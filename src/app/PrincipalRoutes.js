@@ -2,18 +2,20 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { NavBar } from '../ui/NavBar';
 import { IndexPage } from './IndexPage';
+import { CustomersPage } from './CustomersPage';
 
 export const PrincipalRoutes = () => {
     return (
         <>
             <NavBar />
 
-            <div className="container">
+            <div className="container-fluid">
                 <Routes>
-                    <Route path="/motorismo/index" element={<IndexPage />} />
+                    <Route path="/" element={<IndexPage />} />
 
+                    <Route path="/customers" element={<CustomersPage />} />
 
-                    <Route path="/motorismo/" element={<Navigate to="/motorismo/index" />} />
+                    <Route path="/motorismo" element={<Navigate to="/" />} />
 
                 </Routes>
             </div>

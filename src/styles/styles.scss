@@ -1,5 +1,7 @@
 @import './base/base';
 
+@import './auth/login';
+@import './ui/navBar';
 @import './components/welcome';
 @import './components/confirm';
 @import './components/loader';

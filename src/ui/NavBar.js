@@ -18,9 +18,9 @@ export const NavBar = () => {
 
     return (
         <nav className="navbar navbar-expand-sm navbar-dark bg-dark p-2">
-            
-            <Link 
-                className="navbar-brand" 
+
+            <Link
+                className="navbar-brand"
                 to="/motorismo"
             >
                 Home
@@ -28,29 +28,26 @@ export const NavBar = () => {
 
             <div className="navbar-collapse">
                 <div className="navbar-nav">
-
-                    <NavLink 
-                        className={ ({isActive}) => `nav-item nav-link  ${ isActive ? 'active':'' }` }
-                        to="/marvel"
+                    <NavLink
+                        className={({ isActive }) => `nav-item nav-link  ${isActive ? 'active' : ''}`}
+                        to="/motorismo/customers"
                     >
-                        Marvel
+                        Clientes
                     </NavLink>
                 </div>
             </div>
 
             <div className="navbar-collapse collapse w-100 order-3 dual-collapse2 d-flex justify-content-end">
                 <ul className="navbar-nav ml-auto">
-                   
-                    <span className="nav-item nav-link text-primary">
-                        {user}
-                    </span>
 
-                    <button
-                        className="nav-item nav-link btn"
-                        onClick={ onLogout }
-                    >
-                        Logout
-                    </button>
+                    <li className="nav-item dropdown">
+                        <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {user}
+                        </a>
+                        <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="" onClick={onLogout}>Logout</a></li>
+                        </ul>
+                    </li>
 
                 </ul>
             </div>
