@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { LoginPage } from '../auth';
 import { PrincipalRoutes } from '../app';
@@ -17,6 +17,8 @@ export const AppRouter = () => {
             <PrincipalRoutes />
           </PrivateRouter>
         } />
+
+        <Route path="/" element={<Navigate to="/motorismo" />} />
 
       </Routes>
 
