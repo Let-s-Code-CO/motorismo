@@ -10,10 +10,10 @@ export const PrincipalRoutes = () => {
 
             <div className="container">
                 <Routes>
-                    <Route path="index" element={<IndexPage />} />
+                    <Route path="/motorismo/index" element={<IndexPage />} />
 
 
-                    <Route path="/" element={<Navigate to="/index" />} />
+                    <Route path="/motorismo/" element={<Navigate to="/motorismo/index" />} />
 
                 </Routes>
             </div>

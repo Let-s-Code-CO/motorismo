@@ -11,7 +11,7 @@ export const NavBar = () => {
     const onLogout = () => {
         logout();
 
-        navigate('/login', {
+        navigate('/motorismo/login', {
             replace: true
         });
     }
@@ -21,7 +21,7 @@ export const NavBar = () => {
             
             <Link 
                 className="navbar-brand" 
-                to="/"
+                to="/motorismo"
             >
                 Home
             </Link>

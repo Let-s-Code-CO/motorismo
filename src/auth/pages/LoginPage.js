@@ -10,7 +10,7 @@ export const LoginPage = () => {
     const onLogin = () => {
         login('cambiar@gmail.com');
 
-        navigate('/', { replace: true })
+        navigate('/motorismo', { replace: true })
     }
 
     return (
