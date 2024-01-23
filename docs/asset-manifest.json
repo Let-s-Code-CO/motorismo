@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/motorismo/static/css/main.01bbb116.css",
-    "main.js": "/motorismo/static/js/main.04ad2365.js",
+    "main.js": "/motorismo/static/js/main.c504566e.js",
     "static/media/Montserrat-Light.woff": "/motorismo/static/media/Montserrat-Light.ad3f4d41d5d261331e11.woff",
     "static/media/Safina-Script.woff": "/motorismo/static/media/Safina-Script.60d96e9c68b1599c9449.woff",
     "static/media/load.webp": "/motorismo/static/media/load.077c7a73b346a18f4c27.webp",
     "index.html": "/index.html",
     "main.01bbb116.css.map": "/motorismo/static/css/main.01bbb116.css.map",
-    "main.04ad2365.js.map": "/motorismo/static/js/main.04ad2365.js.map"
+    "main.c504566e.js.map": "/motorismo/static/js/main.c504566e.js.map"
   },
   "entrypoints": [
     "motorismo/static/css/main.01bbb116.css",
-    "motorismo/static/js/main.04ad2365.js"
+    "motorismo/static/js/main.c504566e.js"
   ]
 }
