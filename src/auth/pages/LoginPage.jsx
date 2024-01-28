@@ -38,7 +38,7 @@ export const LoginPage = () => {
 
 
   return (
-    <AuthLayout title="Login">
+    <AuthLayout title="Motorismo Detailing">
       <form onSubmit={ onSubmit } className='animate__animated animate__fadeIn animate__faster'>
           <Grid container>
             <Grid item xs={ 12 } sx={{ mt: 2 }}>
@@ -88,7 +88,7 @@ export const LoginPage = () => {
                   Login
                 </Button>
               </Grid>
-              <Grid item xs={ 12 } sm={ 6 }>
+              {/* <Grid item xs={ 12 } sm={ 6 }>
                 <Button
                    disabled={ isAuthenticating }
                    variant='contained' 
@@ -97,15 +97,15 @@ export const LoginPage = () => {
                   <Google />
                   <Typography sx={{ ml: 1 }}>Google</Typography>
                 </Button>
-              </Grid>
+              </Grid> */}
             </Grid>
 
 
-            <Grid container direction='row' justifyContent='end'>
+            {/* <Grid container direction='row' justifyContent='end'>
               <Link component={ RouterLink } color='inherit' to="/auth/register">
                 Crear una cuenta
               </Link>
-            </Grid>
+            </Grid> */}
 
           </Grid>
 

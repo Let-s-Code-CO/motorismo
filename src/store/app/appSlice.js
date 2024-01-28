@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-export const journalSlice = createSlice({
-    name: 'journal',
+export const appSlice = createSlice({
+    name: 'app',
     initialState: {
         isSaving: false,
         messageSaved: '',
@@ -78,4 +78,4 @@ export const {
     setPhotosToActiveNote,
     setSaving,
     updateNote,
-} = journalSlice.actions;
+} = appSlice.actions;

@@ -2,33 +2,33 @@ import { useMemo } from 'react'
 import { useDispatch } from 'react-redux'
 import { Grid, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material'
 import { TurnedInNot } from '@mui/icons-material';
-import { setActiveNote } from '../../store/journal';
+import { setActiveNote } from '../../store/app';
+import { useNavigate } from 'react-router';
 
 
-export const SideBarItem = ({ title = '', body, id, date, imageUrls = [] }) => {
+export const SideBarItem = ({ title = '', url, id }) => {
 
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    const onClickNote = () => {
-        dispatch( setActiveNote({ title, body, id, date, imageUrls }) )
+    const onClickMenu = () => {
+        navigate(url, { replace: true });
     }
 
-
     const newTitle = useMemo( () => {
-        return title.length > 17
+        return title.length > 30
             ? title.substring(0,17) + '...'
             : title;
     },[ title ])
 
   return (
     <ListItem disablePadding>
-        <ListItemButton onClick={ onClickNote }>
-            <ListItemIcon>
+        <ListItemButton onClick={ onClickMenu }>
+            {/* <ListItemIcon>
                 <TurnedInNot />
-            </ListItemIcon>
+            </ListItemIcon> */}
             <Grid container>
                 <ListItemText primary={ newTitle } />
-                <ListItemText secondary={ body } />
             </Grid>
         </ListItemButton>
     </ListItem>

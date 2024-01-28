@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore/lite';
 import { FirebaseDB } from '../../firebase/config';
 import { addNewEmptyNote, setActiveNote } from './';
-import { deleteNoteById, savingNewNote, setNotes, setPhotosToActiveNote, setSaving, updateNote } from './journalSlice';
+import { deleteNoteById, savingNewNote, setNotes, setPhotosToActiveNote, setSaving, updateNote } from './appSlice';
 import { fileUpload, loadNotes } from '../../helpers';
 
 
@@ -18,7 +18,7 @@ export const startNewNote = () => {
             date: new Date().getTime(),
         }
 
-        const newDoc = doc( collection( FirebaseDB, `${ uid }/journal/notes`) );
+        const newDoc = doc( collection( FirebaseDB, `${ uid }/app/notes`) );
         await setDoc( newDoc, newNote );
 
         newNote.id = newDoc.id;  
@@ -48,12 +48,12 @@ export const startSaveNote = () => {
         dispatch( setSaving() );
 
         const { uid } = getState().auth;
-        const { active:note } = getState().journal;
+        const { active:note } = getState().app;
 
         const noteToFireStore = { ...note };
         delete noteToFireStore.id;
     
-        const docRef = doc( FirebaseDB, `${ uid }/journal/notes/${ note.id }` );
+        const docRef = doc( FirebaseDB, `${ uid }/app/notes/${ note.id }` );
         await setDoc( docRef, noteToFireStore, { merge: true });
 
         dispatch( updateNote( note ) );
@@ -84,9 +84,9 @@ export const startDeletingNote = () => {
     return async( dispatch, getState) => {
 
         const { uid } = getState().auth;
-        const { active: note } = getState().journal;
+        const { active: note } = getState().app;
 
-        const docRef = doc( FirebaseDB, `${ uid }/journal/notes/${ note.id }`);
+        const docRef = doc( FirebaseDB, `${ uid }/app/notes/${ note.id }`);
         await deleteDoc( docRef );
 
         dispatch( deleteNoteById(note.id) );

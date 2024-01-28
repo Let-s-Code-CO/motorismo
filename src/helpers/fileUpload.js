@@ -6,7 +6,7 @@ export const fileUpload = async( file ) => {
     const cloudUrl = 'https://api.cloudinary.com/v1_1/cursos-udemy/upload';
 
     const formData = new FormData();
-    formData.append('upload_preset','react-journal');
+    formData.append('upload_preset','react-app');
     formData.append('file', file );
 
     try {

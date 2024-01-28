@@ -8,13 +8,13 @@ import 'sweetalert2/dist/sweetalert2.css';
 
 import { useForm } from '../../hooks/useForm';
 import { ImageGallery } from '../components'
-import { setActiveNote, startDeletingNote, startSaveNote, startUploadingFiles } from '../../store/journal';
+import { setActiveNote, startDeletingNote, startSaveNote, startUploadingFiles } from '../../store/app';
 
 
 export const NoteView = () => {
 
     const dispatch = useDispatch();
-    const { active:note, messageSaved, isSaving } = useSelector( state => state.journal );
+    const { active:note, messageSaved, isSaving } = useSelector( state => state.app );
 
     const { body, title, date, onInputChange, formState } = useForm( note );
 
