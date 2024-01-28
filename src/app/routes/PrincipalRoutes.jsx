@@ -7,6 +7,8 @@ import menus from "../menus/menus";
 export const PrincipalRoutes = () => {
   const { role } = useSelector(state => state.auth);
 
+  const base = import.meta.env.REACT_BASE_URL;
+
   return (
     <Routes>
       <Route path="/" element={<PrincipalPage />} />
@@ -14,7 +16,11 @@ export const PrincipalRoutes = () => {
       {menus.filter(({ admin }) => !admin || (admin && role === 'admin')).map(menu => {
         const Component = menu.component;
 
-        return <Route key={menu.id} path={menu.url} element={<Component />} />
+        const url = menu.url.replaceAll(base, '');
+
+        console.log(url);
+
+        return <Route key={menu.id} path={url} element={<Component />} />
       })}
 
       <Route path="/*" element={<Navigate to="/" />} />

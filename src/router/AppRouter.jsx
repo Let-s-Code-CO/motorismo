@@ -8,6 +8,8 @@ import { useCheckAuth } from '../hooks';
 export const AppRouter = () => {
   const status = useCheckAuth();
 
+  const base = import.meta.env.REACT_BASE_URL;
+
   if ( status === 'checking' ) {
     return <CheckingAuth />
   }
@@ -16,11 +18,12 @@ export const AppRouter = () => {
     <Routes>
         {
           (status === 'authenticated')
-           ? <Route path="/*" element={ <PrincipalRoutes /> } />
-           : <Route path="/auth/*" element={ <AuthRoutes /> } />
+           ? <Route path={`${base}/*`} element={ <PrincipalRoutes /> } />
+           : <Route path={`${base}/auth/*`} element={ <AuthRoutes /> } />
         }
 
-        <Route path='/*' element={ <Navigate to='/auth/login' />  } />
+        <Route path={`${base}/*`} element={ <Navigate to={`${base}/auth/login`} />  } />
+        <Route path="/" element={ <Navigate to={`${base}/`} />  } />
 
     </Routes>
   )

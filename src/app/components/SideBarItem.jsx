@@ -12,6 +12,7 @@ export const SideBarItem = ({ title = '', url, id }) => {
     const navigate = useNavigate();
 
     const onClickMenu = () => {
+        console.log(url)
         navigate(url, { replace: true });
     }
 
