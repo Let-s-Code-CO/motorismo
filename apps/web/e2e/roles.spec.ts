@@ -9,8 +9,8 @@ import { SEED, signIn } from './support/sandbox';
 test('an operator does not see user management (CA-07)', async ({ page }) => {
   await signIn(page, SEED.operator.email);
 
-  await expect(page.getByRole('link', { name: 'Inicio' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Usuarios' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Inicio', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Usuarios', exact: true })).toHaveCount(0);
 });
 
 test('an operator opening an admin URL is told they have no permission (CA-08)', async ({
@@ -33,7 +33,7 @@ test('an operator opening an admin URL is told they have no permission (CA-08)',
 test('an admin sees user management', async ({ page }) => {
   await signIn(page, SEED.admin.email);
 
-  await page.getByRole('link', { name: 'Usuarios' }).click();
+  await page.getByRole('link', { name: 'Usuarios', exact: true }).click();
 
   await expect(page.getByRole('grid', { name: 'Usuarios de la aplicación' })).toBeVisible();
 });

@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
+import AuthHeading from '@web/modules/auth/components/atoms/auth-heading.component';
 import LoginForm from '@web/modules/auth/components/organisms/login-form.component';
 import { sanitizeNextPath } from '@web/modules/auth/utils/access.utils';
 import { mapAuthError } from '@web/modules/auth/utils/auth-errors.utils';
@@ -14,7 +15,7 @@ const LoginPage = async ({ searchParams }: LoginPageProps) => {
 
   return (
     <>
-      <h1 className="mb-4 text-xl font-semibold">{t('title')}</h1>
+      <AuthHeading title={t('title')} subtitle={t('subtitle')} />
       <LoginForm
         next={sanitizeNextPath(next) ?? undefined}
         initialError={error ? mapAuthError(error) : undefined}

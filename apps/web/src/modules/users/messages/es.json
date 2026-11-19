@@ -6,14 +6,11 @@
     "resent": "Invitación reenviada.",
     "table": {
       "label": "Usuarios de la aplicación",
-      "name": "Nombre",
-      "email": "Correo",
-      "role": "Rol",
-      "status": "Estado",
       "actions": "Acciones",
       "empty": "Todavía no hay usuarios.",
       "self": "Tu cuenta",
-      "lastAdmin": "Debe existir al menos un administrador activo."
+      "lastAdmin": "Debe existir al menos un administrador activo.",
+      "user": "Usuario"
     },
     "status": {
       "invited": "Invitado",
@@ -25,7 +22,8 @@
       "makeAdmin": "Hacer administrador",
       "makeOperator": "Hacer operador",
       "disable": "Desactivar",
-      "reactivate": "Reactivar"
+      "reactivate": "Reactivar",
+      "menu": "Acciones de {name}"
     },
     "invite": {
       "title": "Invitar usuario",
@@ -33,7 +31,14 @@
       "email": "Correo",
       "role": "Rol",
       "submit": "Enviar invitación",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "description": "Le enviaremos un correo para que cree su contraseña.",
+      "roleDescriptions": {
+        "operator": "Registra clientes y órdenes de trabajo.",
+        "admin": "Además gestiona usuarios y ve los reportes."
+      },
+      "fullNamePlaceholder": "Ej. Laura Gómez",
+      "emailPlaceholder": "laura@correo.com"
     },
     "validation": {
       "fullNameRequired": "Escribe el nombre.",
@@ -53,6 +58,13 @@
     },
     "roleChanged": "Rol actualizado.",
     "disabled": "Usuario desactivado. Su sesión se cerrará en su siguiente acción.",
-    "reactivated": "Usuario reactivado."
+    "reactivated": "Usuario reactivado.",
+    "description": "Invita a tu equipo y administra sus roles y accesos.",
+    "summary": {
+      "label": "Resumen de usuarios",
+      "active": "Activos",
+      "invited": "Invitados",
+      "disabled": "Desactivados"
+    }
   }
 }

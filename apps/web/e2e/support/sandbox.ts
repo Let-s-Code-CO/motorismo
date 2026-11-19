@@ -76,7 +76,8 @@ export const confirmLinkFromEmail = async (to: string) => {
 export const signIn = async (page: Page, email: string, password: string = SEED.password) => {
   await page.goto('/auth/login');
   await page.getByLabel('Correo').fill(email);
-  await page.getByLabel('Contraseña').fill(password);
+  // exact: the show/hide toggle is labelled "Mostrar contraseña".
+  await page.getByLabel('Contraseña', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar' }).click();
 };
 

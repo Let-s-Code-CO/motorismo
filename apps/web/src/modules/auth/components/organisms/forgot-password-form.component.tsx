@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 
 import { Button, Input } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Mail, MailCheck } from 'lucide-react';
 import type { z } from 'zod';
 
 import { requestPasswordReset } from '@web/modules/auth/actions/auth.actions';
@@ -35,24 +36,38 @@ const ForgotPasswordForm = () => {
 
   if (sent) {
     return (
-      <p role="status" className="rounded-medium bg-success-50 px-3 py-2 text-sm text-success-700">
-        {t('forgotPassword.sent')}
-      </p>
+      <div
+        role="status"
+        className="flex items-start gap-3 rounded-large border border-success-200 bg-success-50 p-4 text-sm text-success-800"
+      >
+        <MailCheck aria-hidden className="mt-0.5 size-5 shrink-0" />
+        <p>{t('forgotPassword.sent')}</p>
+      </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
       <Input
         {...register('email')}
         type="email"
         label={t('forgotPassword.email')}
+        placeholder={t('forgotPassword.emailPlaceholder')}
         autoComplete="email"
+        variant="bordered"
+        labelPlacement="outside"
         validationBehavior="aria"
+        startContent={<Mail aria-hidden className="size-4 shrink-0 text-default-400" />}
         isInvalid={!!errors.email}
         errorMessage={errors.email?.message && t(`validation.${errors.email.message}`)}
       />
-      <Button type="submit" color="primary" isLoading={isSubmitting}>
+      <Button
+        type="submit"
+        color="primary"
+        size="lg"
+        className="font-medium"
+        isLoading={isSubmitting}
+      >
         {t('forgotPassword.submit')}
       </Button>
     </form>

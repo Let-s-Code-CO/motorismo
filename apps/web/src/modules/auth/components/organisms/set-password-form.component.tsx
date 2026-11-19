@@ -5,11 +5,12 @@ import { useForm } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
-import { Button, Input } from '@heroui/react';
+import { Alert, Button } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
 import { setPassword } from '@web/modules/auth/actions/auth.actions';
+import PasswordInput from '@web/modules/auth/components/molecules/password-input.component';
 import {
   type SetPasswordValues,
   setPasswordSchema,
@@ -36,32 +37,30 @@ const SetPasswordForm = () => {
   });
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      {serverError && (
-        <p role="alert" className="rounded-medium bg-danger-50 px-3 py-2 text-sm text-danger">
-          {t(`errors.${serverError}`)}
-        </p>
-      )}
-      <Input
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+      {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
+      <PasswordInput
         {...register('password')}
-        type="password"
         label={t('setPassword.password')}
         description={t('setPassword.hint')}
         autoComplete="new-password"
-        validationBehavior="aria"
         isInvalid={!!errors.password}
         errorMessage={errors.password?.message && t(`validation.${errors.password.message}`)}
       />
-      <Input
+      <PasswordInput
         {...register('confirm')}
-        type="password"
         label={t('setPassword.confirm')}
         autoComplete="new-password"
-        validationBehavior="aria"
         isInvalid={!!errors.confirm}
         errorMessage={errors.confirm?.message && t(`validation.${errors.confirm.message}`)}
       />
-      <Button type="submit" color="primary" isLoading={isSubmitting}>
+      <Button
+        type="submit"
+        color="primary"
+        size="lg"
+        className="font-medium"
+        isLoading={isSubmitting}
+      >
         {t('setPassword.submit')}
       </Button>
     </form>

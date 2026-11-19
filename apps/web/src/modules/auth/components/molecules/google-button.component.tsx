@@ -27,6 +27,8 @@ const GoogleButton = ({ next }: { next?: string }) => {
     <div className="flex flex-col gap-2">
       <Button
         variant="bordered"
+        size="lg"
+        className="font-medium"
         isLoading={isPending}
         startContent={isPending ? null : <GoogleLogo />}
         onPress={onPress}

@@ -3,3 +3,37 @@
 @plugin './hero.ts';
 @source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 @custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
+  /* Slow light sweep across the brand panel (the "shine" of detailing). */
+  --animate-shine: shine 9s ease-in-out infinite;
+  /* Sparkles around the logo. */
+  --animate-twinkle: twinkle 3.2s ease-in-out infinite;
+
+  @keyframes shine {
+    0%,
+    15% {
+      transform: translateX(-120%) rotate(12deg);
+    }
+    55%,
+    100% {
+      transform: translateX(220%) rotate(12deg);
+    }
+  }
+
+  @keyframes twinkle {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}

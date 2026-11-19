@@ -7,7 +7,10 @@
       "submit": "Entrar",
       "forgot": "¿Olvidaste tu contraseña?",
       "google": "Continuar con Google",
-      "or": "o"
+      "or": "o",
+      "subtitle": "Ingresa con la cuenta que te creó el administrador.",
+      "emailPlaceholder": "tu@correo.com",
+      "passwordPlaceholder": "Tu contraseña"
     },
     "setPassword": {
       "titleInvited": "Crea tu contraseña",
@@ -15,7 +18,9 @@
       "password": "Nueva contraseña",
       "confirm": "Repite la contraseña",
       "hint": "Mínimo 8 caracteres.",
-      "submit": "Guardar contraseña"
+      "submit": "Guardar contraseña",
+      "subtitleInvited": "Elige la contraseña con la que entrarás a partir de ahora.",
+      "subtitleRecovery": "Elige una contraseña nueva para tu cuenta."
     },
     "invalidLink": {
       "title": "Enlace no válido",
@@ -48,18 +53,25 @@
     "header": {
       "navLabel": "Navegación principal",
       "home": "Inicio",
-      "users": "Usuarios"
+      "users": "Usuarios",
+      "brandLabel": "Motorismo Detailing, ir al inicio"
     },
     "userMenu": {
       "signOut": "Cerrar sesión"
     },
     "home": {
       "greeting": "Hola, {name}",
-      "role": "Tu rol: {role}"
+      "role": "Tu rol: {role}",
+      "subtitle": "Esto es lo que puedes hacer hoy.",
+      "usersTitle": "Gestionar usuarios",
+      "usersText": "Invita a tu equipo y administra sus roles y accesos.",
+      "soonTitle": "Muy pronto",
+      "soonText": "Registro de clientes, órdenes de trabajo y reportes."
     },
     "noPermission": {
       "title": "No tienes permiso para ver esta página.",
-      "backHome": "Volver al inicio"
+      "backHome": "Volver al inicio",
+      "text": "Esta sección es solo para administradores."
     },
     "forgotPassword": {
       "title": "Recupera tu contraseña",
@@ -67,7 +79,12 @@
       "email": "Correo",
       "submit": "Enviar enlace",
       "sent": "Si el correo está registrado, recibirás un enlace para crear una nueva contraseña.",
-      "backToLogin": "Volver a iniciar sesión"
+      "backToLogin": "Volver a iniciar sesión",
+      "emailPlaceholder": "tu@correo.com"
+    },
+    "password": {
+      "show": "Mostrar contraseña",
+      "hide": "Ocultar contraseña"
     }
   }
 }

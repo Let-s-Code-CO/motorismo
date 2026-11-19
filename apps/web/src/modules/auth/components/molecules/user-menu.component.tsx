@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 
-import { Button } from '@heroui/react';
+import { Avatar, Button, Tooltip } from '@heroui/react';
+import { LogOut } from 'lucide-react';
 
 import { signOut } from '@web/modules/auth/actions/auth.actions';
 import RoleChip from '@web/modules/auth/components/atoms/role-chip.component';
@@ -18,14 +19,22 @@ const UserMenu = ({ user }: UserMenuProps) => {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex flex-col items-end gap-1">
-        <span className="text-sm font-medium">{user.full_name}</span>
+      <Avatar
+        name={user.full_name}
+        size="sm"
+        className="bg-zinc-900 text-xs font-medium text-white"
+        aria-hidden
+      />
+      <div className="hidden flex-col items-start gap-0.5 sm:flex">
+        <span className="text-sm leading-none font-medium">{user.full_name}</span>
         <RoleChip role={user.role} />
       </div>
       <form action={signOut}>
-        <Button type="submit" size="sm" variant="flat">
-          {t('signOut')}
-        </Button>
+        <Tooltip content={t('signOut')} placement="bottom">
+          <Button type="submit" isIconOnly size="sm" variant="light" aria-label={t('signOut')}>
+            <LogOut aria-hidden className="size-4" />
+          </Button>
+        </Tooltip>
       </form>
     </div>
   );

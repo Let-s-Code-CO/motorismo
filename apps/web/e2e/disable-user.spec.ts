@@ -29,18 +29,20 @@ test('a disabled user is removed on their next action and can return once reacti
   await expect(page).toHaveURL('/');
   await page.goto('/admin/users');
   const row = page.getByRole('row', { name: new RegExp(name) });
-  await row.getByRole('button', { name: 'Desactivar' }).click();
+  await page.getByRole('button', { name: `Acciones de ${name}` }).click();
+  await page.getByRole('menuitem', { name: 'Desactivar' }).click();
   await expect(row.getByText('Desactivado', { exact: true })).toBeVisible();
 
   // CA-19: the operator's next action.
-  await operator.getByRole('link', { name: 'Inicio' }).click();
+  await operator.getByRole('link', { name: 'Inicio', exact: true }).click();
   await expect(operator).toHaveURL('/auth/login?error=account_disabled');
   await expect(
     operator.getByText('Tu cuenta está desactivada. Contacta al administrador.')
   ).toBeVisible();
 
   // CA-20: reactivated, they sign in with the same password.
-  await row.getByRole('button', { name: 'Reactivar' }).click();
+  await page.getByRole('button', { name: `Acciones de ${name}` }).click();
+  await page.getByRole('menuitem', { name: 'Reactivar' }).click();
   await expect(row.getByText('Activo', { exact: true })).toBeVisible();
   await signIn(operator, email);
   await expect(operator.getByRole('heading', { name: `Hola, ${name}` })).toBeVisible();

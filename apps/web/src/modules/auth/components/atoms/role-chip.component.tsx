@@ -10,7 +10,12 @@ const RoleChip = ({ role }: { role: UserRole }) => {
   const t = useTranslations('auth.roles');
 
   return (
-    <Chip size="sm" variant="flat" color={role === 'admin' ? 'secondary' : 'default'}>
+    <Chip
+      size="sm"
+      radius="sm"
+      variant={role === 'admin' ? 'solid' : 'flat'}
+      color={role === 'admin' ? 'primary' : 'default'}
+    >
       {t(role)}
     </Chip>
   );

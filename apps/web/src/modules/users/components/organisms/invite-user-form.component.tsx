@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
-import { Button, Input, Radio, RadioGroup } from '@heroui/react';
+import { Alert, Button, Input, Radio, RadioGroup } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Constants } from '@motorismo/supabase/types';
@@ -59,15 +59,14 @@ const InviteUserForm = ({ onInvited }: InviteUserFormProps) => {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      {serverError && (
-        <p role="alert" className="rounded-medium bg-danger-50 px-3 py-2 text-sm text-danger">
-          {t(`errors.${serverError}`)}
-        </p>
-      )}
+      {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
       <Input
         {...register('full_name')}
         label={t('invite.fullName')}
+        placeholder={t('invite.fullNamePlaceholder')}
         autoComplete="off"
+        variant="bordered"
+        labelPlacement="outside"
         validationBehavior="aria"
         isInvalid={!!errors.full_name}
         errorMessage={fieldError(errors.full_name?.message)}
@@ -76,7 +75,10 @@ const InviteUserForm = ({ onInvited }: InviteUserFormProps) => {
         {...register('email')}
         type="email"
         label={t('invite.email')}
+        placeholder={t('invite.emailPlaceholder')}
         autoComplete="off"
+        variant="bordered"
+        labelPlacement="outside"
         validationBehavior="aria"
         isInvalid={!!errors.email}
         errorMessage={fieldError(errors.email?.message)}
@@ -87,7 +89,7 @@ const InviteUserForm = ({ onInvited }: InviteUserFormProps) => {
         render={({ field }) => (
           <RadioGroup
             label={t('invite.role')}
-            orientation="horizontal"
+            classNames={{ wrapper: 'grid gap-3 sm:grid-cols-2', label: 'text-sm text-foreground' }}
             value={field.value ?? ''}
             onValueChange={(value) => field.onChange(value)}
             onBlur={field.onBlur}
@@ -96,14 +98,29 @@ const InviteUserForm = ({ onInvited }: InviteUserFormProps) => {
             errorMessage={fieldError(errors.role?.message)}
           >
             {Constants.public.Enums.user_role.map((role) => (
-              <Radio key={role} value={role}>
+              <Radio
+                key={role}
+                value={role}
+                description={t(`invite.roleDescriptions.${role}`)}
+                classNames={{
+                  base: 'm-0 inline-flex w-full max-w-none cursor-pointer items-start gap-3 rounded-large border border-divider p-3 transition-colors hover:bg-default-50 data-[selected=true]:border-foreground',
+                  labelWrapper: 'ms-0',
+                  label: 'font-medium',
+                }}
+              >
                 {tRoles(role)}
               </Radio>
             ))}
           </RadioGroup>
         )}
       />
-      <Button type="submit" color="primary" isLoading={isSubmitting}>
+      <Button
+        type="submit"
+        color="primary"
+        size="lg"
+        className="font-medium"
+        isLoading={isSubmitting}
+      >
         {t('invite.submit')}
       </Button>
     </form>

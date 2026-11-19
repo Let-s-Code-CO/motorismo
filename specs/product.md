@@ -5,7 +5,10 @@
 
 ## Visión
 
-Motorismo Detailing es un negocio de lavado y detailing de motos. La aplicación sustituye el
+Motorismo Detailing («Motorismo PPF y Detailing») es un negocio especializado en PPF y detailing:
+lavado especializado, micropulidos y recubrimientos cerámicos. Instagram: @motorismodetail.
+**[POR CONFIRMAR]** si atiende solo motos (lista de deseos original: «tipo de moto») o vehículos en
+general (Instagram: «Auto Detailing Service»). La aplicación sustituye el
 registro manual de clientes y servicios, permite saber al instante el historial de un cliente y
 da al administrador reportes para liquidar el trabajo de los empleados.
 

@@ -6,7 +6,33 @@
     },
     "brand": {
       "name": "Motorismo Detailing",
-      "logoAlt": "Logo de Motorismo Detailing"
+      "logoAlt": "Logo de Motorismo Detailing",
+      "short": "Motorismo",
+      "tagline": "Especialistas en PPF y Detailing",
+      "services": {
+        "ppf": {
+          "title": "PPF",
+          "text": "Película que protege la pintura."
+        },
+        "ceramic": {
+          "title": "Recubrimientos cerámicos",
+          "text": "Brillo profundo y duradero."
+        },
+        "polish": {
+          "title": "Micropulidos",
+          "text": "Corrección de rayones y marcas."
+        },
+        "wash": {
+          "title": "Lavado especializado",
+          "text": "Cuidado al detalle de tu vehículo."
+        }
+      },
+      "servicesLabel": "Nuestros servicios"
+    },
+    "footer": {
+      "instagram": "Instagram",
+      "newTab": "(se abre en una pestaña nueva)",
+      "rights": "© {year} Motorismo Detailing"
     }
   }
 }

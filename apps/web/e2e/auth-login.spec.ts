@@ -32,7 +32,7 @@ test('an internal page leads to the login and back to it after signing in (CA-03
   await expect(page).toHaveURL('/auth/login?next=%2Fadmin%2Fusers');
 
   await page.getByLabel('Correo').fill(SEED.admin.email);
-  await page.getByLabel('Contraseña').fill(SEED.password);
+  await page.getByLabel('Contraseña', { exact: true }).fill(SEED.password);
   await page.getByRole('button', { name: 'Entrar' }).click();
 
   await expect(page).toHaveURL('/admin/users');

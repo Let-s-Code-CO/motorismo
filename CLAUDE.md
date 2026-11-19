@@ -31,6 +31,12 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Next.js 16 + React 19, TypeScript estricto.
 - UI: HeroUI 2.8 + Tailwind CSS 4. HeroUI usa contexto de React: los componentes que lo usan
   llevan `'use client'`.
+- Sistema visual (spec 003): Geist, base zinc con primario casi negro, radios 8/12/16 px, sombras
+  suaves; tema en `src/app/hero.ts` y animaciones en `globals.css` (siempre `motion-safe:`).
+  Iconos con `lucide-react`, decorativos (`aria-hidden`); los botones solo-icono llevan
+  `aria-label`. Nada de colores llamativos: los semánticos solo para estados.
+- Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
+  pantallas nuevas se añaden a esa auditoría.
 - i18n: next-intl 4, **solo español**, sin segmento de idioma en la URL.
 - Estado de servidor: TanStack Query 5. Formularios: React Hook Form + Zod 4.
 - Supabase: `@supabase/ssr` con clientes tipados (`createClient<Database>`).

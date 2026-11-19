@@ -1,3 +1,13 @@
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+
+import { inviteUser } from '@web/modules/users/actions/users.actions';
+import UsersSummary from '@web/modules/users/components/molecules/users-summary.component';
+import InviteUserForm from '@web/modules/users/components/organisms/invite-user-form.component';
+import UsersTable from '@web/modules/users/components/organisms/users-table.component';
+
+import { buildProfile } from '@tests/test-utils/builders';
+import { renderWithProviders } from '@tests/test-utils/render';
+
 /**
  * User management UI (spec 002, HU-03).
  *
@@ -10,15 +20,14 @@
  *   active admin, the row explains that at least one active admin must remain.
  * - CA-13: the invitation form shows an error next to each invalid field and sends nothing.
  * - CA-12: a duplicate email reported by the server is shown to the admin.
+ * - Spec 003 CA-07: a summary by status, and each row's actions grouped in a menu.
  */
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 
-import { inviteUser } from '@web/modules/users/actions/users.actions';
-import InviteUserForm from '@web/modules/users/components/organisms/invite-user-form.component';
-import UsersTable from '@web/modules/users/components/organisms/users-table.component';
-
-import { buildProfile } from '@tests/test-utils/builders';
-import { renderWithProviders } from '@tests/test-utils/render';
+/** Opens the actions menu of a row (spec 003) and picks an option. */
+const pick = async (userName: string, option: string) => {
+  fireEvent.click(screen.getByRole('button', { name: `Acciones de ${userName}` }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: option }));
+};
 
 vi.mock('@web/modules/users/actions/users.actions', () => ({ inviteUser: vi.fn() }));
 
@@ -61,29 +70,40 @@ describe('UsersTable', () => {
     expect(row('Diana Desactivada').getByText('Desactivado')).toBeVisible();
   });
 
-  it('offers "Reenviar invitación" only for invited users, passing their id (CA-16)', () => {
+  it('offers "Reenviar invitación" only for invited users, passing their id (CA-16)', async () => {
     const props = handlers();
     renderWithProviders(<UsersTable users={users} currentUserId="u1" {...props} />);
 
-    const buttons = screen.getAllByRole('button', { name: 'Reenviar invitación' });
-    expect(buttons).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Acciones de Diana Desactivada' }));
+    await screen.findByRole('menu');
+    expect(screen.queryByRole('menuitem', { name: 'Reenviar invitación' })).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
 
-    fireEvent.click(buttons[0]!);
+    await pick('Iván Invitado', 'Reenviar invitación');
     expect(props.onResend).toHaveBeenCalledWith('u2');
   });
 
-  it('lets the admin promote an operator and disable or reactivate others (CA-18, CA-19, CA-20)', () => {
+  it('lets the admin promote an invited operator (CA-18)', async () => {
     const props = handlers();
     renderWithProviders(<UsersTable users={users} currentUserId="u1" {...props} />);
 
-    const row = (name: string) => within(screen.getByRole('row', { name: new RegExp(name) }));
-    fireEvent.click(row('Iván Invitado').getByRole('button', { name: 'Hacer administrador' }));
+    await pick('Iván Invitado', 'Hacer administrador');
     expect(props.onChangeRole).toHaveBeenCalledWith('u2', 'admin');
+  });
 
-    fireEvent.click(row('Iván Invitado').getByRole('button', { name: 'Desactivar' }));
+  it('lets the admin disable another user (CA-19)', async () => {
+    const props = handlers();
+    renderWithProviders(<UsersTable users={users} currentUserId="u1" {...props} />);
+
+    await pick('Iván Invitado', 'Desactivar');
     expect(props.onChangeStatus).toHaveBeenCalledWith('u2', 'disabled');
+  });
 
-    fireEvent.click(row('Diana Desactivada').getByRole('button', { name: 'Reactivar' }));
+  it('lets the admin reactivate a disabled user (CA-20)', async () => {
+    const props = handlers();
+    renderWithProviders(<UsersTable users={users} currentUserId="u1" {...props} />);
+
+    await pick('Diana Desactivada', 'Reactivar');
     expect(props.onChangeStatus).toHaveBeenCalledWith('u3', 'active');
   });
 
@@ -115,6 +135,27 @@ describe('UsersTable', () => {
     expect(
       screen.queryByText('Debe existir al menos un administrador activo.')
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('UsersSummary', () => {
+  it('counts users by status (spec 003, CA-07)', () => {
+    renderWithProviders(
+      <UsersSummary
+        users={[
+          buildProfile({ status: 'active' }),
+          buildProfile({ status: 'active' }),
+          buildProfile({ status: 'invited' }),
+          buildProfile({ status: 'disabled' }),
+        ]}
+      />
+    );
+
+    const count = (label: string) =>
+      within(screen.getByText(label).closest('div')!).getByRole('definition').textContent;
+    expect(count('Activos')).toBe('2');
+    expect(count('Invitados')).toBe('1');
+    expect(count('Desactivados')).toBe('1');
   });
 });
 
