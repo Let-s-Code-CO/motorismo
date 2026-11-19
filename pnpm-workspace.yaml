@@ -31,3 +31,11 @@ allowBuilds:
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - lucide-react@1.76.0
+
+# Security overrides for transitive dependencies with no upstream fix.
+overrides:
+  # GHSA-g3hv-75wg-m249 (CVE-2026-118764): minimatch >=7 <11.0.1 is vulnerable and
+  # @trivago/prettier-plugin-sort-imports@6.0.2 (latest) still pins ^9. The plugin only
+  # calls `minimatch(path, pattern, { matchBase })`, which v11 keeps. Drop this once the
+  # plugin moves to minimatch >=11.0.1.
+  '@trivago/prettier-plugin-sort-imports>minimatch': ^11.0.1
