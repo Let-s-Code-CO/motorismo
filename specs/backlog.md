@@ -43,4 +43,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [001](001-migracion-plataforma/spec.md) | Migración de plataforma a Next.js + Supabase + Vercel | en-progreso (falta aprovisionar Vercel y Supabase remotos) |
 | [002](002-autenticacion-roles/spec.md) | Autenticación y roles | implementada (falta despliegue y prueba manual de Google) |
 | [003](003-rediseno-visual/spec.md) | Rediseño visual de la interfaz | implementada |
-| [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | en-progreso |
+| [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | implementada (falta despliegue y prueba manual de Google) |

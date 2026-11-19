@@ -7,14 +7,22 @@ import { parseStatusParam } from '@web/modules/core/utils/status-filter.utils';
 export const CUSTOMERS_PAGE_SIZE = 20;
 const MAX_SEARCH_LENGTH = 100;
 
-export type CustomerFilters = { q: string; status: CustomerStatus | null; page: number };
+/** A customer status, or "active": with or without account, not disabled (CA-17). */
+export type CustomerStatusFilter = CustomerStatus | 'active';
+
+const STATUS_FILTERS: readonly CustomerStatusFilter[] = [
+  'active',
+  ...Constants.public.Enums.customer_status,
+];
+
+export type CustomerFilters = { q: string; status: CustomerStatusFilter | null; page: number };
 
 type RawParams = { q?: string | null; status?: string | null; page?: string | null };
 
 /** `?q=&status=&page=` → the list state; anything invalid falls back to its default. */
 export const parseCustomerFilters = ({ q, status, page }: RawParams): CustomerFilters => ({
   q: (q ?? '').trim().slice(0, MAX_SEARCH_LENGTH),
-  status: parseStatusParam(status, Constants.public.Enums.customer_status),
+  status: parseStatusParam(status, STATUS_FILTERS),
   page: page && /^\d+$/.test(page) && Number(page) >= 1 ? Number(page) : 1,
 });
 
@@ -52,3 +60,7 @@ export const customersQueryString = ({ q, status, page }: CustomerFilters): stri
   const query = params.toString();
   return query ? `?${query}` : '';
 };
+
+/** Customers who can be served: with or without account, not disabled (CA-17). */
+export const activeCount = (counts: Record<CustomerStatus, number>): number =>
+  counts.registered + counts.walk_in;

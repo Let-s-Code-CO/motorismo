@@ -47,20 +47,28 @@ pnpm db:stop
 
 ## Auth local (`config.toml`)
 
-- `[auth] enable_signup = false`: sin registro público; solo el admin API (invitaciones) crea
-  usuarios. **No** pongas `[auth.email] enable_signup = false`: en local desactiva el proveedor de
-  correo entero, login incluido.
-- `otp_expiry = 86400` (enlaces de 24 h), contraseña mínima de 8, plantillas en español en
-  `supabase/templates/`. Los cambios de `config.toml` requieren `pnpm db:stop && pnpm db:start`.
+- `[auth] enable_signup = true` (spec 004): los **clientes** se registran solos;
+  `[auth.email] enable_confirmations = true`: confirman el correo antes de entrar. **No** pongas
+  `[auth.email] enable_signup = false`: en local desactiva el proveedor de correo entero.
+- **El personal solo nace de `public.staff_invitations`** (la crea un admin con RLS, o
+  `admin:bootstrap`): `handle_new_auth_user()` nunca lee el rol de `raw_user_meta_data`, porque
+  con registro público lo escribe cualquiera. Todo alta sin invitación es un cliente.
+- `otp_expiry = 86400` (enlaces de 24 h), contraseña mínima de 8, plantillas en español
+  (invitación, recuperación y confirmación de registro) en `supabase/templates/`. En local
+  `email_sent = 1000` para las pruebas; `max_frequency = 1s` obliga a esperar entre correos a la
+  misma dirección. Los cambios de `config.toml` requieren `pnpm db:stop && pnpm db:start`.
 - El proyecto remoto **no** lee este archivo: replica estos ajustes en el panel de Supabase.
 - Al verificar un enlace de invitación, Auth escribe una contraseña aleatoria en
   `auth.users.encrypted_password`: no uses ese campo para deducir que el usuario eligió contraseña.
 
 ## Seeds y primer administrador
 
-- `seeds/01_users.sql`: `sebastian.pulido@` y `carlos.diaz@` (admins), `operador@` y
-  `desactivado@motorismo.test`, contraseña
-  `motorismo-local`. Las pruebas pgTAP no dependen de ellos.
+- `seeds/01_users.sql`: crea primero las invitaciones del personal y luego `sebastian.pulido@` y
+  `carlos.diaz@` (admins), `operador@` y `desactivado@motorismo.test`.
+- `seeds/02_customers.sql`: `cliente@` (cuenta de prueba de cliente), `cliente.google@` (con
+  foto), `cliente.desactivado@` y dos clientes sin cuenta del punto de atención.
+- Contraseña de todos: `motorismo-local`. Las pruebas pgTAP no dependen de los seeds.
+- Fixtures de pruebas: para crear personal, inserta antes su fila en `staff_invitations`.
 - `pnpm --filter @motorismo/supabase admin:bootstrap -- --email … --name …` invita al primer
   admin de un entorno (necesita `SUPABASE_URL` y `SUPABASE_SECRET_KEY`); se niega si ya hay uno.
 

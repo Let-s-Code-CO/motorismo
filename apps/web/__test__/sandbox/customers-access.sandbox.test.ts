@@ -4,6 +4,7 @@
  * Guards CA-10: a customer who bypasses the UI only reads their own customer record, cannot read
  * staff profiles, cannot change their status or email, cannot create customers, cannot change
  * another customer, and cannot probe which emails exist (email_in_use is server-only, RN-06).
+ * Also CA-31 / RN-09: an operator calling the API directly cannot disable a customer.
  */
 import { SEED, adminClient, signedInAs } from './support/sandbox';
 
@@ -75,5 +76,24 @@ describe('a customer calling the API directly (CA-10)', () => {
     const { error } = await client.rpc('email_in_use', { p_email: SEED.admin });
 
     expect(error?.code).toBe('42501');
+  });
+});
+
+describe('an operator calling the API directly (CA-31)', () => {
+  it('cannot disable a customer: only an admin can', async () => {
+    const { client } = await signedInAs(SEED.operator);
+
+    const { error } = await client
+      .from('customers')
+      .update({ disabled_at: new Date().toISOString() })
+      .eq('email', 'valentina.vasquez@correo.test');
+
+    expect(error?.code).toBe('42501');
+    const { data } = await adminClient()
+      .from('customers')
+      .select('status')
+      .eq('email', 'valentina.vasquez@correo.test')
+      .single();
+    expect(data?.status).toBe('walk_in');
   });
 });

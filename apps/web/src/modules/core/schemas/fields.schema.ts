@@ -23,14 +23,32 @@ export const emailField = z
 /** Optional Colombian mobile (RN-03): blank → null, otherwise the 10 digits or an error. */
 export const optionalMobileField = z
   .string()
-  .optional()
+  // null: the value already normalised by the form (Server Actions receive the parsed output).
+  .nullish()
   .transform((raw, ctx) => {
     const value = raw?.trim() ?? '';
     if (!value) return null;
     const mobile = normalizeMobile(value);
     if (!mobile) {
       ctx.addIssue({ code: 'custom', message: 'phoneInvalid' });
-      return z.NEVER;
+      // The raw value is kept so cross-field checks still see that a phone was given.
+      return value;
     }
     return mobile;
+  });
+
+/** Optional email (counter customers): blank → null, otherwise a valid lowercase email. */
+export const optionalEmailField = z
+  .string()
+  // null: the value already normalised by the form (Server Actions receive the parsed output).
+  .nullish()
+  .transform((raw, ctx) => {
+    const value = raw?.trim().toLowerCase() ?? '';
+    if (!value) return null;
+    if (!z.email().safeParse(value).success) {
+      ctx.addIssue({ code: 'custom', message: 'emailInvalid' });
+      // The raw value is kept so cross-field checks still see that an email was given.
+      return value;
+    }
+    return value;
   });

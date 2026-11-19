@@ -208,7 +208,7 @@ Convenciones:
 
 ### Fase B1 — Base de datos (las reglas existen desde T006: se ven fallar mutándolas)
 
-- [ ] T050 pgTAP `05_customers.test.sql`, parte B:
+- [x] T050 pgTAP `05_customers.test.sql`, parte B:
       - **Google**:
         - un alta con `provider = google` crea la ficha al instante con `origin = google`, la
           foto y `consent_at` (CA-20);
@@ -229,33 +229,33 @@ Convenciones:
 
 ### Fase B2 — Pruebas de la aplicación (rojo)
 
-- [ ] T051 [P] `customer.schema.test.ts`, alta y edición en el punto de atención: nombre,
+- [x] T051 [P] `customer.schema.test.ts`, alta y edición en el punto de atención: nombre,
       correo o celular (al menos uno), formatos y autorización obligatoria (CA-25, RN-02)
       → **rojo**
-- [ ] T052 [P] `customer-form.component.test.tsx`: errores junto a cada campo, sin autorización
+- [x] T052 [P] `customer-form.component.test.tsx`: errores junto a cada campo, sin autorización
       no se envía y el correo está bloqueado si hay cuenta (CA-25, CA-27) → **rojo**
-- [ ] T053 [P] `customer-detail.component.test.tsx`: el operador no ve desactivar/reactivar y el
+- [x] T053 [P] `customer-detail.component.test.tsx`: el operador no ve desactivar/reactivar y el
       admin sí (CA-31) → **rojo**
-- [ ] T054 [P] Botón de Google en el registro con el aviso de autorización y enlace a la política
+- [x] T054 [P] Botón de Google en el registro con el aviso de autorización y enlace a la política
       (CA-20) → **rojo**
-- [ ] T055 Sandbox `customers-access.sandbox.test.ts`, ampliado: un operador no puede desactivar
+- [x] T055 Sandbox `customers-access.sandbox.test.ts`, ampliado: un operador no puede desactivar
       por la API (CA-31) → **rojo**
 
 ### Fase B3 — Implementación (verde)
 
-- [ ] T056 Acción `createCustomer` + modal «Nuevo cliente» en `/customers`, con los `hint` →
+- [x] T056 Acción `createCustomer` + modal «Nuevo cliente» en `/customers`, con los `hint` →
       mensajes (CA-24, CA-25, CA-26) → T051 en **verde**
-- [ ] T057 Acción `updateCustomer` + `customer-form` de edición en la ficha (CA-27)
+- [x] T057 Acción `updateCustomer` + `customer-form` de edición en la ficha (CA-27)
       → T052 en **verde**
-- [ ] T058 Acción `setCustomerDisabled` (RLS + baneo en Auth, que se revierte si falla) y los
+- [x] T058 Acción `setCustomerDisabled` (RLS + baneo en Auth, que se revierte si falla) y los
       botones en la ficha, solo para el admin (CA-29, CA-30, CA-31) → T053 y T055 en **verde**
-- [ ] T059 Google en el registro, con el aviso de autorización. Comentarios de
+- [x] T059 Google en el registro, con el aviso de autorización. Comentarios de
       `signInWithGoogle` y `auth/callback` al día (ya no hay «solo invitados») (CA-20, CA-23)
       → T054 en **verde**
 
 ### Fase B4 — E2E
 
-- [ ] T060 `e2e/customers-counter.spec.ts`:
+- [x] T060 `e2e/customers-counter.spec.ts`:
       - crear un cliente solo con celular (sin correo en Mailpit);
       - correo duplicado → mensaje;
       - editar;
@@ -263,18 +263,22 @@ Convenciones:
       - ficha del punto de atención → registro con ese correo → una sola fila «Con cuenta»
 
       (CA-24 a CA-28)
-- [ ] T061 `e2e/customers-disable.spec.ts`:
+- [x] T061 `e2e/customers-disable.spec.ts`:
       - el admin desactiva a un cliente con la sesión abierta y este sale con el mensaje
         (CA-29);
       - el seed desactivado no entra (CA-22);
       - al reactivarlo vuelve a entrar (CA-30);
       - el operador no ve la opción (CA-31)
-- [ ] T062 `e2e/a11y.spec.ts`: modal «Nuevo cliente» y ficha en modo edición
+- [x] T062 `e2e/a11y.spec.ts`: modal «Nuevo cliente» y ficha en modo edición
+
+- [x] T062b Tarjeta «Activos» (con y sin cuenta) en Clientes, a petición del usuario: spec CA-17,
+      `customers-filter.utils` (`?status=active`, `activeCount`), consulta `status <> 'disabled'`,
+      cuadrícula 2 × 2 en el móvil y E2E (CA-17)
 
 ### Fase B5 — Definición de terminado y documentación
 
-- [ ] T063 Definición de terminado completa, como en T039, y mutaciones anotadas
-- [ ] T064 Documentación:
+- [x] T063 Definición de terminado completa, como en T039, y mutaciones anotadas
+- [x] T064 Documentación:
       - `CLAUDE.md`: tipos de cuenta, registro público, `core` de tarjetas-filtro, usuarios
         locales nuevos (incluida la cuenta de prueba de cliente `cliente@motorismo.test`);
       - `packages/supabase/CLAUDE.md`: invitaciones, `customers`, seeds y `config.toml`;

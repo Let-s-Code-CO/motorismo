@@ -248,6 +248,9 @@ modules/customers/
 - **Lecturas**: RSC con la sesión del usuario (RLS). `range()` de 20 en 20 con `count: 'exact'`
   (RF-05). La búsqueda usa `ilike` sobre `search_text` con el término normalizado igual que en
   la base de datos.
+- **Tarjetas** (CA-17, ampliado a petición del usuario): «Activos» (`?status=active`, con y sin
+  cuenta: `status <> 'disabled'`), «Con cuenta», «Sin cuenta» y «Desactivados»; con cuatro
+  tarjetas la cuadrícula es 2 × 2 en el móvil.
 - **Estado de la lista en la URL** (`?q=&status=&page=`): la búsqueda espera 300 ms tras
   escribir y aplica `router.replace` dentro de una transición. Las tarjetas y «Ver todos» siguen
   el estándar del proyecto, y cambiar el filtro o la búsqueda vuelve a la página 1.
@@ -404,4 +407,5 @@ antes de seguir.
 |---|---|
 | 2026-11-19 | Creación (borrador). |
 | 2026-11-19 | Aprobado por el usuario. |
+| 2026-11-19 | Tarjeta «Activos» en Clientes (CA-17), a petición del usuario. |
 | 2026-11-19 | Spike T001, contra el Supabase local:<br>**(1)** `raw_app_meta_data.provider` (`email`) ya está en el `insert`; Google se simula igual en pgTAP.<br>**(2)** Registrarse otra vez con un correo **sin confirmar**, también el de un invitado, no cambia la contraseña ni los metadatos: solo reenvía el correo. El riesgo 2 no se da, pero la mitigación por `amr` se mantiene porque es barata. Con un correo **confirmado**, Auth responde `user_already_exists`, así que la acción `signUp` lo convierte en la misma respuesta de éxito (CA-07, RN-06).<br>**(3)** Las sesiones abiertas desde un enlace (`invite`, `recovery`, `email`) tienen `amr = otp`; con contraseña, `password`.<br>**(4)** `email_not_confirmed` solo sale con la contraseña correcta (con una incorrecta, `invalid_credentials`).<br>Además, el límite local `email_sent = 2` sí se aplica y se sube a 1000 en `config.toml` (solo local), y `max_frequency = 1s` por usuario obliga a esperar entre reenvíos en las pruebas. |

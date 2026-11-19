@@ -28,7 +28,8 @@ export const listCustomers = async ({ q, status, page }: CustomerFilters) => {
     .order('id')
     .range(from, to);
   if (q) query = query.ilike('search_text', toLikePattern(q));
-  if (status) query = query.eq('status', status);
+  if (status === 'active') query = query.neq('status', 'disabled');
+  else if (status) query = query.eq('status', status);
 
   const { data, error, count } = await query;
   // Asking for a page past the end answers 416 (PGRST103): treat it as an empty page.

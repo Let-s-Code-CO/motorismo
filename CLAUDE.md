@@ -1,7 +1,7 @@
 # CLAUDE.md — Motorismo Detailing
 
-Aplicación web interna para un negocio de lavado y detailing de motos: registro de clientes,
-órdenes de trabajo y reportes para el administrador. Se despliega en **Vercel** con base de datos
+Aplicación web para un negocio de lavado y detailing de motos: los clientes se registran y
+mantienen sus datos; el personal gestiona clientes, órdenes de trabajo y reportes. Se despliega en **Vercel** con base de datos
 **Supabase**.
 
 Este proyecto se desarrolla con **Spec Driven Development (SDD)**. Antes de tocar código de
@@ -81,10 +81,16 @@ pnpm db:stop
 
 Un test concreto: `pnpm --filter web exec vitest run ruta/al/archivo.test.tsx`.
 
-Usuarios locales (seeds), todos con la contraseña `motorismo-local`: administradores
-`sebastian.pulido@motorismo.test` y `carlos.diaz@motorismo.test`, `operador@motorismo.test` y
-`desactivado@motorismo.test`. Los correos (invitaciones,
-recuperación) se ven en Mailpit: http://127.0.0.1:54324.
+Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
+
+- Personal: administradores `sebastian.pulido@motorismo.test` y `carlos.diaz@motorismo.test`,
+  `operador@motorismo.test` y `desactivado@motorismo.test`.
+- Clientes: **`cliente@motorismo.test`** (cuenta de prueba para usar la app como cliente: entra a
+  «Mi perfil»), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
+  Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
+
+Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
+http://127.0.0.1:54324.
 
 ### Git hooks (Husky)
 
@@ -121,12 +127,19 @@ e2e/                         # Playwright
   `Tables<'tabla'>`, sin genéricos explícitos que oculten drift.
 - Autorización en Postgres (RLS), nunca solo ocultando elementos en la UI.
 
-## Autenticación y permisos (spec 002)
+## Autenticación y permisos (specs 002 y 004)
 
-- `public.profiles` (rol `operator`/`admin`, estado `invited`/`active`/`disabled`) es la fuente de
-  verdad. Rol y estado **no** se leen del JWT: se consultan en cada petición.
-- Tres capas: `src/proxy.ts` (`decideAccess`, en cada petición) → `requireUser()` en páginas y
-  `getActiveAdmin()` en Server Actions (`modules/auth/api/auth.server.ts`) → RLS.
+- Dos tipos de cuenta, nunca ambos a la vez: **personal** en `public.profiles` (rol
+  `operator`/`admin`, estado `invited`/`active`/`disabled`) y **clientes** en `public.customers`
+  (con cuenta, sin cuenta del punto de atención o desactivados). Rol y estado **no** se leen del
+  JWT: se consultan en cada petición (`current_account()` en el proxy).
+- **Registro público solo para clientes**: el personal nace únicamente de una invitación
+  pendiente (`public.staff_invitations`, que solo crea un admin); nunca de los metadatos del alta,
+  que escribe cualquiera (spec 004, RN-11). El cliente existe al confirmar su correo.
+- Tres capas: `src/proxy.ts` (`decideAccess`, en cada petición) → en páginas `requireAccount()`,
+  `getStaffForPage()` (un cliente recibe «No tienes permiso») o `requireCustomer()`, y en Server
+  Actions `getActiveStaff()` / `getActiveAdmin()` / `getActiveCustomer()`
+  (`modules/auth/api/auth.server.ts`) → RLS y guardas en Postgres.
 - Clientes Supabase: `supabase-server.lib.ts` (sesión del usuario, por defecto),
   `supabase-proxy.lib.ts` (solo el proxy) y `supabase-admin.lib.ts` (secret key, solo servidor y
   solo para lo que la sesión del usuario no puede hacer, tras comprobar permisos).

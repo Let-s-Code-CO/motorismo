@@ -5,11 +5,13 @@
  * filters). Guards:
  * - CA-16: the search ignores case and accents, exactly like the database's search text, and a
  *   user's `%` or `_` are searched literally (never as wildcards).
- * - CA-17: anything that is not a known status means "no filter" (never an empty list).
+ * - CA-17: the filter is a status or "active" (with or without account, not disabled); anything
+ *   else means "no filter" (never an empty list).
  * - RF-05: pages of 20; a missing, zero, negative or non-numeric page is page 1.
  */
 import {
   CUSTOMERS_PAGE_SIZE,
+  activeCount,
   customersQueryString,
   normalizeSearch,
   pageCount,
@@ -29,6 +31,10 @@ describe('parseCustomerFilters', () => {
 
   it('defaults to no search, no filter and page 1', () => {
     expect(parseCustomerFilters({})).toEqual({ q: '', status: null, page: 1 });
+  });
+
+  it('accepts "active": customers with or without account, not disabled (CA-17)', () => {
+    expect(parseCustomerFilters({ status: 'active' }).status).toBe('active');
   });
 
   it.each(['', 'WALK_IN', 'deleted', 'registered,disabled'])('ignores the status %j', (status) => {
@@ -90,5 +96,12 @@ describe('customersQueryString', () => {
       '?q=jose&status=registered&page=2'
     );
     expect(customersQueryString({ q: '', status: null, page: 1 })).toBe('');
+  });
+});
+
+describe('activeCount', () => {
+  it('adds customers with and without account, leaving out the disabled ones (CA-17)', () => {
+    // 3 with account + 2 without = 5 active; the disabled one does not count.
+    expect(activeCount({ registered: 3, walk_in: 2, disabled: 1 })).toBe(5);
   });
 });

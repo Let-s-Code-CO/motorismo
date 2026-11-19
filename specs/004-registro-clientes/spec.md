@@ -1,7 +1,7 @@
 ---
 id: "004"
 titulo: "Registro de clientes y sección Clientes"
-estado: en-progreso
+estado: implementada
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -107,9 +107,10 @@ de contacto.
   distinguir mayúsculas ni tildes; si ninguno coincide, ve «No hay clientes que coincidan con tu
   búsqueda.».
 - **CA-17** — Dado un miembro del personal en «Clientes», cuando pulsa una de las tarjetas de
-  resumen («Con cuenta», «Sin cuenta», «Desactivados»), entonces la lista se filtra por ese estado
-  según el estándar de tarjetas-filtro del proyecto (el filtro sobrevive a recargar y se quita con
-  «Ver todos»), y se combina con la búsqueda.
+  resumen («Activos», es decir, con o sin cuenta y no desactivados; «Con cuenta»; «Sin cuenta»;
+  «Desactivados»), entonces la lista se filtra por ese estado según el estándar de
+  tarjetas-filtro del proyecto (el filtro sobrevive a recargar y se quita con «Ver todos»), y se
+  combina con la búsqueda.
 - **CA-18** — Dado un miembro del personal, cuando abre un cliente de la lista, entonces ve su
   ficha: nombre, correo, celular, estado, origen («Registro propio», «Google» o «Punto de
   atención»), fecha de alta, fecha de la autorización de datos y, si se creó en el punto de
@@ -299,3 +300,5 @@ opcional (los vehículos van en otra spec).
 | 2026-11-19 | Aprobada por el usuario, con las suposiciones tal como están. Se aplican sus cambios a la spec 002. |
 | 2026-11-19 | Plan técnico aprobado. |
 | 2026-11-19 | La política de tratamiento de datos se redacta con el estándar colombiano (Ley 1581 de 2012), a petición del usuario: se cierra la suposición que dejaba el texto pendiente del negocio. |
+| 2026-11-19 | CA-17: se añade la tarjeta «Activos» (con y sin cuenta, sin los desactivados), a petición del usuario. |
+| 2026-11-19 | Implementada (bloques A y B) y verificada en local: 140 pgTAP, 289 unitarias, 24 sandbox y 46 E2E en verde, con cada prueba nueva vista fallar por mutación. Pendiente: despliegue y verificación manual con Google real (T090, T092). |

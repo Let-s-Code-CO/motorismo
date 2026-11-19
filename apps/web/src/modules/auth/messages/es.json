@@ -14,7 +14,8 @@
       "noAccount": "¿No tienes cuenta?",
       "signUp": "Crear cuenta",
       "resend": "Reenviar correo de confirmación",
-      "resent": "Si tu cuenta está pendiente de confirmar, te enviamos un nuevo correo."
+      "resent": "Si tu cuenta está pendiente de confirmar, te enviamos un nuevo correo.",
+      "googleConsent": "Al continuar con Google autorizas el tratamiento de tus datos personales según la <link>política de tratamiento de datos</link>."
     },
     "setPassword": {
       "titleInvited": "Crea tu contraseña",

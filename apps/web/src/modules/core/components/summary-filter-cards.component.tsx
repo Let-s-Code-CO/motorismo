@@ -29,8 +29,8 @@ const SummaryFilterCards = <T extends string>({
   <div
     role="group"
     aria-label={label}
-    className="grid gap-3"
-    style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    // Four cards make a 2 × 2 grid on phones, so their labels are never cut.
+    className={`grid gap-3 ${options.length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}
   >
     {options.map(({ value, label: optionLabel, count, dot }) => {
       const isSelected = selected === value;

@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Mail, MailCheck, Phone, User } from 'lucide-react';
 
 import { signUp } from '@web/modules/auth/actions/auth.actions';
+import GoogleButton from '@web/modules/auth/components/molecules/google-button.component';
 import PasswordInput from '@web/modules/auth/components/molecules/password-input.component';
 import {
   type SignUpInput,
@@ -73,100 +74,109 @@ const SignUpForm = () => {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
-      <Input
-        {...register('full_name')}
-        label={t('signUp.fullName')}
-        placeholder={t('signUp.fullNamePlaceholder')}
-        autoComplete="name"
-        variant="bordered"
-        labelPlacement="outside"
-        validationBehavior="aria"
-        startContent={<User aria-hidden className="size-4 shrink-0 text-default-400" />}
-        isInvalid={!!errors.full_name}
-        errorMessage={fieldError(errors.full_name?.message)}
-      />
-      <Input
-        {...register('email')}
-        type="email"
-        label={t('signUp.email')}
-        placeholder={t('signUp.emailPlaceholder')}
-        autoComplete="email"
-        variant="bordered"
-        labelPlacement="outside"
-        validationBehavior="aria"
-        startContent={<Mail aria-hidden className="size-4 shrink-0 text-default-400" />}
-        isInvalid={!!errors.email}
-        errorMessage={fieldError(errors.email?.message)}
-      />
-      <Input
-        {...register('phone')}
-        type="tel"
-        inputMode="tel"
-        label={t('signUp.phone')}
-        placeholder={t('signUp.phonePlaceholder')}
-        autoComplete="tel-national"
-        variant="bordered"
-        labelPlacement="outside"
-        validationBehavior="aria"
-        startContent={<Phone aria-hidden className="size-4 shrink-0 text-default-400" />}
-        isInvalid={!!errors.phone}
-        errorMessage={fieldError(errors.phone?.message)}
-      />
-      <PasswordInput
-        {...register('password')}
-        label={t('signUp.password')}
-        placeholder={t('signUp.passwordPlaceholder')}
-        autoComplete="new-password"
-        isInvalid={!!errors.password}
-        errorMessage={fieldError(errors.password?.message)}
-      />
-      <Controller
-        control={control}
-        name="data_consent"
-        render={({ field }) => (
-          <div className="flex flex-col gap-1">
-            <Checkbox
-              name={field.name}
-              isSelected={field.value === true}
-              onValueChange={(checked) => field.onChange(checked ? true : undefined)}
-              onBlur={field.onBlur}
-              size="sm"
-              isInvalid={!!errors.data_consent}
-              aria-describedby={errors.data_consent ? 'data-consent-error' : undefined}
-              classNames={{ label: 'text-sm text-default-600' }}
-            >
-              {t.rich('signUp.consent', {
-                link: (chunks) => (
-                  <Link
-                    href="/privacy"
-                    target="_blank"
-                    className="font-medium text-foreground underline underline-offset-4"
-                  >
-                    {chunks}
-                  </Link>
-                ),
-              })}
-            </Checkbox>
-            {errors.data_consent?.message && (
-              <p id="data-consent-error" className="text-tiny text-danger">
-                {fieldError(errors.data_consent.message)}
-              </p>
-            )}
-          </div>
-        )}
-      />
-      <Button
-        type="submit"
-        color="primary"
-        size="lg"
-        className="font-medium"
-        isLoading={isSubmitting}
-        endContent={isSubmitting ? null : <ArrowRight aria-hidden className="size-4" />}
-      >
-        {t('signUp.submit')}
-      </Button>
+    <div className="flex flex-col gap-6">
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+        {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
+        <Input
+          {...register('full_name')}
+          label={t('signUp.fullName')}
+          placeholder={t('signUp.fullNamePlaceholder')}
+          autoComplete="name"
+          variant="bordered"
+          labelPlacement="outside"
+          validationBehavior="aria"
+          startContent={<User aria-hidden className="size-4 shrink-0 text-default-400" />}
+          isInvalid={!!errors.full_name}
+          errorMessage={fieldError(errors.full_name?.message)}
+        />
+        <Input
+          {...register('email')}
+          type="email"
+          label={t('signUp.email')}
+          placeholder={t('signUp.emailPlaceholder')}
+          autoComplete="email"
+          variant="bordered"
+          labelPlacement="outside"
+          validationBehavior="aria"
+          startContent={<Mail aria-hidden className="size-4 shrink-0 text-default-400" />}
+          isInvalid={!!errors.email}
+          errorMessage={fieldError(errors.email?.message)}
+        />
+        <Input
+          {...register('phone')}
+          type="tel"
+          inputMode="tel"
+          label={t('signUp.phone')}
+          placeholder={t('signUp.phonePlaceholder')}
+          autoComplete="tel-national"
+          variant="bordered"
+          labelPlacement="outside"
+          validationBehavior="aria"
+          startContent={<Phone aria-hidden className="size-4 shrink-0 text-default-400" />}
+          isInvalid={!!errors.phone}
+          errorMessage={fieldError(errors.phone?.message)}
+        />
+        <PasswordInput
+          {...register('password')}
+          label={t('signUp.password')}
+          placeholder={t('signUp.passwordPlaceholder')}
+          autoComplete="new-password"
+          isInvalid={!!errors.password}
+          errorMessage={fieldError(errors.password?.message)}
+        />
+        <Controller
+          control={control}
+          name="data_consent"
+          render={({ field }) => (
+            <div className="flex flex-col gap-1">
+              <Checkbox
+                name={field.name}
+                isSelected={field.value === true}
+                onValueChange={(checked) => field.onChange(checked ? true : undefined)}
+                onBlur={field.onBlur}
+                size="sm"
+                isInvalid={!!errors.data_consent}
+                aria-describedby={errors.data_consent ? 'data-consent-error' : undefined}
+                classNames={{ label: 'text-sm text-default-600' }}
+              >
+                {t.rich('signUp.consent', {
+                  link: (chunks) => (
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      className="font-medium text-foreground underline underline-offset-4"
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </Checkbox>
+              {errors.data_consent?.message && (
+                <p id="data-consent-error" className="text-tiny text-danger">
+                  {fieldError(errors.data_consent.message)}
+                </p>
+              )}
+            </div>
+          )}
+        />
+        <Button
+          type="submit"
+          color="primary"
+          size="lg"
+          className="font-medium"
+          isLoading={isSubmitting}
+          endContent={isSubmitting ? null : <ArrowRight aria-hidden className="size-4" />}
+        >
+          {t('signUp.submit')}
+        </Button>
+      </form>
+      <div className="flex items-center gap-3 text-xs tracking-wider text-default-500 uppercase">
+        <span className="h-px flex-1 bg-divider" />
+        {t('login.or')}
+        <span className="h-px flex-1 bg-divider" />
+      </div>
+      {/* Spec 004, CA-20: an unknown Google account becomes a customer account. */}
+      <GoogleButton />
       <p className="text-center text-sm text-default-500">
         {t('signUp.haveAccount')}{' '}
         <Link
@@ -176,7 +186,7 @@ const SignUpForm = () => {
           {t('signUp.signIn')}
         </Link>
       </p>
-    </form>
+    </div>
   );
 };
 

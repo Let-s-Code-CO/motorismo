@@ -11,6 +11,7 @@
     "reactivated": "Cliente reactivado.",
     "summary": {
       "filterLabel": "Filtrar por estado",
+      "active": "Activos",
       "registered": "Con cuenta",
       "walk_in": "Sin cuenta",
       "disabled": "Desactivados"

@@ -21,6 +21,8 @@ import {
 const older = uniqueEmail('older');
 const newer = uniqueEmail('newer');
 const unconfirmed = uniqueEmail('unconfirmed');
+// Each parallel worker creates its own pair, so the names carry a tag of their own.
+const tag = `T${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
 
 test.beforeAll(async () => {
   const { data: admin } = await adminClient()
@@ -29,8 +31,8 @@ test.beforeAll(async () => {
     .eq('email', SEED.admin.email)
     .single();
   const inOrder: [string, string][] = [
-    [older, 'Orden Antiguo'],
-    [newer, 'Orden Reciente'],
+    [older, `Orden Antiguo ${tag}`],
+    [newer, `Orden Reciente ${tag}`],
   ];
   for (const [email, full_name] of inOrder) {
     await adminClient()
@@ -59,8 +61,8 @@ test('lists customers newest first with their data (CA-15)', async ({ page }) =>
   await expect(page).toHaveURL('/customers');
   await expect(page.getByRole('heading', { name: 'Clientes' })).toBeVisible();
 
-  await page.getByRole('searchbox', { name: 'Buscar clientes' }).fill('Orden');
-  await expect(page).toHaveURL('/customers?q=Orden');
+  await page.getByRole('searchbox', { name: 'Buscar clientes' }).fill(tag);
+  await expect(page).toHaveURL(`/customers?q=${tag}`);
   await expect(rows(page).nth(1)).toContainText('Orden Reciente');
   await expect(rows(page).nth(2)).toContainText('Orden Antiguo');
 
@@ -123,6 +125,22 @@ test('the summary cards filter, combine with the search, survive a reload and re
   await expect(page).toHaveURL('/customers');
   await expect(row(SEED_CUSTOMERS.customer.name)).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Buscar clientes' })).toHaveValue('');
+});
+
+test('"Activos" shows customers with and without account, but not the disabled ones (CA-17)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/customers');
+  const row = (name: string) => page.getByRole('row', { name: new RegExp(name) });
+
+  await page.getByRole('button', { name: /^Activos \d+$/ }).click();
+
+  await expect(page).toHaveURL('/customers?status=active');
+  await expect(row(SEED_CUSTOMERS.customer.name)).toBeVisible();
+  await expect(row(SEED_CUSTOMERS.walkIn.name)).toBeVisible();
+  await expect(row(SEED_CUSTOMERS.disabled.name)).toHaveCount(0);
 });
 
 test('opens the record of a counter customer (CA-18)', async ({ page }) => {

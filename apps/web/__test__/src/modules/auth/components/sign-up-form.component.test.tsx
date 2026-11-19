@@ -48,10 +48,10 @@ describe('SignUpForm', () => {
     expect(
       screen.getByRole('checkbox', { name: /Autorizo el tratamiento de mis datos/ })
     ).not.toBeChecked();
-    expect(screen.getByRole('link', { name: /política de tratamiento de datos/ })).toHaveAttribute(
-      'href',
-      '/privacy'
-    );
+    // One link in the consent, one in the Google notice (CA-20): both lead to the policy.
+    const policyLinks = screen.getAllByRole('link', { name: /política de tratamiento de datos/ });
+    expect(policyLinks).toHaveLength(2);
+    policyLinks.forEach((link) => expect(link).toHaveAttribute('href', '/privacy'));
   });
 
   it('shows each error next to its field and sends nothing (CA-06)', async () => {
