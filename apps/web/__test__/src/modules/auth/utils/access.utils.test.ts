@@ -18,6 +18,7 @@
 import {
   SESSION_INACTIVITY_LIMIT_MS,
   decideAccess,
+  destinationAfterSignIn,
   isSessionExpired,
   sanitizeNextPath,
 } from '@web/modules/auth/utils/access.utils';
@@ -286,5 +287,28 @@ describe('sanitizeNextPath', () => {
     ['a missing value', null],
   ])('rejects %s', (_case, raw) => {
     expect(sanitizeNextPath(raw)).toBeNull();
+  });
+});
+
+describe('destinationAfterSignIn (spec 004, RF-02)', () => {
+  it.each([
+    ['staff', '/admin/users', '/admin/users'],
+    ['staff', null, '/'],
+    ['customer', '/profile', '/profile'],
+    ['customer', '/privacy', '/privacy'],
+    ['customer', null, '/profile'],
+  ] as const)('a %s asking for %s goes to %s', (kind, next, expected) => {
+    expect(destinationAfterSignIn(kind, next)).toBe(expected);
+  });
+
+  it.each(['/customers', '/admin/users', '/', '/profiles-of-others'])(
+    'a customer who asked for %s (not theirs) goes to their profile instead',
+    (next) => {
+      expect(destinationAfterSignIn('customer', next)).toBe('/profile');
+    }
+  );
+
+  it('an unknown account goes to the requested page or home (the proxy decides next)', () => {
+    expect(destinationAfterSignIn(null, '/customers')).toBe('/customers');
   });
 });

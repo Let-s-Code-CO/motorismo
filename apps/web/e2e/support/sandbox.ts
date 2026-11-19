@@ -73,6 +73,15 @@ export const deleteUsersByEmail = async (emails: string[]) => {
   }
 };
 
+/** How many emails Mailpit received for `to` (e.g. to prove that none was sent). */
+export const emailCountFor = async (to: string) => {
+  const search = await fetch(
+    `${MAILPIT_URL}/api/v1/search?query=${encodeURIComponent(`to:"${to}"`)}`
+  );
+  const { messages } = (await search.json()) as { messages: unknown[] };
+  return messages.length;
+};
+
 /** The /auth/confirm link of the newest email sent to `to`, as a path for page.goto. */
 export const confirmLinkFromEmail = async (to: string) => {
   let link: string | undefined;

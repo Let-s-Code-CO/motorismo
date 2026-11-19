@@ -9,14 +9,17 @@ import { forgotPasswordSchema } from '@web/modules/auth/schemas/forgot-password.
 import { loginSchema } from '@web/modules/auth/schemas/login.schema';
 import { setPasswordSchema } from '@web/modules/auth/schemas/set-password.schema';
 import { signUpSchema } from '@web/modules/auth/schemas/sign-up.schema';
-import { sanitizeNextPath } from '@web/modules/auth/utils/access.utils';
+import { destinationAfterSignIn, sanitizeNextPath } from '@web/modules/auth/utils/access.utils';
 import { type AuthErrorKey, mapAuthError } from '@web/modules/auth/utils/auth-errors.utils';
 import { createSupabaseAdminClient } from '@web/modules/core/lib/supabase-admin.lib';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
 import { getSiteUrl } from '@web/modules/core/utils/site-url.utils';
 
-/** Email + password sign-in (HU-01). On success, goes to the requested page or home. */
+/**
+ * Email + password sign-in (HU-01). On success, goes to the requested page or home — for a
+ * customer, only to a page of theirs (spec 004, RF-02).
+ */
 export const signIn = async (
   input: unknown,
   next?: string | null
@@ -29,8 +32,10 @@ export const signIn = async (
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { ok: false, error: mapAuthError(error.code) };
 
+  // Spec 004, RF-02: a customer only goes to the requested page if it is theirs.
+  const { data: account } = await supabase.rpc('current_account');
   await touchActivityCookie();
-  redirect(sanitizeNextPath(next) ?? '/');
+  redirect(destinationAfterSignIn(account?.[0]?.kind, sanitizeNextPath(next)));
 };
 
 export const signOut = async () => {

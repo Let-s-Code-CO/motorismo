@@ -51,7 +51,9 @@ test.afterAll(() => deleteUsersByEmail([older, newer, unconfirmed]));
 const rows = (page: import('@playwright/test').Page) =>
   page.getByRole('grid', { name: 'Clientes del negocio' }).getByRole('row');
 
-test('lists customers newest first with their data (CA-15)', async ({ page }) => {
+test('lists customers newest first with name, email, phone, status and date (CA-15)', async ({
+  page,
+}) => {
   await signIn(page, SEED.operator.email);
   await expect(page).toHaveURL('/');
   await page
@@ -65,6 +67,12 @@ test('lists customers newest first with their data (CA-15)', async ({ page }) =>
   await expect(page).toHaveURL(`/customers?q=${tag}`);
   await expect(rows(page).nth(1)).toContainText('Orden Reciente');
   await expect(rows(page).nth(2)).toContainText('Orden Antiguo');
+  // The date of registration, as the app shows it (Colombian time).
+  const today = new Intl.DateTimeFormat('es', {
+    dateStyle: 'medium',
+    timeZone: 'America/Bogota',
+  }).format(new Date());
+  await expect(rows(page).nth(1)).toContainText(today);
 
   await page.getByRole('searchbox', { name: 'Buscar clientes' }).fill(SEED_CUSTOMERS.walkIn.email);
   const row = page.getByRole('row', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) });

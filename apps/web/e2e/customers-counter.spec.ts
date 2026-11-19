@@ -13,6 +13,7 @@ import {
   adminClient,
   confirmLinkFromEmail,
   deleteUsersByEmail,
+  emailCountFor,
   publicClient,
   signIn,
   uniqueEmail,
@@ -20,13 +21,14 @@ import {
 
 const later = uniqueEmail('later');
 const edited = uniqueEmail('edited');
+const withEmail = uniqueEmail('counteremail');
 // Tests of this file run in parallel workers: each removes only what it created.
 const createdNames: string[] = [];
 
 test.afterAll(async () => {
   if (createdNames.length)
     await adminClient().from('customers').delete().in('full_name', createdNames);
-  await deleteUsersByEmail([later, edited]);
+  await deleteUsersByEmail([later, edited, withEmail]);
 });
 
 const openNewCustomer = async (page: import('@playwright/test').Page) => {
@@ -35,9 +37,7 @@ const openNewCustomer = async (page: import('@playwright/test').Page) => {
   return page.getByRole('dialog', { name: /Nuevo cliente/ });
 };
 
-test('registers a customer with a name and a phone only, without sending any email (CA-24)', async ({
-  page,
-}) => {
+test('registers a customer with a name and a phone only (CA-24)', async ({ page }) => {
   const name = `E2E Mostrador ${Date.now()}`;
   createdNames.push(name);
   await signIn(page, SEED.operator.email);
@@ -55,6 +55,22 @@ test('registers a customer with a name and a phone only, without sending any ema
   await expect(row).toContainText('Sin correo');
   await expect(row).toContainText('312 000 1111');
   await expect(row).toContainText('Sin cuenta');
+});
+
+test('registering a customer with an email sends them nothing (CA-24)', async ({ page }) => {
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+
+  const dialog = await openNewCustomer(page);
+  await dialog.getByLabel('Nombre completo').fill('E2E Mostrador Con Correo');
+  await dialog.getByLabel('Correo (opcional)').fill(withEmail);
+  await dialog.getByRole('checkbox', { name: /El cliente autorizó/ }).check();
+  await dialog.getByRole('button', { name: 'Registrar cliente' }).click();
+  await expect(page.getByText('Cliente registrado.')).toBeVisible();
+
+  // Give any (wrong) email time to arrive: Auth delivers to Mailpit within milliseconds.
+  await page.waitForTimeout(1500);
+  expect(await emailCountFor(withEmail)).toBe(0);
 });
 
 test('refuses an email that already belongs to someone (CA-26)', async ({ page }) => {

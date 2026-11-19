@@ -97,6 +97,23 @@ export const decideAccess = ({
   return allow(true);
 };
 
+/** Pages a customer may open (spec 004): their profile and the public data policy. */
+const CUSTOMER_PAGES = [CUSTOMER_HOME, ...PUBLIC_PATHS];
+
+/**
+ * Where to go right after signing in (spec 004, RF-02): the requested page if the account may see
+ * it, otherwise its home. Staff: the page or "/". Customers: the page only if it is theirs,
+ * otherwise "Mi perfil". `next` must already be sanitized.
+ */
+export const destinationAfterSignIn = (
+  kind: string | null | undefined,
+  next: string | null
+): string => {
+  if (kind !== 'customer') return next ?? '/';
+  const path = next?.split('?')[0];
+  return next && path && CUSTOMER_PAGES.includes(path) ? next : CUSTOMER_HOME;
+};
+
 const INTERNAL_ORIGIN = 'http://internal.invalid';
 
 /** Returns `raw` only if it is an internal, non-auth path; blocks open redirects. */

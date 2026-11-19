@@ -145,8 +145,9 @@ Convenciones:
       - `(app)/layout`, `(app)/page` y `admin/users/page` pasan a usarlos
 
       → `ts:check` y pruebas de 002 en verde
-- [x] T022 `access.utils.ts` + `proxy.ts`: `rpc('current_account')` y `amr` de los claims. Además
-      `setPassword` solo activa con una sesión de enlace (riesgo 2) → T010 en **verde**
+- [x] T022 `access.utils.ts` + `proxy.ts`: `rpc('current_account')` y `amr` de los claims; un
+      invitado sin sesión de enlace sale (riesgo 2). El proxy corre también en las Server Actions,
+      así que `setPassword` no repite la comprobación → T010 en **verde**
 - [x] T023 [P] `core/utils/phone.utils.ts` y `auth/schemas/sign-up.schema.ts` → T011 en **verde**
 - [x] T024 Acciones `signUp` y `resendConfirmation`, más `mapAuthError` → T012 y T018 en
       **verde**
@@ -286,6 +287,14 @@ Convenciones:
       - spec, plan y backlog al día
 
       → commit del bloque
+
+### Correcciones de `/verificar`
+
+- [x] T065 RF-02: `destinationAfterSignIn` en el login y en el callback de Google (unitarias y E2E)
+- [x] T066 Pruebas que faltaban: CA-24 con correo y sin ningún correo en Mailpit, CA-15 con la
+      fecha de alta y RF-06 (recuperación de contraseña de un cliente). La prueba del callback deja
+      de describir el CA-27 de la spec 002, que reemplazó la 004
+- [x] T067 Plan y spec al día (`amr` en el proxy, `email_in_use`, `customer_registrar_name`, RN-04)
 
 ### Fase B6 — Despliegue y verificación manual (requiere al usuario)
 

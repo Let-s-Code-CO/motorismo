@@ -203,7 +203,8 @@ su historial.
 - **RN-03** — El celular es colombiano: 10 dígitos que empiezan por 3. Se aceptan espacios,
   guiones y el prefijo +57, y se guarda solo con los 10 dígitos.
 - **RN-04** — No se crea ningún cliente sin su autorización para el tratamiento de datos
-  personales.
+  personales. En el registro propio la exige también la base de datos; en el punto de atención la
+  declara el personal al marcarla, y queda registrado quién lo hizo y cuándo (RF-07).
 - **RN-05** — La contraseña tiene al menos 8 caracteres (igual que la spec 002).
 - **RN-06** — Los mensajes de registro, inicio de sesión y recuperación no revelan si un correo
   está registrado.
@@ -302,3 +303,4 @@ opcional (los vehículos van en otra spec).
 | 2026-11-19 | La política de tratamiento de datos se redacta con el estándar colombiano (Ley 1581 de 2012), a petición del usuario: se cierra la suposición que dejaba el texto pendiente del negocio. |
 | 2026-11-19 | CA-17: se añade la tarjeta «Activos» (con y sin cuenta, sin los desactivados), a petición del usuario. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local: 140 pgTAP, 289 unitarias, 24 sandbox y 46 E2E en verde, con cada prueba nueva vista fallar por mutación. Pendiente: despliegue y verificación manual con Google real (T090, T092). |
+| 2026-11-19 | `/verificar`: 27 de 31 criterios ✅ al empezar. Corregidos, con pruebas vistas fallar: RF-02 (un cliente que pidió una página del personal entra a su perfil), CA-24 (se comprueba que no llega ningún correo), CA-15 (la fecha de alta se ve) y RF-06 (recuperación de contraseña de un cliente). Se precisa RN-04 para el punto de atención. Quedan CA-20 y CA-21, que esperan la verificación manual con Google real (T092): la spec sigue en `implementada`. |

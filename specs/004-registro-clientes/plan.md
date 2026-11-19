@@ -67,11 +67,12 @@ Dos migraciones nuevas. Las de la spec 002 no se editan.
 
     Si algo falla, lanza una excepción con `hint`. **Nunca lee `role` de los metadatos.**
 - Función `public.email_in_use(p_email text) returns boolean` (`security definer`, solo para
-  `service_role`). Mira `auth.users`, `profiles` y `customers`. La usa `inviteUser` para
-  rechazar correos ocupados, incluidos los registros de clientes aún sin confirmar (RN-01).
+  `service_role`). Vive en la migración de `customers`, porque también mira esa tabla, además de
+  `auth.users`, `profiles` y `staff_invitations`. La usa `inviteUser` para rechazar correos
+  ocupados, incluidos los registros de clientes aún sin confirmar (RN-01).
 - Mitigación de riesgo 2: una persona `invited` solo puede activarse con una sesión abierta
-  desde su enlace. `decideAccess` y `setPassword` comprueban el método de la sesión (`amr`). Los
-  nombres exactos de los métodos se confirman en T-001.
+  desde su enlace (`amr = otp`, confirmado en T001). Lo comprueba `decideAccess` en el proxy, que
+  corre en cada petición, Server Actions incluidas, así que `setPassword` no lo repite.
 - **Seeds**: `01_users.sql` inserta primero las `staff_invitations` del personal.
 - **pgTAP**:
   - Los fixtures de `01`/`02`/`03` pasan a crear la invitación antes que `auth.users`.
@@ -142,6 +143,9 @@ ingreso con Google (CA-20, petición del usuario).
   El proxy la llama una sola vez por petición.
 - `customer_status_counts()` (`security invoker`, sujeta a RLS): totales por estado para las
   tarjetas.
+- `customer_registrar_name(id)`: nombre de quien registró al cliente en el punto de atención,
+  solo para el personal (CA-18). Hace falta porque un operador no puede leer los perfiles de los
+  demás por RLS (spec 002).
 
 **RLS en `customers`**
 - `select`: `is_staff()` o `user_id = auth.uid()`.
@@ -205,6 +209,8 @@ ingreso con Google (CA-20, petición del usuario).
   - el resto pasa, y la página decide. Por ejemplo, `/customers` muestra «No tienes permiso»
     con enlace a su perfil (CA-09).
 - **Personal `invited`**: necesita una sesión de enlace (`amr`; mitigación del riesgo 2).
+- **Tras entrar** (RF-02), con contraseña o con Google: `destinationAfterSignIn` lleva al
+  cliente a la página pedida solo si es suya (`/profile`, `/privacy`); si no, a «Mi perfil».
 - **`auth.server.ts`**:
   - `getCurrentAccount()` sustituye a `getCurrentUser()`;
   - nuevos `requireStaff()`, `requireCustomer()`, `getActiveStaff()` y `getActiveAdmin()`;
@@ -408,4 +414,5 @@ antes de seguir.
 | 2026-11-19 | Creación (borrador). |
 | 2026-11-19 | Aprobado por el usuario. |
 | 2026-11-19 | Tarjeta «Activos» en Clientes (CA-17), a petición del usuario. |
+| 2026-11-19 | Tras `/verificar`: el plan refleja dónde viven la comprobación de `amr` y `email_in_use`, añade `customer_registrar_name` y el destino tras entrar (RF-02). |
 | 2026-11-19 | Spike T001, contra el Supabase local:<br>**(1)** `raw_app_meta_data.provider` (`email`) ya está en el `insert`; Google se simula igual en pgTAP.<br>**(2)** Registrarse otra vez con un correo **sin confirmar**, también el de un invitado, no cambia la contraseña ni los metadatos: solo reenvía el correo. El riesgo 2 no se da, pero la mitigación por `amr` se mantiene porque es barata. Con un correo **confirmado**, Auth responde `user_already_exists`, así que la acción `signUp` lo convierte en la misma respuesta de éxito (CA-07, RN-06).<br>**(3)** Las sesiones abiertas desde un enlace (`invite`, `recovery`, `email`) tienen `amr = otp`; con contraseña, `password`.<br>**(4)** `email_not_confirmed` solo sale con la contraseña correcta (con una incorrecta, `invalid_credentials`).<br>Además, el límite local `email_sent = 2` sí se aplica y se sube a 1000 en `config.toml` (solo local), y `max_frequency = 1s` por usuario obliga a esperar entre reenvíos en las pruebas. |
