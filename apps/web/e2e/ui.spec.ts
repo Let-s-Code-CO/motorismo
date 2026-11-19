@@ -1,6 +1,7 @@
 /**
  * Layout checks of the redesign (spec 003).
- * CA-02 no horizontal scroll on a 360 px phone · CA-03 brand panel beside the form on desktop only.
+ * CA-02 no horizontal scroll on a 360 px phone · CA-03 brand panel beside the form on desktop only ·
+ * every clickable element shows the hand cursor (Tailwind 4 no longer sets it on buttons).
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -41,5 +42,26 @@ test.describe('on a desktop', () => {
 
     await expect(page.getByRole('complementary', { name: 'Motorismo Detailing' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
+  });
+});
+
+test.describe('pointer cursor', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  const cursorOf = (locator: import('@playwright/test').Locator) =>
+    locator.evaluate((element) => getComputedStyle(element).cursor);
+
+  test('custom buttons show the hand cursor: password toggle and summary filters', async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+    expect(await cursorOf(page.getByRole('button', { name: 'Mostrar contraseña' }))).toBe(
+      'pointer'
+    );
+
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/admin/users');
+    expect(await cursorOf(page.getByRole('button', { name: /^Activos \d+$/ }))).toBe('pointer');
   });
 });

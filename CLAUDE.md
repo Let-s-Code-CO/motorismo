@@ -34,7 +34,9 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Sistema visual (spec 003): Geist, base zinc con primario casi negro, radios 8/12/16 px, sombras
   suaves; tema en `src/app/hero.ts` y animaciones en `globals.css` (siempre `motion-safe:`).
   Iconos con `lucide-react`, decorativos (`aria-hidden`); los botones solo-icono llevan
-  `aria-label`. Nada de colores llamativos: los semánticos solo para estados.
+  `aria-label`. Todo lo clicable muestra la «manito»: `globals.css` la restaura para
+  `button` y `[role=button]` (Tailwind 4 ya no lo hace); un enlace o elemento clicable de otro tipo
+  necesita `cursor-pointer`. Nada de colores llamativos: los semánticos solo para estados.
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
