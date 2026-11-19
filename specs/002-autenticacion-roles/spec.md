@@ -234,3 +234,4 @@ contraseña por autoservicio.
 | 2026-11-19 | Plan técnico aprobado. |
 | 2026-11-19 | Tareas aprobadas. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local. Pendiente: despliegue y verificación manual de Google (fase B5). |
+| 2026-11-19 | `/verificar`: 25 de 28 criterios ✅; CA-26–CA-28 pendientes de la prueba manual con Google; dos observaciones abiertas (prueba de CA-04 más débil que el criterio; reactivar a alguien que nunca aceptó la invitación lo deja «Activo»). Sigue en `implementada`. |
