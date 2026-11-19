@@ -8,22 +8,25 @@ import { LogOut } from 'lucide-react';
 import { signOut } from '@web/modules/auth/actions/auth.actions';
 import RoleChip from '@web/modules/auth/components/atoms/role-chip.component';
 import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component';
-import type { CurrentUser } from '@web/modules/auth/types/auth.types';
+import type { Audience } from '@web/modules/auth/types/auth.types';
 
 type UserMenuProps = {
-  user: Pick<CurrentUser, 'full_name' | 'role' | 'avatar_url'>;
+  name: string;
+  /** Google photo, if any (spec 002 CA-30; spec 004 CA-20). */
+  avatarUrl: string | null;
+  audience: Audience;
 };
 
-/** Who is signed in, with which role, and how to leave (RF-05). */
-const UserMenu = ({ user }: UserMenuProps) => {
+/** Who is signed in, with which role (or "Cliente"), and how to leave (RF-05). */
+const UserMenu = ({ name, avatarUrl, audience }: UserMenuProps) => {
   const t = useTranslations('auth.userMenu');
 
   return (
-    <div className="flex items-center gap-3">
-      <UserAvatar name={user.full_name} src={user.avatar_url} className="bg-zinc-900 text-white" />
+    <div className="flex items-center gap-1 sm:gap-3">
+      <UserAvatar name={name} src={avatarUrl} className="bg-zinc-900 text-white" />
       <div className="hidden flex-col items-start gap-0.5 sm:flex">
-        <span className="text-sm leading-none font-medium">{user.full_name}</span>
-        <RoleChip role={user.role} />
+        <span className="text-sm leading-none font-medium">{name}</span>
+        <RoleChip audience={audience} />
       </div>
       <form action={signOut}>
         <Tooltip content={t('signOut')} placement="bottom">

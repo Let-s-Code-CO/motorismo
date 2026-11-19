@@ -1,10 +1,12 @@
 /**
- * Invitations against the real local Auth (spec 002, HU-03).
+ * Invitations against the real local Auth (spec 002, HU-03; spec 004).
  *
  * Guards what mocks cannot:
- * - CA-11 / plan risk 1: with public sign-up DISABLED, the admin API still invites; the database
- *   trigger creates an "invited" profile from the metadata; the email is in Spanish and links to
- *   the app's /auth/confirm route.
+ * - CA-11: the admin API invites; the database trigger creates an "invited" profile from the
+ *   pending staff invitation (spec 004: never from the metadata); the email is in Spanish and
+ *   links to the app's /auth/confirm route.
+ * - Spec 004, RN-11: without a pending invitation, an invitation sent with a role in its metadata
+ *   creates no staff profile.
  * - Why the app checks duplicates itself (CA-12): Auth RE-SENDS the invitation to an unconfirmed
  *   email instead of failing, and only fails (email_exists) for a confirmed user.
  * - CA-16: re-sending issues a new link and the previous one stops working.
@@ -21,11 +23,13 @@ import {
 
 const created: string[] = [];
 
-const invite = (email: string) => {
+/** What the inviteUser action does: the pending invitation, then the Auth invitation. */
+const invite = async (email: string) => {
   created.push(email);
-  return adminClient().auth.admin.inviteUserByEmail(email, {
-    data: { full_name: 'Iván Invitado', role: 'operator' },
-  });
+  await adminClient()
+    .from('staff_invitations')
+    .upsert({ email, full_name: 'Iván Invitado', role: 'operator' });
+  return adminClient().auth.admin.inviteUserByEmail(email);
 };
 
 afterAll(() => deleteUsersByEmail(created));
@@ -47,6 +51,22 @@ describe('invitations', () => {
     const message = await waitForEmail(email);
     expect(message.Subject).toBe('Te invitaron a Motorismo Detailing');
     expect(confirmLinkOf(message.HTML)).toMatchObject({ type: 'invite' });
+  });
+
+  it('creates no staff profile without a pending invitation, whatever the metadata says (RN-11)', async () => {
+    const email = uniqueEmail('noinvitation');
+    created.push(email);
+
+    const { error } = await adminClient().auth.admin.inviteUserByEmail(email, {
+      data: { full_name: 'Sin Invitación', role: 'admin', data_consent: true },
+    });
+
+    expect(error).toBeNull();
+    const { count } = await adminClient()
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('email', email);
+    expect(count).toBe(0);
   });
 
   it('re-sends (does not fail) when the email belongs to a user who has not accepted yet', async () => {

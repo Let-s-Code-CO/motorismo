@@ -1,18 +1,24 @@
 /**
- * access.utils — the routing decision the proxy takes on EVERY request (spec 002).
+ * access.utils — the routing decision the proxy takes on EVERY request (specs 002 and 004).
  *
  * Guards:
  * - CA-03: without a session, internal pages lead to the login, remembering the requested page.
  * - CA-05: with an active session, the login page leads to the home page.
  * - CA-06 / CA-19: a disabled (or profile-less) account is signed out and sent to the login with
  *   the "account disabled" message, on its very next request.
- * - An invited user who opened their invitation link must create a password before anything else.
+ * - An invited user who opened their invitation link must create a password before anything else;
+ *   an invited session that did NOT come from an email link (e.g. a password sign-in) is signed
+ *   out (spec 004, plan risk 2: only the link proves the invitation is theirs).
+ * - Spec 004: customers land on their profile (CA-12); staff pages are not hidden by the proxy but
+ *   answered by the page with "no permission" (CA-09); a disabled customer is signed out (CA-29);
+ *   /auth/sign-up is for visitors and /privacy is public for everyone (RF-03).
  * - Spec assumption: a session unused for more than 7 days is closed.
  * - sanitizeNextPath blocks open redirects: only internal, non-auth paths are honoured.
  */
 import {
   SESSION_INACTIVITY_LIMIT_MS,
   decideAccess,
+  destinationAfterSignIn,
   isSessionExpired,
   sanitizeNextPath,
 } from '@web/modules/auth/utils/access.utils';
@@ -26,7 +32,8 @@ const build = (overrides: Partial<Input> = {}): Input => ({
   pathname: '/',
   search: '',
   hasSession: true,
-  profile: { status: 'active' },
+  account: { kind: 'staff', status: 'active' },
+  authMethods: ['password'],
   lastSeenAt: NOW - ONE_HOUR,
   now: NOW,
   ...overrides,
@@ -34,7 +41,7 @@ const build = (overrides: Partial<Input> = {}): Input => ({
 
 describe('decideAccess', () => {
   describe('without a session', () => {
-    const anonymous = { hasSession: false, profile: null, lastSeenAt: null };
+    const anonymous = { hasSession: false, account: null, authMethods: [], lastSeenAt: null };
 
     it('sends internal pages to the login and remembers the requested page (CA-03)', () => {
       expect(
@@ -54,12 +61,15 @@ describe('decideAccess', () => {
       });
     });
 
-    it.each(['/auth/login', '/auth/forgot-password'])('lets visitors open %s', (pathname) => {
-      expect(decideAccess(build({ ...anonymous, pathname }))).toEqual({
-        type: 'allow',
-        touchActivity: false,
-      });
-    });
+    it.each(['/auth/login', '/auth/forgot-password', '/auth/sign-up'])(
+      'lets visitors open %s',
+      (pathname) => {
+        expect(decideAccess(build({ ...anonymous, pathname }))).toEqual({
+          type: 'allow',
+          touchActivity: false,
+        });
+      }
+    );
 
     it.each(['/auth/confirm', '/auth/callback', '/auth/invalid-link'])(
       'lets anyone reach the link-handling route %s',
@@ -88,7 +98,7 @@ describe('decideAccess', () => {
       });
     });
 
-    it.each(['/auth/login', '/auth/forgot-password'])(
+    it.each(['/auth/login', '/auth/forgot-password', '/auth/sign-up'])(
       'sends %s to the home page (CA-05)',
       (pathname) => {
         expect(decideAccess(build({ pathname }))).toEqual({
@@ -117,15 +127,15 @@ describe('decideAccess', () => {
 
   describe('with a session whose account cannot be used', () => {
     it('signs a disabled user out on their next request, with the disabled message (CA-06, CA-19)', () => {
-      expect(decideAccess(build({ profile: { status: 'disabled' } }))).toEqual({
+      expect(decideAccess(build({ account: { kind: 'staff', status: 'disabled' } }))).toEqual({
         type: 'redirect',
         to: '/auth/login?error=account_disabled',
         signOut: true,
       });
     });
 
-    it('signs out a session that has no profile at all (it can never be authorized)', () => {
-      expect(decideAccess(build({ profile: null }))).toEqual({
+    it('signs out a session with neither a staff profile nor a customer record (it can never be authorized)', () => {
+      expect(decideAccess(build({ account: null }))).toEqual({
         type: 'redirect',
         to: '/auth/login?error=account_disabled',
         signOut: true,
@@ -134,13 +144,17 @@ describe('decideAccess', () => {
 
     it('checks the disabled status before inactivity, so the user sees why they were removed', () => {
       expect(
-        decideAccess(build({ profile: { status: 'disabled' }, lastSeenAt: null }))
+        decideAccess(build({ account: { kind: 'staff', status: 'disabled' }, lastSeenAt: null }))
       ).toMatchObject({ to: '/auth/login?error=account_disabled' });
     });
   });
 
   describe('with an invited user (session created by the invitation link)', () => {
-    const invited = { profile: { status: 'invited' as const } };
+    // Every email link (invitation, recovery, confirmation) opens a session with the "otp" method.
+    const invited = {
+      account: { kind: 'staff' as const, status: 'invited' as const },
+      authMethods: ['otp'],
+    };
 
     it('sends every page to /auth/set-password until a password exists', () => {
       expect(decideAccess(build({ ...invited, pathname: '/' }))).toEqual({
@@ -154,6 +168,85 @@ describe('decideAccess', () => {
       expect(decideAccess(build({ ...invited, pathname: '/auth/set-password' }))).toEqual({
         type: 'allow',
         touchActivity: true,
+      });
+    });
+  });
+
+  describe('with an invited user whose session did not come from an email link', () => {
+    it('signs them out: only the invitation link proves the invitation is theirs (plan risk 2)', () => {
+      expect(
+        decideAccess(
+          build({
+            account: { kind: 'staff', status: 'invited' },
+            authMethods: ['password'],
+            pathname: '/auth/set-password',
+          })
+        )
+      ).toEqual({ type: 'redirect', to: '/auth/login', signOut: true });
+    });
+  });
+
+  describe('with a customer session (spec 004)', () => {
+    const customer = { account: { kind: 'customer' as const, status: 'active' as const } };
+
+    it('sends the home page to their profile (CA-12)', () => {
+      expect(decideAccess(build({ ...customer, pathname: '/' }))).toEqual({
+        type: 'redirect',
+        to: '/profile',
+        signOut: false,
+      });
+    });
+
+    it.each(['/auth/login', '/auth/forgot-password', '/auth/sign-up'])(
+      'sends %s to their profile',
+      (pathname) => {
+        expect(decideAccess(build({ ...customer, pathname }))).toEqual({
+          type: 'redirect',
+          to: '/profile',
+          signOut: false,
+        });
+      }
+    );
+
+    it('allows their profile and refreshes the activity timestamp', () => {
+      expect(decideAccess(build({ ...customer, pathname: '/profile' }))).toEqual({
+        type: 'allow',
+        touchActivity: true,
+      });
+    });
+
+    it('lets a staff page through so the page answers "no permission" with a link to the profile (CA-09)', () => {
+      expect(decideAccess(build({ ...customer, pathname: '/customers' }))).toEqual({
+        type: 'allow',
+        touchActivity: true,
+      });
+    });
+
+    it('allows /auth/set-password (a customer recovering their password)', () => {
+      expect(decideAccess(build({ ...customer, pathname: '/auth/set-password' }))).toEqual({
+        type: 'allow',
+        touchActivity: true,
+      });
+    });
+
+    it('signs a disabled customer out on their next request, with the disabled message (CA-29)', () => {
+      expect(
+        decideAccess(
+          build({ account: { kind: 'customer', status: 'disabled' }, pathname: '/profile' })
+        )
+      ).toEqual({ type: 'redirect', to: '/auth/login?error=account_disabled', signOut: true });
+    });
+  });
+
+  describe('the privacy policy (RF-03)', () => {
+    it.each([
+      ['a visitor', { hasSession: false, account: null, lastSeenAt: null }],
+      ['a staff member', {}],
+      ['a customer', { account: { kind: 'customer' as const, status: 'active' as const } }],
+    ])('is open to %s', (_who, overrides) => {
+      expect(decideAccess(build({ ...overrides, pathname: '/privacy' }))).toEqual({
+        type: 'allow',
+        touchActivity: false,
       });
     });
   });
@@ -194,5 +287,28 @@ describe('sanitizeNextPath', () => {
     ['a missing value', null],
   ])('rejects %s', (_case, raw) => {
     expect(sanitizeNextPath(raw)).toBeNull();
+  });
+});
+
+describe('destinationAfterSignIn (spec 004, RF-02)', () => {
+  it.each([
+    ['staff', '/admin/users', '/admin/users'],
+    ['staff', null, '/'],
+    ['customer', '/profile', '/profile'],
+    ['customer', '/privacy', '/privacy'],
+    ['customer', null, '/profile'],
+  ] as const)('a %s asking for %s goes to %s', (kind, next, expected) => {
+    expect(destinationAfterSignIn(kind, next)).toBe(expected);
+  });
+
+  it.each(['/customers', '/admin/users', '/', '/profiles-of-others'])(
+    'a customer who asked for %s (not theirs) goes to their profile instead',
+    (next) => {
+      expect(destinationAfterSignIn('customer', next)).toBe('/profile');
+    }
+  );
+
+  it('an unknown account goes to the requested page or home (the proxy decides next)', () => {
+    expect(destinationAfterSignIn(null, '/customers')).toBe('/customers');
   });
 });

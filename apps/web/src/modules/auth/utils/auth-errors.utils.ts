@@ -2,7 +2,7 @@
 export type AuthErrorKey =
   | 'invalidCredentials'
   | 'accountDisabled'
-  | 'googleNotAllowed'
+  | 'emailNotConfirmed'
   | 'invalidLink'
   | 'sessionExpired'
   | 'weakPassword'
@@ -15,7 +15,8 @@ const BY_CODE: Record<string, AuthErrorKey> = {
   user_not_found: 'invalidCredentials',
   user_banned: 'accountDisabled',
   account_disabled: 'accountDisabled', // set by the proxy
-  signup_disabled: 'googleNotAllowed',
+  // Spec 004 (CA-04): Auth only says so with the right password, so it reveals nothing (RN-06).
+  email_not_confirmed: 'emailNotConfirmed',
   otp_expired: 'invalidLink',
   flow_state_expired: 'invalidLink',
   flow_state_not_found: 'invalidLink',

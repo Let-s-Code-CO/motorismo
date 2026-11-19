@@ -1,8 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 
 import { inviteUser } from '@web/modules/users/actions/users.actions';
-import UsersFilterBar from '@web/modules/users/components/molecules/users-filter-bar.component';
-import UsersSummary from '@web/modules/users/components/molecules/users-summary.component';
 import InviteUserForm from '@web/modules/users/components/organisms/invite-user-form.component';
 import UsersTable from '@web/modules/users/components/organisms/users-table.component';
 
@@ -21,7 +19,8 @@ import { renderWithProviders } from '@tests/test-utils/render';
  *   active admin, the row explains that at least one active admin must remain.
  * - CA-13: the invitation form shows an error next to each invalid field and sends nothing.
  * - CA-12: a duplicate email reported by the server is shown to the admin.
- * - Spec 003 CA-07: a summary by status, and each row's actions grouped in a menu.
+ * - Spec 003 CA-07: each row's actions grouped in a menu (the summary cards are the shared core
+ *   component, see core/components/summary-filter.component.test.tsx).
  */
 
 /** Opens the actions menu of a row (spec 003) and picks an option. */
@@ -136,65 +135,6 @@ describe('UsersTable', () => {
     expect(
       screen.queryByText('Debe existir al menos un administrador activo.')
     ).not.toBeInTheDocument();
-  });
-});
-
-describe('UsersSummary', () => {
-  const users = [
-    buildProfile({ status: 'active' }),
-    buildProfile({ status: 'active' }),
-    buildProfile({ status: 'invited' }),
-    buildProfile({ status: 'disabled' }),
-  ];
-
-  it('counts users by status (spec 003, CA-07)', () => {
-    renderWithProviders(<UsersSummary users={users} selected={null} onSelect={vi.fn()} />);
-
-    expect(screen.getByRole('button', { name: 'Activos 2' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Invitados 1' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Desactivados 1' })).toBeVisible();
-  });
-
-  it('filters by a status when its summary is pressed (CA-09)', () => {
-    const onSelect = vi.fn();
-    renderWithProviders(<UsersSummary users={users} selected={null} onSelect={onSelect} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Invitados 1' }));
-
-    expect(onSelect).toHaveBeenCalledWith('invited');
-  });
-
-  it('marks the chosen summary and clears the filter when it is pressed again (CA-09)', () => {
-    const onSelect = vi.fn();
-    renderWithProviders(<UsersSummary users={users} selected="invited" onSelect={onSelect} />);
-
-    const invited = screen.getByRole('button', { name: 'Invitados 1' });
-    expect(invited).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Activos 2' })).toHaveAttribute(
-      'aria-pressed',
-      'false'
-    );
-
-    fireEvent.click(invited);
-    expect(onSelect).toHaveBeenCalledWith(null);
-  });
-});
-
-describe('UsersFilterBar', () => {
-  it('shows the total and no reset without a filter', () => {
-    renderWithProviders(<UsersFilterBar total={4} shown={4} status={null} onReset={vi.fn()} />);
-
-    expect(screen.getByText('4 usuarios')).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Ver todos' })).not.toBeInTheDocument();
-  });
-
-  it('says what is shown and offers "Ver todos" while filtering (CA-09)', () => {
-    const onReset = vi.fn();
-    renderWithProviders(<UsersFilterBar total={4} shown={1} status="invited" onReset={onReset} />);
-
-    expect(screen.getByText('1 de 4 usuarios · Invitados')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Ver todos' }));
-    expect(onReset).toHaveBeenCalled();
   });
 });
 

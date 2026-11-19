@@ -3,6 +3,8 @@ import Link from 'next/link';
 
 import { Link2Off } from 'lucide-react';
 
+import ResendConfirmationForm from '@web/modules/auth/components/organisms/resend-confirmation-form.component';
+
 type InvalidLinkPageProps = {
   searchParams: Promise<{ type?: string }>;
 };
@@ -10,12 +12,15 @@ type InvalidLinkPageProps = {
 const BUTTON =
   'inline-flex h-12 items-center justify-center rounded-medium px-6 text-sm font-medium transition-colors';
 
-/** An expired, used or malformed email link (CA-15 invitation, CA-24 recovery). */
+/**
+ * An expired, used or malformed email link (CA-15 invitation, CA-24 recovery; spec 004 CA-05
+ * sign-up confirmation, which offers a new email right here).
+ */
 const InvalidLinkPage = async ({ searchParams }: InvalidLinkPageProps) => {
   const { type } = await searchParams;
   const t = await getTranslations('auth.invalidLink');
   const message =
-    type === 'invite' ? t('invite') : type === 'recovery' ? t('recovery') : t('generic');
+    type === 'invite' || type === 'recovery' || type === 'email' ? t(type) : t('generic');
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,6 +31,7 @@ const InvalidLinkPage = async ({ searchParams }: InvalidLinkPageProps) => {
         <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-sm text-default-600">{message}</p>
       </div>
+      {type === 'email' && <ResendConfirmationForm />}
       <div className="flex flex-col gap-3">
         {type === 'recovery' && (
           <Link

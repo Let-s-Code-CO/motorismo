@@ -39,8 +39,12 @@ const fromGuardError = (error: { hint?: string | null }): UsersErrorKey => {
 };
 
 /**
- * Invites someone by email (HU-03). Only an active admin may do it (CA-09). The profile is built
- * by the database from the metadata sent here (name, role, inviter).
+ * Invites someone by email (HU-03). Only an active admin may do it (CA-09).
+ *
+ * Spec 004: staff only come from a pending invitation (public.staff_invitations), written here with
+ * the admin's OWN session so RLS checks it (admins only, signed as themselves). The database builds
+ * the profile from that invitation when Auth creates the user — never from metadata, which anyone
+ * can forge through the public sign-up (RN-11). If Auth fails, the invitation is withdrawn.
  */
 export const inviteUser = async (input: unknown): Promise<ActionResult<UsersErrorKey>> => {
   const admin = await getActiveAdmin();
@@ -58,20 +62,27 @@ export const inviteUser = async (input: unknown): Promise<ActionResult<UsersErro
 
   const supabase = createSupabaseAdminClient();
 
-  // Checked here because Auth re-sends the invitation to an unconfirmed email instead of failing.
-  const { data: existing, error: lookupError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
+  // Checked here because Auth re-sends the invitation to an unconfirmed email instead of failing;
+  // email_in_use covers staff, pending invitations, customers and unconfirmed sign-ups (RN-01).
+  const { data: inUse, error: lookupError } = await supabase.rpc('email_in_use', {
+    p_email: email,
+  });
   if (lookupError) return { ok: false, error: 'generic' };
-  if (existing) return { ok: false, error: 'emailTaken' };
+  if (inUse) return { ok: false, error: 'emailTaken' };
+
+  const session = await createSupabaseServerClient();
+  const { error: invitationError } = await session
+    .from('staff_invitations')
+    .insert({ email, full_name, role, invited_by: admin.id });
+  if (invitationError) return { ok: false, error: 'generic' };
 
   const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-    data: { full_name, role, invited_by: admin.id },
     redirectTo: getSiteUrl(),
   });
-  if (error) return { ok: false, error: error.code === 'email_exists' ? 'emailTaken' : 'generic' };
+  if (error) {
+    await session.from('staff_invitations').delete().eq('email', email);
+    return { ok: false, error: error.code === 'email_exists' ? 'emailTaken' : 'generic' };
+  }
 
   revalidatePath(USERS_PATH);
   return { ok: true };

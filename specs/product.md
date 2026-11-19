@@ -19,9 +19,11 @@ da al administrador reportes para liquidar el trabajo de los empleados.
 | Operador | Persona en el punto de atención que registra clientes y crea órdenes. Inicia sesión. | Registro de clientes, crear orden de trabajo |
 | Administrador | Dueño o encargado. Consulta reportes, exporta liquidaciones y gestiona usuarios. | Todo lo anterior + reportes + usuarios |
 | Empleado | Persona que ejecuta el servicio. Se asocia a cada orden. **No inicia sesión**: solo aparece en listas. | — |
+| Cliente | Persona que recibe los servicios. Se registra sola (correo y contraseña o Google) o la registra el personal en el punto de atención sin cuenta. | «Mi perfil» (sus datos) |
 
-No hay registro público: el administrador invita a cada usuario desde la app. Se entra con correo y
-contraseña o con Google (solo si el correo ya fue invitado). Ver spec 002.
+El personal no se registra: el administrador lo invita desde la app (spec 002). Los clientes sí
+pueden crear su cuenta, con confirmación de correo (spec 004). Se entra con correo y contraseña o
+con Google.
 
 ## Necesidades conocidas
 

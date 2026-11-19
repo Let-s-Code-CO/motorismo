@@ -3,9 +3,15 @@ import Link from 'next/link';
 
 import { ShieldX } from 'lucide-react';
 
-/** Shown instead of a page the user's role may not see (CA-08). */
-const NoPermission = () => {
+type NoPermissionProps = {
+  /** Who hit the page: an operator on an admin page, or a customer on a staff page (spec 004). */
+  audience: 'operator' | 'customer';
+};
+
+/** Shown instead of a page the user may not see (CA-08; spec 004, CA-09: back to their profile). */
+const NoPermission = ({ audience }: NoPermissionProps) => {
   const t = useTranslations('auth.noPermission');
+  const isCustomer = audience === 'customer';
 
   return (
     <section className="mx-auto flex max-w-md flex-col items-center gap-5 py-20 text-center">
@@ -14,13 +20,13 @@ const NoPermission = () => {
       </span>
       <div className="flex flex-col gap-2">
         <h1 className="text-xl font-semibold tracking-tight">{t('title')}</h1>
-        <p className="text-sm text-default-500">{t('text')}</p>
+        <p className="text-sm text-default-500">{isCustomer ? t('textCustomer') : t('text')}</p>
       </div>
       <Link
-        href="/"
+        href={isCustomer ? '/profile' : '/'}
         className="inline-flex h-10 items-center rounded-medium bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
       >
-        {t('backHome')}
+        {isCustomer ? t('toProfile') : t('backHome')}
       </Link>
     </section>
   );

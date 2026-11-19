@@ -15,9 +15,10 @@ select plan(7);
 create function pg_temp.new_user(p_id uuid, p_email text)
 returns void language plpgsql as $$
 begin
+  insert into public.staff_invitations (email, full_name, role) values (p_email, 'Gina Google', 'operator');
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, raw_user_meta_data)
   values (p_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', p_email, '',
-          '{"full_name":"Gina Google","role":"operator"}');
+          '{}');
 end $$;
 
 select pg_temp.new_user('00000000-0000-0000-0000-0000000000d1', 'gina@test.local');

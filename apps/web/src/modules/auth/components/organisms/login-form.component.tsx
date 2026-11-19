@@ -14,6 +14,7 @@ import type { z } from 'zod';
 import { signIn } from '@web/modules/auth/actions/auth.actions';
 import GoogleButton from '@web/modules/auth/components/molecules/google-button.component';
 import PasswordInput from '@web/modules/auth/components/molecules/password-input.component';
+import ResendConfirmation from '@web/modules/auth/components/molecules/resend-confirmation.component';
 import { type LoginValues, loginSchema } from '@web/modules/auth/schemas/login.schema';
 import type { AuthErrorKey } from '@web/modules/auth/utils/auth-errors.utils';
 
@@ -30,6 +31,7 @@ const LoginForm = ({ next, initialError }: LoginFormProps) => {
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<z.input<typeof loginSchema>, unknown, LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -46,7 +48,20 @@ const LoginForm = ({ next, initialError }: LoginFormProps) => {
   return (
     <div className="flex flex-col gap-6">
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-        {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
+        {serverError && (
+          <Alert
+            color={serverError === 'emailNotConfirmed' ? 'warning' : 'danger'}
+            variant="faded"
+            title={t(`errors.${serverError}`)}
+          >
+            {/* Spec 004, CA-04: a new confirmation email for the typed address. */}
+            {serverError === 'emailNotConfirmed' && (
+              <div className="mt-2">
+                <ResendConfirmation getEmail={() => getValues('email')} />
+              </div>
+            )}
+          </Alert>
+        )}
         <Input
           {...register('email')}
           type="email"
@@ -93,6 +108,15 @@ const LoginForm = ({ next, initialError }: LoginFormProps) => {
         <span className="h-px flex-1 bg-divider" />
       </div>
       <GoogleButton next={next} />
+      <p className="text-center text-sm text-default-500">
+        {t('login.noAccount')}{' '}
+        <Link
+          href="/auth/sign-up"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          {t('login.signUp')}
+        </Link>
+      </p>
     </div>
   );
 };

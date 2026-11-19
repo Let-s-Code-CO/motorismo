@@ -1,12 +1,14 @@
 // @vitest-environment node
 /**
- * GET /auth/callback — where Google sends the user back (spec 002, HU-06).
+ * GET /auth/callback — where Google sends the user back (spec 002, HU-06; spec 004, HU-05).
  *
  * Guards:
  * - CA-26: a successful sign-in opens the session, starts the inactivity clock and goes to the
  *   requested page (sanitized) or home.
- * - CA-27: a Google account that does not belong to any user is refused by Auth (sign-ups are
- *   disabled) and lands on the login with "Esta cuenta de Google no tiene acceso…".
+ * - Spec 004, RF-02: a customer (e.g. a new Google account, CA-20) only goes to the requested page
+ *   if it is theirs; otherwise to "Mi perfil".
+ * - Any error reported by Google or Auth lands on the login with its code (spec 004 replaced
+ *   spec 002's CA-27: unknown Google accounts are no longer refused, they become customers).
  * - CA-28: a disabled account lands on the login with the disabled-account message.
  */
 import { NextRequest } from 'next/server';
@@ -19,8 +21,12 @@ vi.mock('@web/modules/core/lib/supabase-server.lib', () => ({
 }));
 
 const exchangeCodeForSession = vi.fn();
+const rpc = vi
+  .fn()
+  .mockResolvedValue({ data: [{ kind: 'staff', role: 'admin', status: 'active' }] });
 vi.mocked(createSupabaseServerClient).mockResolvedValue({
   auth: { exchangeCodeForSession },
+  rpc,
 } as never);
 
 const request = (query: string) => new NextRequest(`http://localhost:3000/auth/callback${query}`);
@@ -50,15 +56,22 @@ describe('GET /auth/callback', () => {
     expect(locationOf(response)).toBe('/');
   });
 
-  it('refuses an unknown Google account with its own message (CA-27)', async () => {
+  it('sends a customer who asked for a staff page to their profile (spec 004, RF-02)', async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+    rpc.mockResolvedValueOnce({ data: [{ kind: 'customer', role: null, status: 'active' }] });
+
+    const response = await GET(request('?code=xyz&next=%2Fcustomers'));
+
+    expect(locationOf(response)).toBe('/profile');
+  });
+
+  it('passes an error reported by Google on to the login', async () => {
     const response = await GET(
-      request(
-        '?error=access_denied&error_code=signup_disabled&error_description=Signups+not+allowed'
-      )
+      request('?error=access_denied&error_code=access_denied&error_description=Cancelled')
     );
 
     expect(exchangeCodeForSession).not.toHaveBeenCalled();
-    expect(locationOf(response)).toBe('/auth/login?error=signup_disabled');
+    expect(locationOf(response)).toBe('/auth/login?error=access_denied');
   });
 
   it('refuses a disabled account (CA-28)', async () => {

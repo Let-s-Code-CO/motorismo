@@ -8,24 +8,30 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from '@heroui/react';
 import { UserPlus } from 'lucide-react';
 
+import { Constants } from '@motorismo/supabase/types';
+
 import type { CurrentUser, UserRole, UserStatus } from '@web/modules/auth/types/auth.types';
+import FilterBar from '@web/modules/core/components/filter-bar.component';
+import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
+import { filterByStatus, parseStatusParam } from '@web/modules/core/utils/status-filter.utils';
 import {
   type UsersErrorKey,
   changeRole,
   resendInvite,
   setUserStatus,
 } from '@web/modules/users/actions/users.actions';
-import UsersFilterBar from '@web/modules/users/components/molecules/users-filter-bar.component';
-import UsersSummary from '@web/modules/users/components/molecules/users-summary.component';
 import InviteUserForm from '@web/modules/users/components/organisms/invite-user-form.component';
 import UsersTable from '@web/modules/users/components/organisms/users-table.component';
-import {
-  filterUsersByStatus,
-  parseStatusFilter,
-} from '@web/modules/users/utils/users-filter.utils';
 
 type Notice = { tone: 'success' | 'danger'; text: string };
+
+/** Summary cards = filters (project standard): order and status dot of each card. */
+const SUMMARY: { status: UserStatus; dot: string }[] = [
+  { status: 'active', dot: 'bg-success' },
+  { status: 'invited', dot: 'bg-warning' },
+  { status: 'disabled', dot: 'bg-default-400' },
+];
 
 type UsersScreenProps = {
   users: Pick<CurrentUser, 'id' | 'full_name' | 'email' | 'role' | 'status' | 'avatar_url'>[];
@@ -43,8 +49,8 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const status = parseStatusFilter(searchParams.get('status'));
-  const visibleUsers = filterUsersByStatus(users, status);
+  const status = parseStatusParam(searchParams.get('status'), Constants.public.Enums.user_status);
+  const visibleUsers = filterByStatus(users, status);
 
   const setStatus = (next: UserStatus | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -96,7 +102,17 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
         </Button>
       </div>
 
-      <UsersSummary users={users} selected={status} onSelect={setStatus} />
+      <SummaryFilterCards
+        label={t('summary.filterLabel')}
+        options={SUMMARY.map(({ status: value, dot }) => ({
+          value,
+          dot,
+          label: t(`summary.${value}`),
+          count: users.filter((user) => user.status === value).length,
+        }))}
+        selected={status}
+        onSelect={setStatus}
+      />
 
       {notice && (
         <p
@@ -112,10 +128,17 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
       )}
 
       <div className="flex flex-col gap-3">
-        <UsersFilterBar
-          total={users.length}
-          shown={visibleUsers.length}
-          status={status}
+        <FilterBar
+          text={
+            status
+              ? t('filter.shown', {
+                  shown: visibleUsers.length,
+                  total: users.length,
+                  status: t(`summary.${status}`),
+                })
+              : t('filter.total', { count: users.length })
+          }
+          showReset={status !== null}
           onReset={() => setStatus(null)}
         />
         <UsersTable

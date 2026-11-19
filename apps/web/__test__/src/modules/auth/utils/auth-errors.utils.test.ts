@@ -1,5 +1,5 @@
 /**
- * mapAuthError — turns Auth error codes into the message a user sees (spec 002).
+ * mapAuthError — turns Auth error codes into the message a user sees (specs 002 and 004).
  *
  * Guards RN-06: login and recovery never reveal whether an email is registered, so a wrong
  * password and an unknown email produce the SAME message (CA-02).
@@ -13,14 +13,15 @@ describe('mapAuthError', () => {
   });
 
   it.each(['user_banned', 'account_disabled'])(
-    'maps %s to the disabled-account message (CA-06)',
+    'maps %s to the disabled-account message (CA-06; spec 004, CA-22)',
     (code) => {
       expect(mapAuthError(code)).toBe('accountDisabled');
     }
   );
 
-  it('maps signup_disabled to "this Google account has no access" (CA-27)', () => {
-    expect(mapAuthError('signup_disabled')).toBe('googleNotAllowed');
+  it('maps email_not_confirmed to "confirm your email" (spec 004, CA-04)', () => {
+    // Auth only reports it with the right password, so it reveals nothing to a stranger (RN-06).
+    expect(mapAuthError('email_not_confirmed')).toBe('emailNotConfirmed');
   });
 
   it.each(['otp_expired', 'flow_state_expired', 'flow_state_not_found', 'bad_code_verifier'])(

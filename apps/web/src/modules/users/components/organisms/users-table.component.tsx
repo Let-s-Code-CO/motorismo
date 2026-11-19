@@ -177,7 +177,7 @@ const UsersTable = ({
                     <span className="truncate text-xs text-default-500">{user.email}</span>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <RoleChip role={user.role} />
+                    <RoleChip audience={user.role} />
                     <StatusChip status={user.status} />
                   </div>
                 </div>

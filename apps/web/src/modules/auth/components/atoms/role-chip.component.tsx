@@ -4,19 +4,20 @@ import { useTranslations } from 'next-intl';
 
 import { Chip } from '@heroui/react';
 
-import type { UserRole } from '@web/modules/auth/types/auth.types';
+import type { Audience } from '@web/modules/auth/types/auth.types';
 
-const RoleChip = ({ role }: { role: UserRole }) => {
+/** The role of a staff member, or "Cliente" (spec 004). */
+const RoleChip = ({ audience }: { audience: Audience }) => {
   const t = useTranslations('auth.roles');
 
   return (
     <Chip
       size="sm"
       radius="sm"
-      variant={role === 'admin' ? 'solid' : 'flat'}
-      color={role === 'admin' ? 'primary' : 'default'}
+      variant={audience === 'admin' ? 'solid' : 'flat'}
+      color={audience === 'admin' ? 'primary' : 'default'}
     >
-      {t(role)}
+      {t(audience)}
     </Chip>
   );
 };

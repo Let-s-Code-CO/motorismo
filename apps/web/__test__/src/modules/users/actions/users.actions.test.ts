@@ -6,10 +6,12 @@
  * - CA-09: only an ACTIVE ADMIN may invite; anyone else is rejected before Auth is touched.
  * - CA-12: an email that already belongs to a user is rejected with its own message. This check
  *   is ours on purpose: Auth silently RE-SENDS the invitation to an unconfirmed email instead of
- *   failing (see __test__/sandbox/invite.sandbox.test.ts).
+ *   failing (see __test__/sandbox/invite.sandbox.test.ts). Spec 004 (RN-01): the check covers the
+ *   whole app (staff, pending invitations, customers and unconfirmed sign-ups).
  * - CA-13: invalid input returns one error per field and nothing is sent.
- * - CA-11: a valid invitation carries name, role and inviter as metadata (the database trigger
- *   builds the profile from them) and a redirect back to this deployment.
+ * - CA-11 / spec 004 RN-11: a valid invitation is first written as a pending staff invitation
+ *   with the admin's OWN session (RLS: only admins, signed as themselves); the database builds the
+ *   profile from it, never from metadata. If Auth then fails, the pending invitation is withdrawn.
  * - CA-16: resending only applies to users still in "invited".
  * - CA-18 / CA-19 / CA-20 / CA-21: role and status changes go through the admin's OWN session, so
  *   RLS and the database guard decide; the guard's refusals (last admin, own account) become their
@@ -45,27 +47,46 @@ const ADMIN = buildProfile({ id: 'admin-id', role: 'admin', full_name: 'Ana Admi
 type FakeOptions = {
   row?: Record<string, unknown> | null;
   lookupError?: { message: string } | null;
+  inUse?: boolean;
+  inUseError?: { message: string } | null;
   inviteError?: { code?: string; message: string } | null;
 };
 
-/** Minimal stand-in for the secret-key client: from().select().eq().maybeSingle() + auth.admin. */
+/**
+ * Minimal stand-in for the secret-key client: from().select().eq().maybeSingle() (resendInvite),
+ * rpc('email_in_use') and auth.admin.inviteUserByEmail.
+ */
 const fakeAdminClient = ({
   row = null,
   lookupError = null,
+  inUse = false,
+  inUseError = null,
   inviteError = null,
 }: FakeOptions = {}) => {
   const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: lookupError });
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
+  const rpc = vi.fn().mockResolvedValue({ data: inUse, error: inUseError });
   const inviteUserByEmail = vi
     .fn()
     .mockResolvedValue({ data: { user: { id: 'new-id' } }, error: inviteError });
   vi.mocked(createSupabaseAdminClient).mockReturnValue({
     from,
+    rpc,
     auth: { admin: { inviteUserByEmail } },
   } as never);
-  return { from, eq, inviteUserByEmail };
+  return { from, eq, rpc, inviteUserByEmail };
+};
+
+/** The admin's own session: the pending invitation is written under RLS (spec 004). */
+const fakeInvitationSession = (insertError: { code?: string; message: string } | null = null) => {
+  const insert = vi.fn().mockResolvedValue({ error: insertError });
+  const deleteEq = vi.fn().mockResolvedValue({ error: null });
+  const remove = vi.fn(() => ({ eq: deleteEq }));
+  const from = vi.fn(() => ({ insert, delete: remove }));
+  vi.mocked(createSupabaseServerClient).mockResolvedValue({ from } as never);
+  return { from, insert, deleteEq };
 };
 
 const validInput = {
@@ -103,40 +124,65 @@ describe('inviteUser', () => {
     expect(inviteUserByEmail).not.toHaveBeenCalled();
   });
 
-  it('rejects an email that already belongs to a user, looked up in lowercase (CA-12)', async () => {
-    const { eq, inviteUserByEmail } = fakeAdminClient({ row: { id: 'existing' } });
+  it('rejects an email already used anywhere in the app, checked in lowercase (CA-12; spec 004, RN-01)', async () => {
+    // email_in_use covers accounts (also unconfirmed customer sign-ups), staff, pending
+    // invitations and customers without account.
+    const { rpc, inviteUserByEmail } = fakeAdminClient({ inUse: true });
+    const { insert } = fakeInvitationSession();
 
     await expect(inviteUser(validInput)).resolves.toEqual({ ok: false, error: 'emailTaken' });
-    expect(eq).toHaveBeenCalledWith('email', 'oscar@motorismo.test');
+    expect(rpc).toHaveBeenCalledWith('email_in_use', { p_email: 'oscar@motorismo.test' });
+    expect(insert).not.toHaveBeenCalled();
     expect(inviteUserByEmail).not.toHaveBeenCalled();
   });
 
-  it('invites with name, role and inviter as metadata and a link back to this site (CA-11)', async () => {
+  it('writes the pending invitation with the admin as inviter, then invites with a link back to this site (CA-11)', async () => {
     const { inviteUserByEmail } = fakeAdminClient();
+    const { from, insert } = fakeInvitationSession();
 
     await expect(inviteUser(validInput)).resolves.toEqual({ ok: true });
+    expect(from).toHaveBeenCalledWith('staff_invitations');
+    expect(insert).toHaveBeenCalledWith({
+      email: 'oscar@motorismo.test',
+      full_name: 'Óscar Operador',
+      role: 'operator',
+      invited_by: 'admin-id',
+    });
+    // No metadata: the database builds the profile from the invitation only (spec 004, RN-11).
     expect(inviteUserByEmail).toHaveBeenCalledWith('oscar@motorismo.test', {
-      data: { full_name: 'Óscar Operador', role: 'operator', invited_by: 'admin-id' },
       redirectTo: 'https://app.test',
     });
     expect(revalidatePath).toHaveBeenCalledWith('/admin/users');
   });
 
-  it('maps a concurrent duplicate reported by Auth (email_exists) to the same message (CA-12)', async () => {
+  it('does not invite when the database refuses the pending invitation', async () => {
+    const { inviteUserByEmail } = fakeAdminClient();
+    fakeInvitationSession({ code: '42501', message: 'rls' });
+
+    await expect(inviteUser(validInput)).resolves.toEqual({ ok: false, error: 'generic' });
+    expect(inviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('withdraws the pending invitation when Auth fails, and maps email_exists to its message (CA-12)', async () => {
     fakeAdminClient({ inviteError: { code: 'email_exists', message: 'exists' } });
+    const { deleteEq } = fakeInvitationSession();
 
     await expect(inviteUser(validInput)).resolves.toEqual({ ok: false, error: 'emailTaken' });
+    expect(deleteEq).toHaveBeenCalledWith('email', 'oscar@motorismo.test');
   });
 
   it('returns a generic error when Auth fails for another reason, without revalidating', async () => {
     fakeAdminClient({ inviteError: { code: 'unexpected_failure', message: 'boom' } });
+    const { deleteEq } = fakeInvitationSession();
 
     await expect(inviteUser(validInput)).resolves.toEqual({ ok: false, error: 'generic' });
+    expect(deleteEq).toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it('returns a generic error when the duplicate lookup fails', async () => {
-    const { inviteUserByEmail } = fakeAdminClient({ lookupError: { message: 'db down' } });
+  it('returns a generic error when the duplicate check fails', async () => {
+    const { inviteUserByEmail } = fakeAdminClient({ inUseError: { message: 'db down' } });
+    fakeInvitationSession();
 
     await expect(inviteUser(validInput)).resolves.toEqual({ ok: false, error: 'generic' });
     expect(inviteUserByEmail).not.toHaveBeenCalled();

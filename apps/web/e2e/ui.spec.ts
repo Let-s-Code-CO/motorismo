@@ -1,11 +1,12 @@
 /**
  * Layout checks of the redesign (spec 003).
- * CA-02 no horizontal scroll on a 360 px phone · CA-03 brand panel beside the form on desktop only ·
+ * CA-02 no horizontal scroll on a 360 px phone (spec 004 adds sign-up, Clientes, a customer record
+ * and "Mi perfil": the customer signs up from their phone) · CA-03 brand panel beside the form on desktop only ·
  * every clickable element shows the hand cursor (Tailwind 4 no longer sets it on buttons).
  */
 import { type Page, expect, test } from '@playwright/test';
 
-import { SEED, signIn } from './support/sandbox';
+import { SEED, SEED_CUSTOMERS, signIn } from './support/sandbox';
 
 const horizontalOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -23,6 +24,23 @@ test.describe('on a 360 px phone', () => {
 
     await page.goto('/admin/users');
     await expect(page.getByRole('grid')).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+
+    await page.goto('/customers');
+    await expect(page.getByRole('grid')).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    await expect(page.getByRole('heading', { name: SEED_CUSTOMERS.walkIn.name })).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('sign-up and "Mi perfil" have no horizontal scroll (spec 004)', async ({ page }) => {
+    await page.goto('/auth/sign-up');
+    expect(await horizontalOverflow(page)).toBe(0);
+
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    await expect(page).toHaveURL('/profile');
     expect(await horizontalOverflow(page)).toBe(0);
   });
 

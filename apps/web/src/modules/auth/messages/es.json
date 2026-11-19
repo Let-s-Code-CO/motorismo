@@ -8,9 +8,14 @@
       "forgot": "¿Olvidaste tu contraseña?",
       "google": "Continuar con Google",
       "or": "o",
-      "subtitle": "Ingresa con la cuenta que te creó el administrador.",
+      "subtitle": "Ingresa con tu correo o con tu cuenta de Google.",
       "emailPlaceholder": "tu@correo.com",
-      "passwordPlaceholder": "Tu contraseña"
+      "passwordPlaceholder": "Tu contraseña",
+      "noAccount": "¿No tienes cuenta?",
+      "signUp": "Crear cuenta",
+      "resend": "Reenviar correo de confirmación",
+      "resent": "Si tu cuenta está pendiente de confirmar, te enviamos un nuevo correo.",
+      "googleConsent": "Al continuar con Google autorizas el tratamiento de tus datos personales según la <link>política de tratamiento de datos</link>."
     },
     "setPassword": {
       "titleInvited": "Crea tu contraseña",
@@ -28,12 +33,13 @@
       "recovery": "Este enlace caducó o ya se usó. Pide uno nuevo para crear tu contraseña.",
       "generic": "Este enlace no es válido.",
       "requestNew": "Pedir un enlace nuevo",
-      "backToLogin": "Volver a iniciar sesión"
+      "backToLogin": "Volver a iniciar sesión",
+      "email": "Este enlace de confirmación caducó o ya se usó. Pide uno nuevo con tu correo."
     },
     "errors": {
       "invalidCredentials": "Correo o contraseña incorrectos.",
       "accountDisabled": "Tu cuenta está desactivada. Contacta al administrador.",
-      "googleNotAllowed": "Esta cuenta de Google no tiene acceso. Pide al administrador que te invite.",
+      "emailNotConfirmed": "Confirma tu correo para entrar.",
       "invalidLink": "Este enlace caducó o ya se usó.",
       "sessionExpired": "Tu sesión se cerró por inactividad. Vuelve a iniciar sesión.",
       "weakPassword": "La contraseña no es válida. Usa al menos 8 caracteres y que sea distinta de la anterior.",
@@ -44,16 +50,23 @@
       "emailInvalid": "Introduce un correo válido.",
       "passwordRequired": "Introduce tu contraseña.",
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
-      "passwordsDoNotMatch": "Las contraseñas no coinciden."
+      "passwordsDoNotMatch": "Las contraseñas no coinciden.",
+      "fullNameRequired": "Introduce tu nombre.",
+      "fullNameTooLong": "El nombre no puede superar 120 caracteres.",
+      "phoneInvalid": "Introduce un celular colombiano de 10 dígitos que empiece por 3.",
+      "consentRequired": "Debes autorizar el tratamiento de tus datos para crear la cuenta."
     },
     "roles": {
       "operator": "Operador",
-      "admin": "Administrador"
+      "admin": "Administrador",
+      "customer": "Cliente"
     },
     "header": {
       "navLabel": "Navegación principal",
       "home": "Inicio",
+      "customers": "Clientes",
       "users": "Usuarios",
+      "profile": "Mi perfil",
       "brandLabel": "Motorismo Detailing, ir al inicio"
     },
     "userMenu": {
@@ -66,12 +79,16 @@
       "usersTitle": "Gestionar usuarios",
       "usersText": "Invita a tu equipo y administra sus roles y accesos.",
       "soonTitle": "Muy pronto",
-      "soonText": "Registro de clientes, órdenes de trabajo y reportes."
+      "soonText": "Órdenes de trabajo y reportes.",
+      "customersTitle": "Clientes",
+      "customersText": "Consulta, busca y registra a los clientes del negocio."
     },
     "noPermission": {
       "title": "No tienes permiso para ver esta página.",
       "backHome": "Volver al inicio",
-      "text": "Esta sección es solo para administradores."
+      "text": "Esta sección es solo para administradores.",
+      "textCustomer": "Esta sección es solo para el personal del negocio.",
+      "toProfile": "Ir a mi perfil"
     },
     "forgotPassword": {
       "title": "Recupera tu contraseña",
@@ -85,6 +102,26 @@
     "password": {
       "show": "Mostrar contraseña",
       "hide": "Ocultar contraseña"
+    },
+    "signUp": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Regístrate para que Motorismo tenga tus datos a la mano.",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Tu nombre",
+      "email": "Correo",
+      "emailPlaceholder": "tu@correo.com",
+      "phone": "Celular (opcional)",
+      "phonePlaceholder": "300 123 4567",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "consent": "Autorizo el tratamiento de mis datos personales según la <link>política de tratamiento de datos</link>.",
+      "submit": "Crear cuenta",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Inicia sesión",
+      "sentTitle": "Revisa tu correo",
+      "sent": "Te enviamos un correo para confirmar tu cuenta.",
+      "sentTo": "Lo enviamos a {email}. Abre el enlace para activar tu cuenta; caduca en 24 horas.",
+      "backToLogin": "Volver a iniciar sesión"
     }
   }
 }
