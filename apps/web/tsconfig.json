@@ -1,0 +1,19 @@
+{
+  "extends": "@motorismo/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@web/*": ["./src/*"],
+      "@tests/*": ["./__test__/*"]
+    },
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom/vitest"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.mts",
+    "**/*.mjs",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

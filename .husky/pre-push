@@ -1,0 +1,5 @@
+. "$(dirname "$0")/use-project-node.sh"
+
+pnpm ts:check
+pnpm test
+pnpm build

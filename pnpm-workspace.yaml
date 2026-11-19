@@ -1,0 +1,33 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Isolated node_modules, no hoisting: each package only sees the dependencies it declares.
+nodeLinker: isolated
+shamefullyHoist: false
+autoInstallPeers: true
+strictPeerDependencies: false
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+dedupePeerDependents: true
+enablePrePostScripts: false
+
+# Versions shared by several workspaces. Reference them as "catalog:".
+catalog:
+  typescript: 5.9.3
+  eslint: ^9.39.1
+  prettier: ^3.6.2
+  vitest: ^4.1.10
+  '@vitest/coverage-istanbul': ^4.1.10
+
+# pnpm only runs dependency build scripts that are explicitly allowed.
+allowBuilds:
+  '@heroui/shared-utils': true
+  '@parcel/watcher': false
+  '@swc/core': false
+  esbuild: true
+  sharp: true
+  supabase: false
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - lucide-react@1.76.0

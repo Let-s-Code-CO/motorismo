@@ -1,0 +1,77 @@
+{
+  "users": {
+    "title": "Usuarios",
+    "inviteButton": "Invitar usuario",
+    "invited": "Invitación enviada a {email}.",
+    "resent": "Invitación reenviada.",
+    "table": {
+      "label": "Usuarios de la aplicación",
+      "actions": "Acciones",
+      "empty": "Todavía no hay usuarios.",
+      "self": "Tu cuenta",
+      "lastAdmin": "Debe existir al menos un administrador activo.",
+      "user": "Usuario",
+      "emptyFiltered": "No hay usuarios con este estado."
+    },
+    "status": {
+      "invited": "Invitado",
+      "active": "Activo",
+      "disabled": "Desactivado"
+    },
+    "actions": {
+      "resend": "Reenviar invitación",
+      "makeAdmin": "Hacer administrador",
+      "makeOperator": "Hacer operador",
+      "disable": "Desactivar",
+      "reactivate": "Reactivar",
+      "menu": "Acciones de {name}"
+    },
+    "invite": {
+      "title": "Invitar usuario",
+      "fullName": "Nombre completo",
+      "email": "Correo",
+      "role": "Rol",
+      "submit": "Enviar invitación",
+      "cancel": "Cancelar",
+      "description": "Le enviaremos un correo para que cree su contraseña.",
+      "roleDescriptions": {
+        "operator": "Registra clientes y órdenes de trabajo.",
+        "admin": "Además gestiona usuarios y ve los reportes."
+      },
+      "fullNamePlaceholder": "Ej. Laura Gómez",
+      "emailPlaceholder": "laura@correo.com"
+    },
+    "validation": {
+      "fullNameRequired": "Escribe el nombre.",
+      "fullNameTooLong": "El nombre puede tener como máximo 120 caracteres.",
+      "emailInvalid": "Introduce un correo válido.",
+      "roleRequired": "Elige un rol."
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalidInput": "Revisa los datos del formulario.",
+      "emailTaken": "Ya existe un usuario con este correo.",
+      "notInvited": "Ese usuario ya no está pendiente de invitación.",
+      "rateLimited": "Espera unos segundos antes de reenviar la invitación.",
+      "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "lastAdmin": "Debe existir al menos un administrador activo.",
+      "selfChange": "No puedes cambiar tu propio rol ni tu estado."
+    },
+    "roleChanged": "Rol actualizado.",
+    "disabled": "Usuario desactivado. Su sesión se cerrará en su siguiente acción.",
+    "reactivated": "Usuario reactivado.",
+    "description": "Invita a tu equipo y administra sus roles y accesos.",
+    "summary": {
+      "label": "Resumen de usuarios",
+      "active": "Activos",
+      "invited": "Invitados",
+      "disabled": "Desactivados",
+      "filterLabel": "Filtrar por estado"
+    },
+    "filter": {
+      "total": "{count, plural, one {# usuario} other {# usuarios}}",
+      "shown": "{shown} de {total, plural, one {# usuario} other {# usuarios}} · {status}",
+      "reset": "Ver todos"
+    }
+  }
+}

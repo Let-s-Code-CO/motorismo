@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+.next
+.turbo
+coverage
+playwright-report
+test-results
+packages/supabase/types/database.types.ts
+.claude/skills

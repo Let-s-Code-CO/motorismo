@@ -1,0 +1,37 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalDependencies": ["**/.env", "**/.env.local"],
+  "envMode": "loose",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["NEXT_PUBLIC_*", "SUPABASE_SECRET_KEY", "VERCEL_URL"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "lint:fix": {
+      "cache": false
+    },
+    "ts:check": {
+      "dependsOn": ["^ts:check"]
+    },
+    "test": {
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": ["build"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

@@ -1,0 +1,100 @@
+'use client';
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+
+import { Alert, Button, Input } from '@heroui/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowRight, Mail } from 'lucide-react';
+import type { z } from 'zod';
+
+import { signIn } from '@web/modules/auth/actions/auth.actions';
+import GoogleButton from '@web/modules/auth/components/molecules/google-button.component';
+import PasswordInput from '@web/modules/auth/components/molecules/password-input.component';
+import { type LoginValues, loginSchema } from '@web/modules/auth/schemas/login.schema';
+import type { AuthErrorKey } from '@web/modules/auth/utils/auth-errors.utils';
+
+type LoginFormProps = {
+  /** Page to return to after signing in (CA-03); already sanitized by the page. */
+  next?: string;
+  /** Message passed by the proxy, e.g. account disabled (CA-06). */
+  initialError?: AuthErrorKey;
+};
+
+const LoginForm = ({ next, initialError }: LoginFormProps) => {
+  const t = useTranslations('auth');
+  const [serverError, setServerError] = useState<AuthErrorKey | undefined>(initialError);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<z.input<typeof loginSchema>, unknown, LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    setServerError(undefined);
+    // On success the action redirects and never returns.
+    const result = await signIn(values, next);
+    if (result && !result.ok) setServerError(result.error);
+  });
+
+  return (
+    <div className="flex flex-col gap-6">
+      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+        {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
+        <Input
+          {...register('email')}
+          type="email"
+          label={t('login.email')}
+          placeholder={t('login.emailPlaceholder')}
+          autoComplete="email"
+          variant="bordered"
+          labelPlacement="outside"
+          validationBehavior="aria"
+          startContent={<Mail aria-hidden className="size-4 shrink-0 text-default-400" />}
+          isInvalid={!!errors.email}
+          errorMessage={errors.email?.message && t(`validation.${errors.email.message}`)}
+        />
+        <div className="flex flex-col gap-2">
+          <PasswordInput
+            {...register('password')}
+            label={t('login.password')}
+            placeholder={t('login.passwordPlaceholder')}
+            autoComplete="current-password"
+            isInvalid={!!errors.password}
+            errorMessage={errors.password?.message && t(`validation.${errors.password.message}`)}
+          />
+          <Link
+            href="/auth/forgot-password"
+            className="self-end text-sm font-medium text-default-600 underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {t('login.forgot')}
+          </Link>
+        </div>
+        <Button
+          type="submit"
+          color="primary"
+          size="lg"
+          className="font-medium"
+          isLoading={isSubmitting}
+          endContent={isSubmitting ? null : <ArrowRight aria-hidden className="size-4" />}
+        >
+          {t('login.submit')}
+        </Button>
+      </form>
+      <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-default-500">
+        <span className="h-px flex-1 bg-divider" />
+        {t('login.or')}
+        <span className="h-px flex-1 bg-divider" />
+      </div>
+      <GoogleButton next={next} />
+    </div>
+  );
+};
+
+export default LoginForm;
