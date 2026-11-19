@@ -17,16 +17,22 @@ create table public.profiles (
   email text not null,
   role public.user_role not null default 'operator',
   status public.user_status not null default 'invited',
+  -- First time the user accepted the invitation (own password or OAuth). Set by profiles_guard.
+  activated_at timestamptz,
   invited_by uuid references public.profiles (id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- RN-08: only someone who accepted the invitation can be active; "invited" means never accepted.
+  constraint profiles_active_requires_activation check (status <> 'active' or activated_at is not null),
+  constraint profiles_invited_never_activated check (status <> 'invited' or activated_at is null)
 );
 
 comment on table public.profiles is
   'App users: name, role and status. Source of truth for authorization (spec 002).';
 comment on column public.profiles.email is 'Mirror of auth.users.email (lowercase). Immutable.';
 comment on column public.profiles.status is
-  'invited → active (first password or linked OAuth identity); active ↔ disabled (admin).';
+  'invited → active (first password or linked OAuth identity); active ↔ disabled (admin); '
+  'a disabled user who never accepted goes back to invited when reactivated (CA-29).';
 
 -- RN-02: one user per email, case-insensitive.
 create unique index profiles_email_lower_key on public.profiles (lower(email));
@@ -175,7 +181,8 @@ begin
   if new.id <> old.id
      or new.email <> old.email
      or new.invited_by is distinct from old.invited_by
-     or new.created_at <> old.created_at then
+     or new.created_at <> old.created_at
+     or (old.activated_at is not null and new.activated_at is distinct from old.activated_at) then
     raise exception 'profile identity columns are immutable'
       using errcode = 'check_violation', hint = 'profile_immutable_column';
   end if;
@@ -187,9 +194,16 @@ begin
       using errcode = 'insufficient_privilege', hint = 'profile_self_change';
   end if;
 
-  if new.status = 'invited' and old.status <> 'invited' then
-    raise exception 'a user cannot go back to invited'
+  -- Back to "invited" only for someone who never accepted (CA-29); never for who did.
+  if new.status = 'invited' and old.status <> 'invited' and old.activated_at is not null then
+    raise exception 'a user who accepted the invitation cannot go back to invited'
       using errcode = 'check_violation', hint = 'profile_invalid_status_transition';
+  end if;
+
+  -- First activation: record it (RN-08). Reactivating a never-activated user to "active" is then
+  -- rejected by profiles_active_requires_activation.
+  if old.status = 'invited' and new.status = 'active' then
+    new.activated_at := now();
   end if;
 
   if old.role = 'admin' and old.status = 'active'

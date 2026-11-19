@@ -15,6 +15,8 @@
  *   RLS and the database guard decide; the guard's refusals (last admin, own account) become their
  *   own messages. Disabling also bans the account in Auth (no new session can be issued) and
  *   reactivating lifts the ban; if Auth fails, the profile change is reverted.
+ * - CA-29 / RN-08: reactivating someone who never accepted their invitation returns them to
+ *   "invited" (so the invitation can be re-sent), never to "active".
  */
 import { revalidatePath } from 'next/cache';
 
@@ -302,14 +304,27 @@ describe('setUserStatus', () => {
     expect(updateUserById).toHaveBeenCalledWith(USER_ID, { ban_duration: '876000h' });
   });
 
-  it('reactivates the profile and lifts the ban (CA-20)', async () => {
-    const { update } = fakeSessionClient({ current: { status: 'disabled' } });
+  it('reactivates a user who had accepted their invitation and lifts the ban (CA-20)', async () => {
+    const { update } = fakeSessionClient({
+      current: { status: 'disabled', activated_at: '2026-11-01T10:00:00Z' },
+    });
     const { updateUserById } = fakeAuthAdmin();
 
     await expect(setUserStatus({ userId: USER_ID, status: 'active' })).resolves.toEqual({
       ok: true,
     });
     expect(update).toHaveBeenCalledWith({ status: 'active' });
+    expect(updateUserById).toHaveBeenCalledWith(USER_ID, { ban_duration: 'none' });
+  });
+
+  it('returns a user who never accepted to "invited" instead of "active" (CA-29)', async () => {
+    const { update } = fakeSessionClient({ current: { status: 'disabled', activated_at: null } });
+    const { updateUserById } = fakeAuthAdmin();
+
+    await expect(setUserStatus({ userId: USER_ID, status: 'active' })).resolves.toEqual({
+      ok: true,
+    });
+    expect(update).toHaveBeenCalledWith({ status: 'invited' });
     expect(updateUserById).toHaveBeenCalledWith(USER_ID, { ban_duration: 'none' });
   });
 

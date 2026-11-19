@@ -301,6 +301,18 @@ Convenciones:
 
 ---
 
+## Correcciones tras `/verificar` (2026-11-19)
+
+- [x] T100 E2E de CA-04 sin recarga tras «atrás» (la prueba demuestra exactamente el criterio)
+- [x] T101 pgTAP de RN-08 / CA-29: `activated_at` se fija al activar; nadie pasa a «Activo» sin
+      haber aceptado; un desactivado que nunca aceptó puede volver a «Invitado» y uno que sí
+      aceptó no → **rojo**
+- [x] T102 Migración: columna `activated_at`, restricciones y reglas del guard → T101 en verde;
+      seeds y tipos actualizados
+- [x] T103 Test de `setUserStatus`: reactivar a quien nunca aceptó lo devuelve a «Invitado»
+      (CA-29) → **rojo**, luego la action → verde
+- [x] T104 Definición de terminado completa
+
 ## Cobertura de criterios
 
 | CA | Tareas de prueba |
@@ -333,3 +345,4 @@ Convenciones:
 | CA-26 | T002, T054, T094 (manual) |
 | CA-27 | T014, T054, T094 (manual) |
 | CA-28 | T054, T094 (manual) |
+| CA-29 | T101, T103 |

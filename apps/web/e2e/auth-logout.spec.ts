@@ -13,8 +13,8 @@ test('after signing out, back and direct URLs lead to the login (CA-04)', async 
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await expect(page).toHaveURL('/auth/login');
 
+  // No reload: what the browser shows right after "back" must not be the internal page.
   await page.goBack();
-  await page.reload();
   await expect(page).toHaveURL(/\/auth\/login/);
   await expect(page.getByRole('heading', { name: /Hola/ })).toHaveCount(0);
 

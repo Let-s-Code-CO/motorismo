@@ -12,11 +12,14 @@
 --     (Auth writes a random one when the invitation link is verified); the app activates with the
 --     service role after the person sets their own password (CA-14); linking a non-email identity
 --     such as Google activates (CA-26);
---   * no transition back to "invited"; identity columns are immutable.
+--   * RN-08: "active" requires having accepted the invitation once (activated_at, set on the
+--     first activation and immutable); a disabled user who never accepted goes back to "invited"
+--     when reactivated (CA-29), one who did accept never does;
+--   * identity columns are immutable.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(30);
 
 create function pg_temp.new_user(p_id uuid, p_email text, p_name text, p_role text)
 returns void language plpgsql as $$
@@ -188,6 +191,44 @@ select throws_ok(
 select lives_ok(
   $$ update public.profiles set status = 'disabled' where id = '00000000-0000-0000-0000-0000000000b1' $$,
   'disabling an operator is allowed (it never affects the admin count)'
+);
+
+-- RN-08 / CA-29: activated_at --------------------------------------------------------------------
+select isnt(
+  (select activated_at from public.profiles where id = '00000000-0000-0000-0000-0000000000b1'),
+  null,
+  'the first activation (password set) records activated_at'
+);
+select isnt(
+  (select activated_at from public.profiles where id = '00000000-0000-0000-0000-0000000000c1'),
+  null,
+  'activation by linking Google records activated_at'
+);
+-- b1 accepted its invitation and is now disabled.
+select throws_ok(
+  $$ update public.profiles set status = 'invited' where id = '00000000-0000-0000-0000-0000000000b1' $$,
+  '23514', null,
+  'a disabled user who had accepted the invitation cannot go back to invited'
+);
+select throws_ok(
+  $$ update public.profiles set activated_at = null where id = '00000000-0000-0000-0000-0000000000b1' $$,
+  '23514', null,
+  'activated_at is immutable once set'
+);
+
+select pg_temp.new_user('00000000-0000-0000-0000-0000000000c2', 'never@test.local', 'Nunca Aceptó', 'operator');
+select lives_ok(
+  $$ update public.profiles set status = 'disabled' where id = '00000000-0000-0000-0000-0000000000c2' $$,
+  'an invited user who never accepted can be disabled'
+);
+select throws_ok(
+  $$ update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000c2' $$,
+  '23514', null,
+  'a user who never accepted the invitation cannot become active by reactivation (RN-08)'
+);
+select lives_ok(
+  $$ update public.profiles set status = 'invited' where id = '00000000-0000-0000-0000-0000000000c2' $$,
+  'reactivating a user who never accepted returns them to invited (CA-29)'
 );
 
 select * from finish();

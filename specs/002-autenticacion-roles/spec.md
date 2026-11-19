@@ -106,6 +106,9 @@ negocio, para mantener el acceso al día sin borrar su historial.
   inicio de sesión con el mensaje de cuenta desactivada.
 - **CA-20** — Dado un administrador, cuando reactiva a un usuario desactivado, entonces ese
   usuario puede volver a entrar con su contraseña de siempre.
+- **CA-29** — Dado un usuario desactivado que nunca aceptó su invitación, cuando el
+  administrador lo reactiva, entonces vuelve a «Invitado» (no a «Activo», porque no tiene
+  contraseña) y se le puede reenviar la invitación.
 - **CA-21** — Dado que solo queda un administrador activo, cuando intenta desactivarse, cambiarse
   a operador o hacer lo mismo con el último administrador, entonces el sistema lo impide y explica
   que debe existir al menos un administrador activo.
@@ -170,6 +173,8 @@ contraseña.
   registrado.
 - **RN-07** — Los enlaces de invitación y de recuperación son de un solo uso y caducan (vigencia en
   «Suposiciones»).
+- **RN-08** — Un usuario solo puede estar «Activo» si alguna vez aceptó su invitación (creó su
+  contraseña o entró con Google).
 
 ## Datos (vista conceptual)
 
@@ -234,4 +239,6 @@ contraseña por autoservicio.
 | 2026-11-19 | Plan técnico aprobado. |
 | 2026-11-19 | Tareas aprobadas. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local. Pendiente: despliegue y verificación manual de Google (fase B5). |
-| 2026-11-19 | `/verificar`: 25 de 28 criterios ✅; CA-26–CA-28 pendientes de la prueba manual con Google; dos observaciones abiertas (prueba de CA-04 más débil que el criterio; reactivar a alguien que nunca aceptó la invitación lo deja «Activo»). Sigue en `implementada`. |
+| 2026-11-19 | Tras `/verificar`, con aprobación del usuario: se añaden CA-29 y RN-08 (reactivar a quien nunca aceptó lo devuelve a «Invitado»). |
+| 2026-11-19 | Correcciones de `/verificar` implementadas y probadas (CA-04 sin recarga, CA-29, RN-08). 26 de 29 criterios ✅; CA-26–CA-28 esperan la verificación manual con Google en preview (T094). |
+| 2026-11-19 | `/verificar` (antes del cambio anterior): 25 de 28 criterios ✅; CA-26–CA-28 pendientes de la prueba manual con Google; dos observaciones abiertas (prueba de CA-04 más débil que el criterio; reactivar a alguien que nunca aceptó la invitación lo deja «Activo»). Sigue en `implementada`. |

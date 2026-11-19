@@ -135,6 +135,8 @@ export const changeRole = async (input: unknown): Promise<ActionResult<UsersErro
  * Disables or reactivates another user (CA-19, CA-20). The profile status is the source of truth
  * (the proxy and RLS stop a disabled user on their next request); the Auth ban additionally stops
  * any NEW session. If Auth fails, the profile goes back to its previous status.
+ * Reactivating someone who never accepted their invitation returns them to "invited" so it can be
+ * re-sent (CA-29); the database refuses "active" for them anyway (RN-08).
  */
 export const setUserStatus = async (input: unknown): Promise<ActionResult<UsersErrorKey>> => {
   const admin = await getActiveAdmin();
@@ -147,15 +149,17 @@ export const setUserStatus = async (input: unknown): Promise<ActionResult<UsersE
   const supabase = await createSupabaseServerClient();
   const { data: current } = await supabase
     .from('profiles')
-    .select('status')
+    .select('status, activated_at')
     .eq('id', userId)
     .maybeSingle();
   if (!current) return { ok: false, error: 'generic' };
 
+  const target = status === 'active' && !current.activated_at ? 'invited' : status;
+
   const updateStatus = (next: typeof current.status) =>
     supabase.from('profiles').update({ status: next }).eq('id', userId).select('id').maybeSingle();
 
-  const { data, error } = await updateStatus(status);
+  const { data, error } = await updateStatus(target);
   if (error) return { ok: false, error: fromGuardError(error) };
   if (!data) return { ok: false, error: 'generic' };
 

@@ -36,8 +36,13 @@ where u.id in (
   '33333333-3333-3333-3333-333333333333'
 );
 
+-- All three accepted their invitation (activated_at is set on invited → active); then one is disabled.
 update public.profiles set status = 'active'
-where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+where id in (
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222',
+  '33333333-3333-3333-3333-333333333333'
+);
 
 update public.profiles set status = 'disabled'
 where id = '33333333-3333-3333-3333-333333333333';
