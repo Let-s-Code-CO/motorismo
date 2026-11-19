@@ -1,6 +1,6 @@
 ---
 spec: "004"
-estado: borrador
+estado: aprobado
 actualizado: 2026-11-19
 ---
 
@@ -403,3 +403,4 @@ antes de seguir.
 | Fecha | Cambio |
 |---|---|
 | 2026-11-19 | Creación (borrador). |
+| 2026-11-19 | Aprobado por el usuario. |

@@ -1,7 +1,7 @@
 ---
 id: "004"
 titulo: "Registro de clientes y sección Clientes"
-estado: aprobada
+estado: planificada
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -296,3 +296,4 @@ opcional (los vehículos van en otra spec).
 |---|---|
 | 2026-11-19 | Creación (borrador). |
 | 2026-11-19 | Aprobada por el usuario, con las suposiciones tal como están. Se aplican sus cambios a la spec 002. |
+| 2026-11-19 | Plan técnico aprobado. |
