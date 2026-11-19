@@ -141,7 +141,8 @@ contraseña.
 - **CA-26** — Dado un usuario activo o invitado cuyo correo coincide con su cuenta de Google,
   cuando elige «Continuar con Google» y autoriza, entonces entra a la app con su rol (y, si estaba
   «Invitado», pasa a «Activo»).
-- **CA-27** — Dada una cuenta de Google cuyo correo no pertenece a ningún usuario, cuando la usa
+- ~~**CA-27**~~ — *Reemplazado por la spec 004, CA-20: una cuenta de Google cuyo correo no
+  pertenece a nadie crea una cuenta de cliente.* Texto original: Dada una cuenta de Google cuyo correo no pertenece a ningún usuario, cuando la usa
   para entrar, entonces no entra, no se crea ningún usuario y ve «Esta cuenta de Google no tiene
   acceso. Pide al administrador que te invite.».
 - **CA-28** — Dado un usuario desactivado, cuando entra con Google, entonces no entra y ve el
@@ -152,8 +153,9 @@ contraseña.
 
 ## Requisitos funcionales
 
-- **RF-01** — Todas las páginas, salvo inicio de sesión, recuperación de contraseña y aceptación
-  de invitación, requieren sesión.
+- **RF-01** — Todas las páginas, salvo inicio de sesión, recuperación de contraseña, aceptación
+  de invitación y las públicas de la spec 004 (registro, confirmación de cuenta y política de
+  tratamiento de datos), requieren sesión.
 - **RF-02** — Cada usuario tiene exactamente un rol: operador o administrador.
 - **RF-03** — Los permisos se comprueban en el servidor para cada lectura y escritura, no solo en
   la interfaz.
@@ -166,7 +168,8 @@ contraseña.
 
 ## Reglas de negocio
 
-- **RN-01** — No hay registro público: solo entran personas invitadas por un administrador.
+- **RN-01** — No hay registro público **para el personal**: operadores y administradores solo
+  entran por invitación de un administrador. Los clientes sí pueden registrarse (spec 004).
 - **RN-02** — El correo identifica al usuario y es único (sin distinguir mayúsculas).
 - **RN-03** — Siempre debe existir al menos un administrador activo.
 - **RN-04** — La contraseña tiene al menos 8 caracteres.
@@ -200,7 +203,8 @@ contraseña.
 - Menú de navegación completo de la app (spec de navegación del backlog); aquí solo se muestra la
   gestión de usuarios al administrador y la cabecera con el usuario.
 - Que los empleados inicien sesión.
-- Verificación en dos pasos, otros proveedores (Apple, Microsoft…) y registro público.
+- Verificación en dos pasos y otros proveedores (Apple, Microsoft…). El registro público de
+  clientes llega con la spec 004.
 - Que el usuario edite su perfil (nombre, correo) o cambie su contraseña con sesión iniciada.
 - Registro de auditoría de quién cambió qué.
 - Recrear cuentas de la app anterior en Firebase.
@@ -247,3 +251,4 @@ contraseña por autoservicio.
 | 2026-11-19 | CA-30 implementado (migración `profile_avatar`, avatar con iniciales de respaldo). Pendiente su verificación manual con Google real en T094. |
 | 2026-11-19 | Correcciones de `/verificar` implementadas y probadas (CA-04 sin recarga, CA-29, RN-08). 26 de 29 criterios ✅; CA-26–CA-28 esperan la verificación manual con Google en preview (T094). |
 | 2026-11-19 | `/verificar` (antes del cambio anterior): 25 de 28 criterios ✅; CA-26–CA-28 pendientes de la prueba manual con Google; dos observaciones abiertas (prueba de CA-04 más débil que el criterio; reactivar a alguien que nunca aceptó la invitación lo deja «Activo»). Sigue en `implementada`. |
+| 2026-11-19 | Spec 004 aprobada: RN-01 se limita al personal, CA-27 queda reemplazado por 004 CA-20 y RF-01 amplía sus páginas públicas. |
