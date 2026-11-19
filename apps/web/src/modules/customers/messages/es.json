@@ -1,0 +1,112 @@
+{
+  "customers": {
+    "title": "Clientes",
+    "description": "Consulta, busca y registra a los clientes del negocio.",
+    "newButton": "Nuevo cliente",
+    "searchLabel": "Buscar clientes",
+    "searchPlaceholder": "Buscar por nombre, correo o celular",
+    "created": "Cliente registrado.",
+    "updated": "Datos del cliente guardados.",
+    "disabledNotice": "Cliente desactivado. Si tiene una sesión abierta, se cerrará en su siguiente acción.",
+    "reactivated": "Cliente reactivado.",
+    "summary": {
+      "filterLabel": "Filtrar por estado",
+      "registered": "Con cuenta",
+      "walk_in": "Sin cuenta",
+      "disabled": "Desactivados"
+    },
+    "status": {
+      "registered": "Con cuenta",
+      "walk_in": "Sin cuenta",
+      "disabled": "Desactivado"
+    },
+    "origin": {
+      "self_signup": "Registro propio",
+      "google": "Google",
+      "counter": "Punto de atención"
+    },
+    "filter": {
+      "total": "{count, plural, one {# cliente} other {# clientes}}",
+      "shown": "{shown} de {total, plural, one {# cliente} other {# clientes}}",
+      "search": "«{q}»"
+    },
+    "table": {
+      "label": "Clientes del negocio",
+      "customer": "Cliente",
+      "phone": "Celular",
+      "status": "Estado",
+      "since": "Alta",
+      "empty": "Todavía no hay clientes.",
+      "noMatch": "No hay clientes que coincidan con tu búsqueda.",
+      "emptyFiltered": "No hay clientes con este estado.",
+      "noEmail": "Sin correo",
+      "open": "Ver ficha de {name}"
+    },
+    "pagination": {
+      "label": "Páginas de clientes"
+    },
+    "detail": {
+      "back": "Volver a clientes",
+      "contact": "Datos de contacto",
+      "record": "Registro",
+      "email": "Correo",
+      "phone": "Celular",
+      "status": "Estado",
+      "origin": "Origen",
+      "since": "Cliente desde",
+      "consent": "Autorizó el tratamiento de datos",
+      "registeredBy": "Registrado por",
+      "none": "—",
+      "edit": "Editar datos",
+      "cancel": "Cancelar",
+      "save": "Guardar cambios",
+      "emailLocked": "Es el correo con el que entra a su cuenta: no se puede cambiar.",
+      "disable": "Desactivar cliente",
+      "reactivate": "Reactivar cliente",
+      "accessTitle": "Acceso",
+      "accessText": "Un cliente desactivado no puede entrar a su cuenta. Su historial se conserva."
+    },
+    "form": {
+      "title": "Nuevo cliente",
+      "description": "Registra a un cliente que llega al punto de atención sin cuenta.",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Ej. Laura Gómez",
+      "email": "Correo (opcional)",
+      "emailPlaceholder": "laura@correo.com",
+      "phone": "Celular (opcional)",
+      "phonePlaceholder": "300 123 4567",
+      "contactHint": "Indica al menos un correo o un celular.",
+      "consent": "El cliente autorizó el tratamiento de sus datos personales según la <link>política de tratamiento de datos</link>.",
+      "submit": "Registrar cliente",
+      "cancel": "Cancelar"
+    },
+    "profile": {
+      "title": "Mi perfil",
+      "description": "Mantén tus datos al día para que podamos contactarte.",
+      "fullName": "Nombre completo",
+      "email": "Correo",
+      "emailHint": "Tu correo no se puede cambiar.",
+      "phone": "Celular (opcional)",
+      "phonePlaceholder": "300 123 4567",
+      "since": "Cliente desde el {date}",
+      "save": "Guardar cambios",
+      "saved": "Tus datos se guardaron."
+    },
+    "validation": {
+      "fullNameRequired": "Introduce el nombre.",
+      "fullNameTooLong": "El nombre no puede superar 120 caracteres.",
+      "emailInvalid": "Introduce un correo válido.",
+      "phoneInvalid": "Introduce un celular colombiano de 10 dígitos que empiece por 3.",
+      "contactRequired": "Indica al menos un correo o un celular.",
+      "consentRequired": "Confirma que el cliente autorizó el tratamiento de sus datos."
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalidInput": "Revisa los datos del formulario.",
+      "emailTaken": "Ya existe una cuenta con este correo.",
+      "emailLocked": "El correo de un cliente con cuenta no se puede cambiar.",
+      "notFound": "Este cliente ya no existe.",
+      "generic": "Algo salió mal. Inténtalo de nuevo."
+    }
+  }
+}

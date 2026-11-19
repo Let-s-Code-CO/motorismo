@@ -4,12 +4,15 @@ import { inject } from 'vitest';
 
 import type { Database } from '@motorismo/supabase/types';
 
-/** Seed users from packages/supabase/supabase/seeds/01_users.sql. */
+/** Seed users from packages/supabase/supabase/seeds/01_users.sql and 02_customers.sql. */
 export const SEED = {
   password: 'motorismo-local',
   admin: 'sebastian.pulido@motorismo.test',
   operator: 'operador@motorismo.test',
   disabled: 'desactivado@motorismo.test',
+  /** Seed customer with an account (seeds/02_customers.sql). */
+  customer: 'cliente@motorismo.test',
+  disabledCustomer: 'cliente.desactivado@motorismo.test',
 } as const;
 
 const config = () => inject('sandbox');
@@ -36,13 +39,19 @@ export const signedInAs = async (email: string, password: string = SEED.password
 export const uniqueEmail = (label: string) =>
   `sandbox-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@motorismo.test`;
 
-/** Removes users created by a suite (profile first: profiles are never deleted by the app). */
+/** Removes users and customers created by a suite (rows first: the app never deletes them). */
 export const deleteUsersByEmail = async (emails: string[]) => {
   const admin = adminClient();
+  await admin.from('staff_invitations').delete().in('email', emails);
+  // Customers (with or without account) first: an account with a customer cannot be deleted.
+  await admin.from('customers').delete().in('email', emails);
   const { data } = await admin.from('profiles').select('id').in('email', emails);
   for (const { id } of data ?? []) {
     await admin.from('profiles').delete().eq('id', id);
-    await admin.auth.admin.deleteUser(id);
+  }
+  const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  for (const user of users?.users ?? []) {
+    if (user.email && emails.includes(user.email)) await admin.auth.admin.deleteUser(user.id);
   }
 };
 
@@ -93,11 +102,13 @@ export const createActiveUser = async ({
   password?: string;
 }) => {
   const admin = adminClient();
+  // Staff only come from a pending invitation (spec 004): never from the sign-up metadata.
+  await admin.from('staff_invitations').insert({ email, full_name: fullName, role });
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: fullName, role },
+    user_metadata: { full_name: fullName },
   });
   if (error) throw new Error(`createUser failed: ${error.code}`);
   await admin.from('profiles').update({ status: 'active' }).eq('id', data.user.id);

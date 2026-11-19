@@ -1,9 +1,10 @@
 -- profiles — business rules enforced in Postgres (spec 002).
 --
 -- Guards:
---   * on_auth_user_created: every auth user gets a profile built from the invitation metadata
---     (full_name, role, invited_by), starting as "invited"; a missing name or unknown role aborts
---     the invitation, so a user can never exist without a valid profile;
+--   * on_auth_user_created: an auth user with a pending staff invitation gets a profile built from
+--     that invitation (full_name, role, invited_by), starting as "invited" (spec 004: never from
+--     the sign-up metadata, see 04_staff_invitations); an invitation with an unknown role cannot
+--     exist, and a user without invitation nor name is rejected;
 --   * an admin changes other users' role/status, effective on their next request (CA-18);
 --   * nobody — not even an admin — changes their own role or status through the API (CA-10);
 --   * at least one active admin always remains, even for service-role updates (CA-21, RN-03);
@@ -24,16 +25,18 @@ select plan(30);
 create function pg_temp.new_user(p_id uuid, p_email text, p_name text, p_role text)
 returns void language plpgsql as $$
 begin
+  insert into public.staff_invitations (email, full_name, role, invited_by)
+  values (p_email, p_name, p_role::public.user_role, '00000000-0000-0000-0000-0000000000a1');
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, raw_user_meta_data)
   values (p_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', p_email, '',
-          jsonb_build_object('full_name', p_name, 'role', p_role,
-                             'invited_by', '00000000-0000-0000-0000-0000000000a1'));
+          '{}');
 end $$;
 
 -- The first admin is invited by nobody.
+insert into public.staff_invitations (email, full_name, role) values ('admin@test.local', 'Ana Admin', 'admin');
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, raw_user_meta_data)
 values ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-000000000000', 'authenticated',
-        'authenticated', 'admin@test.local', '', '{"full_name":"Ana Admin","role":"admin"}');
+        'authenticated', 'admin@test.local', '', '{}');
 update public.profiles set status = 'active' where id = '00000000-0000-0000-0000-0000000000a1';
 
 -- State-independent: demote any other admin (e.g. local seeds) so a1 is the only active admin.
@@ -55,17 +58,16 @@ select results_eq(
 select throws_ok(
   $$ insert into auth.users (id, instance_id, aud, role, email, encrypted_password, raw_user_meta_data)
      values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated',
-             'authenticated', 'noname@test.local', '', '{"role":"operator"}') $$,
+             'authenticated', 'noname@test.local', '', '{"data_consent":true}') $$,
   '23514', null,
-  'creating an auth user without full_name is rejected (no user without a valid profile)'
+  'creating an auth user without invitation nor full_name is rejected'
 );
 
 select throws_ok(
-  $$ insert into auth.users (id, instance_id, aud, role, email, encrypted_password, raw_user_meta_data)
-     values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated',
-             'authenticated', 'boss@test.local', '', '{"full_name":"Boss","role":"boss"}') $$,
-  '22023', null,
-  'creating an auth user with an unknown role is rejected'
+  $$ insert into public.staff_invitations (email, full_name, role)
+     values ('boss@test.local', 'Boss', 'boss') $$,
+  '22P02', null,
+  'a staff invitation with an unknown role is rejected'
 );
 
 -- CA-14 / CA-26: activation ---------------------------------------------------------------------

@@ -70,8 +70,7 @@
     },
     "filter": {
       "total": "{count, plural, one {# usuario} other {# usuarios}}",
-      "shown": "{shown} de {total, plural, one {# usuario} other {# usuarios}} · {status}",
-      "reset": "Ver todos"
+      "shown": "{shown} de {total, plural, one {# usuario} other {# usuarios}} · {status}"
     }
   }
 }

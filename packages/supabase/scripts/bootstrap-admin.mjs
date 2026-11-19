@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Creates the FIRST administrator of an environment, by invitation (spec 002, RF-06).
+ * Creates the FIRST administrator of an environment, by invitation (spec 002, RF-06; spec 004:
+ * through public.staff_invitations, the only way to become staff).
  *
  *   SUPABASE_URL=… SUPABASE_SECRET_KEY=… \
  *     pnpm --filter @motorismo/supabase admin:bootstrap -- --email dueño@ejemplo.com --name "Nombre"
@@ -46,10 +47,21 @@ const { count, error: countError } = await supabase
 if (countError) fail(`Could not read profiles: ${countError.message}`);
 if ((count ?? 0) > 0) fail('An admin already exists. Manage users from the app instead.');
 
-const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
-  data: { full_name: name, role: 'admin' },
-});
+// Spec 004: staff only come from a pending invitation (the sign-up metadata is never trusted).
+const { data: inUse, error: inUseError } = await supabase.rpc('email_in_use', { p_email: email });
+if (inUseError) fail(`Could not check the email: ${inUseError.message}`);
+if (inUse) fail('That email already belongs to an account, a customer or a pending invitation.');
 
-if (error) fail(`Invitation failed: ${error.message}`);
+const { error: invitationError } = await supabase
+  .from('staff_invitations')
+  .insert({ email, full_name: name, role: 'admin' });
+if (invitationError) fail(`Could not create the invitation: ${invitationError.message}`);
+
+const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
+
+if (error) {
+  await supabase.from('staff_invitations').delete().eq('email', email);
+  fail(`Invitation failed: ${error.message}`);
+}
 
 console.log(`✓ Invited ${data.user.email} as the first admin. They must open the email link.`);

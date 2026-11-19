@@ -4,15 +4,15 @@
  * Guards:
  * - CA-09: an operator who bypasses the UI and calls the API directly with their own session can
  *   only read their own profile and cannot change anyone's role (RLS).
- * - RN-01 / CA-27: public sign-up is disabled, so nobody (including an unknown Google account)
- *   can create a user by themselves.
+ * - Public sign-up creates customers only, never staff: see sign-up.sandbox.test.ts (spec 004,
+ *   which replaced spec 002's RN-01 / CA-27).
  * - RF-06: the first-admin script refuses to run once an admin exists.
  */
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { inject } from 'vitest';
 
-import { SEED, adminClient, publicClient, signedInAs, uniqueEmail } from './support/sandbox';
+import { SEED, adminClient, signedInAs } from './support/sandbox';
 
 describe('an operator calling the API directly (CA-09)', () => {
   it('only reads their own profile', async () => {
@@ -47,21 +47,6 @@ describe('an operator calling the API directly (CA-09)', () => {
       .eq('id', userId)
       .single();
     expect(stillOperator?.role).toBe('operator');
-  });
-});
-
-describe('public sign-up (RN-01, CA-27)', () => {
-  it('is rejected with signup_disabled and creates no user', async () => {
-    const email = uniqueEmail('signup');
-
-    const { error } = await publicClient().auth.signUp({ email, password: 'motorismo-local' });
-
-    expect(error?.code).toBe('signup_disabled');
-    const { count } = await adminClient()
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('email', email);
-    expect(count).toBe(0);
   });
 });
 

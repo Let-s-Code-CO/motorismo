@@ -6,11 +6,19 @@ import {
 } from '@web/modules/auth/utils/activity-cookie.utils';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 
-const LINK_TYPES = ['invite', 'recovery'] as const;
+const LINK_TYPES = ['invite', 'recovery', 'email'] as const;
+
+/** Where each valid link leads: create a password, or "Mi perfil" after confirming a sign-up. */
+const DESTINATION: Record<(typeof LINK_TYPES)[number], string> = {
+  invite: '/auth/set-password',
+  recovery: '/auth/set-password',
+  email: '/profile', // spec 004, CA-03
+};
 
 /**
- * Landing route of invitation and recovery emails (token_hash flow). A valid link opens a session
- * and leads to "create your password"; anything else leads to the invalid-link page for its type.
+ * Landing route of invitation, recovery and sign-up confirmation emails (token_hash flow). A valid
+ * link opens a session and leads to its destination; anything else leads to the invalid-link page
+ * for its type.
  */
 export const GET = async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
@@ -32,7 +40,7 @@ export const GET = async (request: NextRequest) => {
   }
   if (error) return invalidLink();
 
-  const response = NextResponse.redirect(new URL('/auth/set-password', request.url));
+  const response = NextResponse.redirect(new URL(DESTINATION[type], request.url));
   response.cookies.set(ACTIVITY_COOKIE, String(Date.now()), activityCookieOptions);
   return response;
 };

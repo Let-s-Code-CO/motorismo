@@ -42,8 +42,8 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
   botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Sobre la
   lista va una línea de conteo («1 de 4 usuarios · Invitados», `aria-live`) con un botón fantasma
-  «Ver todos» (no un chip). Referencia: `users-summary`, `users-filter-bar` y
-  `users-filter.utils` (spec 003, CA-09); al aparecer la segunda pantalla, extraerlos a `core`.
+  «Ver todos» (no un chip). Componentes compartidos en `core`: `summary-filter-cards`,
+  `filter-bar` y `status-filter.utils` (specs 003 CA-09 y 004 CA-17; los usan Usuarios y Clientes).
 - Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
   pantallas nuevas se añaden a esa auditoría.
 - i18n: next-intl 4, **solo español**, sin segmento de idioma en la URL.

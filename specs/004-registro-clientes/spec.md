@@ -1,7 +1,7 @@
 ---
 id: "004"
 titulo: "Registro de clientes y sección Clientes"
-estado: planificada
+estado: en-progreso
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -254,8 +254,9 @@ su historial.
 - El enlace de confirmación de cuenta caduca a las **24 horas** (la plataforma usa una sola
   vigencia para todos los enlaces por correo, como en la spec 002).
 - El celular **no es único**: dos clientes pueden compartirlo (por ejemplo, una familia).
-- El texto de la **política de tratamiento de datos** lo entrega el negocio. Mientras tanto se
-  publica un texto base que el negocio debe revisar **antes de abrir el registro en producción**.
+- La **política de tratamiento de datos** es la estándar en Colombia (Ley 1581 de 2012 y Decreto
+  1074 de 2015), con los datos que ya conocemos del negocio (nombre, dirección e Instagram como
+  canal de atención). Decidido con el usuario el 2026-11-19.
 - Una persona del personal que también es cliente no puede tener las dos cuentas con el mismo
   correo (RN-01); si se necesita, usa otro correo para la cuenta de cliente.
 - Los clientes registrados con Google quedan sin celular hasta que lo añadan en «Mi perfil».
@@ -297,3 +298,4 @@ opcional (los vehículos van en otra spec).
 | 2026-11-19 | Creación (borrador). |
 | 2026-11-19 | Aprobada por el usuario, con las suposiciones tal como están. Se aplican sus cambios a la spec 002. |
 | 2026-11-19 | Plan técnico aprobado. |
+| 2026-11-19 | La política de tratamiento de datos se redacta con el estándar colombiano (Ley 1581 de 2012), a petición del usuario: se cierra la suposición que dejaba el texto pendiente del negocio. |

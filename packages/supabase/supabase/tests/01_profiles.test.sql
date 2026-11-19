@@ -14,14 +14,16 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(26);
 
--- Fixtures: users are created the way Auth creates them (insert into auth.users); the
--- on_auth_user_created trigger builds each profile from raw_user_meta_data.
+-- Fixtures: staff are created the way the app does it (spec 004): a pending invitation, then the
+-- auth user (insert into auth.users); on_auth_user_created builds the profile from the invitation.
 create function pg_temp.new_user(p_id uuid, p_email text, p_name text, p_role text, p_status text)
 returns void language plpgsql as $$
 begin
+  insert into public.staff_invitations (email, full_name, role)
+  values (p_email, p_name, p_role::public.user_role);
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, raw_user_meta_data)
   values (p_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', p_email, '',
-          jsonb_build_object('full_name', p_name, 'role', p_role));
+          '{}');
   update public.profiles set status = p_status::public.user_status where id = p_id;
 end $$;
 

@@ -5,14 +5,14 @@ import { NextIntlClientProvider } from 'next-intl';
 import { HeroUIProvider } from '@heroui/react';
 import { type RenderOptions, render } from '@testing-library/react';
 
-import { DEFAULT_LOCALE, messages } from '@web/i18n/messages';
+import { DEFAULT_LOCALE, TIME_ZONE, messages } from '@web/i18n/messages';
 
 /**
  * Renders with the same providers the app uses and the REAL Spanish messages, so assertions read
  * the text a user sees and a missing translation key fails the test.
  */
 const AllProviders = ({ children }: { children: ReactNode }) => (
-  <NextIntlClientProvider locale={DEFAULT_LOCALE} messages={messages}>
+  <NextIntlClientProvider locale={DEFAULT_LOCALE} timeZone={TIME_ZONE} messages={messages}>
     <HeroUIProvider locale={DEFAULT_LOCALE}>{children}</HeroUIProvider>
   </NextIntlClientProvider>
 );

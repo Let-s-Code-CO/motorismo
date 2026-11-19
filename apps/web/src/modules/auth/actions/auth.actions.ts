@@ -2,10 +2,13 @@
 
 import { redirect } from 'next/navigation';
 
+import { z } from 'zod';
+
 import { clearActivityCookie, touchActivityCookie } from '@web/modules/auth/api/activity.server';
 import { forgotPasswordSchema } from '@web/modules/auth/schemas/forgot-password.schema';
 import { loginSchema } from '@web/modules/auth/schemas/login.schema';
 import { setPasswordSchema } from '@web/modules/auth/schemas/set-password.schema';
+import { signUpSchema } from '@web/modules/auth/schemas/sign-up.schema';
 import { sanitizeNextPath } from '@web/modules/auth/utils/access.utils';
 import { type AuthErrorKey, mapAuthError } from '@web/modules/auth/utils/auth-errors.utils';
 import { createSupabaseAdminClient } from '@web/modules/core/lib/supabase-admin.lib';
@@ -79,7 +82,10 @@ export const requestPasswordReset = async (
   return { ok: true };
 };
 
-/** Starts "Continuar con Google" (HU-06). Only already-invited emails get in (sign-up is disabled). */
+/**
+ * Starts "Continuar con Google" (HU-06). Staff enter with their account; an unknown Google email
+ * becomes a customer account (spec 004, CA-20 — the consent notice is shown next to the button).
+ */
 export const signInWithGoogle = async (
   next?: string | null
 ): Promise<ActionResult<AuthErrorKey>> => {
@@ -94,4 +100,56 @@ export const signInWithGoogle = async (
   if (error || !data.url) return { ok: false, error: mapAuthError(error?.code) };
 
   redirect(data.url);
+};
+
+type SignUpErrorKey = 'invalidInput' | 'rateLimited' | 'generic';
+
+/**
+ * Customer sign-up with email and password (spec 004, HU-01). Auth sends the confirmation email
+ * (CA-02); the customer exists once it is confirmed (CA-19). The form data and the consent travel
+ * as metadata, and the database validates them again (RN-04, RN-03). An email that already has an
+ * account gets the same answer as a new one (CA-07, RN-06): Auth changes nothing in that case.
+ */
+export const signUp = async (input: unknown): Promise<ActionResult<SignUpErrorKey>> => {
+  const parsed = signUpSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: 'invalidInput',
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+  const { email, password, full_name, phone, data_consent } = parsed.data;
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name, phone: phone ?? null, data_consent },
+      emailRedirectTo: `${getSiteUrl()}/auth/confirm`,
+    },
+  });
+
+  if (!error || error.code === 'user_already_exists') return { ok: true };
+  const key = mapAuthError(error.code);
+  return { ok: false, error: key === 'rateLimited' ? 'rateLimited' : 'generic' };
+};
+
+/**
+ * Re-sends the sign-up confirmation email (CA-04, CA-05). Like the password recovery, the answer
+ * is always the same, so it cannot be used to discover which emails have a pending sign-up.
+ */
+export const resendConfirmation = async (rawEmail: string): Promise<ActionResult<never>> => {
+  const parsed = forgotPasswordSchema.safeParse({ email: rawEmail });
+  if (!parsed.success) return { ok: true };
+
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.resend({
+    type: 'signup',
+    email: parsed.data.email,
+    options: { emailRedirectTo: `${getSiteUrl()}/auth/confirm` },
+  });
+
+  return { ok: true };
 };

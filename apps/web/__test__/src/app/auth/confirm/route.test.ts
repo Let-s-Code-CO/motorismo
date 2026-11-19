@@ -1,6 +1,7 @@
 // @vitest-environment node
 /**
- * GET /auth/confirm — where invitation and recovery emails land (spec 002).
+ * GET /auth/confirm — where invitation, recovery (spec 002) and sign-up confirmation (spec 004)
+ * emails land.
  *
  * Guards:
  * - CA-14 / CA-23: a valid link opens a session and leads to "create your password", and starts
@@ -8,6 +9,9 @@
  * - CA-15 / CA-24: an expired, used or malformed link leads to the "invalid link" page for its
  *   type, so the page can tell an invited person to ask for a new invitation and a user who
  *   forgot their password to request a new link.
+ * - Spec 004, CA-03: a valid sign-up confirmation opens the session and leads to "Mi perfil";
+ *   CA-05: an expired or used one leads to the invalid-link page for confirmations (which offers a
+ *   new email).
  * - CA-25: a disabled account that follows a recovery link gets no session and is told its account
  *   is disabled (not that the link expired).
  */
@@ -55,6 +59,24 @@ describe('GET /auth/confirm', () => {
       expect(response.headers.get('set-cookie')).toBeNull();
     }
   );
+
+  it('confirms a sign-up and leads to "Mi perfil" with the activity clock started (spec 004, CA-03)', async () => {
+    verifyOtp.mockResolvedValue({ error: null });
+
+    const response = await GET(request('?token_hash=abc&type=email'));
+
+    expect(verifyOtp).toHaveBeenCalledWith({ type: 'email', token_hash: 'abc' });
+    expect(locationOf(response)).toBe('/profile');
+    expect(response.headers.get('set-cookie')).toContain('mt_last_seen=');
+  });
+
+  it('sends an expired or used sign-up confirmation to its invalid-link page (spec 004, CA-05)', async () => {
+    verifyOtp.mockResolvedValue({ error: { code: 'otp_expired', message: 'expired' } });
+
+    const response = await GET(request('?token_hash=abc&type=email'));
+
+    expect(locationOf(response)).toBe('/auth/invalid-link?type=email');
+  });
 
   it('sends a disabled account to the login with the disabled message (CA-25)', async () => {
     verifyOtp.mockResolvedValue({ error: { code: 'user_banned', message: 'banned' } });

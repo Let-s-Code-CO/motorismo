@@ -20,7 +20,7 @@ Convenciones:
 
 ### Fase A0 — Spike de Auth
 
-- [ ] T001 Comprobar contra el Supabase local, con el registro y la confirmación activados
+- [x] T001 Comprobar contra el Supabase local, con el registro y la confirmación activados
       temporalmente (script en el scratchpad, sin tocar el repo), los puntos 1 a 4 de «Riesgos»
       del plan:
       1. `provider` en `raw_app_meta_data` al hacer el `insert`;
@@ -33,7 +33,7 @@ Convenciones:
 
 ### Fase A1 — Base de datos
 
-- [ ] T002 [P] pgTAP `sb/tests/04_staff_invitations.test.sql`:
+- [x] T002 [P] pgTAP `sb/tests/04_staff_invitations.test.sql`:
       - estructura, RLS, `policies_are` y privilegios (`anon` nada; `authenticated` solo
         `insert`/`delete` como admin);
       - la invitación crea el `profile` con su nombre, rol e invitador y se consume;
@@ -43,16 +43,16 @@ Convenciones:
         (RN-01)
 
       → `pnpm db:test` **rojo**
-- [ ] T003 [P] Ajustar los fixtures de `sb/tests/01_profiles`, `02_profiles_rules` y
+- [x] T003 [P] Ajustar los fixtures de `sb/tests/01_profiles`, `02_profiles_rules` y
       `03_profiles_avatar`: crear la invitación antes de insertar en `auth.users`
       → siguen en rojo hasta T004 (dependen de la tabla nueva)
-- [ ] T004 Migración `<ts>_staff_invitations.sql` (`migration:new staff_invitations < /dev/null`):
+- [x] T004 Migración `<ts>_staff_invitations.sql` (`migration:new staff_invitations < /dev/null`):
       - tabla, RLS y privilegios;
       - `handle_new_auth_user()` reescrita (invitación → personal; si no, validación de cliente);
       - `email_in_use()`
 
       (RN-01, RN-04, RN-11) → T002 y T003 en **verde**
-- [ ] T005 [P] pgTAP `sb/tests/05_customers.test.sql`, parte A:
+- [x] T005 [P] pgTAP `sb/tests/05_customers.test.sql`, parte A:
       - enums, columnas, checks e índices; RLS, `policies_are` y privilegios por columna;
       - `status` generado (`registered`/`walk_in`/`disabled`);
       - normalización del celular y del correo (RN-03);
@@ -65,7 +65,7 @@ Convenciones:
       - `current_account()` e `is_staff()`
 
       → **rojo**
-- [ ] T006 Migración `<ts>_customers.sql`:
+- [x] T006 Migración `<ts>_customers.sql`:
       - extensiones `unaccent` y `pg_trgm`, `immutable_unaccent()`;
       - enums, tabla con columnas generadas e índices (incluido GIN trigram);
       - trigger de alta al confirmar (con vinculación de ficha);
@@ -74,7 +74,7 @@ Convenciones:
       - `is_staff()`, `current_account()`, `customer_status_counts()`, RLS y privilegios
 
       → T005 en **verde**
-- [ ] T007 [P] `sb/config.toml`:
+- [x] T007 [P] `sb/config.toml`:
       - `enable_signup = true` y `[auth.email] enable_confirmations = true`;
       - plantilla `confirmation`;
       - `email_sent` local suficiente para las pruebas.
@@ -82,7 +82,7 @@ Convenciones:
       Plantilla `sb/templates/confirmation.html` en español, con enlace a
       `/auth/confirm?token_hash=…&type=email` (RF-03, RNF idioma)
       → `pnpm db:stop && pnpm db:start` sin errores
-- [ ] T008 Seeds:
+- [x] T008 Seeds:
       - `01_users.sql` crea primero las invitaciones del personal;
       - nuevo `02_customers.sql` con `cliente@` (con cuenta), `cliente.google@` (con foto), dos
         sin cuenta (uno solo con celular) y `cliente.desactivado@` (baneado)
@@ -90,34 +90,34 @@ Convenciones:
       → `pnpm db:reset` sin errores y login de `cliente@` en Studio/API.
       **Cuenta de prueba para usar la app como cliente** (petición del usuario):
       `cliente@motorismo.test` / `motorismo-local`, con celular y entrada directa a «Mi perfil»
-- [ ] T009 `pnpm db:types` + `scripts/bootstrap-admin.mjs` (crea la invitación antes de invitar)
+- [x] T009 `pnpm db:types` + `scripts/bootstrap-admin.mjs` (crea la invitación antes de invitar)
       → `types:check` en verde; el bootstrap funciona en el sandbox y se niega si ya hay un admin
 
 ### Fase A2 — Pruebas de la aplicación (rojo)
 
-- [ ] T010 [P] `access.utils.test.ts`, ampliado:
+- [x] T010 [P] `access.utils.test.ts`, ampliado:
       - cuenta `customer` activa y desactivada;
       - el cliente en `/` o en una ruta de entrada va a `/profile`;
       - `/auth/sign-up` es de entrada y `/privacy` es pública con y sin sesión;
       - un personal `invited` sin sesión de enlace (`amr`) sale
 
       (CA-09, CA-29, RF-02, RF-03) → **rojo**
-- [ ] T011 [P] `phone.utils.test.ts` (`+57`, espacios, guiones, 9/11 dígitos, no empieza por 3) y
+- [x] T011 [P] `phone.utils.test.ts` (`+57`, espacios, guiones, 9/11 dígitos, no empieza por 3) y
       `sign-up.schema.test.ts` (cada campo y el consentimiento) (CA-06, RN-03, RN-04) → **rojo**
-- [ ] T012 [P] `auth-errors.utils.test.ts`: `email_not_confirmed` se traduce a
+- [x] T012 [P] `auth-errors.utils.test.ts`: `email_not_confirmed` se traduce a
       `emailNotConfirmed` y `user_banned` a cuenta desactivada (CA-04, CA-22) → **rojo**
-- [ ] T013 [P] `sign-up-form.component.test.tsx`: campos, errores junto a cada campo, casilla con
+- [x] T013 [P] `sign-up-form.component.test.tsx`: campos, errores junto a cada campo, casilla con
       enlace a la política y mensaje de «revisa tu correo» (CA-01, CA-02, CA-06) → **rojo**
-- [ ] T014 [P] `nav-links.component.test.tsx`: el cliente solo ve «Mi perfil»; el operador ve
+- [x] T014 [P] `nav-links.component.test.tsx`: el cliente solo ve «Mi perfil»; el operador ve
       Inicio y Clientes; el admin, además, Usuarios (CA-08, RF-04) → **rojo**
-- [ ] T015 [P] `customer.schema.test.ts` (Mi perfil) y `my-profile-form.component.test.tsx`
+- [x] T015 [P] `customer.schema.test.ts` (Mi perfil) y `my-profile-form.component.test.tsx`
       (correo de solo lectura, errores, «Tus datos se guardaron.») (CA-13, CA-14) → **rojo**
-- [ ] T016 [P] `customers-filter.utils.test.ts`: parseo de `q`/`status`/`page` (valores
+- [x] T016 [P] `customers-filter.utils.test.ts`: parseo de `q`/`status`/`page` (valores
       inválidos, página 0 o negativa → 1) y `normalizeSearch` (mayúsculas y tildes)
       (CA-16, CA-17, RF-05) → **rojo**
-- [ ] T017 [P] Pruebas de `core`: `summary-filter-cards` y `filter-bar`, a partir de las de
+- [x] T017 [P] Pruebas de `core`: `summary-filter-cards` y `filter-bar`, a partir de las de
       `users-summary`/`users-filter-bar`, más `status-filter.utils` (CA-17) → **rojo**
-- [ ] T018 Sandbox `__test__/sandbox/sign-up.sandbox.test.ts`:
+- [x] T018 Sandbox `__test__/sandbox/sign-up.sandbox.test.ts`:
       - registro → correo en Mailpit, sin sesión y sin ficha (CA-02, CA-19);
       - con la contraseña correcta, sin confirmar → `email_not_confirmed` (CA-04);
       - un correo existente da la misma respuesta y su nombre y contraseña quedan intactos
@@ -126,79 +126,79 @@ Convenciones:
 
       Los fixtures de personal en `__test__/sandbox/support` y `e2e/support` crean antes la
       invitación → **rojo**
-- [ ] T019 Sandbox `__test__/sandbox/customers-access.sandbox.test.ts`, con la sesión de un
+- [x] T019 Sandbox `__test__/sandbox/customers-access.sandbox.test.ts`, con la sesión de un
       cliente: no lee otros clientes ni `profiles`, no cambia `disabled_at` ni su correo, y no
       inserta clientes (CA-10) → **rojo**
 
 ### Fase A3 — Implementación (verde)
 
-- [ ] T020 `users.actions.ts`:
+- [x] T020 `users.actions.ts`:
       - `inviteUser` comprueba `email_in_use`, inserta la invitación con la sesión del admin
         (RLS), invita y, si falla el envío, borra la invitación;
       - `resendInvite` sin cambios de comportamiento
 
       → `invite.sandbox.test.ts` y `e2e/invite.spec.ts` (spec 002) en **verde**
-- [ ] T021 `auth.types.ts` + `auth.server.ts`:
+- [x] T021 `auth.types.ts` + `auth.server.ts`:
       - `CurrentAccount` como unión discriminada;
       - `getCurrentAccount`, `requireStaff`, `requireCustomer`, `getActiveStaff` y
         `getActiveAdmin`;
       - `(app)/layout`, `(app)/page` y `admin/users/page` pasan a usarlos
 
       → `ts:check` y pruebas de 002 en verde
-- [ ] T022 `access.utils.ts` + `proxy.ts`: `rpc('current_account')` y `amr` de los claims. Además
+- [x] T022 `access.utils.ts` + `proxy.ts`: `rpc('current_account')` y `amr` de los claims. Además
       `setPassword` solo activa con una sesión de enlace (riesgo 2) → T010 en **verde**
-- [ ] T023 [P] `core/utils/phone.utils.ts` y `auth/schemas/sign-up.schema.ts` → T011 en **verde**
-- [ ] T024 Acciones `signUp` y `resendConfirmation`, más `mapAuthError` → T012 y T018 en
+- [x] T023 [P] `core/utils/phone.utils.ts` y `auth/schemas/sign-up.schema.ts` → T011 en **verde**
+- [x] T024 Acciones `signUp` y `resendConfirmation`, más `mapAuthError` → T012 y T018 en
       **verde**
-- [ ] T025 Página `/auth/sign-up` + `sign-up-form`. En el login, enlace «Crear cuenta» y, si el
+- [x] T025 Página `/auth/sign-up` + `sign-up-form`. En el login, enlace «Crear cuenta» y, si el
       correo no está confirmado, mensaje con «Reenviar correo de confirmación» (CA-01, CA-04)
       → T013 en **verde**
-- [ ] T026 La ruta `/auth/confirm` acepta `type=email` y lleva a `/profile`. `invalid-link` de
+- [x] T026 La ruta `/auth/confirm` acepta `type=email` y lleva a `/profile`. `invalid-link` de
       tipo `email` ofrece reenviar la confirmación. Más la prueba unitaria de la ruta
       (CA-03, CA-05) → verde
-- [ ] T027 [P] Página `/privacy` con el texto base de la política, en `messages/es.json`
+- [x] T027 [P] Página `/privacy` con el texto base de la política, en `messages/es.json`
       (RF-03, RN-04)
-- [ ] T028 Cabecera según la cuenta: `nav-links`, `user-menu`, chip «Cliente» y avatar con foto
+- [x] T028 Cabecera según la cuenta: `nav-links`, `user-menu`, chip «Cliente» y avatar con foto
       (CA-08, RF-04) → T014 en **verde**
-- [ ] T029 `/profile`: página, `my-profile-form` y la acción `updateMyProfile` (sesión del
+- [x] T029 `/profile`: página, `my-profile-form` y la acción `updateMyProfile` (sesión del
       cliente, RLS) (CA-12, CA-13, CA-14) → T015 en **verde**
-- [ ] T030 Extracción a `core` de `summary-filter-cards`, `filter-bar` y `status-filter.utils`.
+- [x] T030 Extracción a `core` de `summary-filter-cards`, `filter-bar` y `status-filter.utils`.
       `users` los usa y se borran los suyos → T017 y las pruebas de `users` en **verde**, sin
       cambios en `e2e/users-filter.spec.ts`
-- [ ] T031 Módulo `customers`: `customers-filter.utils`, `api/customers.server.ts`
+- [x] T031 Módulo `customers`: `customers-filter.utils`, `api/customers.server.ts`
       (`listCustomers` con `range` + `count`, `getCustomer`, `countByStatus`, `getMyCustomer`)
       y `messages/es.json` registrado en `i18n/messages.ts` → T016 en **verde**
-- [ ] T032 `/customers`:
+- [x] T032 `/customers`:
       - `customers-screen` y `customers-table`, con estado, origen y avatar;
       - búsqueda con espera de 300 ms en la URL;
       - tarjetas-filtro y paginación de 20
 
       (CA-15, CA-16, CA-17, RF-05) → verificado en el navegador
-- [ ] T033 `/customers/[id]` (ficha de solo lectura en este bloque: CA-18). Tarjeta «Clientes» en
+- [x] T033 `/customers/[id]` (ficha de solo lectura en este bloque: CA-18). Tarjeta «Clientes» en
       el inicio del personal y enlace en el menú (RF-04) → verificado en el navegador
 
 ### Fase A4 — E2E
 
-- [ ] T034 Helpers de Mailpit para el correo de confirmación en `e2e/support`. Nuevo
+- [x] T034 Helpers de Mailpit para el correo de confirmación en `e2e/support`. Nuevo
       `e2e/sign-up.spec.ts`: registro → mensaje → confirmar → «Mi perfil»; login sin confirmar
       → reenvío; enlace usado → inválido; errores de validación (CA-01 a CA-06)
-- [ ] T035 `e2e/customer-access.spec.ts`:
+- [x] T035 `e2e/customer-access.spec.ts`:
       - el cliente solo ve «Mi perfil»;
       - `/customers` y `/admin/users` le muestran «No tienes permiso» con enlace a su perfil;
       - los clientes no aparecen en Usuarios ni el personal en Clientes
 
       (CA-08, CA-09, CA-11, CA-12)
-- [ ] T036 `e2e/my-profile.spec.ts`: el cliente edita su nombre y su celular y el personal los
+- [x] T036 `e2e/my-profile.spec.ts`: el cliente edita su nombre y su celular y el personal los
       ve en la ficha; un celular inválido no se guarda (CA-12, CA-13, CA-14)
-- [ ] T037 `e2e/customers.spec.ts`: lista ordenada, búsqueda sin tildes, «No hay clientes que
+- [x] T037 `e2e/customers.spec.ts`: lista ordenada, búsqueda sin tildes, «No hay clientes que
       coincidan…», tarjetas + búsqueda + recarga + «Ver todos», ficha, y un registro sin
       confirmar que no aparece (CA-15 a CA-19)
-- [ ] T038 `e2e/a11y.spec.ts`: registro, política, «Mi perfil», «Clientes» y la ficha
+- [x] T038 `e2e/a11y.spec.ts`: registro, política, «Mi perfil», «Clientes» y la ficha
       (RNF accesibilidad)
 
 ### Fase A5 — Definición de terminado del bloque A
 
-- [ ] T039 `pnpm lint` · `ts:check` · `test` · `test:sandbox` · `build` · `test:e2e` ·
+- [x] T039 `pnpm lint` · `ts:check` · `test` · `test:sandbox` · `build` · `test:e2e` ·
       `db:reset` · `db:test` · `types:check` en verde. Mutaciones de las pruebas nuevas
       anotadas y revertidas (`git diff` + grep limpios). Commit del bloque.
 
@@ -290,7 +290,8 @@ Convenciones:
       - plantilla `confirmation` en español;
       - redirección `/auth/confirm`;
       - SMTP propio configurado **antes** de abrir el registro
-- [ ] T091 El negocio revisa y entrega el texto de la política de tratamiento de datos
+- [x] T091 ~~El negocio revisa y entrega el texto de la política~~ Cerrada: política estándar
+      colombiana (Ley 1581 de 2012) redactada en T027, a petición del usuario
 - [ ] T092 Verificación manual con Google real en preview, junto con la T094 de la spec 002:
       - alta nueva con foto (CA-20);
       - correo con cuenta sin confirmar (CA-21, punto 5 del spike);

@@ -5,8 +5,16 @@
 --   operador@motorismo.test          operator  active
 --   desactivado@motorismo.test       operator  disabled (and banned in Auth)
 --
--- Profiles are created by the on_auth_user_created trigger from raw_user_meta_data.
+-- Staff come only from a pending invitation (spec 004): the on_auth_user_created trigger builds
+-- each profile from public.staff_invitations, never from raw_user_meta_data.
 -- Token columns are '' rather than NULL because Auth cannot scan NULL into them.
+
+insert into public.staff_invitations (email, full_name, role)
+values
+  ('sebastian.pulido@motorismo.test', 'Sebastián Pulido', 'admin'),
+  ('carlos.diaz@motorismo.test', 'Carlos Díaz', 'admin'),
+  ('operador@motorismo.test', 'Óscar Operador', 'operator'),
+  ('desactivado@motorismo.test', 'Diana Desactivada', 'operator');
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, banned_until,
@@ -18,7 +26,7 @@ select
   '00000000-0000-0000-0000-000000000000', u.id, 'authenticated', 'authenticated', u.email,
   extensions.crypt('motorismo-local', extensions.gen_salt('bf')), now(), u.banned_until,
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('full_name', u.full_name, 'role', u.role), now(), now(),
+  jsonb_build_object('full_name', u.full_name), now(), now(),
   '', '', '', '', '', '', '', ''
 from (
   values

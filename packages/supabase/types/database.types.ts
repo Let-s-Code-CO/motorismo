@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customers: {
+        Row: {
+          avatar_url: string | null
+          consent_at: string
+          created_at: string
+          disabled_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          origin: Database["public"]["Enums"]["customer_origin"]
+          phone: string | null
+          registered_by: string | null
+          search_text: string
+          status: Database["public"]["Enums"]["customer_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          consent_at?: string
+          created_at?: string
+          disabled_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          origin?: Database["public"]["Enums"]["customer_origin"]
+          phone?: string | null
+          registered_by?: string | null
+          search_text?: string
+          status?: Database["public"]["Enums"]["customer_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          consent_at?: string
+          created_at?: string
+          disabled_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          origin?: Database["public"]["Enums"]["customer_origin"]
+          phone?: string | null
+          registered_by?: string | null
+          search_text?: string
+          status?: Database["public"]["Enums"]["customer_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_registered_by_fkey"
+            columns: ["registered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           activated_at: string | null
@@ -56,18 +115,73 @@ export type Database = {
           },
         ]
       }
+      staff_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      current_account: {
+        Args: never
+        Returns: {
+          kind: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: string
+        }[]
+      }
       current_profile_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      customer_registrar_name: {
+        Args: { p_customer_id: string }
+        Returns: string
+      }
+      customer_status_counts: {
+        Args: never
+        Returns: {
+          status: Database["public"]["Enums"]["customer_status"]
+          total: number
+        }[]
+      }
+      email_in_use: { Args: { p_email: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
+      customer_origin: "self_signup" | "google" | "counter"
+      customer_status: "registered" | "walk_in" | "disabled"
       user_role: "operator" | "admin"
       user_status: "invited" | "active" | "disabled"
     }
@@ -197,6 +311,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      customer_origin: ["self_signup", "google", "counter"],
+      customer_status: ["registered", "walk_in", "disabled"],
       user_role: ["operator", "admin"],
       user_status: ["invited", "active", "disabled"],
     },

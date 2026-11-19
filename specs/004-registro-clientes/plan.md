@@ -394,8 +394,8 @@ antes de seguir.
    - Google habilitado.
 3. **SMTP propio obligatorio antes de abrir el registro**: el SMTP por defecto de Supabase
    permite muy pocos correos por hora.
-4. **Política de tratamiento de datos**: el negocio revisa el texto base antes de abrir el
-   registro en producción (suposición de la spec).
+4. **Política de tratamiento de datos**: publicada en `/privacy` con el estándar colombiano (Ley
+   1581 de 2012), decidido con el usuario; no queda pendiente.
 5. **Vercel**: sin variables nuevas.
 
 ## Historial del plan
@@ -404,3 +404,4 @@ antes de seguir.
 |---|---|
 | 2026-11-19 | Creación (borrador). |
 | 2026-11-19 | Aprobado por el usuario. |
+| 2026-11-19 | Spike T001, contra el Supabase local:<br>**(1)** `raw_app_meta_data.provider` (`email`) ya está en el `insert`; Google se simula igual en pgTAP.<br>**(2)** Registrarse otra vez con un correo **sin confirmar**, también el de un invitado, no cambia la contraseña ni los metadatos: solo reenvía el correo. El riesgo 2 no se da, pero la mitigación por `amr` se mantiene porque es barata. Con un correo **confirmado**, Auth responde `user_already_exists`, así que la acción `signUp` lo convierte en la misma respuesta de éxito (CA-07, RN-06).<br>**(3)** Las sesiones abiertas desde un enlace (`invite`, `recovery`, `email`) tienen `amr = otp`; con contraseña, `password`.<br>**(4)** `email_not_confirmed` solo sale con la contraseña correcta (con una incorrecta, `invalid_credentials`).<br>Además, el límite local `email_sent = 2` sí se aplica y se sube a 1000 en `config.toml` (solo local), y `max_frequency = 1s` por usuario obliga a esperar entre reenvíos en las pruebas. |

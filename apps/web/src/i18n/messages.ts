@@ -1,5 +1,6 @@
 import auth from '@web/modules/auth/messages/es.json';
 import core from '@web/modules/core/messages/es.json';
+import customers from '@web/modules/customers/messages/es.json';
 import users from '@web/modules/users/messages/es.json';
 
 /**
@@ -8,8 +9,12 @@ import users from '@web/modules/users/messages/es.json';
  */
 export const DEFAULT_LOCALE = 'es';
 
+/** Dates are shown in Colombian time (the business is in Bogotá). */
+export const TIME_ZONE = 'America/Bogota';
+
 export const messages = {
   ...core,
   ...auth,
   ...users,
+  ...customers,
 };
