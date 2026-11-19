@@ -1,0 +1,4 @@
+{
+  "extends": "@motorismo/typescript-config/base.json",
+  "include": ["types/**/*.ts"]
+}

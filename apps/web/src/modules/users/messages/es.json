@@ -1,0 +1,58 @@
+{
+  "users": {
+    "title": "Usuarios",
+    "inviteButton": "Invitar usuario",
+    "invited": "Invitación enviada a {email}.",
+    "resent": "Invitación reenviada.",
+    "table": {
+      "label": "Usuarios de la aplicación",
+      "name": "Nombre",
+      "email": "Correo",
+      "role": "Rol",
+      "status": "Estado",
+      "actions": "Acciones",
+      "empty": "Todavía no hay usuarios.",
+      "self": "Tu cuenta",
+      "lastAdmin": "Debe existir al menos un administrador activo."
+    },
+    "status": {
+      "invited": "Invitado",
+      "active": "Activo",
+      "disabled": "Desactivado"
+    },
+    "actions": {
+      "resend": "Reenviar invitación",
+      "makeAdmin": "Hacer administrador",
+      "makeOperator": "Hacer operador",
+      "disable": "Desactivar",
+      "reactivate": "Reactivar"
+    },
+    "invite": {
+      "title": "Invitar usuario",
+      "fullName": "Nombre completo",
+      "email": "Correo",
+      "role": "Rol",
+      "submit": "Enviar invitación",
+      "cancel": "Cancelar"
+    },
+    "validation": {
+      "fullNameRequired": "Escribe el nombre.",
+      "fullNameTooLong": "El nombre puede tener como máximo 120 caracteres.",
+      "emailInvalid": "Introduce un correo válido.",
+      "roleRequired": "Elige un rol."
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalidInput": "Revisa los datos del formulario.",
+      "emailTaken": "Ya existe un usuario con este correo.",
+      "notInvited": "Ese usuario ya no está pendiente de invitación.",
+      "rateLimited": "Espera unos segundos antes de reenviar la invitación.",
+      "generic": "Algo salió mal. Inténtalo de nuevo.",
+      "lastAdmin": "Debe existir al menos un administrador activo.",
+      "selfChange": "No puedes cambiar tu propio rol ni tu estado."
+    },
+    "roleChanged": "Rol actualizado.",
+    "disabled": "Usuario desactivado. Su sesión se cerrará en su siguiente acción.",
+    "reactivated": "Usuario reactivado."
+  }
+}

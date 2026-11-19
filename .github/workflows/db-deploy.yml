@@ -1,0 +1,43 @@
+name: db-deploy
+
+# Applies pending migrations to the remote Supabase project after they reach develop.
+# Requires the repository secret SUPABASE_DB_URL (Supabase → Connect → Session pooler string).
+on:
+  push:
+    branches: [develop]
+    paths:
+      - packages/supabase/supabase/migrations/**
+  workflow_dispatch:
+
+concurrency:
+  group: db-deploy
+  cancel-in-progress: false
+
+jobs:
+  push-migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::warning::SUPABASE_DB_URL is not configured; skipping migration deploy."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v6
+        if: steps.config.outputs.skip != 'true'
+      - uses: pnpm/action-setup@v4
+        if: steps.config.outputs.skip != 'true'
+      - uses: actions/setup-node@v4
+        if: steps.config.outputs.skip != 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.config.outputs.skip != 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Push migrations
+        if: steps.config.outputs.skip != 'true'
+        run: pnpm --filter @motorismo/supabase db:push

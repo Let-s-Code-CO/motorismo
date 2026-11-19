@@ -1,25 +1,47 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Builds and caches
+.next
+out
+dist
+build
+.turbo
+*.tsbuildinfo
+next-env.d.ts
+
+# Tests
+coverage
+test-results
+playwright-report
+blob-report
+playwright/.cache
+
+# Environment (only the *.example files are versioned)
+.env
+.env.*
+!.env.example
+
+# Supabase local state
+packages/supabase/supabase/.temp
+packages/supabase/supabase/.branches
+
+# Vercel
+.vercel
+
 # Logs
-logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Editors and OS
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
 *.sw?
-.env.*
+
+# Claude Code (personal settings)
+.claude/settings.local.json

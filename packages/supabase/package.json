@@ -1,0 +1,29 @@
+{
+  "name": "@motorismo/supabase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Postgres schema (Supabase migrations), seeds, pgTAP tests and generated types",
+  "exports": {
+    "./types": "./types/index.ts"
+  },
+  "scripts": {
+    "sandbox:start": "supabase start -x imgproxy,edge-runtime,logflare,vector,supavisor,realtime",
+    "sandbox:stop": "supabase stop",
+    "sandbox:status": "supabase status",
+    "sandbox:reset": "supabase db reset",
+    "sandbox:test": "supabase test db",
+    "migration:new": "supabase migration new",
+    "db:diff": "supabase db diff --schema public",
+    "db:push": "bash scripts/db-push.sh",
+    "types:gen": "bash scripts/types-gen.sh",
+    "types:check": "bash scripts/types-gen.sh --check",
+    "ts:check": "tsc --noEmit",
+    "admin:bootstrap": "node scripts/bootstrap-admin.mjs"
+  },
+  "devDependencies": {
+    "@motorismo/typescript-config": "workspace:*",
+    "@supabase/supabase-js": "2.116.0",
+    "supabase": "2.117.0",
+    "typescript": "catalog:"
+  }
+}
