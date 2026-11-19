@@ -32,11 +32,20 @@ import {
   pageCount,
 } from '@web/modules/customers/utils/customers-filter.utils';
 
-/** Summary cards = filters (project standard): order and status dot of each card. */
-const SUMMARY: { status: CustomerStatusFilter; dot: string }[] = [
-  { status: 'active', dot: 'bg-foreground' },
-  { status: 'registered', dot: 'bg-success' },
-  { status: 'walk_in', dot: 'bg-warning' },
+/**
+ * Summary cards = filters (project standard): order and status dot of each card. "Activos" is the
+ * sum of "Con cuenta" and "Sin cuenta", so it holds them; "Desactivados" stands apart (CA-17).
+ */
+type SummaryCard = { status: CustomerStatusFilter; dot: string; parts?: SummaryCard[] };
+const SUMMARY: SummaryCard[] = [
+  {
+    status: 'active',
+    dot: 'bg-foreground',
+    parts: [
+      { status: 'registered', dot: 'bg-success' },
+      { status: 'walk_in', dot: 'bg-warning' },
+    ],
+  },
   { status: 'disabled', dot: 'bg-default-400' },
 ];
 
@@ -92,6 +101,13 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
   const total = activeCount(counts) + counts.disabled;
   const countOf = (status: CustomerStatusFilter) =>
     status === 'active' ? activeCount(counts) : counts[status];
+  const toCard = ({ status, dot }: SummaryCard) => ({
+    value: status,
+    dot,
+    label: t(`summary.${status}`),
+    count: countOf(status),
+  });
+  const toOption = (card: SummaryCard) => ({ ...toCard(card), parts: card.parts?.map(toCard) });
   const isFiltering = filters.status !== null || filters.q !== '';
   const summaryText = [
     isFiltering
@@ -132,12 +148,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
 
       <SummaryFilterCards
         label={t('summary.filterLabel')}
-        options={SUMMARY.map(({ status, dot }) => ({
-          value: status,
-          dot,
-          label: t(`summary.${status}`),
-          count: countOf(status),
-        }))}
+        options={SUMMARY.map(toOption)}
         selected={filters.status}
         onSelect={(status) => navigate({ ...filters, status, page: 1 })}
       />

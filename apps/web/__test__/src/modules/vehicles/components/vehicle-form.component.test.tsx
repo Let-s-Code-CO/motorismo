@@ -9,7 +9,8 @@
  * - CA-06: a bicycle has no plate and no displacement, and its line is optional;
  * - CA-09: changing the type empties brand and line (a brand of one type is not of another), and
  *   changing the brand empties the line;
- * - CA-07: sending it incomplete shows the error next to each field and saves nothing;
+ * - CA-07: sending it incomplete shows the error next to each field (class and displacement
+ *   included) and saves nothing;
  * - a valid vehicle is sent for the customer of the record, normalised (plate without separators).
  */
 import type { ReactNode } from 'react';
@@ -126,6 +127,29 @@ describe('VehicleForm', () => {
     expect(screen.getByText('Escribe la línea.')).toBeInTheDocument();
     expect(screen.getByText('Elige el color.')).toBeInTheDocument();
     expect(screen.getByText('Escribe la placa.')).toBeInTheDocument();
+    expect(saveVehicle).not.toHaveBeenCalled();
+  });
+
+  it('shows "Elige la clase." next to the class of a car sent without one (CA-07)', async () => {
+    setup();
+
+    chooseType('Carro');
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    const classGroup = screen.getByRole('radiogroup', { name: 'Clase' });
+    expect(await within(classGroup).findByText('Elige la clase.')).toBeInTheDocument();
+    expect(saveVehicle).not.toHaveBeenCalled();
+  });
+
+  it('shows the displacement range next to a displacement of 49 cc (CA-07, RN-09)', async () => {
+    setup();
+
+    const displacement = screen.getByLabelText(/Cilindraje/);
+    fireEvent.change(displacement, { target: { value: '49' } });
+    fireEvent.blur(displacement);
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(await screen.findByText('El cilindraje va de 50 a 2.500 cc.')).toBeInTheDocument();
     expect(saveVehicle).not.toHaveBeenCalled();
   });
 

@@ -231,6 +231,9 @@ retiro, búsqueda por placa y acceso del cliente), igual que en la spec 004.
       del marcador limpios. Mutaciones anotadas en el Historial del plan
 - [x] T063 `CLAUDE.md` (vehículos de los seeds) y `packages/supabase/CLAUDE.md` (catálogo por
       migración, `03_vehicles.sql`); spec en `implementada`, plan y backlog actualizados
+- [x] T065 `/verificar`: pruebas de los errores de clase y de cilindraje en `vehicle-form`
+      (CA-07) y de un cliente que amplía el catálogo en `06_vehicles.test.sql` (RF-05), vistas
+      fallar por mutación; suposición de los nombres nuevos precisada en la spec
 - [ ] T064 Despliegue (cuando existan los entornos remotos): migraciones por `db-deploy` y conteo
       de marcas por tipo en el remoto (plan, Despliegue)
 
@@ -246,7 +249,7 @@ retiro, búsqueda por placa y acceso del cliente), igual que en la spec 004.
 | CA-04 | T031 |
 | CA-05 | T002, T010, T012, T031 |
 | CA-06 | T002, T012, T016, T031 |
-| CA-07 | T002, T012, T016 |
+| CA-07 | T002, T012, T016, T065 |
 | CA-08 | T002, T013, T031 |
 | CA-09 | T002, T016 |
 | CA-10 | T004, T011, T032 |

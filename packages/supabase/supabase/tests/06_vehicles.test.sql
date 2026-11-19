@@ -11,11 +11,12 @@
 --     really new and never leaving one behind when the vehicle fails (CA-13, CA-14, RF-04, RF-05);
 --     retiring frees the plate and is final (CA-20..CA-22, RN-07); the customer is fixed (RN-01);
 --     a customer reads and changes only their own vehicles (CA-26); a disabled customer's vehicles
---     are read-only (spec assumption); the active plates feed the customer search (CA-17, CA-18).
+--     are read-only (spec assumption); a customer grows the catalog too (RF-05); the active plates
+--     feed the customer search (CA-17, CA-18).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(77);
+select plan(79);
 
 -- Fixtures -------------------------------------------------------------------------------------
 create function pg_temp.new_staff(p_id uuid, p_email text, p_name text, p_role text)
@@ -472,6 +473,18 @@ select lives_ok(
        p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'bicycle', p_vehicle_class => 'road',
        p_brand_name => 'Specialized', p_line_name => 'Tarmac', p_color => 'white')) $$,
   'HU-06: a customer registers a vehicle of their own'
+);
+select lives_ok(
+  $$ select public.save_vehicle(
+       p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'bicycle', p_vehicle_class => 'mountain',
+       p_brand_name => 'Marca Del Cliente', p_line_name => 'Línea Del Cliente', p_color => 'green') $$,
+  'RF-05: a customer registers a vehicle of their own with a brand and line that are not in the catalog...'
+);
+select results_eq(
+  $$ select b.name, l.name from public.vehicle_brands b join public.vehicle_lines l on l.brand_id = b.id
+     where b.vehicle_type = 'bicycle' and b.name_key = 'marcadelcliente' $$,
+  $$ values ('Marca Del Cliente', 'Línea Del Cliente') $$,
+  'RF-05: ...and they join the catalog for everyone, like those added by staff'
 );
 select throws_ok(
   $$ select public.save_vehicle(

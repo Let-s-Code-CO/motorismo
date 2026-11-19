@@ -42,7 +42,9 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
   botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Sobre la
   lista va una línea de conteo («1 de 4 usuarios · Invitados», `aria-live`) con un botón fantasma
-  «Ver todos» (no un chip). Componentes compartidos en `core`: `summary-filter-cards`,
+  «Ver todos» (no un chip). Si una tarjeta es la suma de otras (p. ej. «Activos» = «Con cuenta»
+  + «Sin cuenta»), se dibuja como un panel que las contiene (`parts`) y cada una sigue filtrando
+  sola. Componentes compartidos en `core`: `summary-filter-cards`,
   `filter-bar` y `status-filter.utils` (specs 003 CA-09 y 004 CA-17; los usan Usuarios y Clientes).
 - Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
   pantallas nuevas se añaden a esa auditoría.
@@ -88,11 +90,11 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Clientes: **`cliente@motorismo.test`** (cuenta de prueba para usar la app como cliente: entra a
   «Mi perfil»), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
   Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
-
-Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
 - Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada),
   Valentina la camioneta `KDM-482` y Andrés una bicicleta. El catálogo de marcas y líneas llega
   por migración (existe en todos los entornos), no por seed.
+
+Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
 http://127.0.0.1:54324.
 
 ### Git hooks (Husky)
@@ -129,11 +131,11 @@ e2e/                         # Playwright
 - Datos: query key factories + `queryOptions` (TanStack Query 5); tipos de filas derivados de
   `Tables<'tabla'>`, sin genéricos explícitos que oculten drift.
 - Autorización en Postgres (RLS), nunca solo ocultando elementos en la UI.
-
-## Autenticación y permisos (specs 002 y 004)
 - Desplegables de HeroUI (`Autocomplete`, `Select`) dentro de un `Modal`: pásales
   `popoverProps={{ portalContainer }}` con un elemento del modal; si no, el modal los oculta a los
   lectores de pantalla (`aria-hidden`). Ver `vehicle-form` (spec 005).
+
+## Autenticación y permisos (specs 002 y 004)
 
 - Dos tipos de cuenta, nunca ambos a la vez: **personal** en `public.profiles` (rol
   `operator`/`admin`, estado `invited`/`active`/`disabled`) y **clientes** en `public.customers`

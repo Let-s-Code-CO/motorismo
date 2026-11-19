@@ -275,6 +275,12 @@ Convenciones:
 - [x] T062b Tarjeta «Activos» (con y sin cuenta) en Clientes, a petición del usuario: spec CA-17,
       `customers-filter.utils` (`?status=active`, `activeCount`), consulta `status <> 'disabled'`,
       cuadrícula 2 × 2 en el móvil y E2E (CA-17)
+- [x] T062c «Activos» agrupa a «Con cuenta» y «Sin cuenta», a petición del usuario (CA-17):
+      - opción `parts` en `summary-filter-cards`: panel con sus subconjuntos y barra de
+        proporción; «Desactivados» aparte; en el móvil el panel se apila;
+      - pruebas del componente (agrupación, filtro por el todo y por cada parte, marcado y
+        desmarcado) escritas antes y vistas fallar (3 en rojo sin `parts`);
+      - E2E de clientes, usuarios, UI y axe en verde; verificado en el navegador
 
 ### Fase B5 — Definición de terminado y documentación
 
@@ -333,7 +339,7 @@ Convenciones:
 | CA-14 | T005, T015, T036 |
 | CA-15 | T037 |
 | CA-16 | T005, T016, T037 |
-| CA-17 | T016, T017, T037 |
+| CA-17 | T016, T017, T037, T062b, T062c |
 | CA-18 | T037 |
 | CA-19 | T005, T018, T037 |
 | CA-20 | T050, T054, T092 (manual) |

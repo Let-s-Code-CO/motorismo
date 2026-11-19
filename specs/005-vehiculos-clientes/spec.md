@@ -1,7 +1,7 @@
 ---
 id: "005"
 titulo: "Vehículos de los clientes"
-estado: implementada
+estado: verificada
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -250,7 +250,8 @@ el negocio ya los tenga cuando llegue.
 - Otras bicicletas (urbanas, BMX, eléctricas) se registran con la clase más cercana; ampliar la
   lista queda para más adelante.
 - Los nombres nuevos se guardan en el catálogo tal como se escribieron, sin espacios al principio
-  ni al final; la primera forma escrita es la que verán los demás.
+  ni al final y con los espacios internos reducidos a uno; la primera forma escrita es la que
+  verán los demás.
 - Los vehículos de un **cliente desactivado** (spec 004) se ven en su ficha pero no se agregan,
   editan ni retiran hasta que se reactive.
 - Los vehículos de un cliente sin cuenta los gestiona solo el personal; si luego crea su cuenta y
@@ -292,3 +293,4 @@ queda libre.
 | 2026-11-19 | Aprobada por el usuario, con las suposiciones tal como están. |
 | 2026-11-19 | Plan técnico aprobado. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local: 229 pgTAP (89 nuevas), 418 unitarias, 30 sandbox y 60 E2E en verde, lint, tipos y build en verde. Cada prueba nueva se vio fallar, escrita antes que el código o por mutación (ver el Historial del plan). Pendiente: el despliegue (T064). |
+| 2026-11-19 | `/verificar`: 23 de 26 criterios ✅ al empezar. Corregidos: CA-07 (el formulario muestra junto a su campo los errores de clase y de cilindraje) y RF-05 (un cliente también amplía el catálogo), con pruebas vistas fallar por mutación. Se precisa la suposición de los nombres nuevos (los espacios internos se reducen a uno). Todo ✅: verificada en local. Pendiente: el despliegue (T064). |

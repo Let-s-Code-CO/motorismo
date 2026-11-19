@@ -10,7 +10,7 @@
  * - the line above the list announces what is shown (aria-live) and, only while filtering, offers
  *   a quiet "Ver todos" button (not a chip).
  */
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 
 import FilterBar from '@web/modules/core/components/filter-bar.component';
 import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
@@ -70,6 +70,74 @@ describe('SummaryFilterCards', () => {
     const chosen = screen.getByRole('button', { name: 'Sin cuenta 2' });
     expect(chosen).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'Con cuenta 3' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+
+    fireEvent.click(chosen);
+    expect(onSelect).toHaveBeenCalledWith(null);
+  });
+});
+
+/**
+ * A card can be made of parts (spec 004, CA-17): "Activos" is the sum of "Con cuenta" and
+ * "Sin cuenta", so it is drawn as a panel that holds them, apart from "Desactivados". Every card,
+ * the whole and each part, still filters on its own.
+ */
+describe('SummaryFilterCards with a card made of parts', () => {
+  const grouped = [
+    {
+      value: 'active',
+      label: 'Activos',
+      count: 5, // 3 with account + 2 without
+      dot: 'bg-foreground',
+      parts: [
+        { value: 'registered', label: 'Con cuenta', count: 3, dot: 'bg-success' },
+        { value: 'walk_in', label: 'Sin cuenta', count: 2, dot: 'bg-warning' },
+      ],
+    },
+    { value: 'disabled', label: 'Desactivados', count: 1, dot: 'bg-default-400' },
+  ];
+
+  const renderGrouped = (selected: string | null, onSelect = vi.fn()) =>
+    renderWithProviders(
+      <SummaryFilterCards
+        label="Filtrar por estado"
+        options={grouped}
+        selected={selected}
+        onSelect={onSelect}
+      />
+    );
+
+  it('groups the parts under the whole, and keeps the other cards outside that group', () => {
+    renderGrouped(null);
+
+    const whole = screen.getByRole('group', { name: 'Activos' });
+    expect(within(whole).getByRole('button', { name: 'Activos 5' })).toBeVisible();
+    expect(within(whole).getByRole('button', { name: 'Con cuenta 3' })).toBeVisible();
+    expect(within(whole).getByRole('button', { name: 'Sin cuenta 2' })).toBeVisible();
+    expect(within(whole).queryByRole('button', { name: 'Desactivados 1' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desactivados 1' })).toBeVisible();
+  });
+
+  it('filters by the whole or by one of its parts', () => {
+    const onSelect = vi.fn();
+    renderGrouped(null, onSelect);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Activos 5' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Con cuenta 3' }));
+
+    expect(onSelect).toHaveBeenNthCalledWith(1, 'active');
+    expect(onSelect).toHaveBeenNthCalledWith(2, 'registered');
+  });
+
+  it('marks a chosen part as pressed and clears the filter when it is pressed again', () => {
+    const onSelect = vi.fn();
+    renderGrouped('walk_in', onSelect);
+
+    const chosen = screen.getByRole('button', { name: 'Sin cuenta 2' });
+    expect(chosen).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Activos 5' })).toHaveAttribute(
       'aria-pressed',
       'false'
     );
