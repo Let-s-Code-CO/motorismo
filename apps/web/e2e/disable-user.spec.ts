@@ -6,7 +6,14 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { SEED, createActiveUser, deleteUsersByEmail, signIn, uniqueEmail } from './support/sandbox';
+import {
+  SEED,
+  adminClient,
+  createActiveUser,
+  deleteUsersByEmail,
+  signIn,
+  uniqueEmail,
+} from './support/sandbox';
 
 const email = uniqueEmail('disable');
 const name = `Olivia Prueba ${Date.now()}`;
@@ -49,14 +56,27 @@ test('a disabled user is removed on their next action and can return once reacti
   await operatorContext.close();
 });
 
+/** Sets the role of a seed user by email (secret key: test setup only). */
+const setSeedRole = async (seedEmail: string, role: 'admin' | 'operator') => {
+  const { error } = await adminClient().from('profiles').update({ role }).eq('email', seedEmail);
+  if (error) throw error;
+};
+
 test('the only active admin cannot change their own account and is told why (CA-21)', async ({
   page,
 }) => {
-  await signIn(page, SEED.admin.email);
-  await expect(page).toHaveURL('/');
-  await page.goto('/admin/users');
+  // The seeds have two admins; demote the second one so SEED.admin is the only active admin,
+  // which is the precondition of CA-21. Restored afterwards so other specs see the seeds intact.
+  await setSeedRole(SEED.secondAdmin.email, 'operator');
+  try {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/admin/users');
 
-  const own = page.getByRole('row', { name: new RegExp(SEED.admin.name) });
-  await expect(own.getByText('Debe existir al menos un administrador activo.')).toBeVisible();
-  await expect(own.getByRole('button')).toHaveCount(0);
+    const own = page.getByRole('row', { name: new RegExp(SEED.admin.name) });
+    await expect(own.getByText('Debe existir al menos un administrador activo.')).toBeVisible();
+    await expect(own.getByRole('button')).toHaveCount(0);
+  } finally {
+    await setSeedRole(SEED.secondAdmin.email, 'admin');
+  }
 });

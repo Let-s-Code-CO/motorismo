@@ -9,7 +9,8 @@ import type { Database } from '@motorismo/supabase/types';
 /** Seed users from packages/supabase/supabase/seeds/01_users.sql. */
 export const SEED = {
   password: 'motorismo-local',
-  admin: { email: 'admin@motorismo.test', name: 'Ana Administradora' },
+  admin: { email: 'sebastian.pulido@motorismo.test', name: 'Sebastián Pulido' },
+  secondAdmin: { email: 'carlos.diaz@motorismo.test', name: 'Carlos Díaz' },
   operator: { email: 'operador@motorismo.test', name: 'Óscar Operador' },
   disabled: { email: 'desactivado@motorismo.test', name: 'Diana Desactivada' },
 } as const;

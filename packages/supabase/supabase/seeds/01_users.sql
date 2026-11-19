@@ -1,8 +1,9 @@
 -- Local users for development and E2E tests (spec 002). Password for all: motorismo-local
 --
---   admin@motorismo.test        admin     active
---   operador@motorismo.test     operator  active
---   desactivado@motorismo.test  operator  disabled (and banned in Auth)
+--   sebastian.pulido@motorismo.test  admin     active
+--   carlos.diaz@motorismo.test       admin     active
+--   operador@motorismo.test          operator  active
+--   desactivado@motorismo.test       operator  disabled (and banned in Auth)
 --
 -- Profiles are created by the on_auth_user_created trigger from raw_user_meta_data.
 -- Token columns are '' rather than NULL because Auth cannot scan NULL into them.
@@ -21,7 +22,8 @@ select
   '', '', '', '', '', '', '', ''
 from (
   values
-    ('11111111-1111-1111-1111-111111111111'::uuid, 'admin@motorismo.test', 'Ana Administradora', 'admin', null::timestamptz),
+    ('11111111-1111-1111-1111-111111111111'::uuid, 'sebastian.pulido@motorismo.test', 'Sebastián Pulido', 'admin', null::timestamptz),
+    ('44444444-4444-4444-4444-444444444444'::uuid, 'carlos.diaz@motorismo.test', 'Carlos Díaz', 'admin', null),
     ('22222222-2222-2222-2222-222222222222'::uuid, 'operador@motorismo.test', 'Óscar Operador', 'operator', null),
     ('33333333-3333-3333-3333-333333333333'::uuid, 'desactivado@motorismo.test', 'Diana Desactivada', 'operator', now() + interval '100 years')
 ) as u (id, email, full_name, role, banned_until);
@@ -32,14 +34,16 @@ select u.id::text, u.id, jsonb_build_object('sub', u.id::text, 'email', u.email,
 from auth.users u
 where u.id in (
   '11111111-1111-1111-1111-111111111111',
+  '44444444-4444-4444-4444-444444444444',
   '22222222-2222-2222-2222-222222222222',
   '33333333-3333-3333-3333-333333333333'
 );
 
--- All three accepted their invitation (activated_at is set on invited → active); then one is disabled.
+-- All of them accepted their invitation (activated_at is set on invited → active); then one is disabled.
 update public.profiles set status = 'active'
 where id in (
   '11111111-1111-1111-1111-111111111111',
+  '44444444-4444-4444-4444-444444444444',
   '22222222-2222-2222-2222-222222222222',
   '33333333-3333-3333-3333-333333333333'
 );

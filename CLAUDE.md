@@ -72,8 +72,9 @@ pnpm db:stop
 
 Un test concreto: `pnpm --filter web exec vitest run ruta/al/archivo.test.tsx`.
 
-Usuarios locales (seeds), todos con la contraseña `motorismo-local`: `admin@motorismo.test`,
-`operador@motorismo.test` y `desactivado@motorismo.test`. Los correos (invitaciones,
+Usuarios locales (seeds), todos con la contraseña `motorismo-local`: administradores
+`sebastian.pulido@motorismo.test` y `carlos.diaz@motorismo.test`, `operador@motorismo.test` y
+`desactivado@motorismo.test`. Los correos (invitaciones,
 recuperación) se ven en Mailpit: http://127.0.0.1:54324.
 
 ### Git hooks (Husky)

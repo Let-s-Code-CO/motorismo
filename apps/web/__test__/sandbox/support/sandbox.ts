@@ -7,7 +7,7 @@ import type { Database } from '@motorismo/supabase/types';
 /** Seed users from packages/supabase/supabase/seeds/01_users.sql. */
 export const SEED = {
   password: 'motorismo-local',
-  admin: 'admin@motorismo.test',
+  admin: 'sebastian.pulido@motorismo.test',
   operator: 'operador@motorismo.test',
   disabled: 'desactivado@motorismo.test',
 } as const;
