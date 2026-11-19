@@ -7,8 +7,7 @@
 
 Motorismo Detailing («Motorismo PPF y Detailing») es un negocio especializado en PPF y detailing:
 lavado especializado, micropulidos y recubrimientos cerámicos. Instagram: @motorismodetail.
-**[POR CONFIRMAR]** si atiende solo motos (lista de deseos original: «tipo de moto») o vehículos en
-general (Instagram: «Auto Detailing Service»). La aplicación sustituye el
+Atiende motocicletas, bicicletas y carros (confirmado con el usuario, spec 005). La aplicación sustituye el
 registro manual de clientes y servicios, permite saber al instante el historial de un cliente y
 da al administrador reportes para liquidar el trabajo de los empleados.
 
@@ -48,8 +47,8 @@ consultable en el historial de git antes de la spec 001).
 
 | Término | Definición |
 |---|---|
-| Cliente | Persona dueña de una o más motos que recibe servicios. **[POR CONFIRMAR]** si un cliente puede tener varias motos. |
-| Moto / vehículo | Se identifica por su **placa**. Tiene un tipo (p. ej. scooter, deportiva...). **[POR CONFIRMAR]** catálogo de tipos. |
+| Cliente | Persona dueña de uno o más vehículos que recibe servicios (spec 005). |
+| Vehículo | Motocicleta, bicicleta o carro de un cliente, con marca, línea y color de catálogo. Motos y carros se identifican por su **placa** colombiana; las bicicletas no tienen (spec 005). |
 | Servicio | Tipo de trabajo ofrecido (lavado sencillo, detailing...) con un valor de referencia. |
 | Orden de trabajo / lavada | Registro de uno o más servicios hechos a una moto en una fecha, por uno o más empleados, con su valor final. |
 | Liquidación | Suma de los servicios realizados por un empleado en un periodo. |
@@ -59,5 +58,5 @@ consultable en el historial de git antes de la spec 001).
 - ¿El identificador principal del cliente es la placa, el celular o ambos?
 - ¿Una orden puede tener varios servicios y varios empleados?
 - ¿El valor final puede diferir del valor de referencia del servicio (descuentos)?
-- ¿Quién administra el catálogo de servicios, tipos de moto y empleados?
+- ¿Quién administra el catálogo de servicios, de marcas y líneas de vehículos y de empleados?
 - ¿Qué formato de exportación se necesita (Excel, PDF, CSV)?

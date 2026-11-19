@@ -10,12 +10,14 @@ import NoPermission from '@web/modules/auth/components/organisms/no-permission.c
 import { getCustomer } from '@web/modules/customers/api/customers.server';
 import CustomerDetail from '@web/modules/customers/components/organisms/customer-detail.component';
 import CustomerManage from '@web/modules/customers/components/organisms/customer-manage.component';
+import { listCustomerVehicles } from '@web/modules/vehicles/api/vehicles.server';
+import VehiclesSection from '@web/modules/vehicles/components/organisms/vehicles-section.component';
 
 type CustomerPageProps = { params: Promise<{ id: string }> };
 
 /**
- * A customer's record (spec 004, CA-18), where staff edit it (CA-27) and an admin disables or
- * reactivates it (CA-29 to CA-31). Staff only; data protected by RLS and the database guard.
+ * A customer's record (spec 004, CA-18) with their vehicles (spec 005, HU-01), where staff edit it
+ * (CA-27) and an admin disables or reactivates it (CA-29 to CA-31). Staff only; data protected by RLS and the database guard.
  */
 const CustomerPage = async ({ params }: CustomerPageProps) => {
   const staff = await getStaffForPage();
@@ -25,6 +27,7 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
   if (!z.uuid().safeParse(id).success) notFound();
   const customer = await getCustomer(id);
   if (!customer) notFound();
+  const vehicles = await listCustomerVehicles(customer.id);
 
   const t = await getTranslations('customers.detail');
 
@@ -38,6 +41,13 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
         {t('back')}
       </Link>
       <CustomerDetail customer={customer}>
+        <VehiclesSection
+          customerId={customer.id}
+          audience="staff"
+          vehicles={vehicles.active}
+          retired={vehicles.retired}
+          readOnly={customer.disabled_at !== null}
+        />
         <CustomerManage customer={customer} isAdmin={staff.role === 'admin'} />
       </CustomerDetail>
     </section>

@@ -90,6 +90,9 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
 
 Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
+- Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada),
+  Valentina la camioneta `KDM-482` y Andrés una bicicleta. El catálogo de marcas y líneas llega
+  por migración (existe en todos los entornos), no por seed.
 http://127.0.0.1:54324.
 
 ### Git hooks (Husky)
@@ -128,6 +131,9 @@ e2e/                         # Playwright
 - Autorización en Postgres (RLS), nunca solo ocultando elementos en la UI.
 
 ## Autenticación y permisos (specs 002 y 004)
+- Desplegables de HeroUI (`Autocomplete`, `Select`) dentro de un `Modal`: pásales
+  `popoverProps={{ portalContainer }}` con un elemento del modal; si no, el modal los oculta a los
+  lectores de pantalla (`aria-hidden`). Ver `vehicle-form` (spec 005).
 
 - Dos tipos de cuenta, nunca ambos a la vez: **personal** en `public.profiles` (rol
   `operator`/`admin`, estado `invited`/`active`/`disabled`) y **clientes** en `public.customers`

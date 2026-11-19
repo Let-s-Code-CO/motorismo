@@ -25,6 +25,7 @@ export type Database = {
           status: Database["public"]["Enums"]["customer_status"]
           updated_at: string
           user_id: string | null
+          vehicle_plates: string
         }
         Insert: {
           avatar_url?: string | null
@@ -41,6 +42,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
           user_id?: string | null
+          vehicle_plates?: string
         }
         Update: {
           avatar_url?: string | null
@@ -57,6 +59,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
           user_id?: string | null
+          vehicle_plates?: string
         }
         Relationships: [
           {
@@ -147,6 +150,129 @@ export type Database = {
           },
         ]
       }
+      vehicle_brands: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          name_key: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          name_key?: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          name_key?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: []
+      }
+      vehicle_lines: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          name: string
+          name_key: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          name: string
+          name_key?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          name_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_lines_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          brand_id: string
+          color: Database["public"]["Enums"]["vehicle_color"]
+          created_at: string
+          customer_id: string
+          displacement_cc: number | null
+          id: string
+          line_id: string | null
+          plate: string | null
+          retired_at: string | null
+          updated_at: string
+          vehicle_class: Database["public"]["Enums"]["vehicle_class"] | null
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          brand_id: string
+          color: Database["public"]["Enums"]["vehicle_color"]
+          created_at?: string
+          customer_id: string
+          displacement_cc?: number | null
+          id?: string
+          line_id?: string | null
+          plate?: string | null
+          retired_at?: string | null
+          updated_at?: string
+          vehicle_class?: Database["public"]["Enums"]["vehicle_class"] | null
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          brand_id?: string
+          color?: Database["public"]["Enums"]["vehicle_color"]
+          created_at?: string
+          customer_id?: string
+          displacement_cc?: number | null
+          id?: string
+          line_id?: string | null
+          plate?: string | null
+          retired_at?: string | null
+          updated_at?: string
+          vehicle_class?: Database["public"]["Enums"]["vehicle_class"] | null
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_brand_fk"
+            columns: ["brand_id", "vehicle_type"]
+            isOneToOne: false
+            referencedRelation: "vehicle_brands"
+            referencedColumns: ["id", "vehicle_type"]
+          },
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_line_fk"
+            columns: ["line_id", "brand_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_lines"
+            referencedColumns: ["id", "brand_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -178,12 +304,45 @@ export type Database = {
       email_in_use: { Args: { p_email: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      save_vehicle: {
+        Args: {
+          p_brand_name: string
+          p_color: Database["public"]["Enums"]["vehicle_color"]
+          p_customer_id: string
+          p_displacement_cc?: number
+          p_line_name?: string
+          p_plate?: string
+          p_vehicle_class?: Database["public"]["Enums"]["vehicle_class"]
+          p_vehicle_id?: string
+          p_vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Returns: string
+      }
     }
     Enums: {
       customer_origin: "self_signup" | "google" | "counter"
       customer_status: "registered" | "walk_in" | "disabled"
       user_role: "operator" | "admin"
       user_status: "invited" | "active" | "disabled"
+      vehicle_class: "automobile" | "utility" | "mountain" | "road"
+      vehicle_color:
+        | "black"
+        | "white"
+        | "gray"
+        | "silver"
+        | "red"
+        | "burgundy"
+        | "blue"
+        | "green"
+        | "yellow"
+        | "orange"
+        | "brown"
+        | "beige"
+        | "gold"
+        | "purple"
+        | "pink"
+        | "multicolor"
+      vehicle_type: "motorcycle" | "bicycle" | "car"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -315,6 +474,26 @@ export const Constants = {
       customer_status: ["registered", "walk_in", "disabled"],
       user_role: ["operator", "admin"],
       user_status: ["invited", "active", "disabled"],
+      vehicle_class: ["automobile", "utility", "mountain", "road"],
+      vehicle_color: [
+        "black",
+        "white",
+        "gray",
+        "silver",
+        "red",
+        "burgundy",
+        "blue",
+        "green",
+        "yellow",
+        "orange",
+        "brown",
+        "beige",
+        "gold",
+        "purple",
+        "pink",
+        "multicolor",
+      ],
+      vehicle_type: ["motorcycle", "bicycle", "car"],
     },
   },
 } as const

@@ -41,7 +41,8 @@
       "noMatch": "No hay clientes que coincidan con tu búsqueda.",
       "emptyFiltered": "No hay clientes con este estado.",
       "noEmail": "Sin correo",
-      "open": "Ver ficha de {name}"
+      "open": "Ver ficha de {name}",
+      "plate": "Placa"
     },
     "pagination": {
       "label": "Páginas de clientes"

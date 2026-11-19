@@ -28,15 +28,31 @@ export const parseCustomerFilters = ({ q, status, page }: RawParams): CustomerFi
 
 /**
  * Lowercase and without accents, like the database's search_text (CA-16): "José" → "jose",
- * "Ñáñez" → "nanez". Inner spaces collapse to one.
+ * "Ñáñez" → "nanez". Inner spaces collapse to one; a plate loses its separators (spec 005).
  */
-export const normalizeSearch = (raw: string): string =>
-  raw
+export const normalizeSearch = (raw: string): string => {
+  const text = raw
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
+  // A plate (three letters, then digits: "UIH-03", "uih 03") is kept without separators, as the
+  // database stores it (spec 005, CA-17).
+  return LOOKS_LIKE_PLATE.test(text) ? text.replace(/[\s-]/g, '') : text;
+};
+
+const LOOKS_LIKE_PLATE = /^[a-z]{3}[\s-]?\d[\da-z\s-]*$/;
+
+/**
+ * The active plate of a customer that a search matched, to show it in the row (spec 005, CA-19);
+ * null when the search matched something else. `plates` is the customer's `vehicle_plates`.
+ */
+export const matchingPlate = (plates: string, query: string): string | null => {
+  const key = query.replace(/[\s.-]/g, '').toUpperCase();
+  if (key.length < 3) return null;
+  return plates.split(' ').find((plate) => plate !== '' && plate.includes(key)) ?? null;
+};
 
 /** ILIKE pattern for "contains", with the user's % and _ escaped (searched literally). */
 export const toLikePattern = (raw: string): string =>

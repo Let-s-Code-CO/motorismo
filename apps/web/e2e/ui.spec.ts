@@ -1,7 +1,7 @@
 /**
  * Layout checks of the redesign (spec 003).
  * CA-02 no horizontal scroll on a 360 px phone (spec 004 adds sign-up, Clientes, a customer record
- * and "Mi perfil": the customer signs up from their phone) · CA-03 brand panel beside the form on desktop only ·
+ * and "Mi perfil": the customer signs up from their phone; spec 005 the vehicles and their form) · CA-03 brand panel beside the form on desktop only ·
  * every clickable element shows the hand cursor (Tailwind 4 no longer sets it on buttons).
  */
 import { type Page, expect, test } from '@playwright/test';
@@ -32,6 +32,24 @@ test.describe('on a 360 px phone', () => {
 
     await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
     await expect(page.getByRole('heading', { name: SEED_CUSTOMERS.walkIn.name })).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('the vehicles of a customer and the vehicle form have no horizontal scroll (spec 005)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/customers');
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    const vehicles = page.getByRole('region', { name: 'Vehículos' });
+    await expect(vehicles.getByText('Mazda CX-30')).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+
+    await vehicles.getByRole('button', { name: 'Agregar vehículo' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Agregar vehículo' });
+    await dialog.getByRole('radio', { name: 'Carro' }).check();
+    await expect(dialog.getByRole('radio', { name: 'Camioneta' })).toBeVisible();
     expect(await horizontalOverflow(page)).toBe(0);
   });
 

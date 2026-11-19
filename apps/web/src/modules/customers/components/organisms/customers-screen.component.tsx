@@ -167,7 +167,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
           }}
         />
         <div aria-busy={isPending} className={isPending ? 'opacity-60 transition-opacity' : ''}>
-          <CustomersTable customers={rows} emptyLabel={emptyLabel} />
+          <CustomersTable customers={rows} query={filters.q} emptyLabel={emptyLabel} />
         </div>
         {pageCount(matching) > 1 && (
           <nav aria-label={t('pagination.label')} className="flex justify-center pt-2">

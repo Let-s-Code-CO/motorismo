@@ -79,6 +79,8 @@ abrir el registro al público no exponga información del negocio ni de otros cl
 
 ### HU-03 (P1) — Mi perfil
 
+*(Spec 005: «Mi perfil» incluye «Mis vehículos», HU-06 de la 005).*
+
 Como cliente, quiero ver y corregir mis datos, para que el negocio pueda contactarme.
 
 **Criterios de aceptación**
@@ -106,6 +108,7 @@ de contacto.
   correo o del celular de un cliente, entonces la lista muestra solo los que coinciden, sin
   distinguir mayúsculas ni tildes; si ninguno coincide, ve «No hay clientes que coincidan con tu
   búsqueda.».
+  *(Spec 005: también busca por la placa de un vehículo vigente, CA-17 a CA-19 de la 005).*
 - **CA-17** — Dado un miembro del personal en «Clientes», cuando pulsa una de las tarjetas de
   resumen («Activos», es decir, con o sin cuenta y no desactivados; «Con cuenta»; «Sin cuenta»;
   «Desactivados»), entonces la lista se filtra por ese estado según el estándar de
