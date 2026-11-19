@@ -42,6 +42,10 @@ Como usuario, quiero una interfaz moderna, sobria y coherente para trabajar con 
 - **CA-07** — Dada la gestión de usuarios, cuando el administrador la abre, entonces ve cuántos
   usuarios hay activos, invitados y desactivados, y las acciones de cada fila están agrupadas en un
   menú.
+- **CA-09** — Dada la gestión de usuarios, cuando el administrador pulsa el resumen de un estado
+  (activos, invitados o desactivados), entonces la lista muestra solo ese estado, el resumen elegido
+  se ve marcado y aparece una forma visible de volver a ver todos; pulsar otra vez el mismo
+  resumen o «Ver todos» quita el filtro. El filtro se conserva al recargar la página.
 - **CA-08** — Dado cualquier visitante o usuario, cuando mira el pie de página, entonces encuentra
   un enlace al Instagram del negocio (@motorismodetail) que se abre en una pestaña nueva.
 
@@ -56,4 +60,6 @@ Como usuario, quiero una interfaz moderna, sobria y coherente para trabajar con 
 |---|---|
 | 2026-11-19 | Creación y aprobación por petición directa del usuario («que la UI se vea muy moderna, sin ser loco»). Base monocroma del logo, confirmada por el usuario. |
 | 2026-11-19 | CA-08 (Instagram en el pie de página), a petición del usuario. Estética del panel de marca tomada del perfil de Instagram (plata sobre negro). |
+| 2026-11-19 | CA-09 (filtrar usuarios desde el resumen), a petición del usuario. |
+| 2026-11-19 | CA-09 implementado (filtro en la URL, «Ver todos» fantasma). El usuario lo fija como estándar para futuras pantallas con tarjetas de resumen (ver `CLAUDE.md`). |
 | 2026-11-19 | Implementada. Ajustes pedidos por el usuario: círculo del logo como en Instagram y centrado, «Especialistas en PPF y Detailing» como título, panel de marca más rico (anillo, destellos, servicios). Tabla de usuarios en una columna de datos + acciones para que nada quede oculto en móvil. |

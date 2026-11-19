@@ -10,7 +10,8 @@
       "empty": "Todavía no hay usuarios.",
       "self": "Tu cuenta",
       "lastAdmin": "Debe existir al menos un administrador activo.",
-      "user": "Usuario"
+      "user": "Usuario",
+      "emptyFiltered": "No hay usuarios con este estado."
     },
     "status": {
       "invited": "Invitado",
@@ -64,7 +65,13 @@
       "label": "Resumen de usuarios",
       "active": "Activos",
       "invited": "Invitados",
-      "disabled": "Desactivados"
+      "disabled": "Desactivados",
+      "filterLabel": "Filtrar por estado"
+    },
+    "filter": {
+      "total": "{count, plural, one {# usuario} other {# usuarios}}",
+      "shown": "{shown} de {total, plural, one {# usuario} other {# usuarios}} · {status}",
+      "reset": "Ver todos"
     }
   }
 }

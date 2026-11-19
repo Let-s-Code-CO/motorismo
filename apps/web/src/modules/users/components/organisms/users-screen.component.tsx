@@ -3,11 +3,12 @@
 import { useState, useTransition } from 'react';
 
 import { useTranslations } from 'next-intl';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { Button, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from '@heroui/react';
 import { UserPlus } from 'lucide-react';
 
-import type { CurrentUser, UserRole } from '@web/modules/auth/types/auth.types';
+import type { CurrentUser, UserRole, UserStatus } from '@web/modules/auth/types/auth.types';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
 import {
   type UsersErrorKey,
@@ -15,9 +16,14 @@ import {
   resendInvite,
   setUserStatus,
 } from '@web/modules/users/actions/users.actions';
+import UsersFilterBar from '@web/modules/users/components/molecules/users-filter-bar.component';
 import UsersSummary from '@web/modules/users/components/molecules/users-summary.component';
 import InviteUserForm from '@web/modules/users/components/organisms/invite-user-form.component';
 import UsersTable from '@web/modules/users/components/organisms/users-table.component';
+import {
+  filterUsersByStatus,
+  parseStatusFilter,
+} from '@web/modules/users/utils/users-filter.utils';
 
 type Notice = { tone: 'success' | 'danger'; text: string };
 
@@ -32,6 +38,21 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
+
+  // The status filter lives in the URL: it survives a reload and works with "back" (CA-09).
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const status = parseStatusFilter(searchParams.get('status'));
+  const visibleUsers = filterUsersByStatus(users, status);
+
+  const setStatus = (next: UserStatus | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set('status', next);
+    else params.delete('status');
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const handleInvited = (email: string) => {
     onClose();
@@ -75,7 +96,7 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
         </Button>
       </div>
 
-      <UsersSummary users={users} />
+      <UsersSummary users={users} selected={status} onSelect={setStatus} />
 
       {notice && (
         <p
@@ -90,14 +111,23 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
         </p>
       )}
 
-      <UsersTable
-        users={users}
-        currentUserId={currentUserId}
-        onResend={handleResend}
-        onChangeRole={handleChangeRole}
-        onChangeStatus={handleChangeStatus}
-        isBusy={isPending}
-      />
+      <div className="flex flex-col gap-3">
+        <UsersFilterBar
+          total={users.length}
+          shown={visibleUsers.length}
+          status={status}
+          onReset={() => setStatus(null)}
+        />
+        <UsersTable
+          users={visibleUsers}
+          emptyLabel={status ? t('table.emptyFiltered') : t('table.empty')}
+          currentUserId={currentUserId}
+          onResend={handleResend}
+          onChangeRole={handleChangeRole}
+          onChangeStatus={handleChangeStatus}
+          isBusy={isPending}
+        />
+      </div>
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="lg" backdrop="blur">
         <ModalContent>

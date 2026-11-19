@@ -34,6 +34,8 @@ type UsersTableProps = {
   onChangeRole: (userId: string, role: UserRole) => void;
   onChangeStatus: (userId: string, status: 'active' | 'disabled') => void;
   isBusy?: boolean;
+  /** Shown when the (possibly filtered) list is empty. */
+  emptyLabel?: string;
 };
 
 const ICON = 'size-4 shrink-0';
@@ -50,6 +52,7 @@ const UsersTable = ({
   onChangeRole,
   onChangeStatus,
   isBusy = false,
+  emptyLabel,
 }: UsersTableProps) => {
   const t = useTranslations('users');
   const activeAdmins = users.filter(({ role, status }) => role === 'admin' && status === 'active');
@@ -156,7 +159,7 @@ const UsersTable = ({
           {t('table.actions')}
         </TableColumn>
       </TableHeader>
-      <TableBody emptyContent={t('table.empty')}>
+      <TableBody emptyContent={emptyLabel ?? t('table.empty')}>
         {users.map((user) => (
           <TableRow key={user.id} className="border-b border-divider last:border-none">
             <TableCell>

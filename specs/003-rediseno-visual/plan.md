@@ -45,3 +45,4 @@ actualizado: 2026-11-19
 | CA-06 | Unit `nav-links.component.test.tsx` (`aria-current="page"`) |
 | CA-07 | Unit `users-admin.component.test.tsx` (resumen y menú de acciones) |
 | CA-08 | Unit `site-footer.component.test.tsx` (enlace, pestaña nueva, `rel`) |
+| CA-09 | Unit `users-filter.utils.test.ts`, resumen como filtro y barra de filtro; E2E `users-filter.spec.ts` (URL `?status=`, recarga, «Ver todos») |
