@@ -7,7 +7,7 @@ import type { CurrentUser } from '@web/modules/auth/types/auth.types';
 import BrandBadge from '@web/modules/core/components/brand-badge.component';
 
 type AppHeaderProps = {
-  user: Pick<CurrentUser, 'full_name' | 'role'>;
+  user: Pick<CurrentUser, 'full_name' | 'role' | 'avatar_url'>;
 };
 
 /** Sticky, translucent header of the signed-in area. Admin options only for admins (CA-07). */

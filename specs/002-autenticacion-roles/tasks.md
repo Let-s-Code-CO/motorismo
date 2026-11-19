@@ -48,7 +48,7 @@ Convenciones:
 - [x] T006 [P] Plantillas en español `sb/templates/invite.html` y `recovery.html`, con enlace a
       `/auth/confirm?token_hash=…&type=…` (RNF idioma) → visibles en Mailpit tras una invitación
       manual
-- [x] T007 Seeds `sb/seeds/01_users.sql`: `admin@`, `operador@` y `desactivado@motorismo.test`
+- [x] T007 Seeds `sb/seeds/01_users.sql`: `sebastian.pulido@` y `carlos.diaz@` (admins), `operador@` y `desactivado@motorismo.test`
       (contraseña `motorismo-local`; el desactivado, además, baneado) → `pnpm db:reset` + login
       manual en Studio
 - [x] T008 Regenerar tipos (`pnpm db:types`) → `types:check` en verde y `ts:check` en verde
@@ -298,6 +298,7 @@ Convenciones:
       - un **invitado** entra con Google, pasa a Activo y conserva el mismo id (CA-26, riesgo 2);
       - una cuenta de Google desconocida es rechazada y no se crea ningún usuario (CA-27);
       - un usuario desactivado es rechazado (CA-28)
+      - el avatar muestra la foto de la cuenta de Google (CA-30)
 
 ---
 
@@ -312,6 +313,16 @@ Convenciones:
 - [x] T103 Test de `setUserStatus`: reactivar a quien nunca aceptó lo devuelve a «Invitado»
       (CA-29) → **rojo**, luego la action → verde
 - [x] T104 Definición de terminado completa
+
+## Foto de Google en el avatar — CA-30 (2026-11-19)
+
+- [x] T110 pgTAP `03_profiles_avatar.test.sql`: vincular Google copia la foto; `picture` como
+      respaldo; un nuevo inicio de sesión la actualiza; la identidad `email` no la toca; solo URLs
+      `https://`; `authenticated` no puede escribir `avatar_url` → **rojo**
+- [x] T111 Migración `profile_avatar` (columna, restricción y trigger) → T110 en verde; tipos
+- [x] T112 Tests de `UserMenu` y `UsersTable`: foto cuando hay `avatar_url`, iniciales si no → **rojo**
+- [x] T113 `avatar_url` en `getCurrentUser`, `listUsers` y los avatares → T112 en verde
+- [x] T114 Definición de terminado; T094 añade comprobar la foto con una cuenta real de Google
 
 ## Cobertura de criterios
 
@@ -346,3 +357,4 @@ Convenciones:
 | CA-27 | T014, T054, T094 (manual) |
 | CA-28 | T054, T094 (manual) |
 | CA-29 | T101, T103 |
+| CA-30 | T110, T112, T094 (manual) |

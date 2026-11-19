@@ -32,7 +32,7 @@ pnpm db:reset                                         # reaplica migraciones + s
 pnpm db:test                                          # pgTAP de supabase/tests
 pnpm db:types                                         # regenera types/database.types.ts
 pnpm --filter @motorismo/supabase types:check         # falla si los tipos están desactualizados (CI)
-pnpm --filter @motorismo/supabase migration:new <nombre>
+pnpm --filter @motorismo/supabase migration:new <nombre> < /dev/null   # sin stdin interactivo lee el SQL de stdin
 pnpm --filter @motorismo/supabase db:diff             # SQL de cambios hechos a mano en el sandbox
 pnpm --filter @motorismo/supabase sandbox:status      # URLs y claves locales
 pnpm db:stop
@@ -58,7 +58,8 @@ pnpm db:stop
 
 ## Seeds y primer administrador
 
-- `seeds/01_users.sql`: `admin@`, `operador@` y `desactivado@motorismo.test`, contraseña
+- `seeds/01_users.sql`: `sebastian.pulido@` y `carlos.diaz@` (admins), `operador@` y
+  `desactivado@motorismo.test`, contraseña
   `motorismo-local`. Las pruebas pgTAP no dependen de ellos.
 - `pnpm --filter @motorismo/supabase admin:bootstrap -- --email … --name …` invita al primer
   admin de un entorno (necesita `SUPABASE_URL` y `SUPABASE_SECRET_KEY`); se niega si ya hay uno.

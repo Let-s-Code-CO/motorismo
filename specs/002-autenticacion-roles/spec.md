@@ -146,6 +146,9 @@ contraseña.
   acceso. Pide al administrador que te invite.».
 - **CA-28** — Dado un usuario desactivado, cuando entra con Google, entonces no entra y ve el
   mensaje de cuenta desactivada.
+- **CA-30** — Dado un usuario que entra con Google y cuya cuenta de Google tiene foto, cuando usa
+  la app, entonces su avatar (cabecera y lista de usuarios) muestra esa foto, que se actualiza cada
+  vez que vuelve a entrar con Google; si no hay foto o no carga, se ven sus iniciales.
 
 ## Requisitos funcionales
 
@@ -240,5 +243,7 @@ contraseña por autoservicio.
 | 2026-11-19 | Tareas aprobadas. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local. Pendiente: despliegue y verificación manual de Google (fase B5). |
 | 2026-11-19 | Tras `/verificar`, con aprobación del usuario: se añaden CA-29 y RN-08 (reactivar a quien nunca aceptó lo devuelve a «Invitado»). |
+| 2026-11-19 | CA-30 (foto de Google en el avatar), a petición del usuario. |
+| 2026-11-19 | CA-30 implementado (migración `profile_avatar`, avatar con iniciales de respaldo). Pendiente su verificación manual con Google real en T094. |
 | 2026-11-19 | Correcciones de `/verificar` implementadas y probadas (CA-04 sin recarga, CA-29, RN-08). 26 de 29 criterios ✅; CA-26–CA-28 esperan la verificación manual con Google en preview (T094). |
 | 2026-11-19 | `/verificar` (antes del cambio anterior): 25 de 28 criterios ✅; CA-26–CA-28 pendientes de la prueba manual con Google; dos observaciones abiertas (prueba de CA-04 más débil que el criterio; reactivar a alguien que nunca aceptó la invitación lo deja «Activo»). Sigue en `implementada`. |

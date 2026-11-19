@@ -100,8 +100,8 @@ datos en cada petición.
   vía `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` / `env(..._SECRET)`, documentado.
 
 ### Seeds `supabase/seeds/01_users.sql` (solo local)
-Tres usuarios con contraseña `motorismo-local`: `admin@motorismo.test` (admin, active),
-`operador@motorismo.test` (operator, active) y `desactivado@motorismo.test` (operator, disabled y
+Cuatro usuarios con contraseña `motorismo-local`: `sebastian.pulido@motorismo.test` y
+`carlos.diaz@motorismo.test` (admin, active), `operador@motorismo.test` (operator, active) y `desactivado@motorismo.test` (operator, disabled y
 baneado). Se insertan en `auth.users` + `auth.identities` y los perfiles los crea el trigger.
 
 ### Primer administrador (RF-06)
@@ -333,3 +333,4 @@ creados).
 | 2026-11-19 | La activación por contraseña pasa del trigger `on_auth_user_password_set` a la acción `setPassword` (secret key, solo `invited → active`). | El E2E de invitación mostró que Auth escribe una contraseña aleatoria al verificar el enlace: el trigger activaba al abrir el enlace, sin contraseña elegida (incumplía CA-14). La spec no cambia. |
 | 2026-11-19 | `logging.serverFunctions: false` en `next.config.ts`. | `next dev` imprimía los argumentos de las Server Actions, contraseñas incluidas. |
 | 2026-11-19 | Columna `profiles.activated_at` + restricciones (`active` exige haber aceptado; `invited` exige no haberlo hecho); el guard la fija en la primera activación y es inmutable; `setUserStatus` devuelve a «Invitado» a quien nunca aceptó. | `/verificar` detectó que reactivar a un invitado lo dejaba «Activo» sin contraseña. Nuevos CA-29 y RN-08 aprobados por el usuario. |
+| 2026-11-19 | Nueva migración `profile_avatar`: columna `profiles.avatar_url` (solo `https://`), sincronizada por trigger desde `auth.identities` (proveedores OAuth, al vincular y en cada inicio de sesión); el avatar la usa con las iniciales como respaldo. | CA-30. En la base de datos para que sea atómico y el usuario no pueda escribirla por la API. |

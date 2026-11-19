@@ -1,6 +1,9 @@
 import type { Tables } from '@motorismo/supabase/types';
 
-export type ProfileRow = Pick<Tables<'profiles'>, 'id' | 'full_name' | 'email' | 'role' | 'status'>;
+export type ProfileRow = Pick<
+  Tables<'profiles'>,
+  'id' | 'full_name' | 'email' | 'role' | 'status' | 'avatar_url'
+>;
 
 let sequence = 0;
 
@@ -13,6 +16,7 @@ export const buildProfile = (overrides: Partial<ProfileRow> = {}): ProfileRow =>
     email: `usuario${sequence}@motorismo.test`,
     role: 'operator',
     status: 'active',
+    avatar_url: null,
     ...overrides,
   };
 };

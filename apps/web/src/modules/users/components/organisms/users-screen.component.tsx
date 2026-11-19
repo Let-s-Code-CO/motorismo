@@ -22,7 +22,7 @@ import UsersTable from '@web/modules/users/components/organisms/users-table.comp
 type Notice = { tone: 'success' | 'danger'; text: string };
 
 type UsersScreenProps = {
-  users: Pick<CurrentUser, 'id' | 'full_name' | 'email' | 'role' | 'status'>[];
+  users: Pick<CurrentUser, 'id' | 'full_name' | 'email' | 'role' | 'status' | 'avatar_url'>[];
   currentUserId: string;
 };
 

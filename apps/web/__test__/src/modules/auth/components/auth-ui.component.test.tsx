@@ -35,6 +35,32 @@ describe('UserMenu', () => {
   });
 });
 
+describe('UserMenu avatar (CA-30)', () => {
+  it('shows the Google photo when the user has one', () => {
+    const { container } = renderWithProviders(
+      <UserMenu
+        user={buildProfile({
+          full_name: 'Gina Google',
+          avatar_url: 'https://lh3.googleusercontent.com/a/gina',
+        })}
+      />
+    );
+
+    expect(
+      container.querySelector('img[src="https://lh3.googleusercontent.com/a/gina"]')
+    ).not.toBeNull();
+  });
+
+  it('shows the initials when there is no photo', () => {
+    const { container } = renderWithProviders(
+      <UserMenu user={buildProfile({ full_name: 'Ana Administradora', avatar_url: null })} />
+    );
+
+    expect(container.querySelector('img')).toBeNull();
+    expect(screen.getByText('AA')).toBeInTheDocument();
+  });
+});
+
 describe('AppHeader', () => {
   it('does not offer user management to an operator (CA-07)', () => {
     renderWithProviders(<AppHeader user={buildProfile({ role: 'operator' })} />);

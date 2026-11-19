@@ -5,7 +5,6 @@ import type { ReactElement } from 'react';
 import { useTranslations } from 'next-intl';
 
 import {
-  Avatar,
   Button,
   Dropdown,
   DropdownItem,
@@ -21,10 +20,11 @@ import {
 import { Ellipsis, Send, ShieldCheck, UserCheck, UserRound, UserX } from 'lucide-react';
 
 import RoleChip from '@web/modules/auth/components/atoms/role-chip.component';
+import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component';
 import type { CurrentUser, UserRole } from '@web/modules/auth/types/auth.types';
 import StatusChip from '@web/modules/users/components/molecules/status-chip.component';
 
-type UserRow = Pick<CurrentUser, 'id' | 'full_name' | 'email' | 'role' | 'status'>;
+type UserRow = Pick<CurrentUser, 'id' | 'full_name' | 'email' | 'role' | 'status' | 'avatar_url'>;
 
 type UsersTableProps = {
   users: UserRow[];
@@ -58,8 +58,8 @@ const UsersTable = ({
   const actionsFor = (user: UserRow) => {
     if (user.id === currentUserId) {
       return (
-        <div className="flex max-w-40 flex-col items-end text-right text-xs text-default-500">
-          <span className="font-medium">{t('table.self')}</span>
+        <div className="ml-auto flex w-max max-w-44 flex-col items-end text-right text-xs text-default-500">
+          <span className="font-medium whitespace-nowrap">{t('table.self')}</span>
           {isOnlyActiveAdmin && <span>{t('table.lastAdmin')}</span>}
         </div>
       );
@@ -161,11 +161,10 @@ const UsersTable = ({
           <TableRow key={user.id} className="border-b border-divider last:border-none">
             <TableCell>
               <div className="flex items-center gap-3">
-                <Avatar
+                <UserAvatar
                   name={user.full_name}
-                  size="sm"
-                  aria-hidden
-                  className="shrink-0 bg-default-100 text-xs font-medium text-default-700"
+                  src={user.avatar_url}
+                  className="bg-default-100 text-default-700"
                 />
                 {/* Role and status sit beside the name on desktop and below it on phones, so
                     nothing is hidden behind a horizontal scroll. */}
