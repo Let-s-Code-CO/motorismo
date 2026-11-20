@@ -12,11 +12,14 @@ import CustomerDetail from '@web/modules/customers/components/organisms/customer
 import CustomerManage from '@web/modules/customers/components/organisms/customer-manage.component';
 import { listCustomerVehicles } from '@web/modules/vehicles/api/vehicles.server';
 import VehiclesSection from '@web/modules/vehicles/components/organisms/vehicles-section.component';
+import { listCustomerOrders } from '@web/modules/work-orders/api/work-orders.server';
+import CustomerHistory from '@web/modules/work-orders/components/organisms/customer-history.component';
 
 type CustomerPageProps = { params: Promise<{ id: string }> };
 
 /**
- * A customer's record (spec 004, CA-18) with their vehicles (spec 005, HU-01), where staff edit it
+ * A customer's record (spec 004, CA-18) with their vehicles (spec 005, HU-01) and their work
+ * orders (spec 008, CA-16), where staff edit it
  * (CA-27) and staff disable or reactivate it (RN-09, CA-29 to CA-31). Staff only; data protected by RLS and the database guard.
  */
 const CustomerPage = async ({ params }: CustomerPageProps) => {
@@ -27,7 +30,10 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
   if (!z.uuid().safeParse(id).success) notFound();
   const customer = await getCustomer(id);
   if (!customer) notFound();
-  const vehicles = await listCustomerVehicles(customer.id);
+  const [vehicles, orders] = await Promise.all([
+    listCustomerVehicles(customer.id),
+    listCustomerOrders(customer.id),
+  ]);
 
   const t = await getTranslations('customers.detail');
 
@@ -48,6 +54,9 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
           retired={vehicles.retired}
           readOnly={customer.disabled_at !== null}
         />
+        <div className="rounded-large border border-divider bg-content1 p-5 shadow-small">
+          <CustomerHistory orders={orders} variant="full" />
+        </div>
         <CustomerManage customer={customer} />
       </CustomerDetail>
     </section>

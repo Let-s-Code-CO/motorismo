@@ -6,7 +6,9 @@
  * - CA-04: Safari gets the home-screen icon (not a screenshot) and opens the app full screen.
  * - CA-05: the system bar uses the app's colour.
  * - CA-18 / CA-19 (HU-03): on an iPhone, a signed-in person is told the app can be installed;
- *   «Instalar» shows the steps and «Ahora no» hides the notice, also after reloading. (Headless
+ *   «Instalar» shows the steps and «Ahora no» hides the notice, also after reloading. The notice
+ *   never covers the end of a page: scrolled to the bottom, the last thing on it can be tapped (a
+ *   destructive action like «Anular orden» lives there, spec 008). (Headless
  *   Chromium never offers to install, so the browser's own install is covered by unit tests.)
  *
  * Opening the installed app from its icon (CA-02) and the iPhone home screen (CA-04) are checked
@@ -101,5 +103,22 @@ test.describe('the install notice on an iPhone (spec 006, HU-03)', () => {
     await page.reload();
     await expect(page.getByRole('button', { name: 'Instalar app' })).toBeVisible();
     await expect(notice).toHaveCount(0);
+  });
+
+  test('never covers the end of the page: scrolled to the bottom, the footer can be tapped (CA-18)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    await expect(page.getByText('Instala Motorismo en este dispositivo')).toBeVisible();
+
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    // What a finger would hit at the centre of the footer is the footer itself, not the notice.
+    const hit = await page.locator('footer').evaluate((footer) => {
+      const box = footer.getBoundingClientRect();
+      const found = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+      return Boolean(found && footer.contains(found));
+    });
+    expect(hit).toBe(true);
   });
 });

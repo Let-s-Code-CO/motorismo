@@ -43,13 +43,16 @@
       "pricePlaceholder": "0",
       "submitNew": "Registrar servicio",
       "submitEdit": "Guardar cambios",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "minutes": "Tiempo estimado (min)",
+      "minutesHint": "Opcional. Cuánto suele tardar; se usa para estimar cuándo estará lista una orden."
     },
     "validation": {
       "nameRequired": "Escribe el nombre del servicio.",
       "nameTooLong": "El nombre admite hasta 80 caracteres.",
       "priceInvalid": "Escribe un valor en pesos, sin decimales, entre $ 1 y $ 10.000.000.",
-      "priceRequired": "Indica el valor de al menos un tipo de vehículo."
+      "priceRequired": "Indica el valor de al menos un tipo de vehículo.",
+      "minutesInvalid": "Escribe minutos enteros, entre 5 y 1.440."
     },
     "errors": {
       "forbidden": "Solo un administrador puede cambiar los servicios.",

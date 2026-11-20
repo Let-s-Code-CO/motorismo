@@ -29,6 +29,7 @@ const lavado: ServiceRow = {
   price_motorcycle: 25000,
   price_car: 40000,
   price_bicycle: null,
+  estimated_minutes: 30,
   disabled_at: null,
 };
 
@@ -66,6 +67,8 @@ describe('ServiceForm', () => {
     type('Nombre del servicio', 'Micropulido');
     type('Moto', '120.000');
     type('Carro', '250000');
+    // Spec 008, CA-26: how long it usually takes.
+    type('Tiempo estimado (min)', '120');
     fireEvent.click(screen.getByRole('button', { name: 'Registrar servicio' }));
 
     await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
@@ -74,6 +77,7 @@ describe('ServiceForm', () => {
       price_motorcycle: 120000,
       price_car: 250000,
       price_bicycle: null,
+      estimated_minutes: 120,
     });
   });
 
@@ -94,6 +98,7 @@ describe('ServiceForm', () => {
       price_motorcycle: 25000,
       price_car: 40000,
       price_bicycle: 15000,
+      estimated_minutes: 30,
     });
   });
 

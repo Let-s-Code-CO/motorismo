@@ -5,13 +5,14 @@
  * in "Mi perfil" too), the vehicle form, the retired vehicles and the retire dialog; spec 006 the
  * "Sin conexión" page and notice, the new-version notice and the iPhone install notice and steps;
  * spec 007 «Servicios» and «Empleados» with their forms, the confirmation to disable and the
- * «Menú» of a phone. Serious and
+ * «Menú» of a phone; spec 008 «Órdenes», a new order (with errors), the detail of an open order and
+ * its close and void dialogs. Serious and
  * critical findings fail the test.
  */
 import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page, expect, test } from '@playwright/test';
 
-import { SEED, SEED_CUSTOMERS, signIn } from './support/sandbox';
+import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 
 const audit = async (page: Page) => {
   const { violations } = await new AxeBuilder({ page })
@@ -282,4 +283,50 @@ test.describe('the «Menú» of a phone (spec 007)', () => {
     await untilSettled(page.getByRole('menu'));
     expect(await audit(page)).toEqual([]);
   });
+});
+
+test('«Órdenes», a new order with errors, an open order and its dialogs have no serious accessibility issues (spec 008)', async ({
+  page,
+}) => {
+  const { data: open } = await adminClient()
+    .from('work_orders')
+    .select('id')
+    .eq('status', 'open')
+    .order('number')
+    .limit(1)
+    .single();
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+
+  await page.goto('/orders');
+  await expect(page.getByRole('heading', { name: 'En proceso' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  // A new order for Valentina (one vehicle, chosen by itself), sent without services.
+  await page.goto('/orders/new');
+  await page.getByLabel('Buscar cliente').fill(SEED_CUSTOMERS.walkIn.name);
+  await page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+  await page.getByRole('button', { name: 'Abrir orden' }).click();
+  await expect(page.getByText('Añade al menos un servicio.')).toBeVisible();
+  await page.getByRole('button', { name: 'Añadir Otro' }).click();
+  expect(await audit(page)).toEqual([]);
+
+  await page.goto(`/orders/${open!.id}`);
+  await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: 'Cerrar y cobrar' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page
+    .getByRole('region', { name: 'Anulación' })
+    .getByRole('button', { name: 'Anular orden' })
+    .click();
+  await untilDialogSettled(page);
+  await page.getByRole('dialog').getByRole('button', { name: 'Anular orden' }).click();
+  await expect(page.getByText('Escribe el motivo.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
 });

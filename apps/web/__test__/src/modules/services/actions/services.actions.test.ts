@@ -93,6 +93,8 @@ describe('services.actions', () => {
       price_motorcycle: 25000,
       price_car: 40000,
       price_bicycle: null,
+      // Spec 008, CA-26: no estimated time typed.
+      estimated_minutes: null,
     });
     expect(revalidatePath).toHaveBeenCalledWith('/services');
   });
@@ -127,6 +129,7 @@ describe('services.actions', () => {
       price_motorcycle: 25000,
       price_car: null,
       price_bicycle: null,
+      estimated_minutes: null,
     });
     expect(eq).toHaveBeenCalledWith('id', ID);
   });

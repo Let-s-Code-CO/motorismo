@@ -4,11 +4,18 @@ import type { Tables } from '@motorismo/supabase/types';
 
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 
-const COLUMNS = 'id, name, price_motorcycle, price_car, price_bicycle, disabled_at';
+const COLUMNS =
+  'id, name, price_motorcycle, price_car, price_bicycle, estimated_minutes, disabled_at';
 
 export type ServiceRow = Pick<
   Tables<'services'>,
-  'id' | 'name' | 'price_motorcycle' | 'price_car' | 'price_bicycle' | 'disabled_at'
+  | 'id'
+  | 'name'
+  | 'price_motorcycle'
+  | 'price_car'
+  | 'price_bicycle'
+  | 'estimated_minutes'
+  | 'disabled_at'
 >;
 
 /**

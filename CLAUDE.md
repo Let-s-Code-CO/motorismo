@@ -60,6 +60,22 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
   pantallas nuevas se añaden a esa auditoría.
   Audita también los formularios con sus errores a la vista.
+- **Selector con una sola opción = ya elegida (spec 008, RN-10, estándar).** El único vehículo de un
+  cliente, el único empleado activo… vienen preseleccionados (`core/utils/selection.utils.ts`,
+  `singleOption`); nadie despliega una lista para elegir lo único que hay.
+- Un botón con texto visible y algo más para lectores de pantalla («Añadir …») lleva ese extra en un
+  `sr-only` delante del texto, no en `aria-label`: el nombre accesible debe contener el visible
+  (WCAG 2.5.3; axe `label-content-name-mismatch`). Una `<dl>` solo contiene pares `dt`/`dd`.
+- Horas para el negocio en 12 horas, como se leen en Colombia («4:15 p. m.»), siempre con
+  `core/hooks/clock.hook.ts` (`useClock`): Node y el navegador ponen espacios distintos en «p. m.» y
+  sin normalizarlos la hidratación falla. Las fechas relativas («hace 40 minutos») con `useNow`,
+  nunca sin un «ahora» de referencia: `src/i18n/request.ts` fija `now` por petición y el navegador
+  lo hereda. Fecha y hora juntas se formatean por separado (fecha + `useClock`), nunca con
+  `dateStyle` + `timeStyle` (Node y el navegador las unen distinto).
+- **Móvil siempre.** Toda pantalla nueva o cambiada se revisa en teléfono (capturas en 360 px y en
+  iPhone de 440 px con modo táctil) y se añade a la prueba «on an iPhone» de `e2e/ui.spec.ts`, que
+  exige cero desplazamiento lateral. El contenedor de la app lleva `overflow-x-clip` como red de
+  seguridad, no como sustituto de arreglar lo que desborde.
 - Menú principal (`nav-links`): con más de dos opciones, por debajo de `md` se recoge en un botón
   «Menú» (spec 007), para que el encabezado quepa en 360 px. Una sección nueva se añade a `LINKS`
   y, si es del personal, a las tarjetas de inicio (`src/app/(app)/page.tsx`).
@@ -109,6 +125,8 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   Valentina la camioneta `KDM-482` (placa de Bogotá, D.C.) y Andrés una bicicleta. El catálogo de
   marcas y líneas y los 1.104 municipios (ciudad de la placa) llegan por migración (existen en
   todos los entornos), no por seed.
+- Órdenes (spec 008, solo en local): Valentina #1 cerrada; Camila #2 cerrada (dos medios de pago y
+  descuento), #3 anulada y #4 abierta («Limpieza de cadena» sin tiempo estimado).
 - Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
   «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
   (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real
@@ -181,6 +199,16 @@ e2e/                         # Playwright
   peticiones que pasan por él, así que esas pruebas usan `test.use({ serviceWorkers: 'block' })`.
   Chromium sin ventana no informa errores de instalabilidad (`Page.getInstallabilityErrors`
   siempre vacío): se prueba el manifiesto con `Page.getAppManifest`.
+
+## Órdenes de trabajo (spec 008)
+
+- Una orden (`work_orders` + líneas, participación de empleados y pagos) **solo se escribe por
+  funciones** `security definer` que comprueban rol y estado: `save_work_order`, `close_work_order`,
+  `correct_work_order` y `void_work_order`. Nadie tiene `insert/update/delete` sobre esas tablas.
+  Totales, estimado y nombres del personal salen de la vista `work_order_summaries`.
+- Cada línea copia el nombre, el valor y el tiempo del servicio al añadirse: cambiar el catálogo no
+  altera ninguna orden. Las utilidades del editor (`order-totals`, `order-estimate`, `shares`) son
+  puras y probadas; el editor solo las muestra.
 
 ## Autenticación y permisos (specs 002 y 004)
 

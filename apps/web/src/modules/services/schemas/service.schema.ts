@@ -23,6 +23,24 @@ const priceField = z
     return value;
   });
 
+/**
+ * Spec 008, CA-26 / RN-11: an optional estimated time, whole minutes from 5 to 1.440 (digits only:
+ * «1.5» is not 15).
+ */
+const minutesField = z
+  .union([z.number(), z.string()])
+  .nullish()
+  .transform((raw, ctx) => {
+    if (raw === null || raw === undefined || (typeof raw === 'string' && !raw.trim())) return null;
+    const text = String(raw).trim();
+    const value = /^\d+$/.test(text) ? Number(text) : Number.NaN;
+    if (!Number.isInteger(value) || value < 5 || value > 1440) {
+      ctx.addIssue({ code: 'custom', message: 'minutesInvalid' });
+      return null;
+    }
+    return value;
+  });
+
 const hasPrice = (data: {
   price_motorcycle?: unknown;
   price_car?: unknown;
@@ -47,6 +65,7 @@ export const serviceSchema = z
     price_motorcycle: priceField,
     price_car: priceField,
     price_bicycle: priceField,
+    estimated_minutes: minutesField,
   })
   .refine(hasPrice, { path: ['prices'], error: 'priceRequired', when: () => true });
 

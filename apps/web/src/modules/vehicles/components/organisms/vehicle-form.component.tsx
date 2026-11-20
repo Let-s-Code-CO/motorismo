@@ -42,7 +42,8 @@ type VehicleFormProps = {
   customerId: string;
   /** The vehicle being corrected; absent to register a new one. */
   vehicle?: VehicleView;
-  onSaved: () => void;
+  /** Told the vehicle's id (a work order picks the vehicle just registered, spec 008 CA-02). */
+  onSaved: (vehicleId: string) => void;
   onCancel: () => void;
 };
 
@@ -136,7 +137,7 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
     }
     // A new brand or line may have joined the catalog: suggest it from now on (CA-13).
     await queryClient.invalidateQueries({ queryKey: vehicleKeys.all });
-    onSaved();
+    onSaved(result.id);
   });
 
   const fieldError = (message?: string) => message && t(`validation.${message}`);

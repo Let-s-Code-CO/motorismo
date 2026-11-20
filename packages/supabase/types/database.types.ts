@@ -193,6 +193,7 @@ export type Database = {
         Row: {
           created_at: string
           disabled_at: string | null
+          estimated_minutes: number | null
           id: string
           name: string
           name_key: string
@@ -203,6 +204,7 @@ export type Database = {
         Insert: {
           created_at?: string
           disabled_at?: string | null
+          estimated_minutes?: number | null
           id?: string
           name: string
           name_key?: string
@@ -213,6 +215,7 @@ export type Database = {
         Update: {
           created_at?: string
           disabled_at?: string | null
+          estimated_minutes?: number | null
           id?: string
           name?: string
           name_key?: string
@@ -387,11 +390,312 @@ export type Database = {
           },
         ]
       }
+      work_order_line_employees: {
+        Row: {
+          employee_id: string
+          line_id: string
+          share_pct: number
+        }
+        Insert: {
+          employee_id: string
+          line_id: string
+          share_pct: number
+        }
+        Update: {
+          employee_id?: string
+          line_id?: string
+          share_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_line_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_line_employees_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "work_order_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_order_lines: {
+        Row: {
+          estimated_minutes: number | null
+          id: string
+          name: string
+          position: number
+          price: number
+          service_id: string | null
+          work_order_id: string
+        }
+        Insert: {
+          estimated_minutes?: number | null
+          id?: string
+          name: string
+          position: number
+          price: number
+          service_id?: string | null
+          work_order_id: string
+        }
+        Update: {
+          estimated_minutes?: number | null
+          id?: string
+          name?: string
+          position?: number
+          price?: number
+          service_id?: string | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_lines_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_lines_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_order_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_lines_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_order_payments: {
+        Row: {
+          amount: number
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          work_order_id: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          work_order_id: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_payments_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_order_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_payments_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          corrected_at: string | null
+          corrected_by: string | null
+          correction_reason: string | null
+          customer_id: string
+          discount: number
+          id: string
+          notes: string | null
+          number: number
+          opened_at: string
+          opened_by: string
+          started_at: string | null
+          started_by: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          vehicle_id: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          corrected_at?: string | null
+          corrected_by?: string | null
+          correction_reason?: string | null
+          customer_id: string
+          discount?: number
+          id?: string
+          notes?: string | null
+          number?: never
+          opened_at?: string
+          opened_by: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          vehicle_id: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          corrected_at?: string | null
+          corrected_by?: string | null
+          correction_reason?: string | null
+          customer_id?: string
+          discount?: number
+          id?: string
+          notes?: string | null
+          number?: never
+          opened_at?: string
+          opened_by?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          vehicle_id?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_corrected_by_fkey"
+            columns: ["corrected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_opened_by_fkey"
+            columns: ["opened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_started_by_fkey"
+            columns: ["started_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_voided_by_fkey"
+            columns: ["voided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      work_order_summaries: {
+        Row: {
+          brand_name: string | null
+          closed_at: string | null
+          closed_by_name: string | null
+          corrected_at: string | null
+          corrected_by_name: string | null
+          correction_reason: string | null
+          customer_id: string | null
+          customer_name: string | null
+          discount: number | null
+          estimated_minutes: number | null
+          id: string | null
+          line_name: string | null
+          notes: string | null
+          number: number | null
+          opened_at: string | null
+          opened_by_name: string | null
+          plate: string | null
+          plate_city_name: string | null
+          services: string[] | null
+          started_at: string | null
+          started_by_name: string | null
+          status: Database["public"]["Enums"]["work_order_status"] | null
+          subtotal: number | null
+          total: number | null
+          unestimated: string[] | null
+          vehicle_id: string | null
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"] | null
+          void_reason: string | null
+          voided_at: string | null
+          voided_by_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      close_work_order: {
+        Args: { p_id: string; p_payments?: Json }
+        Returns: undefined
+      }
+      correct_work_order: {
+        Args: {
+          p_discount?: number
+          p_id: string
+          p_lines: Json
+          p_notes?: string
+          p_payments: Json
+          p_reason: string
+        }
+        Returns: undefined
+      }
       current_account: {
         Args: never
         Returns: {
@@ -444,11 +748,28 @@ export type Database = {
         }
         Returns: string
       }
+      save_work_order: {
+        Args: {
+          p_customer_id: string
+          p_discount?: number
+          p_id?: string
+          p_lines: Json
+          p_notes?: string
+          p_vehicle_id: string
+        }
+        Returns: string
+      }
+      start_work_order: { Args: { p_id: string }; Returns: undefined }
+      void_work_order: {
+        Args: { p_id: string; p_reason: string }
+        Returns: undefined
+      }
     }
     Enums: {
       customer_origin: "self_signup" | "google" | "counter"
       customer_status: "registered" | "walk_in" | "disabled"
       document_type: "cc" | "ce" | "ppt" | "passport"
+      payment_method: "cash" | "transfer" | "card" | "other"
       user_role: "operator" | "admin"
       user_status: "invited" | "active" | "disabled"
       vehicle_class: "automobile" | "utility" | "mountain" | "road"
@@ -470,6 +791,7 @@ export type Database = {
         | "pink"
         | "multicolor"
       vehicle_type: "motorcycle" | "bicycle" | "car"
+      work_order_status: "open" | "closed" | "voided"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -600,6 +922,7 @@ export const Constants = {
       customer_origin: ["self_signup", "google", "counter"],
       customer_status: ["registered", "walk_in", "disabled"],
       document_type: ["cc", "ce", "ppt", "passport"],
+      payment_method: ["cash", "transfer", "card", "other"],
       user_role: ["operator", "admin"],
       user_status: ["invited", "active", "disabled"],
       vehicle_class: ["automobile", "utility", "mountain", "road"],
@@ -622,6 +945,7 @@ export const Constants = {
         "multicolor",
       ],
       vehicle_type: ["motorcycle", "bicycle", "car"],
+      work_order_status: ["open", "closed", "voided"],
     },
   },
 } as const

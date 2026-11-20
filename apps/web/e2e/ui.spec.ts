@@ -36,6 +36,33 @@ test.describe('on a 360 px phone', () => {
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
+  test('a new order and the detail of an open order have no horizontal scroll (spec 008)', async ({
+    page,
+  }) => {
+    const { data: open } = await adminClient()
+      .from('work_orders')
+      .select('id')
+      .eq('status', 'open')
+      .order('number')
+      .limit(1)
+      .single();
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+
+    await page.goto('/orders/new');
+    await page.getByLabel('Buscar cliente').fill(SEED_CUSTOMERS.walkIn.name);
+    await page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    await page.getByRole('button', { name: 'Añadir Lavado detallado' }).click();
+    await page.getByRole('button', { name: 'Añadir Otro' }).click();
+    // The summary stays in sight at the bottom.
+    await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toBeInViewport();
+    expect(await horizontalOverflow(page)).toBe(0);
+
+    await page.goto(`/orders/${open!.id}`);
+    await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
   test('with every staff section, the menu fits: it moves into «Menú»; a long service fits too (spec 007, CA-19)', async ({
     page,
   }) => {
@@ -53,10 +80,12 @@ test.describe('on a 360 px phone', () => {
     await page.getByRole('button', { name: 'Menú' }).click();
     await page.getByRole('menuitemradio', { name: 'Servicios' }).click();
     await expect(page).toHaveURL('/services');
+    // Measured once the menu has closed: its popover is not part of the page.
+    await expect(page.getByRole('menu')).toHaveCount(0);
     await expect(page.getByRole('grid', { name: 'Servicios activos' })).toContainText(longName);
-    const overflow = await horizontalOverflow(page);
+    // The steady state: the menu's popover may still be animating out for a moment under load.
+    await expect.poll(() => horizontalOverflow(page)).toBe(0);
     await adminClient().from('services').delete().eq('name', longName);
-    expect(overflow).toBe(0);
   });
 
   test('the vehicles of a customer and the vehicle form have no horizontal scroll (spec 005)', async ({
@@ -91,6 +120,43 @@ test.describe('on a 360 px phone', () => {
 
     await expect(page.getByRole('complementary', { name: 'Motorismo Detailing' })).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
+  });
+});
+
+test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
+  test.use({
+    viewport: { width: 440, height: 956 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 3,
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+  });
+
+  test('every staff screen of specs 007 and 008 has no horizontal scroll', async ({ page }) => {
+    const { data: open } = await adminClient()
+      .from('work_orders')
+      .select('id, customer_id')
+      .eq('status', 'open')
+      .order('number')
+      .limit(1)
+      .single();
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    for (const path of [
+      '/',
+      '/orders',
+      '/orders/new',
+      `/orders/${open!.id}`,
+      `/customers/${open!.customer_id}`,
+      '/services',
+      '/employees',
+    ]) {
+      await page.goto(path);
+      await expect(page.getByRole('main')).toBeVisible();
+      await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
+    }
   });
 });
 

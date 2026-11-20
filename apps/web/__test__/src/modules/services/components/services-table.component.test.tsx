@@ -22,6 +22,7 @@ const service = (overrides: Partial<ServiceRow> = {}): ServiceRow => ({
   price_motorcycle: 25000,
   price_car: 40000,
   price_bicycle: null,
+  estimated_minutes: 45,
   disabled_at: null,
   ...overrides,
 });
@@ -46,7 +47,7 @@ describe('ServicesTable', () => {
     );
 
     expect(screen.getByRole('rowheader', { name: /Lavado sencillo/ })).toHaveTextContent(
-      'Lavado sencilloMoto: $ 25.000Carro: $ 40.000Bicicleta: No disponible'
+      'Lavado sencillo45 minMoto: $ 25.000Carro: $ 40.000Bicicleta: No disponible'
     );
   });
 
@@ -99,5 +100,23 @@ describe('ServicesTable', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Acciones de Polichado' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Reactivar' }));
     expect(onReactivate).toHaveBeenCalledWith(polichado);
+  });
+
+  it('shows the estimated time under the name, or nothing when there is none (spec 008, CA-26)', () => {
+    renderWithProviders(
+      <ServicesTable
+        services={[
+          service({ estimated_minutes: 150 }),
+          service({ id: 's2', name: 'Cera', estimated_minutes: null }),
+        ]}
+        variant="active"
+        label="Servicios"
+      />
+    );
+
+    expect(screen.getByRole('rowheader', { name: /Lavado sencillo/ })).toHaveTextContent(
+      '2 h 30 min'
+    );
+    expect(screen.getByRole('rowheader', { name: /Cera/ })).not.toHaveTextContent('min');
   });
 });

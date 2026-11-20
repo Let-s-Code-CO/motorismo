@@ -11,6 +11,7 @@ import type { Audience } from '@web/modules/auth/types/auth.types';
 
 const LINKS: { href: string; key: string; audiences: Audience[] }[] = [
   { href: '/', key: 'home', audiences: ['admin', 'operator'] },
+  { href: '/orders', key: 'orders', audiences: ['admin', 'operator'] },
   { href: '/customers', key: 'customers', audiences: ['admin', 'operator'] },
   { href: '/services', key: 'services', audiences: ['admin', 'operator'] },
   { href: '/employees', key: 'employees', audiences: ['admin', 'operator'] },

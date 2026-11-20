@@ -14,8 +14,8 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 2. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
-3. **Orden de trabajo** — servicios elegidos (incluido «otro» con valor libre), empleados
-   asociados y valor final; al encontrar al cliente, total de lavadas y las dos últimas.
+3. **Agendamiento (reservas)** — guardar un puesto para una fecha y hora, con o sin servicios; al
+   llegar el cliente, la reserva pasa a ser una orden en cola (spec 008). Candidata a spec 009.
 4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
    retira y se registra de nuevo).
 5. **Confirmación por WhatsApp** (deseable).
@@ -38,6 +38,7 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
   la E2E de la spec 005 bajo carga.
 - E2E `vehicle-catalog.spec.ts` («adds a really new brand and line…», spec 005) agota los 30 s
   a veces en la suite completa y pasa sola: revisar qué espera bajo carga (visto el 2026-11-20).
+- Ver sus órdenes desde «Mi perfil» (cliente) y estado «lista para entregar»: fuera de la spec 008.
 - Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
   con la confirmación por WhatsApp o las reservas.
 - `minimatch` < 11 (aviso moderado, solo en desarrollo) llega vía
@@ -54,3 +55,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | verificada (bloques A, B y C); falta despliegue |
 | [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
 | [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | verificada; falta despliegue |
+| [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | verificada, con enmienda (falta despliegue) |

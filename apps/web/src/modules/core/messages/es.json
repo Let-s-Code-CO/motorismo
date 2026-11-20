@@ -110,6 +110,11 @@
     },
     "confirm": {
       "cancel": "Cancelar"
+    },
+    "duration": {
+      "minutes": "{minutes} min",
+      "hours": "{hours} h",
+      "hoursMinutes": "{hours} h {minutes} min"
     }
   }
 }
