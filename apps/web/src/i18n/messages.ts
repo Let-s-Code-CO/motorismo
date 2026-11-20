@@ -6,6 +6,7 @@ import pwa from '@web/modules/pwa/messages/es.json';
 import services from '@web/modules/services/messages/es.json';
 import users from '@web/modules/users/messages/es.json';
 import vehicles from '@web/modules/vehicles/messages/es.json';
+import orders from '@web/modules/work-orders/messages/es.json';
 
 /**
  * The app is Spanish-only. Each module owns `messages/es.json` with a single top-level namespace
@@ -25,4 +26,5 @@ export const messages = {
   ...pwa,
   ...services,
   ...employees,
+  ...orders,
 };

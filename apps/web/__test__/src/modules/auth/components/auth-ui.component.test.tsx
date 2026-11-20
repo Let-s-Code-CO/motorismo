@@ -117,6 +117,7 @@ describe('AppHeader', () => {
     const items = await screen.findAllByRole('menuitemradio');
     expect(items.map((item) => item.textContent)).toEqual([
       'Inicio',
+      'Órdenes',
       'Clientes',
       'Servicios',
       'Empleados',

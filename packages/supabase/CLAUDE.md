@@ -70,6 +70,8 @@ pnpm db:stop
 - `seeds/03_vehicles.sql`: vehículos de esos clientes (spec 005), guardados con `save_vehicle`.
 - `seeds/04_catalogs.sql`: servicios y empleados de ejemplo (spec 007), solo locales: los reales
   los carga el administrador. Las pruebas pgTAP de catálogos vacían esas tablas en su transacción.
+- `seeds/05_work_orders.sql`: órdenes de ejemplo (spec 008), creadas con las mismas funciones que la
+  app, como el primer admin. Las pruebas pgTAP de catálogos y órdenes vacían primero las órdenes.
 - **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
   municipios DANE de `municipalities_data`) van en
   una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo

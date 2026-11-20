@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 
 import { Alert, Button, Input } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Tag } from 'lucide-react';
+import { Clock, Tag } from 'lucide-react';
 
 import { formatAmount, parsePesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
@@ -56,6 +56,8 @@ const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
       price_motorcycle: asText(service?.price_motorcycle),
       price_car: asText(service?.price_car),
       price_bicycle: asText(service?.price_bicycle),
+      estimated_minutes:
+        service?.estimated_minutes == null ? '' : String(service.estimated_minutes),
     },
   });
 
@@ -126,6 +128,19 @@ const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
           </p>
         )}
       </fieldset>
+      <Input
+        {...register('estimated_minutes')}
+        label={t('form.minutes')}
+        description={t('form.minutesHint')}
+        inputMode="numeric"
+        variant="bordered"
+        labelPlacement="outside"
+        validationBehavior="aria"
+        className="sm:max-w-xs"
+        startContent={<Clock aria-hidden className="size-4 shrink-0 text-default-400" />}
+        isInvalid={!!errors.estimated_minutes}
+        errorMessage={fieldError(errors.estimated_minutes?.message)}
+      />
       <div className="flex justify-end gap-2">
         <Button variant="light" onPress={onCancel}>
           {t('form.cancel')}

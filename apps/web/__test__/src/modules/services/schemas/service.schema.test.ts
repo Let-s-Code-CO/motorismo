@@ -7,6 +7,7 @@
  *   reported at once, next to its field.
  * - CA-01: a typed «25.000» is sent as 25000; a blank price is sent as null (not offered, CA-02).
  * - The Server Action parses the form's output again: numbers are accepted as they are.
+ * - Spec 008, CA-26 / RN-11: an optional estimated time, whole minutes from 5 to 1.440.
  */
 import { serviceSchema } from '@web/modules/services/schemas/service.schema';
 
@@ -15,6 +16,7 @@ const input = (overrides: Record<string, unknown> = {}) => ({
   price_motorcycle: '25.000',
   price_car: '',
   price_bicycle: '',
+  estimated_minutes: '',
   ...overrides,
 });
 
@@ -32,6 +34,7 @@ describe('serviceSchema', () => {
       price_motorcycle: 25000,
       price_car: 40000,
       price_bicycle: null,
+      estimated_minutes: null,
     });
   });
 
@@ -70,4 +73,18 @@ describe('serviceSchema', () => {
   it('accepts the limits: $ 1 and $ 10.000.000 (RN-05)', () => {
     expect(issuesOf(input({ price_motorcycle: '1', price_car: '10.000.000' }))).toEqual({});
   });
+
+  it('keeps an estimated time in whole minutes, optional (spec 008, CA-26)', () => {
+    expect(serviceSchema.parse(input({ estimated_minutes: '45' })).estimated_minutes).toBe(45);
+    expect(serviceSchema.parse(input({ estimated_minutes: '' })).estimated_minutes).toBeNull();
+  });
+
+  it.each(['4', '1441', '1.5', 'media hora'])(
+    'refuses «%s» as an estimated time (spec 008, RN-11)',
+    (minutes) => {
+      expect(issuesOf(input({ estimated_minutes: minutes }))).toEqual({
+        estimated_minutes: 'minutesInvalid',
+      });
+    }
+  );
 });

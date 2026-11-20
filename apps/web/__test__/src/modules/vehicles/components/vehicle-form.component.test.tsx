@@ -90,7 +90,7 @@ describe('VehicleForm', () => {
       { code: '11001', name: 'Bogotá, D.C.', department: 'Bogotá, D.C.' },
       { code: '63001', name: 'Armenia', department: 'Quindío' },
     ]);
-    vi.mocked(saveVehicle).mockResolvedValue({ ok: true });
+    vi.mocked(saveVehicle).mockResolvedValue({ ok: true, id: 'vehicle-id' });
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -207,7 +207,8 @@ describe('VehicleForm', () => {
     fireEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'Negro' }));
     fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
 
-    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    // With the vehicle's id: a work order picks the vehicle just registered (spec 008, CA-02).
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith('vehicle-id'));
     expect(saveVehicle).toHaveBeenCalledWith(
       expect.objectContaining({
         customer_id: CUSTOMER_ID,

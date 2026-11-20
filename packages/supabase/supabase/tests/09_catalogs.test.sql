@@ -56,7 +56,12 @@ exception when others then
 end $$;
 grant execute on function pg_temp.error_hint(text) to authenticated;
 
--- Independent of the seeds: start from empty catalogs (undone by the final rollback).
+-- Independent of the seeds: start from empty catalogs (undone by the final rollback). The seed
+-- work orders (spec 008) point at services and employees, so they go first.
+delete from public.work_order_payments;
+delete from public.work_order_line_employees;
+delete from public.work_order_lines;
+delete from public.work_orders;
 delete from public.employee_details;
 delete from public.employees;
 delete from public.services;

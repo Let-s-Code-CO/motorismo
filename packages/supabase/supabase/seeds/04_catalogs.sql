@@ -28,3 +28,8 @@ select public.save_employee('Paula Pineda', 'cc', '52123456', 30);
 select public.save_employee('Diego Desactivado', 'ce', '987654', 25);
 
 update public.employees set disabled_at = now() - interval '60 days' where full_name = 'Diego Desactivado';
+
+-- Estimated times (spec 008, HU-06): some services have one, «Recubrimiento cerámico» does not.
+update public.services set estimated_minutes = 30 where name = 'Lavado sencillo';
+update public.services set estimated_minutes = 90 where name = 'Lavado detallado';
+update public.services set estimated_minutes = 120 where name = 'Micropulido';

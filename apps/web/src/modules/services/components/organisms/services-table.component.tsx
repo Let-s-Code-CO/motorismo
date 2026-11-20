@@ -17,6 +17,7 @@ import {
 } from '@heroui/react';
 import { ArchiveRestore, Ban, Ellipsis, Pencil } from 'lucide-react';
 
+import useDuration from '@web/modules/core/hooks/duration.hook';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import type { ServiceRow } from '@web/modules/services/api/services.server';
 
@@ -60,6 +61,7 @@ const ServicesTable = ({
 }: ServicesTableProps) => {
   const t = useTranslations('services.table');
   const format = useFormatter();
+  const duration = useDuration();
   const hasActions = variant === 'active' ? !!(onEdit || onDisable) : !!onReactivate;
   const priceText = (value: number | null) =>
     value === null ? t('notOffered') : formatPesos(value);
@@ -143,6 +145,12 @@ const ServicesTable = ({
             <TableCell key="name">
               <span className="flex flex-col">
                 <span className="font-medium break-words">{service.name}</span>
+                {/* Spec 008, CA-26: how long it usually takes. */}
+                {service.estimated_minutes != null && (
+                  <span className="text-xs text-default-500">
+                    {duration(service.estimated_minutes)}
+                  </span>
+                )}
                 {/* On phones the prices go under the name: nothing behind a sideways scroll. */}
                 <span className="flex flex-col text-xs text-default-500 tabular-nums sm:hidden">
                   {PRICES.map((price) => (

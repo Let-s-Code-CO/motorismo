@@ -68,7 +68,8 @@ describe('saveVehicle', () => {
     vi.mocked(getActiveStaff).mockResolvedValue(STAFF);
     const { rpc } = fakeSession();
 
-    expect(await saveVehicle(motorcycle())).toEqual({ ok: true });
+    // The vehicle's id comes back, so a work order can pick a vehicle just registered (spec 008, CA-02).
+    expect(await saveVehicle(motorcycle())).toEqual({ ok: true, id: 'vehicle-id' });
     expect(rpc).toHaveBeenCalledWith('save_vehicle', {
       p_customer_id: OTHER_CUSTOMER_ID,
       p_vehicle_type: 'motorcycle',

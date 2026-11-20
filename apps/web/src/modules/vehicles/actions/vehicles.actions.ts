@@ -38,7 +38,9 @@ const revalidateVehicles = (customerId: string) => {
  * NAME: save_vehicle finds them in the catalog or adds them, in the same transaction as the
  * vehicle (CA-13, CA-14). Runs with the user's OWN session: RLS and the guard decide.
  */
-export const saveVehicle = async (input: unknown): Promise<ActionResult<VehiclesErrorKey>> => {
+export const saveVehicle = async (
+  input: unknown
+): Promise<{ ok: true; id: string } | Exclude<ActionResult<VehiclesErrorKey>, { ok: true }>> => {
   const who = await actor();
   if (!who) return { ok: false, error: 'forbidden' };
 
@@ -54,7 +56,7 @@ export const saveVehicle = async (input: unknown): Promise<ActionResult<Vehicles
   const customerId = who.ownCustomerId ?? vehicle.customer_id;
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc('save_vehicle', {
+  const { data, error } = await supabase.rpc('save_vehicle', {
     p_customer_id: customerId,
     p_vehicle_type: vehicle.vehicle_type,
     p_vehicle_class: vehicle.vehicle_class ?? undefined,
@@ -70,7 +72,8 @@ export const saveVehicle = async (input: unknown): Promise<ActionResult<Vehicles
   if (error) return { ok: false, error: fromVehicleError(error, who.audience) };
 
   revalidateVehicles(customerId);
-  return { ok: true };
+  // The id lets a work order pick the vehicle just registered (spec 008, CA-02).
+  return { ok: true, id: data };
 };
 
 const retireSchema = z.object({ id: z.uuid() });

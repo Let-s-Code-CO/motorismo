@@ -2,7 +2,16 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { ArrowRight, Contact, HardHat, type LucideIcon, Sparkles, Tags, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  ClipboardList,
+  Contact,
+  HardHat,
+  type LucideIcon,
+  Sparkles,
+  Tags,
+  Users,
+} from 'lucide-react';
 
 import { getStaffForPage } from '@web/modules/auth/api/auth.server';
 
@@ -10,8 +19,9 @@ const CARD = 'flex flex-col gap-4 rounded-large border border-divider bg-content
 
 const LINK_CARD = `${CARD} group transition-[box-shadow,border-color] hover:border-default-300 hover:shadow-medium`;
 
-/** Where staff can go from home; «Usuarios» only for an admin (spec 002, CA-07; spec 007, CA-19). */
+/** Where staff can go from home; «Usuarios» only for an admin (spec 002, CA-07; spec 007, CA-19; spec 008). */
 const SECTIONS: { href: string; key: string; icon: LucideIcon; adminOnly?: boolean }[] = [
+  { href: '/orders', key: 'orders', icon: ClipboardList },
   { href: '/customers', key: 'customers', icon: Contact },
   { href: '/services', key: 'services', icon: Tags },
   { href: '/employees', key: 'employees', icon: HardHat },
