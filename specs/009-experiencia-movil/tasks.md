@@ -105,6 +105,11 @@ Sin cambios de esquema (plan: el resumen cuenta `work_orders` con la sesión y s
       acceso), spec, plan, tareas y backlog al día; nota en el historial de las specs 003, 006 y
       007 de lo que cambia la 009.
 
+- [x] T095 Verificación (`/verificar 009`): E2E del fondo oculto al lector con el panel abierto
+      (CA-03), el nombre corto de los mosaicos (CA-06), «Órdenes» oscura y del mismo tamaño en
+      escritorio (CA-09) y la franja en «Enlace no válido» (CA-10); cada una vista fallar con una
+      mutación.
+
 ## Cobertura de criterios
 
 | Criterio | Tareas de prueba |

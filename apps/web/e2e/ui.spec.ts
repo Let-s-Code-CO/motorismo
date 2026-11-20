@@ -125,7 +125,13 @@ test.describe('on a 360 px phone', () => {
   test('every sign-in page shows the brand band on top, not the side panel, and fits (spec 009, CA-10)', async ({
     page,
   }) => {
-    for (const path of ['/auth/login', '/auth/sign-up', '/auth/forgot-password']) {
+    // «Nueva contraseña» needs an invitation or recovery link: invite and password-reset tests.
+    for (const path of [
+      '/auth/login',
+      '/auth/sign-up',
+      '/auth/forgot-password',
+      '/auth/invalid-link?type=email',
+    ]) {
       await page.goto(path);
       const band = page.getByRole('banner', { name: 'Motorismo Detailing' });
       await expect(band, path).toBeVisible();
@@ -215,6 +221,33 @@ test.describe('on an iPhone (390 × 844) — the phone experience (spec 009)', (
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
+  test('with the panel open, screen readers do not read the page behind it (CA-03)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await expect(page.getByRole('main')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Menú' }).click();
+    await expect(page.getByRole('dialog', { name: 'Menú principal' })).toBeVisible();
+
+    // Hidden from the accessibility tree while the panel is open; back once it closes.
+    await expect(page.getByRole('main')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('main')).toBeVisible();
+  });
+
+  test("the tiles use the menu's short names: «Usuarios», not «Gestionar usuarios» (CA-06)", async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    const tiles = page.getByRole('list', { name: 'Secciones' });
+    await expect(tiles.getByRole('link', { name: 'Usuarios', exact: true })).toBeVisible();
+    await expect(tiles.getByText('Gestionar usuarios')).toBeHidden();
+  });
+
   test('the home leads with «Órdenes» and what is open, then tiles in two columns, centred, without «Muy pronto» (CA-06 to CA-08)', async ({
     page,
   }) => {
@@ -286,7 +319,7 @@ test.describe('on a desktop', () => {
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
   });
 
-  test('the header and the home are as before, with the open orders on «Órdenes» (spec 009, CA-05, CA-09)', async ({
+  test('the header and the home are as before; «Órdenes» dark, the same size, with the open orders (spec 009, CA-05, CA-09)', async ({
     page,
   }) => {
     await signIn(page, SEED.admin.email);
@@ -310,6 +343,26 @@ test.describe('on a desktop', () => {
     await expect(
       page.getByRole('list', { name: 'Secciones' }).getByRole('link').first()
     ).toContainText(/\d+En proceso\d+En cola|Sin órdenes abiertas/);
+
+    // «Órdenes» is dark like the brand panel, and the same size as the other cards.
+    const tiles = page.getByRole('list', { name: 'Secciones' }).getByRole('link');
+    const background = (index: number) =>
+      tiles.nth(index).evaluate((element) => getComputedStyle(element).backgroundColor);
+    const zinc950 = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.className = 'bg-zinc-950';
+      document.body.append(probe);
+      const colour = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return colour;
+    });
+    expect(await background(0)).toBe(zinc950);
+    expect(await background(1)).not.toBe(zinc950);
+    const [orders, customers] = (await Promise.all(
+      [0, 1].map(async (index) => (await tiles.nth(index).boundingBox())!)
+    )) as [Box, Box];
+    expect(Math.abs(orders.width - customers.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(orders.height - customers.height)).toBeLessThanOrEqual(1);
   });
 });
 
