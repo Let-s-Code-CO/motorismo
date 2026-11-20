@@ -61,4 +61,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | verificada; falta despliegue |
 | [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | verificada, con enmienda (falta despliegue) |
 | [009](009-experiencia-movil/spec.md) | Experiencia móvil | verificada; falta despliegue |
-| [010](010-modo-oscuro/spec.md) | Modo oscuro | implementada |
+| [010](010-modo-oscuro/spec.md) | Modo oscuro | verificada; falta despliegue |

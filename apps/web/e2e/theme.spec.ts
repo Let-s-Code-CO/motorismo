@@ -7,7 +7,10 @@
  *   keeps what was typed.
  * - CA-04: the plate is the same yellow in both themes.
  * - CA-05: states stay distinct in dark.
- * - CA-06: brand elements keep their look and stand out from the page.
+ * - CA-03: on dark, the focus ring of a button and the border of a focused field stand out from
+ *   the background at 3:1 or more (WCAG 1.4.11; the axe audit does not measure them).
+ * - CA-06: brand elements keep their look and stand out from the page (the desktop's panel and
+ *   the phone's band with their edge, «Órdenes» with its relief).
  * - CA-07: the system bar follows the theme.
  * - CA-09 / CA-11: on a phone «Tema» lives in the account's menu; the choice survives reloading and
  *   signing out, and another device keeps its own.
@@ -24,6 +27,19 @@ const isDark = (page: Page) =>
 const background = (page: Page) =>
   page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 const DARK_BG = 'rgb(9, 9, 11)';
+
+/** WCAG contrast ratio between two `rgb(…)` colours. */
+const contrast = (a: string, b: string) => {
+  const luminance = (colour: string) => {
+    const [r, g, bl] = (colour.match(/[\d.]+/g) ?? []).slice(0, 3).map((value) => {
+      const channel = Number(value) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r! + 0.7152 * g! + 0.0722 * bl!;
+  };
+  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (light! + 0.05) / (dark! + 0.05);
+};
 const LIGHT_BG = 'rgb(250, 250, 250)';
 
 test.describe('following the device (HU-01)', () => {
@@ -127,6 +143,49 @@ test.describe('following the device (HU-01)', () => {
     const orders = page.getByRole('list', { name: 'Secciones' }).getByRole('link').first();
     const image = await orders.evaluate((element) => getComputedStyle(element).backgroundImage);
     expect(image).toContain('linear-gradient');
+  });
+
+  test("the keyboard focus stands out on dark: a button's ring and a field's border (CA-03)", async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+
+    // A field reached with the keyboard: its border against the page.
+    const email = page.getByLabel('Correo');
+    while (!(await email.evaluate((input) => input === document.activeElement)))
+      await page.keyboard.press('Tab');
+    const fieldBorder = await email.evaluate(
+      (input) => getComputedStyle(input.closest('[data-slot="input-wrapper"]')!).borderColor
+    );
+    expect(contrast(fieldBorder, DARK_BG)).toBeGreaterThanOrEqual(3);
+
+    // A button reached with the keyboard: its focus ring (outline) against the page.
+    const enter = page.getByRole('button', { name: 'Entrar' });
+    while (!(await enter.evaluate((button) => button === document.activeElement)))
+      await page.keyboard.press('Tab');
+    const ring = await enter.evaluate((button) => {
+      const style = getComputedStyle(button);
+      return style.outlineStyle === 'none' ? '' : style.outlineColor;
+    });
+    expect(ring).not.toBe('');
+    expect(contrast(ring, DARK_BG)).toBeGreaterThanOrEqual(3);
+  });
+
+  test('on a phone, the brand band keeps its edge against the dark page (CA-06)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/auth/login');
+
+    const edge = await page
+      .getByRole('banner', { name: 'Motorismo Detailing' })
+      .evaluate((band) => {
+        const style = getComputedStyle(band);
+        return { width: style.borderBottomWidth, colour: style.borderBottomColor };
+      });
+
+    expect(edge.width).toBe('1px');
+    expect(edge.colour).not.toBe('rgba(0, 0, 0, 0)');
   });
 
   test("changing the device's theme applies at once and keeps what was typed (CA-02)", async ({

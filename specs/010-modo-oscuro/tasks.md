@@ -100,6 +100,10 @@ Sin cambios (RN-02: la elección vive en el dispositivo).
 - [x] T094 `CLAUDE.md` (colores siempre por tokens o con su `dark:`; cookie del tema; caché v2),
       spec, plan, tareas y backlog al día; nota en el historial de las specs 003, 006 y 009.
 
+- [x] T095 Verificación (`/verificar 010`): E2E del contraste del foco con teclado en oscuro
+      (anillo de «Entrar» y borde de «Correo», al menos 3:1; CA-03) y del borde de la franja de
+      marca en el teléfono (CA-06); cada una vista fallar con una mutación.
+
 ## Cobertura de criterios
 
 | Criterio | Tareas de prueba |

@@ -1,7 +1,7 @@
 ---
 id: "010"
 titulo: "Modo oscuro"
-estado: implementada
+estado: verificada
 creada: 2026-11-20
 actualizada: 2026-11-20
 ---
@@ -155,3 +155,4 @@ Ninguna.
 | 2026-11-20 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-20 | Ajustes pedidos por el usuario durante la implementación: «Órdenes» en oscuro destaca por relieve (degradado carbón, borde plateado, resplandor), no por ser clara. La auditoría en oscuro ajustó el rojo de error y los botones destructivos. |
 | 2026-11-20 | Implementada. |
+| 2026-11-20 | Verificada: pruebas añadidas para el contraste del foco con teclado en oscuro, botón y campo (CA-03, WCAG 1.4.11), y el borde de la franja de marca en el teléfono (CA-06). |
