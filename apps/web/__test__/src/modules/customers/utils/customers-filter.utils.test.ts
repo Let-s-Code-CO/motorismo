@@ -8,11 +8,14 @@
  * - CA-17: the filter is a status or "active" (with or without account, not disabled); anything
  *   else means "no filter" (never an empty list).
  * - RF-05: pages of 20; a missing, zero, negative or non-numeric page is page 1.
+ * - spec 005, CA-17 / CA-19: a plate is found written any way ("UIH-03", "uih 03": the database
+ *   keeps plates without separators), and the row shows which plate matched.
  */
 import {
   CUSTOMERS_PAGE_SIZE,
   activeCount,
   customersQueryString,
+  matchingPlate,
   normalizeSearch,
   pageCount,
   pageRange,
@@ -57,6 +60,42 @@ describe('normalizeSearch', () => {
     ['300 123', '300 123'],
   ])('turns %j into %j (CA-16)', (raw, expected) => {
     expect(normalizeSearch(raw)).toBe(expected);
+  });
+});
+
+describe('normalizeSearch — plates (spec 005, CA-17)', () => {
+  it.each([
+    ['UIH-03', 'uih03'],
+    ['uih 03', 'uih03'],
+    ['UIH-03D', 'uih03d'],
+    ['abc 123', 'abc123'],
+  ])('searches the plate "%s" without separators: "%s"', (raw, expected) => {
+    expect(normalizeSearch(raw)).toBe(expected);
+  });
+
+  it.each([
+    ['ana-maría', 'ana-maria'],
+    ['José Pérez', 'jose perez'],
+    ['300 123', '300 123'],
+  ])('leaves "%s" as a name or phone search: "%s"', (raw, expected) => {
+    expect(normalizeSearch(raw)).toBe(expected);
+  });
+});
+
+describe('matchingPlate (spec 005, CA-19)', () => {
+  it('gives the plate of the customer that the search matched', () => {
+    expect(matchingPlate('UIH03D ABC123', 'uih-03')).toBe('UIH03D');
+    expect(matchingPlate('UIH03D ABC123', 'abc 12')).toBe('ABC123');
+  });
+
+  it('gives nothing when the search matched the name, email or phone (not a plate)', () => {
+    expect(matchingPlate('UIH03D', 'camila')).toBeNull();
+    expect(matchingPlate('', 'uih03')).toBeNull();
+    expect(matchingPlate('UIH03D', '')).toBeNull();
+  });
+
+  it('needs at least three characters, so a single letter does not "match" every plate', () => {
+    expect(matchingPlate('UIH03D', 'u')).toBeNull();
   });
 });
 

@@ -36,13 +36,25 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   Iconos con `lucide-react`, decorativos (`aria-hidden`); los botones solo-icono llevan
   `aria-label`. Todo lo clicable muestra la «manito»: `globals.css` la restaura para
   `button` y `[role=button]` (Tailwind 4 ya no lo hace); un enlace o elemento clicable de otro tipo
-  necesita `cursor-pointer`. Nada de colores llamativos: los semánticos solo para estados.
+  necesita `cursor-pointer`. Nada de colores llamativos (salvo la placa amarilla de los vehículos, que reproduce la placa
+  colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
+  las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
+  `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
+- El tema conserva la escala de `foreground` de HeroUI (`src/app/hero.ts`): sus componentes pintan
+  placeholders y textos de ayuda con ella. Turbopack no recarga `hero.ts` en caliente, y a veces
+  sirve una versión vieja de `globals.css` (p. ej. tras deshacer un cambio enseguida): si un cambio
+  de estilos no se ve, borra `apps/web/.next` y reinicia `pnpm dev`.
+- Radios: con Geist, el texto de un radio queda ~0,5 px por encima del centro del círculo;
+  `globals.css` lo corrige para todos. Las tarjetas de rol (`invite-user-form`) bajan el círculo
+  (`wrapper: 'mt-[1.75px]'`) para centrarlo en el nombre del rol.
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
   botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Sobre la
   lista va una línea de conteo («1 de 4 usuarios · Invitados», `aria-live`) con un botón fantasma
-  «Ver todos» (no un chip). Componentes compartidos en `core`: `summary-filter-cards`,
+  «Ver todos» (no un chip). Si una tarjeta es la suma de otras (p. ej. «Activos» = «Con cuenta»
+  + «Sin cuenta»), se dibuja como un panel que las contiene (`parts`) y cada una sigue filtrando
+  sola. Componentes compartidos en `core`: `summary-filter-cards`,
   `filter-bar` y `status-filter.utils` (specs 003 CA-09 y 004 CA-17; los usan Usuarios y Clientes).
 - Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
   pantallas nuevas se añaden a esa auditoría.
@@ -88,6 +100,10 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Clientes: **`cliente@motorismo.test`** (cuenta de prueba para usar la app como cliente: entra a
   «Mi perfil»), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
   Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
+- Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada),
+  Valentina la camioneta `KDM-482` (placa de Bogotá, D.C.) y Andrés una bicicleta. El catálogo de
+  marcas y líneas y los 1.104 municipios (ciudad de la placa) llegan por migración (existen en
+  todos los entornos), no por seed.
 
 Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
 http://127.0.0.1:54324.
@@ -126,6 +142,11 @@ e2e/                         # Playwright
 - Datos: query key factories + `queryOptions` (TanStack Query 5); tipos de filas derivados de
   `Tables<'tabla'>`, sin genéricos explícitos que oculten drift.
 - Autorización en Postgres (RLS), nunca solo ocultando elementos en la UI.
+- Desplegables de HeroUI (`Autocomplete`, `Select`) dentro de un `Modal`: pásales
+  `popoverProps={{ portalContainer }}` con un elemento del modal; si no, el modal los oculta a los
+  lectores de pantalla (`aria-hidden`). Y ese `Modal` lleva `scrollBehavior="outside"`: con
+  `normal` (por defecto) o `inside` la tarjeta del modal recorta la lista abierta. Ver
+  `vehicle-form` y `vehicles-section` (spec 005).
 
 ## Autenticación y permisos (specs 002 y 004)
 

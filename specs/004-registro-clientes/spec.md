@@ -79,6 +79,8 @@ abrir el registro al público no exponga información del negocio ni de otros cl
 
 ### HU-03 (P1) — Mi perfil
 
+*(Spec 005: «Mi perfil» incluye «Mis vehículos», HU-06 de la 005).*
+
 Como cliente, quiero ver y corregir mis datos, para que el negocio pueda contactarme.
 
 **Criterios de aceptación**
@@ -106,11 +108,14 @@ de contacto.
   correo o del celular de un cliente, entonces la lista muestra solo los que coinciden, sin
   distinguir mayúsculas ni tildes; si ninguno coincide, ve «No hay clientes que coincidan con tu
   búsqueda.».
+  *(Spec 005: también busca por la placa de un vehículo vigente, CA-17 a CA-19 de la 005).*
 - **CA-17** — Dado un miembro del personal en «Clientes», cuando pulsa una de las tarjetas de
   resumen («Activos», es decir, con o sin cuenta y no desactivados; «Con cuenta»; «Sin cuenta»;
   «Desactivados»), entonces la lista se filtra por ese estado según el estándar de
   tarjetas-filtro del proyecto (el filtro sobrevive a recargar y se quita con «Ver todos»), y se
-  combina con la búsqueda.
+  combina con la búsqueda. «Activos» se presenta como la suma de «Con cuenta» y «Sin cuenta»
+  (las contiene y muestra su proporción) y «Desactivados» queda aparte; cada una sigue filtrando
+  por sí sola.
 - **CA-18** — Dado un miembro del personal, cuando abre un cliente de la lista, entonces ve su
   ficha: nombre, correo, celular, estado, origen («Registro propio», «Google» o «Punto de
   atención»), fecha de alta, fecha de la autorización de datos y, si se creó en el punto de
@@ -304,3 +309,4 @@ opcional (los vehículos van en otra spec).
 | 2026-11-19 | CA-17: se añade la tarjeta «Activos» (con y sin cuenta, sin los desactivados), a petición del usuario. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local: 140 pgTAP, 289 unitarias, 24 sandbox y 46 E2E en verde, con cada prueba nueva vista fallar por mutación. Pendiente: despliegue y verificación manual con Google real (T090, T092). |
 | 2026-11-19 | `/verificar`: 27 de 31 criterios ✅ al empezar. Corregidos, con pruebas vistas fallar: RF-02 (un cliente que pidió una página del personal entra a su perfil), CA-24 (se comprueba que no llega ningún correo), CA-15 (la fecha de alta se ve) y RF-06 (recuperación de contraseña de un cliente). Se precisa RN-04 para el punto de atención. Quedan CA-20 y CA-21, que esperan la verificación manual con Google real (T092): la spec sigue en `implementada`. |
+| 2026-11-19 | CA-17: «Activos» agrupa visualmente a «Con cuenta» y «Sin cuenta» (sus subconjuntos, con su proporción) y «Desactivados» queda aparte, a petición del usuario. Cada tarjeta sigue filtrando por sí sola. |

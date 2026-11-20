@@ -4,11 +4,17 @@ import { requireCustomer } from '@web/modules/auth/api/auth.server';
 import RoleChip from '@web/modules/auth/components/atoms/role-chip.component';
 import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component';
 import MyProfileForm from '@web/modules/customers/components/organisms/my-profile-form.component';
+import { listCustomerVehicles } from '@web/modules/vehicles/api/vehicles.server';
+import VehiclesSection from '@web/modules/vehicles/components/organisms/vehicles-section.component';
 
-/** "Mi perfil" (spec 004, HU-03): the customer's home. Staff are sent to their own home page. */
+/**
+ * "Mi perfil" (spec 004, HU-03): the customer's home, with "Mis vehículos" (spec 005, HU-06).
+ * Staff are sent to their own home page.
+ */
 const ProfilePage = async () => {
   const customer = await requireCustomer();
   const t = await getTranslations('customers.profile');
+  const vehicles = await listCustomerVehicles(customer.id);
 
   return (
     <section className="mx-auto flex w-full max-w-xl flex-col gap-8">
@@ -33,6 +39,13 @@ const ProfilePage = async () => {
         </div>
         <MyProfileForm customer={customer} />
       </div>
+      <VehiclesSection
+        customerId={customer.id}
+        audience="customer"
+        vehicles={vehicles.active}
+        retired={[]}
+        readOnly={false}
+      />
     </section>
   );
 };

@@ -58,10 +58,19 @@ export const adminClient = () =>
 export const uniqueEmail = (label: string) =>
   `e2e-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@motorismo.test`;
 
+/** Deletes the vehicles of these customers (cleanup only: the app retires, never deletes). */
+export const deleteVehiclesOf = async (customerIds: string[]) => {
+  if (customerIds.length)
+    await adminClient().from('vehicles').delete().in('customer_id', customerIds);
+};
+
 export const deleteUsersByEmail = async (emails: string[]) => {
   const admin = adminClient();
   await admin.from('staff_invitations').delete().in('email', emails);
   // Customers (with or without account) first: an account with a customer cannot be deleted.
+  // Their vehicles before them (the app never deletes vehicles, spec 005 RN-07; tests do).
+  const { data: customers } = await admin.from('customers').select('id').in('email', emails);
+  await deleteVehiclesOf((customers ?? []).map(({ id }) => id));
   await admin.from('customers').delete().in('email', emails);
   const { data } = await admin.from('profiles').select('id').in('email', emails);
   for (const { id } of data ?? []) {
@@ -162,4 +171,63 @@ export const createCustomerAccount = async ({
   });
   if (error) throw new Error(`createUser failed: ${error.code}`);
   return data.user.id;
+};
+
+/**
+ * A customer without account, registered at the counter by the first admin (spec 004), for the
+ * vehicle suites (spec 005): each test gets its own record. Remove with `deleteCustomers`.
+ */
+export const createWalkInCustomer = async (fullName: string) => {
+  const admin = adminClient();
+  const { data: registrar } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', SEED.admin.email)
+    .single();
+  const { data, error } = await admin
+    .from('customers')
+    .insert({
+      full_name: fullName,
+      phone: '3000000000',
+      origin: 'counter',
+      registered_by: registrar!.id,
+    })
+    .select('id')
+    .single();
+  if (error) throw new Error(`createWalkInCustomer failed: ${error.message}`);
+  return data.id;
+};
+
+/** Deletes customers created by a suite, with their vehicles. */
+export const deleteCustomers = async (ids: string[]) => {
+  if (!ids.length) return;
+  await deleteVehiclesOf(ids);
+  await adminClient().from('customers').delete().in('id', ids);
+};
+
+/** A random plate nobody else has, in the shape of the type (spec 005, RN-03): "QXZ48K" / "QXZ481". */
+export const uniquePlate = (type: 'motorcycle' | 'car') => {
+  const letter = () => String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  const digit = () => String(Math.floor(Math.random() * 10));
+  const letters = `Q${letter()}${letter()}`;
+  return type === 'car'
+    ? `${letters}${digit()}${digit()}${digit()}`
+    : `${letters}${digit()}${digit()}${letter()}`;
+};
+
+/** "QXZ48K" → "QXZ-48K", as the app shows plates. */
+export const shownPlate = (plate: string) => `${plate.slice(0, 3)}-${plate.slice(3)}`;
+
+/** Removes the catalog brands (and their lines) whose name starts with `prefix` (test data). */
+export const deleteCatalogBrands = async (prefix: string) => {
+  const admin = adminClient();
+  const { data: brands } = await admin
+    .from('vehicle_brands')
+    .select('id')
+    .ilike('name', `${prefix}%`);
+  const ids = (brands ?? []).map(({ id }) => id);
+  if (!ids.length) return;
+  await admin.from('vehicles').delete().in('brand_id', ids);
+  await admin.from('vehicle_lines').delete().in('brand_id', ids);
+  await admin.from('vehicle_brands').delete().in('id', ids);
 };

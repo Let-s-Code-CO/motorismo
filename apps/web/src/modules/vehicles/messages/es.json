@@ -1,0 +1,120 @@
+{
+  "vehicles": {
+    "types": {
+      "motorcycle": "Motocicleta",
+      "bicycle": "Bicicleta",
+      "car": "Carro"
+    },
+    "classes": {
+      "automobile": "Automóvil",
+      "utility": "Camioneta",
+      "mountain": "Montaña",
+      "road": "Ruta"
+    },
+    "colors": {
+      "black": "Negro",
+      "white": "Blanco",
+      "gray": "Gris",
+      "silver": "Plata",
+      "red": "Rojo",
+      "burgundy": "Vinotinto",
+      "blue": "Azul",
+      "green": "Verde",
+      "yellow": "Amarillo",
+      "orange": "Naranja",
+      "brown": "Café",
+      "beige": "Beige",
+      "gold": "Dorado",
+      "purple": "Morado",
+      "pink": "Rosado",
+      "multicolor": "Multicolor"
+    },
+    "section": {
+      "title": "Vehículos",
+      "titleOwn": "Mis vehículos",
+      "description": "Motos, carros y bicicletas del cliente.",
+      "descriptionOwn": "Registra tus vehículos para que te atendamos más rápido.",
+      "empty": "Este cliente aún no tiene vehículos.",
+      "emptyOwn": "Aún no tienes vehículos.",
+      "add": "Agregar vehículo",
+      "readOnly": "El cliente está desactivado: sus vehículos no se pueden cambiar.",
+      "added": "Vehículo agregado.",
+      "updated": "Vehículo actualizado.",
+      "retiredNotice": "Vehículo retirado.",
+      "edit": "Editar",
+      "editLabel": "Editar {vehicle}",
+      "retire": "Retirar",
+      "retireLabel": "Retirar {vehicle}",
+      "retiredTitle": "Vehículos retirados ({count})",
+      "retiredOn": "Retirado el {date}"
+    },
+    "summary": {
+      "displacement": "{value} cc",
+      "noPlate": "Sin placa"
+    },
+    "form": {
+      "titleNew": "Agregar vehículo",
+      "titleEdit": "Editar vehículo",
+      "type": "Tipo",
+      "class": "Clase",
+      "brand": "Marca",
+      "brandPlaceholder": "Escribe o elige la marca",
+      "line": "Línea",
+      "lineOptional": "Línea (opcional)",
+      "linePlaceholder": "Escribe o elige la línea",
+      "newName": "Nueva: se añadirá al catálogo.",
+      "displacement": "Cilindraje (opcional)",
+      "displacementUnit": "cc",
+      "color": "Color",
+      "colorPlaceholder": "Elige el color",
+      "plate": "Placa",
+      "plateHelpMotorcycle": "Tres letras, dos números y, casi siempre, una letra. Ej.: UIH-03D o JWJ-07.",
+      "plateHelpCar": "Tres letras y tres números. Ej.: ABC-123.",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "noSuggestions": "Sin coincidencias: se añadirá como nueva.",
+      "plateCity": "Ciudad de la placa",
+      "plateCityPlaceholder": "Escribe o elige la ciudad",
+      "noCityMatches": "Ninguna ciudad coincide.",
+      "typeForMoreCities": "Escribe para ver más ciudades."
+    },
+    "retire": {
+      "title": "Retirar vehículo",
+      "text": "{vehicle} dejará de estar entre los vehículos vigentes y su placa quedará libre. No se puede deshacer.",
+      "textOwn": "{vehicle} dejará de aparecer en tus vehículos y su placa quedará libre. No se puede deshacer.",
+      "confirm": "Retirar",
+      "cancel": "Cancelar"
+    },
+    "validation": {
+      "brandRequired": "Escribe la marca.",
+      "lineRequired": "Escribe la línea.",
+      "colorRequired": "Elige el color.",
+      "plateRequired": "Escribe la placa.",
+      "plateInvalid": "La placa no tiene el formato de este tipo de vehículo.",
+      "classRequired": "Elige la clase.",
+      "displacementInvalid": "El cilindraje va de 50 a 2.500 cc.",
+      "nameTooLong": "Máximo 60 caracteres.",
+      "plateCityRequired": "Elige la ciudad de la placa."
+    },
+    "errors": {
+      "forbidden": "No tienes permiso para hacer esto.",
+      "invalidInput": "Revisa los datos del vehículo.",
+      "plateTaken": "Ya hay un vehículo registrado con esta placa.",
+      "plateTakenCustomer": "Ya hay un vehículo registrado con esta placa. Si es tuyo, acércate al punto de atención.",
+      "plateRequired": "Escribe la placa.",
+      "plateInvalid": "La placa no tiene el formato de este tipo de vehículo.",
+      "classRequired": "Elige la clase.",
+      "lineRequired": "Escribe la línea.",
+      "brandRequired": "Escribe la marca.",
+      "displacementInvalid": "El cilindraje va de 50 a 2.500 cc.",
+      "retired": "Este vehículo ya está retirado.",
+      "notFound": "No encontramos este vehículo.",
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "plateCityRequired": "Elige la ciudad de la placa.",
+      "plateCityInvalid": "Elige una ciudad de la lista."
+    },
+    "plate": {
+      "country": "COLOMBIA"
+    }
+  }
+}

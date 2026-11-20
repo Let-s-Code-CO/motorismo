@@ -12,12 +12,12 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 ### Operación
 
-2. **Vehículos del cliente y búsqueda por placa** — resolver antes si son solo motos o vehículos
-   en general; al encontrar al cliente, mostrar sus datos, total de lavadas y las dos últimas
-   (el registro y la búsqueda por nombre, correo o celular están en la spec 004).
-3. **Catálogos** — servicios (con valor de referencia), tipos de moto y empleados.
-4. **Orden de trabajo** — servicios elegidos (incluido «otro» con valor libre), empleados
-   asociados y valor final.
+2. **Catálogos** — servicios (con valor de referencia) y empleados; administrar marcas y líneas
+   de vehículos (renombrar, unir duplicados; la spec 005 solo las precarga y amplía).
+3. **Orden de trabajo** — servicios elegidos (incluido «otro» con valor libre), empleados
+   asociados y valor final; al encontrar al cliente, total de lavadas y las dos últimas.
+4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
+   retira y se registra de nuevo).
 5. **Confirmación por WhatsApp** (deseable).
 
 ### Administración
@@ -33,6 +33,9 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 - Definir la rama de producción y su entorno en Vercel/Supabase (hoy solo existe `develop`).
 - Crear los proyectos de Vercel y Supabase y cargar variables y secrets (ver spec 001, plan).
+- Clientes (spec 004): si se pulsa una tarjeta-filtro antes de que la búsqueda (con espera de
+  300 ms) llegue a la URL, la búsqueda pisa el filtro. Poco probable con una persona; lo destapó
+  la E2E de la spec 005 bajo carga.
 - `minimatch` < 11 (aviso moderado, solo en desarrollo) llega vía
   `@trivago/prettier-plugin-sort-imports`; revisar cuando el plugin lo actualice.
 
@@ -44,3 +47,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [002](002-autenticacion-roles/spec.md) | Autenticación y roles | implementada (falta despliegue y prueba manual de Google) |
 | [003](003-rediseno-visual/spec.md) | Rediseño visual de la interfaz | implementada |
 | [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | implementada (falta despliegue y prueba manual de Google) |
+| [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | implementada (bloque C, HU-07, pendiente de `/verificar`); falta despliegue |

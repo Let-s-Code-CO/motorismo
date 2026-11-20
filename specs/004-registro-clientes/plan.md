@@ -255,8 +255,9 @@ modules/customers/
   (RF-05). La búsqueda usa `ilike` sobre `search_text` con el término normalizado igual que en
   la base de datos.
 - **Tarjetas** (CA-17, ampliado a petición del usuario): «Activos» (`?status=active`, con y sin
-  cuenta: `status <> 'disabled'`), «Con cuenta», «Sin cuenta» y «Desactivados»; con cuatro
-  tarjetas la cuadrícula es 2 × 2 en el móvil.
+  cuenta: `status <> 'disabled'`), «Con cuenta», «Sin cuenta» y «Desactivados». «Activos» es
+  un panel que contiene a sus dos subconjuntos (opción `parts` de `summary-filter-cards`, con una
+  barra de proporción) y «Desactivados» queda aparte; en el móvil el panel se apila.
 - **Estado de la lista en la URL** (`?q=&status=&page=`): la búsqueda espera 300 ms tras
   escribir y aplica `router.replace` dentro de una transición. Las tarjetas y «Ver todos» siguen
   el estándar del proyecto, y cambiar el filtro o la búsqueda vuelve a la página 1.

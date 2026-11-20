@@ -67,6 +67,11 @@ pnpm db:stop
   `carlos.diaz@` (admins), `operador@` y `desactivado@motorismo.test`.
 - `seeds/02_customers.sql`: `cliente@` (cuenta de prueba de cliente), `cliente.google@` (con
   foto), `cliente.desactivado@` y dos clientes sin cuenta del punto de atención.
+- `seeds/03_vehicles.sql`: vehículos de esos clientes (spec 005), guardados con `save_vehicle`.
+- **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
+  municipios DANE de `municipalities_data`) van en
+  una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo
+  corren en local.
 - Contraseña de todos: `motorismo-local`. Las pruebas pgTAP no dependen de los seeds.
 - Fixtures de pruebas: para crear personal, inserta antes su fila en `staff_invitations`.
 - `pnpm --filter @motorismo/supabase admin:bootstrap -- --email … --name …` invita al primer

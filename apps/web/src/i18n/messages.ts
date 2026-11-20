@@ -2,6 +2,7 @@ import auth from '@web/modules/auth/messages/es.json';
 import core from '@web/modules/core/messages/es.json';
 import customers from '@web/modules/customers/messages/es.json';
 import users from '@web/modules/users/messages/es.json';
+import vehicles from '@web/modules/vehicles/messages/es.json';
 
 /**
  * The app is Spanish-only. Each module owns `messages/es.json` with a single top-level namespace
@@ -17,4 +18,5 @@ export const messages = {
   ...auth,
   ...users,
   ...customers,
+  ...vehicles,
 };

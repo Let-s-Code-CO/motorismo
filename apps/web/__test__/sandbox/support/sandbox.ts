@@ -39,11 +39,20 @@ export const signedInAs = async (email: string, password: string = SEED.password
 export const uniqueEmail = (label: string) =>
   `sandbox-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@motorismo.test`;
 
+/** Deletes the vehicles of these customers (cleanup only: the app retires, never deletes). */
+export const deleteVehiclesOf = async (customerIds: string[]) => {
+  if (customerIds.length)
+    await adminClient().from('vehicles').delete().in('customer_id', customerIds);
+};
+
 /** Removes users and customers created by a suite (rows first: the app never deletes them). */
 export const deleteUsersByEmail = async (emails: string[]) => {
   const admin = adminClient();
   await admin.from('staff_invitations').delete().in('email', emails);
   // Customers (with or without account) first: an account with a customer cannot be deleted.
+  // Their vehicles before them (the app never deletes vehicles, spec 005 RN-07; tests do).
+  const { data: customers } = await admin.from('customers').select('id').in('email', emails);
+  await deleteVehiclesOf((customers ?? []).map(({ id }) => id));
   await admin.from('customers').delete().in('email', emails);
   const { data } = await admin.from('profiles').select('id').in('email', emails);
   for (const { id } of data ?? []) {
