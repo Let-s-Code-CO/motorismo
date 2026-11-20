@@ -1,4 +1,7 @@
 /**
+ * Runs twice: in light and, as the «chromium-dark» project, on a device in dark mode (spec 010,
+ * CA-03, CA-05, CA-13).
+ *
  * Automatic accessibility audit (spec 003, CA-04): WCAG 2.1 A/AA rules, colour contrast included,
  * on the login, the home page and user management; spec 004 adds the sign-up, the data policy,
  * "Mi perfil", Clientes and a customer record; spec 005 the vehicles of a customer ("Mis vehículos"

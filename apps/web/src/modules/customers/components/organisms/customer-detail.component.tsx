@@ -39,7 +39,7 @@ const CustomerDetail = ({ customer, children }: CustomerDetailProps) => {
           name={customer.full_name}
           src={customer.avatar_url}
           size="lg"
-          className="bg-zinc-900 text-white"
+          className="bg-primary text-primary-foreground"
         />
         <div className="flex min-w-0 flex-col gap-1.5">
           <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">

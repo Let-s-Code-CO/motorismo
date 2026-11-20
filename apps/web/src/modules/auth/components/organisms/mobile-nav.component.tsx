@@ -72,7 +72,7 @@ const MobileNav = ({ audience }: { audience: Audience }) => {
                           onClick={close}
                           className={`flex min-h-12 items-center gap-3 rounded-large px-3 font-medium transition-colors ${
                             current
-                              ? 'bg-zinc-900 text-white'
+                              ? 'bg-primary text-primary-foreground'
                               : 'text-foreground hover:bg-default-100'
                           }`}
                         >

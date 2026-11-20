@@ -9,6 +9,7 @@
  * - CA-11: with the network back, «Reintentar» lands on the page being opened.
  * - CA-10: when the network drops just as a form is sent, no success is reported, the notice shows
  *   and what was typed stays.
+ * - Spec 010, CA-08: the «Sin conexión» page follows the device's theme, or the one chosen on it.
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -93,6 +94,38 @@ test('reloading without network shows the "Sin conexión" page; «Reintentar» l
 
   await expect(page.getByRole('heading', { name: 'Clientes', level: 1 })).toBeVisible();
   await expect(page).toHaveURL('/customers');
+});
+
+test.describe('«Sin conexión» in dark mode (spec 010, CA-08)', () => {
+  const pageBackground = (page: Page) =>
+    page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+  const offlinePage = async (page: Page, context: import('@playwright/test').BrowserContext) => {
+    await page.goto('/auth/login');
+    await expect
+      .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+      .toBe(true);
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Sin conexión', level: 1 })).toBeVisible();
+  };
+
+  test.describe('on a dark device', () => {
+    test.use({ colorScheme: 'dark' });
+
+    test('the page is dark', async ({ page, context }) => {
+      await offlinePage(page, context);
+      expect(await pageBackground(page)).toBe('rgb(9, 9, 11)');
+    });
+  });
+
+  test('on a light device that chose «Oscuro», the page is dark', async ({ page, context }) => {
+    await context.addCookies([
+      { name: 'motorismo-theme', value: 'dark', url: 'http://localhost:3000' },
+    ]);
+    await offlinePage(page, context);
+    expect(await pageBackground(page)).toBe('rgb(9, 9, 11)');
+  });
 });
 
 test.describe('the network drops while sending (CA-10)', () => {

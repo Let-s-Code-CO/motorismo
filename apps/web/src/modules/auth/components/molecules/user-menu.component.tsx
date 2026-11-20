@@ -28,7 +28,7 @@ const UserMenu = ({ name, avatarUrl, audience }: UserMenuProps) => {
 
   return (
     <div className="flex items-center gap-1 sm:gap-3">
-      <UserAvatar name={name} src={avatarUrl} className="bg-zinc-900 text-white" />
+      <UserAvatar name={name} src={avatarUrl} className="bg-primary text-primary-foreground" />
       <div className="hidden flex-col items-start gap-0.5 sm:flex">
         <span className="text-sm leading-none font-medium">{name}</span>
         <RoleChip audience={audience} />

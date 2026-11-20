@@ -76,7 +76,7 @@ const RetireVehicleModal = ({ vehicle, audience, onClose, onRetired }: RetireVeh
           <Button
             // The destructive confirmation: solid red, danger-600 for AA contrast with white text.
             color="danger"
-            className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700"
+            className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700 dark:bg-danger-300 dark:data-[hover=true]:bg-danger-200"
             isLoading={isPending}
             onPress={confirm}
           >

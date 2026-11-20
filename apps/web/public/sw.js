@@ -10,7 +10,7 @@
  * app's scripts) goes to the network exactly as without it. Changing what is kept means a new
  * CACHE name: the old one is deleted on activate.
  */
-const CACHE = 'motorismo-offline-v1';
+const CACHE = 'motorismo-offline-v2';
 const OFFLINE_PAGE = '/offline';
 const OFFLINE_ICON = '/icons/icon-192.png';
 

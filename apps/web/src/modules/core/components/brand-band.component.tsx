@@ -17,7 +17,7 @@ const BrandBand = () => {
   return (
     <header
       aria-label={t('name')}
-      className="relative flex flex-auto items-center overflow-hidden bg-zinc-950 px-6 py-8 text-white lg:hidden"
+      className="relative flex flex-auto items-center overflow-hidden bg-zinc-950 px-6 py-8 text-white lg:hidden dark:border-b dark:border-white/10"
     >
       <BrandOrnaments />
       <div className="relative mx-auto flex w-full max-w-sm items-center gap-6">

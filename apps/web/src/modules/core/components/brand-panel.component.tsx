@@ -25,7 +25,7 @@ const BrandPanel = () => {
   return (
     <aside
       aria-label={t('name')}
-      className="relative hidden flex-col overflow-hidden bg-zinc-950 p-12 text-white lg:flex xl:p-16"
+      className="relative hidden flex-col overflow-hidden bg-zinc-950 p-12 text-white lg:flex xl:p-16 dark:border-r dark:border-white/10"
     >
       <BrandOrnaments />
 

@@ -215,3 +215,4 @@ iPhone; la instalan personal y clientes.
 | 2026-11-20 | Implementada (bloques A a D y el aviso de instalación). Falta la prueba manual en dispositivos reales tras el despliegue (T055). |
 | 2026-11-20 | Verificada: CA-01 a CA-20 cubiertos. Correcciones al verificar: el proxy excluye solo rutas exactas, y una prueba exige `callAction` en todo componente que llama a una Server Action. Queda la prueba manual en dispositivos (T055). |
 | 2026-11-20 | Spec 009: en el teléfono, «Instalar app» vive en el menú del avatar (CA-12); en escritorio no cambia. |
+| 2026-11-20 | Spec 010: la barra del sistema y la página «Sin conexión» siguen el tema; caché `motorismo-offline-v2`. |

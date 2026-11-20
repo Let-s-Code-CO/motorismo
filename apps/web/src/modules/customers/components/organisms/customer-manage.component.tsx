@@ -69,7 +69,9 @@ const CustomerManage = ({ customer }: CustomerManageProps) => {
           color={isDisabled ? 'primary' : 'danger'}
           variant="solid"
           className={
-            isDisabled ? 'font-medium' : 'bg-danger-600 font-medium data-[hover=true]:bg-danger-700'
+            isDisabled
+              ? 'font-medium'
+              : 'bg-danger-600 font-medium data-[hover=true]:bg-danger-700 dark:bg-danger-300 dark:data-[hover=true]:bg-danger-200'
           }
           isLoading={isPending}
           startContent={

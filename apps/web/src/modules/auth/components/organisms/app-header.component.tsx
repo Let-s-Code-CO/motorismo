@@ -7,6 +7,7 @@ import UserMenu from '@web/modules/auth/components/molecules/user-menu.component
 import MobileNav from '@web/modules/auth/components/organisms/mobile-nav.component';
 import { type CurrentAccount, audienceOf } from '@web/modules/auth/types/auth.types';
 import BrandBadge from '@web/modules/core/components/brand-badge.component';
+import ThemeMenu from '@web/modules/theme/components/theme-menu.component';
 
 type AppHeaderProps = {
   account: CurrentAccount;
@@ -51,7 +52,9 @@ const AppHeader = ({ account }: AppHeaderProps) => {
             audience={audience}
           />
         </div>
-        <div className="hidden md:ml-auto md:block">
+        <div className="hidden items-center gap-2 md:ml-auto md:flex">
+          {/* The theme's own menu: its icon is the chosen theme (spec 010, CA-10). */}
+          <ThemeMenu />
           <UserMenu name={account.full_name} avatarUrl={account.avatar_url} audience={audience} />
         </div>
       </div>
