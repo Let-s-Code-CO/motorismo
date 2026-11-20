@@ -1,7 +1,7 @@
 ---
 id: "003"
 titulo: "Rediseño visual de la interfaz"
-estado: implementada
+estado: verificada
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -63,3 +63,4 @@ Como usuario, quiero una interfaz moderna, sobria y coherente para trabajar con 
 | 2026-11-19 | CA-09 (filtrar usuarios desde el resumen), a petición del usuario. |
 | 2026-11-19 | CA-09 implementado (filtro en la URL, «Ver todos» fantasma). El usuario lo fija como estándar para futuras pantallas con tarjetas de resumen (ver `CLAUDE.md`). |
 | 2026-11-19 | Implementada. Ajustes pedidos por el usuario: círculo del logo como en Instagram y centrado, «Especialistas en PPF y Detailing» como título, panel de marca más rico (anillo, destellos, servicios). Tabla de usuarios en una columna de datos + acciones para que nada quede oculto en móvil. |
+| 2026-11-19 | `/verificar`: CA-01 a CA-09 ✅ (462 unitarias y 69 E2E en verde, lint y tipos OK). CA-07 tenía cubierto el menú de acciones pero no los números de las tarjetas: se añade `users-screen.component.test.tsx` (2 activos, 1 invitado, 1 desactivado), vista fallar por mutación (contar uno de más). Verificada. |

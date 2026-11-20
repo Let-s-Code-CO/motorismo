@@ -41,7 +41,7 @@ actualizado: 2026-11-19
 - [x] T051 `db-deploy.yml`: `db push` al hacer merge en `develop` (CA-06)
 - [ ] T052 Crear proyecto Supabase y secret `SUPABASE_DB_URL` en GitHub (CA-06)
 - [ ] T053 Crear proyecto Vercel (Root Directory `apps/web`) y variables por entorno (CA-06)
-- [ ] T054 Primera ejecución de la CI en un PR, en verde (CA-02)
+- [x] T054 Primera ejecución de la CI en un PR, en verde (CA-02) — PR de la spec 004 (#3), CI en verde el 2026-11-19, también al entrar en `develop`
 - [ ] T055 Desactivar GitHub Pages
 
 ## Fase 7 — SDD

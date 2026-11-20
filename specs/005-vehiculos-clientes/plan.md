@@ -503,7 +503,7 @@ primera tarea de la app. Si da ambigüedad, se nombra la FK en el `select`
 | II. Qué antes que cómo | ✅ | La spec nombra la fuente oficial (DANE) como dato de negocio, no como tecnología. |
 | III. Criterios verificables | ✅ | CA-27 a CA-31 mapeados a pruebas (tabla abajo). |
 | IV. Ambigüedad explícita | ✅ | Sin marcas abiertas. Suposiciones aplicadas: lista DANE completa, carros previos con Bogotá, D.C., toda placa en amarillo. |
-| V. Simplicidad y stack | ✅ | Sin dependencias nuevas. El `Autocomplete` de HeroUI ya virtualiza listas largas (`isVirtualized`). La lista (≈1.100 filas, unos 60 KB) se lee una vez y se filtra en el navegador con la `catalogKey` que ya existe. |
+| V. Simplicidad y stack | ✅ | Sin dependencias nuevas. La lista (1.104 filas, unos 60 KB) se lee una vez, por páginas de 1.000 (`max_rows`), y se filtra en el navegador con la `catalogKey` que ya existe; se muestran como máximo 50 opciones, sin virtualizar. |
 | VI. Seguridad y datos personales | ✅ | `municipalities` es un dato público: `select` para `authenticated` y nada más (ni escritura desde la API, ni `anon`). La ciudad de la placa se rige por la RLS de `vehicles`. |
 | VII. Trazabilidad | ✅ | Misma rama; cada prueba cita su CA. |
 | VIII. Incrementos pequeños | ✅ | Un bloque C en la misma rama, antes del PR. |
@@ -590,12 +590,14 @@ definición de la guarda y de `save_vehicle`. Los entornos locales se rehacen co
     espacios ni guiones.
 
 **Formulario** (`vehicle.schema.ts`, `vehicle-form`)
-- **Esquema**: `plateCityCode` (string). En `superRefine`, es obligatorio en carro
+- **Esquema**: `plate_city_code` (string). En `superRefine`, es obligatorio en carro
   (`plateCityRequired`) y se ignora en los demás tipos. El input de la acción solo lo envía en
   carro.
 - **Campo nuevo**: molécula `plate-city-autocomplete`, un `Autocomplete` sin valor libre
-  (`allowsCustomValue` en `false`) y con `isVirtualized`. Cada opción muestra el nombre y, como
-  descripción, el departamento, que distingue los homónimos (CA-30). Recibe `portalContainer`
+  (`allowsCustomValue` en `false`), sin virtualizar y con como máximo 50 opciones (la elegida siempre
+  entre ellas; «Escribe para ver más ciudades.» si hay más). Cada opción muestra en una línea el
+  nombre y, a la derecha y atenuado, el departamento, que distingue los homónimos (CA-30); no se
+  repite cuando coincide con el nombre (Bogotá, D.C.). Recibe `portalContainer`
   dentro del modal, como pide el `CLAUDE.md`.
 - **Valor inicial**: al elegir Carro, `DEFAULT_PLATE_CITY`; al editar un carro, su ciudad. Al
   cambiar de tipo se vacía, y al volver a Carro vuelve a Bogotá, D.C. (CA-09).
@@ -698,3 +700,4 @@ desplegar, se comprueba en el remoto que `select count(*) from municipalities` d
 | 2026-11-19 | Cambio HU-07 (CA-27 a CA-31): municipios DANE, ciudad de la placa en carros y la placa dibujada como la colombiana. En borrador hasta su aprobación. |
 | 2026-11-19 | Cambio HU-07 aprobado por el usuario. |
 | 2026-11-19 | Implementación del cambio HU-07. Ajustes respecto al plan: el campo es `plate_city_code` (snake_case, como el resto del esquema); `fetchMunicipalities` lee por páginas de 1.000 porque la API corta en `max_rows = 1000` (perdería 104 municipios); la lista no se virtualiza (axe: `scrollable-region-focusable`) y muestra como máximo 50 ciudades, con la elegida siempre entre ellas, el departamento en la misma línea y «Escribe para ver más ciudades.» (plan B); los tokens de la placa van en `@theme static` (Tailwind no emite variables usadas solo en valores arbitrarios); a petición del usuario, la placa de moto es igual a la de carro (una fila) con «COLOMBIA» debajo. Mutaciones: sin la versión compacta fallan 2 pruebas de CA-29; con la ciudad conservada fuera de carro fallan la de la acción (CA-31) y la del esquema; las demás pruebas se escribieron antes que el código y se vieron en rojo. |
+| 2026-11-19 | `/verificar` del bloque C: todo ✅. El cuerpo de esta sección se alinea con el código (`plate_city_code`, lista sin virtualizar con máximo 50). |

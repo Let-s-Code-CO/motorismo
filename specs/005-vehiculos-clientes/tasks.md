@@ -310,7 +310,7 @@ PR. Abreviatura extra: `mun` = municipios.
       - sin ciudad en carro → «Elige la ciudad de la placa.» junto al campo (CA-07)
 
       → **rojo**
-- [x] T079 [P] `vehicle.schema.test.ts` (carro sin `plateCityCode` inválido; moto y bicicleta lo
+- [x] T079 [P] `vehicle.schema.test.ts` (carro sin `plate_city_code` inválido; moto y bicicleta lo
       ignoran) y `vehicles-errors.utils.test.ts` (`vehicle_plate_city_required` e
       `vehicle_plate_city_invalid` a sus mensajes) (CA-07, CA-31)
       → **rojo**
@@ -331,11 +331,11 @@ PR. Abreviatura extra: `mun` = municipios.
       `municipalitiesQueryOptions` (`staleTime: Infinity`) y `vehicles.server.ts` (incrusta
       `plate_city`; `VehicleView`)
       → `pnpm ts:check` en verde
-- [x] T084 Esquema (`plateCityCode`), errores (los dos `hint`), mensajes (`form.plateCity`,
+- [x] T084 Esquema (`plate_city_code`), errores (los dos `hint`), mensajes (`form.plateCity`,
       `form.plateCityPlaceholder`, `errors.plateCityRequired`, `errors.plateCityInvalid`,
       `plate.country`) y acción `saveVehicle`
       → T079 y T080 en **verde**
-- [x] T085 Molécula `plate-city-autocomplete` (sin valor libre, `isVirtualized`, departamento como
+- [x] T085 Molécula `plate-city-autocomplete` (sin valor libre, sin virtualizar y con máximo 50 opciones, departamento como
       descripción, `portalContainer`) y su uso en `vehicle-form` (solo en Carro, Bogotá, D.C. por
       defecto, al editar la del carro, vaciar al cambiar de tipo)
       → T078 en **verde**; `pnpm test` completo en verde
@@ -366,7 +366,7 @@ PR. Abreviatura extra: `mun` = municipios.
 - [x] T090 `CLAUDE.md` (excepción del amarillo de la placa en el sistema visual; `KDM-482` con
       Bogotá, D.C.; municipios por migración) y `packages/supabase/CLAUDE.md` (municipios por
       migración, como el catálogo); spec en `implementada`, plan y backlog actualizados
-- [ ] T091 `/verificar 005` sobre CA-27 a CA-31 y los criterios ajustados (CA-02, CA-03, CA-07,
+- [x] T091 `/verificar 005` sobre CA-27 a CA-31 y los criterios ajustados (CA-02, CA-03, CA-07,
       CA-09, CA-20)
 
 ---

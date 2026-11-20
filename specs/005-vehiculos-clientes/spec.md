@@ -1,7 +1,7 @@
 ---
 id: "005"
 titulo: "Vehículos de los clientes"
-estado: implementada
+estado: verificada
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -188,7 +188,10 @@ vistazo, igual que en la calle.
   las tres primeras opciones son Bogotá, D.C., La Calera y Funza, y después el resto de municipios
   de Colombia en orden alfabético; al escribir se filtra sin distinguir mayúsculas ni tildes
   («medellin» encuentra «Medellín»), y un municipio cuyo nombre se repite en otro departamento se
-  distingue por su departamento. Con Motocicleta o Bicicleta el campo no aparece.
+  distingue por su departamento. La lista muestra como máximo 50 ciudades a la vez (las tres
+  fijadas primero, y la ciudad elegida siempre entre ellas) y, si hay más, «Escribe para ver más
+  ciudades.»; escribiendo se encuentra cualquiera de las 1.104. Con Motocicleta o Bicicleta el
+  campo no aparece.
 - **CA-31** — Dado un carro, cuando se registra o se corrige con una ciudad que no está en la
   lista (RF-07), entonces no se guarda y se ve el error junto al campo; y una motocicleta o una
   bicicleta nunca se guardan con ciudad de la placa, por ninguna vía.
@@ -360,3 +363,4 @@ alfabético; las motos no tienen el campo (ni en el formulario) y su placa dice 
 | 2026-11-19 | Tareas del cambio HU-07 (bloque C, T070–T091) aprobadas. |
 | 2026-11-19 | CA-27, a petición del usuario durante la implementación: la placa de moto se dibuja igual que la de carro (una fila con guion), con «COLOMBIA» debajo, en lugar de dos filas. |
 | 2026-11-19 | Cambio HU-07 implementado en local: 262 pgTAP, 462 unitarias, 30 sandbox y 69 E2E en verde; lint, tipos y build en verde. Pendiente: `/verificar` del bloque C y el despliegue (T064). |
+| 2026-11-19 | `/verificar` del bloque C: CA-27 a CA-31, RF-07, RN-11 y los criterios ajustados ✅. Se precisa CA-30 (como máximo 50 ciudades a la vez, con «Escribe para ver más ciudades.») y se alinean plan y tareas con el código (`plate_city_code`, lista sin virtualizar). Verificada en local. Pendiente: el despliegue (T064). |
