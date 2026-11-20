@@ -19,6 +19,7 @@ import {
   newCustomerSchema,
 } from '@web/modules/customers/schemas/customer.schema';
 import type { CustomersErrorKey } from '@web/modules/customers/utils/customers-errors.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type Contact = { full_name: string; email: string | null; phone: string | null };
 
@@ -63,15 +64,18 @@ const CustomerForm = (props: CustomerFormProps) => {
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
-    const result =
+    const result = await callAction(() =>
       props.mode === 'create'
-        ? await createCustomer(values)
-        : await updateCustomer({
+        ? createCustomer(values)
+        : updateCustomer({
             id: props.customerId,
             full_name: values.full_name,
             email: values.email,
             phone: values.phone,
-          });
+          })
+    );
+    // No network (spec 006, CA-10): the app-wide notice speaks; the form stays as it was.
+    if (!result) return;
     if (result.ok) props.onSaved();
     else setServerError(result.error);
   });

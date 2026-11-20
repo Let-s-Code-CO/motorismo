@@ -14,9 +14,18 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'sw
 export const generateMetadata = async (): Promise<Metadata> => {
   const t = await getTranslations('core.metadata');
 
-  return { title: t('title'), description: t('description') };
+  const brand = await getTranslations('core.brand');
+
+  return {
+    title: t('title'),
+    description: t('description'),
+    // Added to the iPhone/iPad home screen, it opens full screen with its short name (spec 006,
+    // CA-04). The default status bar keeps content clear of the notch without viewport-fit=cover.
+    appleWebApp: { capable: true, title: brand('short'), statusBarStyle: 'default' },
+  };
 };
 
+/** The app's background (hero.ts), also in the manifest: the system bar blends in (CA-05). */
 export const viewport: Viewport = { themeColor: '#fafafa' };
 
 const RootLayout = async ({ children }: { children: ReactNode }) => {

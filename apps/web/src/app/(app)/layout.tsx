@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { requireAccount } from '@web/modules/auth/api/auth.server';
 import AppHeader from '@web/modules/auth/components/organisms/app-header.component';
 import SiteFooter from '@web/modules/core/components/site-footer.component';
+import InstallBanner from '@web/modules/pwa/components/install-banner.component';
 
 /**
  * Signed-in area (RF-01) for staff and customers (spec 004). The proxy already redirected visitors;
@@ -20,6 +21,8 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
           <SiteFooter />
         </div>
       </div>
+      {/* Spec 006, CA-18: only signed-in people are told the app can be installed. */}
+      <InstallBanner />
     </div>
   );
 };

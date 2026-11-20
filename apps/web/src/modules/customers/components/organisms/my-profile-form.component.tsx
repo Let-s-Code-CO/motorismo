@@ -17,6 +17,7 @@ import {
   myProfileSchema,
 } from '@web/modules/customers/schemas/customer.schema';
 import type { CustomersErrorKey } from '@web/modules/customers/utils/customers-errors.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type MyProfileFormProps = {
   customer: { full_name: string; email: string | null; phone: string | null; created_at: string };
@@ -46,7 +47,8 @@ const MyProfileForm = ({ customer }: MyProfileFormProps) => {
 
   const onSubmit = handleSubmit(async (values) => {
     setNotice(undefined);
-    const result = await updateMyProfile(values);
+    const result = await callAction(() => updateMyProfile(values));
+    if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
     setNotice(
       result.ok
         ? { tone: 'success', text: t('profile.saved') }

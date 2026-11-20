@@ -18,6 +18,7 @@ import {
   type SignUpValues,
   signUpSchema,
 } from '@web/modules/auth/schemas/sign-up.schema';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type ServerError = 'rateLimited' | 'generic';
 
@@ -42,7 +43,8 @@ const SignUpForm = () => {
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
-    const result = await signUp(values);
+    const result = await callAction(() => signUp(values));
+    if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
     if (result.ok) setSentTo(values.email);
     else setServerError(result.error === 'rateLimited' ? 'rateLimited' : 'generic');
   });

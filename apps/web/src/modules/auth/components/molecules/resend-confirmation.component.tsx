@@ -8,6 +8,7 @@ import { Button } from '@heroui/react';
 import { MailCheck } from 'lucide-react';
 
 import { resendConfirmation } from '@web/modules/auth/actions/auth.actions';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type ResendConfirmationProps = {
   /** Reads the email to use at the moment of pressing (e.g. from the login form). */
@@ -40,8 +41,9 @@ const ResendConfirmation = ({ getEmail }: ResendConfirmationProps) => {
       isLoading={isPending}
       onPress={() =>
         startTransition(async () => {
-          await resendConfirmation(getEmail());
-          setSent(true);
+          const result = await callAction(() => resendConfirmation(getEmail()));
+          // null: no network (spec 006, CA-10); nothing was sent.
+          if (result !== null) setSent(true);
         })
       }
     >

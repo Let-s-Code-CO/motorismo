@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Constants } from '@motorismo/supabase/types';
 
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { inviteUser } from '@web/modules/users/actions/users.actions';
 import type { UsersErrorKey } from '@web/modules/users/actions/users.actions';
 import {
@@ -42,7 +43,8 @@ const InviteUserForm = ({ onInvited }: InviteUserFormProps) => {
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
-    const result = await inviteUser(values);
+    const result = await callAction(() => inviteUser(values));
+    if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
     if (result.ok) {
       onInvited(values.email);
       return;

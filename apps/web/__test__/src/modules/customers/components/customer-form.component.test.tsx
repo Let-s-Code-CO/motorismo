@@ -9,14 +9,19 @@
  * - CA-26: the "email already in use" refusal from the database is shown.
  * - CA-27: editing changes name, phone and — only without account — email; the email of a customer
  *   with an account is read-only and explains why.
+ * - Spec 006, CA-10: if the network drops while sending, nothing is reported (neither success nor
+ *   an error of its own: the app-wide «Sin conexión» notice speaks) and what was typed stays, to
+ *   send again once the network is back.
  */
 import { fireEvent, screen } from '@testing-library/react';
 
 import { createCustomer, updateCustomer } from '@web/modules/customers/actions/customers.actions';
 import CustomerForm from '@web/modules/customers/components/organisms/customer-form.component';
+import { markOffline } from '@web/modules/pwa/utils/connection.lib';
 
 import { renderWithProviders } from '@tests/test-utils/render';
 
+vi.mock('@web/modules/pwa/utils/connection.lib', () => ({ markOffline: vi.fn() }));
 vi.mock('@web/modules/customers/actions/customers.actions', () => ({
   createCustomer: vi.fn(),
   updateCustomer: vi.fn(),
@@ -72,6 +77,24 @@ describe('CustomerForm (new customer)', () => {
     submit();
 
     expect(await screen.findByText('Ya existe una cuenta con este correo.')).toBeVisible();
+  });
+
+  it('reports nothing and keeps what was typed when the network drops while sending (spec 006, CA-10)', async () => {
+    vi.mocked(createCustomer).mockRejectedValue(new TypeError('Failed to fetch'));
+    const onSaved = vi.fn();
+    renderWithProviders(<CustomerForm mode="create" onSaved={onSaved} />);
+
+    type(/Nombre/, 'Marta Mostrador');
+    type(/Celular/, '312 000 1111');
+    fireEvent.click(screen.getByRole('checkbox', { name: /El cliente autorizó/ }));
+    submit();
+
+    await vi.waitFor(() => expect(markOffline).toHaveBeenCalled());
+    expect(onSaved).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Nombre/)).toHaveValue('Marta Mostrador');
+    expect(screen.getByLabelText(/Celular/)).toHaveValue('312 000 1111');
+    expect(screen.getByRole('button', { name: 'Registrar cliente' })).toBeEnabled();
   });
 });
 

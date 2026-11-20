@@ -14,6 +14,7 @@ import {
   ModalHeader,
 } from '@heroui/react';
 
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { retireVehicle } from '@web/modules/vehicles/actions/vehicles.actions';
 import type { VehiclesAudience } from '@web/modules/vehicles/types/vehicles.types';
 import type { VehiclesErrorKey } from '@web/modules/vehicles/utils/vehicles-errors.utils';
@@ -38,7 +39,8 @@ const RetireVehicleModal = ({ vehicle, audience, onClose, onRetired }: RetireVeh
   const confirm = () =>
     startTransition(async () => {
       if (!vehicle) return;
-      const result = await retireVehicle({ id: vehicle.id });
+      const result = await callAction(() => retireVehicle({ id: vehicle.id }));
+      if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       if (!result.ok) {
         setError(result.error);
         return;

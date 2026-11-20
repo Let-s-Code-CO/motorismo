@@ -10,6 +10,7 @@ import { UserCheck, UserX } from 'lucide-react';
 
 import { setCustomerDisabled } from '@web/modules/customers/actions/customers.actions';
 import type { CustomersErrorKey } from '@web/modules/customers/utils/customers-errors.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type CustomerManageProps = {
   customer: {
@@ -35,7 +36,10 @@ const CustomerManage = ({ customer }: CustomerManageProps) => {
 
   const toggleAccess = () =>
     startTransition(async () => {
-      const result = await setCustomerDisabled({ id: customer.id, disabled: !isDisabled });
+      const result = await callAction(() =>
+        setCustomerDisabled({ id: customer.id, disabled: !isDisabled })
+      );
+      if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       setNotice(
         result.ok
           ? { tone: 'success', text: isDisabled ? t('reactivated') : t('disabledNotice') }
