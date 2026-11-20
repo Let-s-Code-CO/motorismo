@@ -9,6 +9,8 @@
  * - The avatar button's name contains what it shows (WCAG 2.5.3): «CD, tu cuenta» with the
  *   initials, «Tu cuenta» with a photo.
  * - «Cerrar sesión» goes through callAction, like every Server Action call (spec 006, CA-10).
+ * - Spec 010, CA-09: «Tema» with Claro, Oscuro and Sistema, each with its icon; the current one is
+ *   marked (a check, and «elegido» for screen readers); choosing one changes the theme at once.
  */
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 
@@ -17,6 +19,7 @@ import AccountMenu from '@web/modules/auth/components/molecules/account-menu.com
 import type { Audience } from '@web/modules/auth/types/auth.types';
 import useInstallPrompt from '@web/modules/pwa/hooks/install-prompt.hook';
 import { promptInstall } from '@web/modules/pwa/utils/install-prompt.lib';
+import { ThemeProvider } from '@web/modules/theme/providers/theme.provider';
 
 import { renderWithProviders } from '@tests/test-utils/render';
 
@@ -28,13 +31,27 @@ const openAccount = async ({
   name = 'Carlos Díaz',
   audience = 'admin' as Audience,
 }: { name?: string; audience?: Audience } = {}) => {
-  renderWithProviders(<AccountMenu name={name} avatarUrl={null} audience={audience} />);
+  renderWithProviders(
+    <ThemeProvider initialChoice="system">
+      <AccountMenu name={name} avatarUrl={null} audience={audience} />
+    </ThemeProvider>
+  );
   fireEvent.click(screen.getByRole('button', { name: /tu cuenta$/ }));
   return screen.findByRole('menu');
 };
 
 describe('AccountMenu', () => {
-  afterEach(() => vi.clearAllMocks());
+  beforeEach(() =>
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }))
+  );
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   it('names the avatar with the initials it shows, or «Tu cuenta» with a photo (CA-04; WCAG 2.5.3)', () => {
     const { unmount } = renderWithProviders(
@@ -55,12 +72,9 @@ describe('AccountMenu', () => {
     // Present in the open menu (its opening animation keeps jsdom from calling it visible).
     expect(screen.getByText('Carlos Díaz')).toBeInTheDocument();
     expect(screen.getByText('Administrador')).toBeInTheDocument();
-    // Only actions are options (axe: an option's name must contain everything it shows).
-    expect(
-      within(menu)
-        .getAllByRole('menuitem')
-        .map((item) => item.textContent)
-    ).toEqual(['Cerrar sesión']);
+    // Who is signed in is not an option (axe: an option's name must contain all it shows).
+    expect(within(menu).queryByRole('menuitem', { name: /Carlos Díaz/ })).not.toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'Cerrar sesión' })).toBeInTheDocument();
   });
 
   it('says «Cliente» for a customer (CA-04)', async () => {
@@ -102,5 +116,34 @@ describe('AccountMenu', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }));
 
     await waitFor(() => expect(signOut).toHaveBeenCalledOnce());
+  });
+
+  it('offers «Tema» with its three choices, the current one marked (spec 010, CA-09)', async () => {
+    const menu = await openAccount();
+
+    const choices = within(menu).getAllByRole('menuitem', { name: /^(Claro|Oscuro|Sistema)/ });
+    expect(
+      choices.map((choice) =>
+        [...(choice.querySelector('svg')?.classList ?? [])].find((name) =>
+          /^lucide-(sun|moon|monitor)$/.test(name)
+        )
+      )
+    ).toEqual(['lucide-sun', 'lucide-moon', 'lucide-monitor']);
+    // Nothing chosen yet on this device: «Sistema».
+    expect(
+      within(menu).getByRole('menuitem', { name: /^Sistema\s*,\s*elegido$/ })
+    ).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: 'Oscuro' })).toBeInTheDocument();
+    expect(within(menu).getAllByRole('menuitem', { name: /elegido/ })).toHaveLength(1);
+  });
+
+  it('changes the theme at once when one is chosen (spec 010, CA-09)', async () => {
+    document.documentElement.classList.remove('dark');
+    const menu = await openAccount();
+
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Oscuro' }));
+
+    expect(document.documentElement).toHaveClass('dark');
+    document.documentElement.classList.remove('dark');
   });
 });

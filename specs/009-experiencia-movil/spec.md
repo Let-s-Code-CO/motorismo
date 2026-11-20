@@ -183,3 +183,4 @@ Ninguna.
 | 2026-11-20 | Ajustes pedidos por el usuario durante la implementación: la franja del acceso crece con la pantalla y el formulario queda centrado (CA-10, CA-11); en el inicio, «Órdenes» primero, a todo el ancho y oscura con los números en grande, también en escritorio (CA-06, CA-07, CA-09); los mosaicos con el nombre corto y el inicio centrado en el teléfono (CA-06). Accesibilidad: el nombre y el rol encabezan el menú de la cuenta como texto, y el botón del avatar se anuncia con sus iniciales (CA-04; WCAG 2.5.3). |
 | 2026-11-20 | Implementada. |
 | 2026-11-20 | Verificada: pruebas añadidas para el fondo oculto al lector con el panel abierto (CA-03), el nombre corto de los mosaicos (CA-06), «Órdenes» oscura y del mismo tamaño en escritorio (CA-09) y la franja en «Enlace no válido» (CA-10). |
+| 2026-11-20 | Spec 010: el menú de la cuenta gana «Tema» y el encabezado de escritorio, su menú de tema. |

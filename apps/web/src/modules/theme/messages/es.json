@@ -1,0 +1,10 @@
+{
+  "theme": {
+    "title": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "current": "Tema: {name}",
+    "chosen": "elegido"
+  }
+}

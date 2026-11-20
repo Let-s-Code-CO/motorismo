@@ -19,7 +19,15 @@ export default defineConfig({
     locale: 'es-CO',
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // The whole accessibility audit again on a device in dark mode (spec 010, CA-03).
+    {
+      name: 'chromium-dark',
+      use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
+      testMatch: /a11y\.spec\.ts$/,
+    },
+  ],
   webServer: {
     // CI runs against the production build that the pipeline already produced.
     command: process.env.CI ? 'pnpm start' : 'pnpm dev',

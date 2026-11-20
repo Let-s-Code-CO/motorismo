@@ -99,8 +99,8 @@ describe('sw.js — install and activate', () => {
 
     await fireLifecycle(handlers.get('install')!);
 
-    expect([...caches.stores.keys()]).toEqual(['motorismo-offline-v1']);
-    expect([...caches.stores.get('motorismo-offline-v1')!.keys()]).toEqual([
+    expect([...caches.stores.keys()]).toEqual(['motorismo-offline-v2']);
+    expect([...caches.stores.get('motorismo-offline-v2')!.keys()]).toEqual([
       '/offline',
       '/icons/icon-192.png',
     ]);
@@ -108,19 +108,19 @@ describe('sw.js — install and activate', () => {
   });
 
   it('deletes the caches of other versions on activate, and controls the open pages', async () => {
-    const caches = fakeCaches({ 'motorismo-offline-v0': ['/offline'], 'motorismo-offline-v1': [] });
+    const caches = fakeCaches({ 'motorismo-offline-v1': ['/offline'], 'motorismo-offline-v2': [] });
     const { handlers, self } = loadWorker({ caches });
 
     await fireLifecycle(handlers.get('activate')!);
 
-    expect([...caches.stores.keys()]).toEqual(['motorismo-offline-v1']);
+    expect([...caches.stores.keys()]).toEqual(['motorismo-offline-v2']);
     expect(self.clients.claim).toHaveBeenCalled();
   });
 });
 
 describe('sw.js — fetch', () => {
   const offlineReady = () =>
-    fakeCaches({ 'motorismo-offline-v1': ['/offline', '/icons/icon-192.png'] });
+    fakeCaches({ 'motorismo-offline-v2': ['/offline', '/icons/icon-192.png'] });
 
   it('serves a page from the network when there is network (nothing is answered from the device)', async () => {
     const { handlers, fetch } = loadWorker({ caches: offlineReady() });

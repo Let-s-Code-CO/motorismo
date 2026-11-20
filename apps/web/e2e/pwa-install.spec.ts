@@ -43,7 +43,10 @@ test.describe('installable app (spec 006, HU-01)', () => {
       'href',
       '/manifest.webmanifest'
     );
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#fafafa');
+    // A light device sees the light background as its system bar (spec 010 adds the dark one).
+    await expect(
+      page.locator('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')
+    ).toHaveAttribute('content', '#fafafa');
     await expect(page.locator('meta[name="mobile-web-app-capable"]')).toHaveAttribute(
       'content',
       'yes'

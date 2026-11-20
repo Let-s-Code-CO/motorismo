@@ -63,10 +63,12 @@ const StaffHome = ({ name, role, openOrders }: StaffHomeProps) => {
             return (
               <li key={href} className="col-span-2 flex md:col-span-1">
                 {/* Dark like the brand panel, on the phone and the desktop alike; the desktop keeps
-                    the card's size and its description. */}
+                    the card's size and its description. In the dark theme, where every card is dark,
+                    it stands out by relief instead: a lighter charcoal gradient, a silver edge like
+                    the logo's ring and a soft glow (spec 010, CA-06). */}
                 <Link
                   href={href}
-                  className="group relative flex w-full flex-col gap-5 overflow-hidden rounded-large bg-zinc-950 p-5 text-white shadow-medium transition-[box-shadow,transform] hover:shadow-large active:scale-[0.99] md:gap-4 md:p-6"
+                  className="group relative flex w-full flex-col gap-5 overflow-hidden rounded-large bg-zinc-950 p-5 text-white shadow-medium transition-[box-shadow,transform] hover:shadow-large active:scale-[0.99] md:gap-4 md:p-6 dark:bg-gradient-to-br dark:from-zinc-700 dark:via-zinc-800 dark:to-zinc-950 dark:shadow-[0_0_44px_-14px_rgba(212,212,216,0.35)] dark:ring-1 dark:ring-zinc-300/35"
                 >
                   <BrandOrnaments />
                   <span className="relative flex w-full items-center gap-3 md:flex-col md:items-start md:gap-4">
@@ -120,7 +122,7 @@ const StaffHome = ({ name, role, openOrders }: StaffHomeProps) => {
                 href={href}
                 className={`group flex min-h-28 w-full flex-col justify-between gap-4 rounded-large border border-divider bg-content1 p-4 shadow-small transition-[box-shadow,border-color,transform] active:scale-[0.98] ${DESKTOP_CARD}`}
               >
-                <span className="grid size-11 place-items-center rounded-medium bg-zinc-900 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] md:size-12 md:rounded-large">
+                <span className="grid size-11 place-items-center rounded-medium bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] md:size-12 md:rounded-large">
                   <Icon aria-hidden className="size-5 md:size-6" />
                 </span>
                 <span className="flex w-full items-end justify-between gap-2 md:flex-col md:items-start md:gap-1">

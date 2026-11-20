@@ -387,7 +387,7 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
           <Button
             color="danger"
             variant="solid"
-            className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700"
+            className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700 dark:bg-danger-300 dark:data-[hover=true]:bg-danger-200"
             startContent={<Ban aria-hidden className="size-4" />}
             onPress={() => {
               setNotice(undefined);

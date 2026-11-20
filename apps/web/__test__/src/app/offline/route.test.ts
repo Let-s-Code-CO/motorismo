@@ -9,7 +9,8 @@
  * - CA-11: «Reintentar» reloads the address the person was opening (the service worker serves this
  *   page under that address), so with the network back they land where they were going.
  * - RN-02: the page is the same for everyone and shows nobody's data; it is self-contained (inline
- *   styles, no scripts or style sheets to fetch), because without network nothing else can load.
+ *   styles and script, nothing to fetch), because without network nothing else can load.
+ * - Spec 010, CA-08: it follows the device's theme, or the one chosen on it (its cookie).
  */
 import { GET } from '@web/app/offline/route';
 
@@ -41,9 +42,25 @@ describe('GET /offline', () => {
   it('is self-contained: no scripts or style sheets to fetch, and no personal data (RN-02)', async () => {
     const { html } = await render();
 
-    expect(html).not.toMatch(/<script/i);
+    // Inline only: a script or style sheet with an address could not load without network.
+    expect(html).not.toMatch(/<script[^>]*\bsrc=/i);
     expect(html).not.toMatch(/<link[^>]+stylesheet/i);
     expect(html).toContain('<style>');
-    expect(html).not.toMatch(/@/);
+    // Nobody's data: no email address in it.
+    expect(html).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
+  });
+
+  it("follows the device's theme, or the one chosen on it (spec 010, CA-08)", async () => {
+    const { html } = await render();
+
+    // Dark when the device prefers it, unless «Claro» was chosen; and dark when «Oscuro» was.
+    expect(html).toContain('@media (prefers-color-scheme: dark)');
+    expect(html).toContain(":root:not([data-theme='light'])");
+    expect(html).toContain(":root[data-theme='dark']");
+    // The choice is read from the device's cookie, and the system bar follows it.
+    expect(html).toContain('motorismo-theme=(light|dark)');
+    expect(html).toContain(
+      '<meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">'
+    );
   });
 });

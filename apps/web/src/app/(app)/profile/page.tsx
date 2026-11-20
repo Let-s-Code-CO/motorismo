@@ -28,7 +28,7 @@ const ProfilePage = async () => {
             name={customer.full_name}
             src={customer.avatar_url}
             size="lg"
-            className="bg-zinc-900 text-white"
+            className="bg-primary text-primary-foreground"
           />
           <div className="flex min-w-0 flex-col gap-1">
             <span className="truncate text-lg font-semibold tracking-tight">

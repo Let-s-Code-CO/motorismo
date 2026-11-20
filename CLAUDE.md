@@ -40,6 +40,18 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
+- **Modo oscuro (spec 010).**
+  - **Temas:** claro y oscuro en `src/app/hero.ts`, con «Sistema» por defecto.
+  - **Dónde se guarda:** en la cookie del dispositivo `motorismo-theme`. El layout raíz pinta
+    «Claro» u «Oscuro» desde el servidor, y un script en `<head>` resuelve «Sistema» antes de
+    pintar (`modules/theme`).
+  - **Colores:** nunca un color fijo que no tenga su variante: usa tokens (`bg-content1`,
+    `text-default-500`, `bg-primary`…) o añade su `dark:`.
+  - **Botones destructivos:** `bg-danger-600 dark:bg-danger-300` (en oscuro HeroUI invierte las
+    escalas semánticas).
+  - **Disparadores de menú:** el de un `Dropdown` lleva `classNames={{ trigger:
+    'aria-expanded:opacity-100' }}`; HeroUI lo baja al 70 % y en oscuro pierde contraste.
+  - **Pruebas:** `a11y.spec.ts` corre también en oscuro (proyecto `chromium-dark`).
 - El tema conserva la escala de `foreground` de HeroUI (`src/app/hero.ts`): sus componentes pintan
   placeholders y textos de ayuda con ella. `danger` usa por defecto el tono 600 de la escala roja
   (spec 007): así los errores de los campos (`text-danger`) y los botones `danger` cumplen AA. Turbopack no recarga `hero.ts` en caliente, y a veces
