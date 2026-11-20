@@ -72,7 +72,11 @@
       "plateHelpCar": "Tres letras y tres números. Ej.: ABC-123.",
       "save": "Guardar",
       "cancel": "Cancelar",
-      "noSuggestions": "Sin coincidencias: se añadirá como nueva."
+      "noSuggestions": "Sin coincidencias: se añadirá como nueva.",
+      "plateCity": "Ciudad de la placa",
+      "plateCityPlaceholder": "Escribe o elige la ciudad",
+      "noCityMatches": "Ninguna ciudad coincide.",
+      "typeForMoreCities": "Escribe para ver más ciudades."
     },
     "retire": {
       "title": "Retirar vehículo",
@@ -89,7 +93,8 @@
       "plateInvalid": "La placa no tiene el formato de este tipo de vehículo.",
       "classRequired": "Elige la clase.",
       "displacementInvalid": "El cilindraje va de 50 a 2.500 cc.",
-      "nameTooLong": "Máximo 60 caracteres."
+      "nameTooLong": "Máximo 60 caracteres.",
+      "plateCityRequired": "Elige la ciudad de la placa."
     },
     "errors": {
       "forbidden": "No tienes permiso para hacer esto.",
@@ -104,7 +109,12 @@
       "displacementInvalid": "El cilindraje va de 50 a 2.500 cc.",
       "retired": "Este vehículo ya está retirado.",
       "notFound": "No encontramos este vehículo.",
-      "generic": "No se pudo guardar. Inténtalo de nuevo."
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "plateCityRequired": "Elige la ciudad de la placa.",
+      "plateCityInvalid": "Elige una ciudad de la lista."
+    },
+    "plate": {
+      "country": "COLOMBIA"
     }
   }
 }

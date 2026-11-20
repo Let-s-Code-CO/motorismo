@@ -4,7 +4,8 @@
 -- manage anyone's; a customer with an account manages only their own. Brands (per type) and lines
 -- (per brand) come from a catalog that is preloaded (next migration) and grows only through
 -- save_vehicle, when a really new name is typed. Enforcement lives here (RLS, checks and a guard
--- trigger), never only in the UI.
+-- trigger), never only in the UI. A car keeps the municipality that issued its plate (HU-07),
+-- from a fixed list loaded by the municipalities_data migration.
 --
 -- seeds: supabase/seeds/03_vehicles.sql gives the local customers some vehicles.
 
@@ -65,6 +66,19 @@ create table public.vehicle_lines (
 comment on table public.vehicle_lines is
   'Vehicle lines (models) per brand (spec 005), e.g. Suzuki → GSX-R600.';
 
+-- Municipalities (HU-07, RF-07) ------------------------------------------------------------------
+-- The municipalities of Colombia (DANE's DIVIPOLA), for the city that issued a car's plate. Keyed
+-- by the DANE code, the same in every environment (11001 = Bogotá, D.C.). Fixed: loaded by the
+-- municipalities_data migration and never written through the API.
+create table public.municipalities (
+  code text primary key check (code ~ '^[0-9]{5}$'),
+  name text not null,
+  department text not null
+);
+
+comment on table public.municipalities is
+  'Municipalities of Colombia (DANE DIVIPOLA) for the issuing city of a car plate (spec 005, RF-07).';
+
 -- Vehicles ---------------------------------------------------------------------------------------
 create table public.vehicles (
   id uuid primary key default gen_random_uuid(),
@@ -78,6 +92,8 @@ create table public.vehicles (
   color public.vehicle_color not null,
   -- Uppercase without separators (UIH03D); shown with a hyphen (UIH-03D).
   plate text,
+  -- RN-11: the municipality that issued the plate, only for cars (required there).
+  plate_city_code text references public.municipalities (code),
   -- Active while null (RN-07: retired, never deleted).
   retired_at timestamptz,
   created_at timestamptz not null default now(),
@@ -107,7 +123,11 @@ create table public.vehicles (
     displacement_cc is null or (vehicle_type = 'motorcycle' and displacement_cc between 50 and 2500)
   ),
   -- The line is optional only on a bicycle (spec assumption).
-  constraint vehicles_line_required check (vehicle_type = 'bicycle' or line_id is not null)
+  constraint vehicles_line_required check (vehicle_type = 'bicycle' or line_id is not null),
+  -- RN-11: a car has the city of its plate; motorcycles and bicycles never have one.
+  constraint vehicles_plate_city_by_type check (
+    case vehicle_type when 'car' then plate_city_code is not null else plate_city_code is null end
+  )
 );
 
 comment on table public.vehicles is
@@ -119,6 +139,7 @@ create unique index vehicles_plate_active_key on public.vehicles (plate)
 create index vehicles_customer_created_at_idx on public.vehicles (customer_id, created_at desc);
 create index vehicles_brand_id_idx on public.vehicles (brand_id);
 create index vehicles_line_id_idx on public.vehicles (line_id);
+create index vehicles_plate_city_code_idx on public.vehicles (plate_city_code);
 
 create trigger vehicles_set_updated_at
   before update on public.vehicles
@@ -176,9 +197,17 @@ grant execute on function private.can_write_vehicles_of(uuid) to authenticated, 
 grant execute on function private.vehicle_plate_taken(text, uuid) to authenticated, service_role;
 
 -- RLS and privileges -----------------------------------------------------------------------------
+alter table public.municipalities enable row level security;
 alter table public.vehicle_brands enable row level security;
 alter table public.vehicle_lines enable row level security;
 alter table public.vehicles enable row level security;
+
+-- Municipalities are public data: anyone with a session reads them; nobody writes them (RF-07).
+create policy municipalities_select_authenticated
+  on public.municipalities for select to authenticated using (true);
+
+revoke all on table public.municipalities from anon, authenticated;
+grant select on table public.municipalities to authenticated;
 
 -- The catalog is not personal data: anyone with a session reads it; nobody writes it through the
 -- API (it grows only through save_vehicle).
@@ -213,9 +242,11 @@ create policy vehicles_update_staff_or_own
 -- No delete (RN-07); customer_id is set on insert only (RN-01).
 revoke all on table public.vehicles from anon, authenticated;
 grant select on table public.vehicles to authenticated;
-grant insert (customer_id, vehicle_type, vehicle_class, brand_id, line_id, displacement_cc, color, plate)
+grant insert (customer_id, vehicle_type, vehicle_class, brand_id, line_id, displacement_cc, color, plate,
+               plate_city_code)
   on table public.vehicles to authenticated;
-grant update (vehicle_type, vehicle_class, brand_id, line_id, displacement_cc, color, plate, retired_at)
+grant update (vehicle_type, vehicle_class, brand_id, line_id, displacement_cc, color, plate, retired_at,
+               plate_city_code)
   on table public.vehicles to authenticated;
 
 -- Guard rules ------------------------------------------------------------------------------------
@@ -254,6 +285,10 @@ begin
   if new.vehicle_type = 'bicycle' then
     new.plate := null;
   end if;
+  -- RN-11, CA-31: only a car keeps the city of its plate.
+  if new.vehicle_type <> 'car' then
+    new.plate_city_code := null;
+  end if;
   if new.vehicle_type = 'motorcycle' then
     new.vehicle_class := null;
   else
@@ -281,6 +316,17 @@ begin
   if new.displacement_cc is not null and new.displacement_cc not between 50 and 2500 then
     raise exception 'displacement out of range: % cc', new.displacement_cc
       using errcode = 'check_violation', hint = 'vehicle_displacement_invalid';
+  end if;
+  -- RN-11: a car needs the city of its plate, from the municipalities list (CA-31). Checked here,
+  -- with a hint, before the foreign key would refuse an unknown code.
+  if new.vehicle_type = 'car' and new.plate_city_code is null then
+    raise exception 'a car needs the city of its plate'
+      using errcode = 'check_violation', hint = 'vehicle_plate_city_required';
+  end if;
+  if new.plate_city_code is not null
+     and not exists (select 1 from public.municipalities m where m.code = new.plate_city_code) then
+    raise exception 'unknown plate city: %', new.plate_city_code
+      using errcode = 'check_violation', hint = 'vehicle_plate_city_invalid';
   end if;
 
   -- RN-04, RN-08: one active vehicle per plate, without telling whose it is.
@@ -374,7 +420,8 @@ create function public.save_vehicle(
   p_line_name text default null,
   p_displacement_cc integer default null,
   p_plate text default null,
-  p_vehicle_id uuid default null
+  p_vehicle_id uuid default null,
+  p_plate_city_code text default null
 )
 returns uuid
 language plpgsql
@@ -387,9 +434,9 @@ declare
 begin
   if p_vehicle_id is null then
     insert into public.vehicles (customer_id, vehicle_type, vehicle_class, brand_id, line_id,
-                                 displacement_cc, color, plate)
+                                 displacement_cc, color, plate, plate_city_code)
     values (p_customer_id, p_vehicle_type, p_vehicle_class, v_brand_id, v_line_id,
-            p_displacement_cc, p_color, p_plate)
+            p_displacement_cc, p_color, p_plate, p_plate_city_code)
     returning id into v_id;
   else
     update public.vehicles
@@ -399,7 +446,8 @@ begin
         line_id = v_line_id,
         displacement_cc = p_displacement_cc,
         color = p_color,
-        plate = p_plate
+        plate = p_plate,
+        plate_city_code = p_plate_city_code
     where id = p_vehicle_id and customer_id = p_customer_id
     returning id into v_id;
 
@@ -415,9 +463,9 @@ end;
 $$;
 
 revoke execute on function public.save_vehicle(uuid, public.vehicle_type, text, public.vehicle_color,
-  public.vehicle_class, text, integer, text, uuid) from public, anon;
+  public.vehicle_class, text, integer, text, uuid, text) from public, anon;
 grant execute on function public.save_vehicle(uuid, public.vehicle_type, text, public.vehicle_color,
-  public.vehicle_class, text, integer, text, uuid) to authenticated, service_role;
+  public.vehicle_class, text, integer, text, uuid, text) to authenticated, service_role;
 
 -- Plate search in "Clientes" (CA-17, CA-18) --------------------------------------------------------
 -- The active plates of a customer, copied to their record so the existing search (spec 004:

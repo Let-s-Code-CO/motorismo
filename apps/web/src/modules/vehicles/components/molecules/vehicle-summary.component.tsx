@@ -23,8 +23,8 @@ export const vehicleName = (vehicle: Pick<VehicleView, 'brand' | 'line'>) =>
 
 /**
  * One vehicle (spec 005): "Marca Línea", the type with its displacement (motorcycle) or its class
- * (car, bicycle), the colour by name with a swatch (CA-16) and the plate with a hyphen (CA-03), or
- * "Sin placa" for a bicycle (CA-06).
+ * (car, bicycle), the colour by name with a swatch (CA-16) and the plate drawn like a Colombian one,
+ * a car's with its issuing city (CA-03, CA-27), or "Sin placa" for a bicycle (CA-06).
  */
 const VehicleSummary = ({ vehicle }: VehicleSummaryProps) => {
   const t = useTranslations('vehicles');
@@ -52,7 +52,7 @@ const VehicleSummary = ({ vehicle }: VehicleSummaryProps) => {
         </span>
       </div>
       {vehicle.plate ? (
-        <PlateLabel plate={vehicle.plate} />
+        <PlateLabel plate={vehicle.plate} city={vehicle.plate_city?.name} />
       ) : (
         <span className="text-sm whitespace-nowrap text-default-500">{t('summary.noPlate')}</span>
       )}

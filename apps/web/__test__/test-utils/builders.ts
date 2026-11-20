@@ -58,6 +58,8 @@ export const buildVehicle = (overrides: Partial<VehicleView> = {}): VehicleView 
     created_at: '2026-11-01T15:00:00.000Z',
     brand: { name: 'Suzuki' },
     line: { name: 'GSX-R600' },
+    plate_city_code: null,
+    plate_city: null,
     ...overrides,
   };
 };

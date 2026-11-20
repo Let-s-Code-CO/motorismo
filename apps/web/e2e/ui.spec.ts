@@ -150,7 +150,7 @@ test.describe('customer record actions', () => {
     await page.keyboard.press('Escape'); // nothing is retired
   });
 
-  test('in the vehicle form, fields side by side start at the same height even when one has help text below (Color beside Placa)', async ({
+  test('in the vehicle form, fields side by side start at the same height even when one has help text below (in a car, Placa beside Ciudad de la placa)', async ({
     page,
   }) => {
     await signIn(page, SEED.operator.email);
@@ -164,7 +164,45 @@ test.describe('customer record actions', () => {
     const top = async (text: string) =>
       (await dialog.getByText(text, { exact: true }).boundingBox())!.y;
     // Same row: the labels line up (1 px of rounding allowed).
-    expect(Math.abs((await top('Color')) - (await top('Placa')))).toBeLessThanOrEqual(1);
+    expect(Math.abs((await top('Ciudad de la placa')) - (await top('Placa')))).toBeLessThanOrEqual(
+      1
+    );
+  });
+
+  test('the plate is drawn yellow with black characters, a car with its city and a motorcycle with COLOMBIA (CA-27)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    const vehicles = page.getByRole('region', { name: 'Vehículos' });
+    // Valentina's KDM-482 (seeds), issued in Bogotá, D.C.
+    const carPlate = vehicles.getByText('KDM-482', { exact: true });
+    const look = await carPlate.evaluate((characters) => {
+      const plate = characters.parentElement!;
+      return {
+        background: getComputedStyle(plate).backgroundImage,
+        ink: getComputedStyle(characters).color,
+        below: plate.lastElementChild!.textContent,
+      };
+    });
+    expect(look.background).toContain('rgb(255, 219, 61)'); // --color-plate-light, #ffdb3d
+    expect(look.background).toContain('rgb(247, 198, 0)'); // --color-plate, #f7c600
+    expect(look.ink).toBe('rgb(17, 17, 17)'); // --color-plate-ink, #111
+    expect(look.below).toBe('BOGOTÁ, D.C.');
+
+    // Camila's UIH-03D (seeds): the same plate, with COLOMBIA below.
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.customer.email)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
+    const motoPlate = page
+      .getByRole('region', { name: 'Vehículos' })
+      .getByText('UIH-03D', { exact: true });
+    expect(
+      await motoPlate.evaluate(
+        (characters) => characters.parentElement!.lastElementChild!.textContent
+      )
+    ).toBe('COLOMBIA');
   });
 
   test('the colour list of a car (Color in the left column) opens right under the field, over the modal without being clipped, and each swatch is centred on its name', async ({
@@ -241,42 +279,60 @@ test.describe('customer record actions', () => {
     expect(Math.abs(brandPopover.x - brandField.x)).toBeLessThanOrEqual(1);
   });
 
-  test('in the vehicle form, each radio label is vertically centred on its circle (Tipo and Clase)', async ({
+  test('every one-line radio label is optically centred on its circle (Tipo, Clase); a role card centres it on the role name (Rol)', async ({
     page,
   }) => {
-    await signIn(page, SEED.operator.email);
+    // The circle's centre against the centre of the word as drawn (capitals, lower case and accents
+    // together, from their top to the baseline), not against the text's line box, which Geist's uneven vertical metrics
+    // leave about half a pixel off the letters. Negative = the word sits above the circle's centre.
+    const offsets = (scope: import('@playwright/test').Locator) =>
+      scope.evaluate((element) =>
+        [...element.querySelectorAll('input[type="radio"]')].map((input) => {
+          const label = input.closest('label')!;
+          const circle = input.nextElementSibling!.getBoundingClientRect();
+          const text = label.querySelector('div > span')! as HTMLElement;
+          const probe = document.createElement('span');
+          probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+          text.appendChild(probe);
+          const baseline = probe.getBoundingClientRect().top;
+          probe.remove();
+          const style = getComputedStyle(text);
+          const context = document.createElement('canvas').getContext('2d')!;
+          context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          const ink = context.measureText(text.firstChild?.textContent ?? '');
+          // Descenders (the "p" of "Operador") do not count for the eye: top of the letters to baseline.
+          const inkCentre = baseline - ink.actualBoundingBoxAscent / 2;
+          return {
+            name: text.firstChild?.textContent,
+            off: inkCentre - (circle.top + circle.height / 2),
+          };
+        })
+      );
+    const expectCentred = (list: { name?: string | null; off: number }[], count: number) => {
+      expect(list.length).toBe(count);
+      for (const { name, off } of list) expect(Math.abs(off), name ?? '').toBeLessThanOrEqual(0.4);
+    };
+
+    await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
     await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
     await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
     await page.getByRole('button', { name: /^Editar Mazda CX-30/ }).click();
-    const dialog = page.getByRole('dialog', { name: 'Editar vehículo' });
-    await expect(dialog.getByRole('radio', { name: 'Camioneta' })).toBeAttached();
+    const vehicleDialog = page.getByRole('dialog', { name: 'Editar vehículo' });
+    await expect(vehicleDialog.getByRole('radio', { name: 'Camioneta' })).toBeAttached();
+    await page.waitForTimeout(400); // modal animation
+    expectCentred(await offsets(vehicleDialog), 5); // Motocicleta, Bicicleta, Carro · Automóvil, Camioneta
+    await page.keyboard.press('Escape');
 
-    // Optical centring: the circle's centre against the middle of the capital letters (between
-    // the baseline and the cap height of the font), not against the text's line box, which the
-    // font's uneven vertical metrics leave off the letters.
-    const offCentre = await dialog.evaluate((element) =>
-      [...element.querySelectorAll('input[type="radio"]')].map((input) => {
-        const label = input.closest('label')!;
-        const circle = input.nextElementSibling!.getBoundingClientRect();
-        const text = label.querySelector('div > span')! as HTMLElement;
-        const probe = document.createElement('span');
-        probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
-        text.appendChild(probe);
-        const baseline = probe.getBoundingClientRect().top;
-        probe.remove();
-        const style = getComputedStyle(text);
-        const context = document.createElement('canvas').getContext('2d')!;
-        context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-        const capHeight = context.measureText('H').actualBoundingBoxAscent;
-        return {
-          name: text.textContent,
-          off: Math.abs(circle.top + circle.height / 2 - (baseline - capHeight / 2)),
-        };
-      })
-    );
-    expect(offCentre.length).toBe(5); // Motocicleta, Bicicleta, Carro · Automóvil, Camioneta
-    for (const { name, off } of offCentre) expect(off, name ?? '').toBeLessThanOrEqual(1);
+    // Radios with a description (invite form: Rol) are cards: the circle sits beside the role's
+    // name (first line), so it is centred on that word, not on the whole card.
+    await page.goto('/admin/users');
+    await page.getByRole('button', { name: 'Invitar usuario' }).click();
+    const inviteDialog = page.getByRole('dialog', { name: /Invitar usuario/ });
+    await expect(inviteDialog.getByRole('radio').first()).toBeAttached();
+    await page.waitForTimeout(400); // modal animation
+    const roles = await offsets(inviteDialog);
+    expectCentred(roles, 2); // Operador, Administrador
   });
 
   test('"Editar datos" is an icon button inside "Datos de contacto", with the hand cursor', async ({

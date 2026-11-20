@@ -64,6 +64,8 @@ export const saveVehicle = async (input: unknown): Promise<ActionResult<Vehicles
     p_color: vehicle.color,
     p_plate: vehicle.plate ?? undefined,
     p_vehicle_id: vehicle.vehicle_id ?? undefined,
+    // RN-11: only a car has a plate city (the schema already drops it from other types).
+    p_plate_city_code: vehicle.plate_city_code ?? undefined,
   });
   if (error) return { ok: false, error: fromVehicleError(error, who.audience) };
 

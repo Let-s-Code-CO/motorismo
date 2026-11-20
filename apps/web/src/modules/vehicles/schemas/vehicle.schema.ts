@@ -13,8 +13,8 @@ import { hasPlate, isValidPlate, normalizePlate } from '@web/modules/vehicles/ut
 /**
  * The vehicle form (spec 005), shared by the browser and the Server Action. It mirrors the
  * database rules (vehicles_guard) so every problem shows next to its field (CA-07), and its
- * output keeps only what belongs to the type (CA-09). Errors are message keys under
- * `vehicles.validation`.
+ * output keeps only what belongs to the type (CA-09): the plate city only on cars (RN-11, CA-31).
+ * Errors are message keys under `vehicles.validation`.
  */
 
 const isFilled = (value: unknown): value is string =>
@@ -58,6 +58,8 @@ export const vehicleFormSchema = z
     displacement_cc: displacementField,
     color: z.enum(Constants.public.Enums.vehicle_color, { error: 'colorRequired' }),
     plate: z.string().nullish(),
+    // DANE code of the municipality that issued a car plate (RN-11); the list is the database's.
+    plate_city_code: z.string().nullish(),
   })
   .refine(
     (data) => !isType(data.vehicle_type) || !hasPlate(data.vehicle_type) || isFilled(data.plate),
@@ -91,6 +93,11 @@ export const vehicleFormSchema = z
       (!!data.vehicle_class && CLASSES_BY_TYPE[data.vehicle_type].includes(data.vehicle_class)),
     { path: ['vehicle_class'], error: 'classRequired', ...always }
   )
+  .refine(
+    (data) =>
+      !isType(data.vehicle_type) || data.vehicle_type !== 'car' || isFilled(data.plate_city_code),
+    { path: ['plate_city_code'], error: 'plateCityRequired', ...always }
+  )
   // CA-09: only what belongs to the type is kept (a stale value from the form is dropped).
   .transform((data) => ({
     vehicle_type: data.vehicle_type,
@@ -100,6 +107,7 @@ export const vehicleFormSchema = z
     displacement_cc: data.vehicle_type === 'motorcycle' ? data.displacement_cc : null,
     color: data.color,
     plate: hasPlate(data.vehicle_type) && data.plate ? normalizePlate(data.plate) : null,
+    plate_city_code: data.vehicle_type === 'car' ? (data.plate_city_code ?? null) : null,
   }));
 
 export type VehicleFormInput = z.input<typeof vehicleFormSchema>;

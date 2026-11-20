@@ -8,7 +8,9 @@
  * - the class on cars (Automóvil, Camioneta) and bicycles (Montaña, Ruta), never preselected;
  * - the displacement only on motorcycles, optional, 50–2500 cc (RN-09);
  * - what does not belong to the type is dropped from the output, so a stale value left in the form
- *   after changing the type is never saved (CA-09). Errors are message keys (vehicles.validation).
+ *   after changing the type is never saved (CA-09). Errors are message keys (vehicles.validation);
+ * - the city that issued the plate, only on cars and required there (RN-11, CA-07); a stale one
+ *   is dropped from motorcycles and bicycles (CA-09, CA-31).
  */
 import {
   type VehicleFormInput,
@@ -44,6 +46,7 @@ describe('vehicleFormSchema — a valid vehicle of each type', () => {
       displacement_cc: 600,
       color: 'black',
       plate: 'UIH03D',
+      plate_city_code: null,
     });
   });
 
@@ -55,9 +58,15 @@ describe('vehicleFormSchema — a valid vehicle of each type', () => {
           vehicle_class: 'utility',
           plate: 'abc 123',
           line_name: 'CX-30',
+          plate_city_code: '25377',
         })
       )
-    ).toMatchObject({ vehicle_class: 'utility', displacement_cc: null, plate: 'ABC123' });
+    ).toMatchObject({
+      vehicle_class: 'utility',
+      displacement_cc: null,
+      plate: 'ABC123',
+      plate_city_code: '25377',
+    });
   });
 
   it('accepts a bicycle without line and drops a stale plate and displacement (CA-06, CA-09)', () => {
@@ -66,6 +75,20 @@ describe('vehicleFormSchema — a valid vehicle of each type', () => {
         build({ vehicle_type: 'bicycle', vehicle_class: 'road', line_name: '  ', plate: 'UIH03D' })
       )
     ).toMatchObject({ vehicle_class: 'road', line_name: null, plate: null, displacement_cc: null });
+  });
+
+  it('drops a stale plate city from a motorcycle and a bicycle: only cars keep one (CA-09, CA-31)', () => {
+    expect(vehicleFormSchema.parse(build({ plate_city_code: '11001' })).plate_city_code).toBeNull();
+    expect(
+      vehicleFormSchema.parse(
+        build({
+          vehicle_type: 'bicycle',
+          vehicle_class: 'road',
+          plate: null,
+          plate_city_code: '11001',
+        })
+      ).plate_city_code
+    ).toBeNull();
   });
 
   it('drops a stale class from a motorcycle (CA-09)', () => {
@@ -105,7 +128,9 @@ describe('vehicleFormSchema — errors next to each field (CA-07)', () => {
   });
 
   it('requires the class of a car and of a bicycle, never preselected (RN-10)', () => {
-    expect(errorsOf(build({ vehicle_type: 'car', plate: 'ABC123' }))).toEqual({
+    expect(
+      errorsOf(build({ vehicle_type: 'car', plate: 'ABC123', plate_city_code: '11001' }))
+    ).toEqual({
       vehicle_class: 'classRequired',
     });
     expect(errorsOf(build({ vehicle_type: 'bicycle', plate: null }))).toEqual({
@@ -115,14 +140,28 @@ describe('vehicleFormSchema — errors next to each field (CA-07)', () => {
 
   it('rejects a class of another type (a car cannot be "Montaña")', () => {
     expect(
-      errorsOf(build({ vehicle_type: 'car', vehicle_class: 'mountain', plate: 'ABC123' }))
+      errorsOf(
+        build({
+          vehicle_type: 'car',
+          vehicle_class: 'mountain',
+          plate: 'ABC123',
+          plate_city_code: '11001',
+        })
+      )
     ).toEqual({ vehicle_class: 'classRequired' });
   });
 
   it('rejects a plate in the shape of another type (CA-05)', () => {
     expect(errorsOf(build({ plate: 'ABC123' }))).toEqual({ plate: 'plateInvalid' });
     expect(
-      errorsOf(build({ vehicle_type: 'car', vehicle_class: 'automobile', plate: 'UIH03D' }))
+      errorsOf(
+        build({
+          vehicle_type: 'car',
+          vehicle_class: 'automobile',
+          plate: 'UIH03D',
+          plate_city_code: '11001',
+        })
+      )
     ).toEqual({ plate: 'plateInvalid' });
   });
 
@@ -132,6 +171,16 @@ describe('vehicleFormSchema — errors next to each field (CA-07)', () => {
     });
     expect(errorsOf(build({ displacement_cc: 2501 }))).toEqual({
       displacement_cc: 'displacementInvalid',
+    });
+  });
+
+  it('requires the city of a car plate, empty or missing (CA-07, RN-11)', () => {
+    const car = { vehicle_type: 'car', vehicle_class: 'automobile', plate: 'ABC123' } as const;
+    expect(errorsOf(build({ ...car, plate_city_code: null }))).toEqual({
+      plate_city_code: 'plateCityRequired',
+    });
+    expect(errorsOf(build({ ...car, plate_city_code: '' }))).toEqual({
+      plate_city_code: 'plateCityRequired',
     });
   });
 

@@ -1,4 +1,4 @@
-import type { Enums } from '@motorismo/supabase/types';
+import type { Enums, Tables } from '@motorismo/supabase/types';
 
 export type VehicleType = Enums<'vehicle_type'>;
 export type VehicleClass = Enums<'vehicle_class'>;
@@ -12,3 +12,6 @@ export type VehiclesAudience = 'staff' | 'customer';
 
 /** A catalog entry (brand or line) as the form suggests it. */
 export type CatalogItem = { id: string; name: string };
+
+/** A municipality a car plate can be issued in (spec 005, RF-07): DANE code, name, department. */
+export type Municipality = Pick<Tables<'municipalities'>, 'code' | 'name' | 'department'>;

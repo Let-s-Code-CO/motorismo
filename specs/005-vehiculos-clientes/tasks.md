@@ -245,7 +245,7 @@ PR. Abreviatura extra: `mun` = municipios.
 
 ### Fase C1 — Base de datos
 
-- [ ] T070 Crear la migración vacía `migration:new municipalities_data < /dev/null` (versión
+- [x] T070 Crear la migración vacía `migration:new municipalities_data < /dev/null` (versión
       posterior a `20261119211116`). Generar su SQL desde la DIVIPOLA descargada de datos.gov.co
       (`gdxc-w37w`) con un script de un solo uso en el scratchpad, que no se versiona. Entran los
       «Municipio» y la «Isla», sin las «Área no municipalizada». Nombres y departamentos en
@@ -254,7 +254,7 @@ PR. Abreviatura extra: `mun` = municipios.
       `on conflict (code) do nothing`
       → 1.104 `insert` revisados a mano en una muestra (Bogotá, D.C., La Calera, Funza, Villa de
       San Diego de Ubaté, El Carmen de Viboral) (RF-07)
-- [ ] T071 [P] pgTAP `sb/tests/08_municipalities.test.sql`:
+- [x] T071 [P] pgTAP `sb/tests/08_municipalities.test.sql`:
       - tabla, PK `code` con `check` de 5 dígitos, RLS activado, `policies_are` (solo `select`
         para `authenticated`), `table_privs_are` (sin escritura; `anon` sin nada);
       - 1.104 filas y 33 departamentos; `11001` = «Bogotá, D.C.», `25377` = «La Calera» y `25286`
@@ -262,7 +262,7 @@ PR. Abreviatura extra: `mun` = municipios.
         escritos; Armenia en dos departamentos; «La Chorrera» no está (RF-07, CA-30)
 
       → `pnpm db:test` **rojo**
-- [ ] T072 [P] pgTAP `sb/tests/06_vehicles.test.sql`, ampliado:
+- [x] T072 [P] pgTAP `sb/tests/06_vehicles.test.sql`, ampliado:
       - columna `plate_city_code`, FK a `municipalities`, `check` por tipo y privilegios por
         columna de `insert` y `update`;
       - carro sin ciudad → `vehicle_plate_city_required`; con `99999` →
@@ -273,26 +273,26 @@ PR. Abreviatura extra: `mun` = municipios.
       - las altas de carro existentes en la prueba pasan `p_plate_city_code`
 
       → `pnpm db:test` **rojo**
-- [ ] T073 Editar `sb/migrations/20261119211115_vehicles.sql`:
+- [x] T073 Editar `sb/migrations/20261119211115_vehicles.sql`:
       - tabla `public.municipalities` antes de `vehicles`, con RLS, política y `grant select`;
       - `plate_city_code`, su `check`, su índice y la FK;
       - la guarda (anula fuera de carro; los dos `hint`) y los `grant` por columna;
       - `save_vehicle` con `p_plate_city_code` (y su firma en `revoke`/`grant`)
 
       → T071 y T072 en **verde**
-- [ ] T074 Seeds `sb/seeds/03_vehicles.sql`: `KDM-482` con `p_plate_city_code => '11001'`.
+- [x] T074 Seeds `sb/seeds/03_vehicles.sql`: `KDM-482` con `p_plate_city_code => '11001'`.
       `pnpm db:reset`, `pnpm db:test` y `pnpm db:types`
       → `types:check` en verde y la consulta de `vehicles` con `plate_city:municipalities(name)`
       responde desde el cliente tipado
 
 ### Fase C2 — Pruebas de la aplicación (rojo)
 
-- [ ] T075 [P] `veh/utils/plate-city.utils.test.ts`: `sortPlateCities` (Bogotá, D.C., La Calera
+- [x] T075 [P] `veh/utils/plate-city.utils.test.ts`: `sortPlateCities` (Bogotá, D.C., La Calera
       y Funza primero, en ese orden; luego alfabético con tildes, «Ábrego» entre las «A»; a igual
       nombre, por departamento) y `filterPlateCities` («medellin» y «MEDELLÍN» → Medellín; «la
       cal» → La Calera; vacío → toda la lista en orden) (CA-30)
       → **rojo**
-- [ ] T076 [P] `plate-label.component.test.tsx` (nuevo):
+- [x] T076 [P] `plate-label.component.test.tsx` (nuevo):
       - carro `ABC123` con ciudad: una fila `ABC-123` y debajo `BOGOTÁ, D.C.`; texto accesible
         con la placa y la ciudad (CA-27, CA-28);
       - moto `UIH03D`: filas `UIH` y `03D` ocultas a lectores, `UIH-03D` legible, «COLOMBIA»
@@ -300,55 +300,55 @@ PR. Abreviatura extra: `mun` = municipios.
       - `size="sm"`: una línea `UIH-03D` o `ABC-123`, sin ciudad ni «COLOMBIA» (CA-29)
 
       → **rojo**
-- [ ] T077 [P] `vehicle-summary.component.test.tsx`, ampliado: un carro muestra la ciudad de su
+- [x] T077 [P] `vehicle-summary.component.test.tsx`, ampliado: un carro muestra la ciudad de su
       placa (CA-27); las pruebas actuales de la placa siguen en verde (CA-03, CA-05)
       → **rojo**
-- [ ] T078 `vehicle-form.component.test.tsx`, ampliado:
+- [x] T078 `vehicle-form.component.test.tsx`, ampliado:
       - «Ciudad de la placa» solo con Carro, con «Bogotá, D.C.» elegida; al editar un carro,
         su ciudad; cada opción con su departamento (CA-02, CA-30);
       - pasar de Carro a Moto quita el campo, y volver a Carro lo trae con Bogotá, D.C. (CA-09);
       - sin ciudad en carro → «Elige la ciudad de la placa.» junto al campo (CA-07)
 
       → **rojo**
-- [ ] T079 [P] `vehicle.schema.test.ts` (carro sin `plateCityCode` inválido; moto y bicicleta lo
+- [x] T079 [P] `vehicle.schema.test.ts` (carro sin `plateCityCode` inválido; moto y bicicleta lo
       ignoran) y `vehicles-errors.utils.test.ts` (`vehicle_plate_city_required` e
       `vehicle_plate_city_invalid` a sus mensajes) (CA-07, CA-31)
       → **rojo**
-- [ ] T080 [P] `vehicles.actions.test.ts`, ampliado: `saveVehicle` pasa `p_plate_city_code` solo
+- [x] T080 [P] `vehicles.actions.test.ts`, ampliado: `saveVehicle` pasa `p_plate_city_code` solo
       en carro, nunca en moto ni bicicleta (CA-31)
       → **rojo**
 
 ### Fase C3 — Implementación (verde)
 
-- [ ] T081 [P] Constantes `DEFAULT_PLATE_CITY` y `PINNED_PLATE_CITIES`, y
+- [x] T081 [P] Constantes `DEFAULT_PLATE_CITY` y `PINNED_PLATE_CITIES`, y
       `veh/utils/plate-city.utils.ts`
       → T075 en **verde**
-- [ ] T082 [P] Tokens `--color-plate`, `--color-plate-ink` y `--color-plate-edge` en
+- [x] T082 [P] Tokens `--color-plate`, `--color-plate-ink` y `--color-plate-edge` en
       `web/src/app/globals.css`, y el átomo `plate-label` (forma deducida de la placa, `city`,
       `size`), con `vehicle-summary` pasando la ciudad y `customers-table` con `size="sm"`
       → T076 y T077 en **verde**
-- [ ] T083 `vehicles.client.ts` (`fetchMunicipalities`), `vehicleKeys.municipalities()`,
+- [x] T083 `vehicles.client.ts` (`fetchMunicipalities`), `vehicleKeys.municipalities()`,
       `municipalitiesQueryOptions` (`staleTime: Infinity`) y `vehicles.server.ts` (incrusta
       `plate_city`; `VehicleView`)
       → `pnpm ts:check` en verde
-- [ ] T084 Esquema (`plateCityCode`), errores (los dos `hint`), mensajes (`form.plateCity`,
+- [x] T084 Esquema (`plateCityCode`), errores (los dos `hint`), mensajes (`form.plateCity`,
       `form.plateCityPlaceholder`, `errors.plateCityRequired`, `errors.plateCityInvalid`,
       `plate.country`) y acción `saveVehicle`
       → T079 y T080 en **verde**
-- [ ] T085 Molécula `plate-city-autocomplete` (sin valor libre, `isVirtualized`, departamento como
+- [x] T085 Molécula `plate-city-autocomplete` (sin valor libre, `isVirtualized`, departamento como
       descripción, `portalContainer`) y su uso en `vehicle-form` (solo en Carro, Bogotá, D.C. por
       defecto, al editar la del carro, vaciar al cambiar de tipo)
       → T078 en **verde**; `pnpm test` completo en verde
 
 ### Fase C4 — E2E
 
-- [ ] T086 `e2e/vehicles.spec.ts`, ampliado: el carro registrado con la ciudad por defecto
+- [x] T086 `e2e/vehicles.spec.ts`, ampliado: el carro registrado con la ciudad por defecto
       muestra «BOGOTÁ, D.C.» en su placa; elegir «medellin» → Medellín (Antioquia), guardar y ver
       «MEDELLÍN»; editar la ciudad de un carro (CA-20, CA-27, CA-30). `vehicles-search.spec.ts`:
       la placa encontrada se ve en una línea y sin «COLOMBIA» (CA-29).
       `vehicles-access.sandbox.test.ts`: altas de carro con ciudad
       → verde
-- [ ] T087 [P] `e2e/ui.spec.ts`: la placa tiene el fondo amarillo y los caracteres negros de los
+- [x] T087 [P] `e2e/ui.spec.ts`: la placa tiene el fondo amarillo y los caracteres negros de los
       tokens (CA-27); la ficha con un carro y el formulario con «Ciudad de la placa» sin scroll
       horizontal a 360 px. `e2e/a11y.spec.ts`: la ficha con un carro y la moto, y el formulario
       con la lista de ciudades abierta (CA-28)
@@ -357,13 +357,13 @@ PR. Abreviatura extra: `mun` = municipios.
 
 ### Fase C5 — Definición de terminado
 
-- [ ] T088 `pnpm lint` · `pnpm ts:check` · `pnpm test` · `pnpm build` · `pnpm test:e2e` ·
+- [x] T088 `pnpm lint` · `pnpm ts:check` · `pnpm test` · `pnpm build` · `pnpm test:e2e` ·
       `pnpm --filter web test:sandbox` en verde; `pnpm db:reset` + `pnpm db:test` +
       `pnpm --filter @motorismo/supabase types:check` en verde
-- [ ] T089 Mutación para cada prueba nueva que no se vio en rojo al escribirla; fallo observado y
+- [x] T089 Mutación para cada prueba nueva que no se vio en rojo al escribirla; fallo observado y
       revertido; `git diff` + grep del marcador limpios. Mutaciones anotadas en el Historial del
       plan
-- [ ] T090 `CLAUDE.md` (excepción del amarillo de la placa en el sistema visual; `KDM-482` con
+- [x] T090 `CLAUDE.md` (excepción del amarillo de la placa en el sistema visual; `KDM-482` con
       Bogotá, D.C.; municipios por migración) y `packages/supabase/CLAUDE.md` (municipios por
       migración, como el catálogo); spec en `implementada`, plan y backlog actualizados
 - [ ] T091 `/verificar 005` sobre CA-27 a CA-31 y los criterios ajustados (CA-02, CA-03, CA-07,

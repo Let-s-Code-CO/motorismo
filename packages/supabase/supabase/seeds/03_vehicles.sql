@@ -2,7 +2,7 @@
 --
 --   Camila Cliente (cliente@)        Suzuki GSX-R600, 600 cc, black, UIH-03D (active)
 --                                    Yamaha BWS FI, blue, JWJ-07 (retired: shows "Vehículos retirados")
---   Valentina Vásquez (no account)   Mazda CX-30, "Camioneta", gray, KDM-482
+--   Valentina Vásquez (no account)   Mazda CX-30, "Camioneta", gray, KDM-482, Bogotá, D.C.
 --   Andrés Ñáñez (no account)        GW "Montaña" bicycle, green, no plate
 --   Daniel Desactivado (disabled)    AKT NKD 125, red, DAN-12D (read-only while disabled)
 --
@@ -23,7 +23,7 @@ select public.save_vehicle(
 select public.save_vehicle(
   p_customer_id => (select id from public.customers where email = 'valentina.vasquez@correo.test'),
   p_vehicle_type => 'car', p_vehicle_class => 'utility', p_brand_name => 'Mazda', p_line_name => 'CX-30',
-  p_color => 'gray', p_plate => 'KDM482');
+  p_color => 'gray', p_plate => 'KDM482', p_plate_city_code => '11001');
 
 select public.save_vehicle(
   p_customer_id => (select id from public.customers where full_name = 'Andrés Ñáñez'),

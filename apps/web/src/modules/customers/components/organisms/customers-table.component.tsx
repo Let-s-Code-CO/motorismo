@@ -78,7 +78,7 @@ const CustomersTable = ({ customers, query, emptyLabel }: CustomersTableProps) =
                     {plate && (
                       <span className="mt-1 flex items-center gap-1.5 text-xs text-default-500">
                         {t('table.plate')}
-                        <PlateLabel plate={plate} className="text-xs" />
+                        <PlateLabel plate={plate} size="sm" />
                       </span>
                     )}
                   </span>

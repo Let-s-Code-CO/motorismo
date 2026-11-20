@@ -12,6 +12,8 @@ export type VehiclesErrorKey =
   | 'lineRequired'
   | 'brandRequired'
   | 'displacementInvalid'
+  | 'plateCityRequired'
+  | 'plateCityInvalid'
   | 'retired'
   | 'notFound'
   | 'generic';
@@ -23,6 +25,8 @@ const BY_HINT: Partial<Record<string, VehiclesErrorKey>> = {
   vehicle_line_required: 'lineRequired',
   vehicle_brand_required: 'brandRequired',
   vehicle_displacement_invalid: 'displacementInvalid',
+  vehicle_plate_city_required: 'plateCityRequired',
+  vehicle_plate_city_invalid: 'plateCityInvalid',
   vehicle_retired: 'retired',
   vehicle_not_found: 'notFound',
 };

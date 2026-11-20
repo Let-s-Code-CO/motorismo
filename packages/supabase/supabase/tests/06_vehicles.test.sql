@@ -12,11 +12,13 @@
 --     retiring frees the plate and is final (CA-20..CA-22, RN-07); the customer is fixed (RN-01);
 --     a customer reads and changes only their own vehicles (CA-26); a disabled customer's vehicles
 --     are read-only (spec assumption); a customer grows the catalog too (RF-05); the active plates
---     feed the customer search (CA-17, CA-18).
+--     feed the customer search (CA-17, CA-18);
+--   * part C (HU-07): a car keeps the issuing city of its plate, required and from the
+--     municipalities list; motorcycles and bicycles never keep one (CA-09, CA-20, CA-31, RN-11).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(79);
+select plan(95);
 
 -- Fixtures -------------------------------------------------------------------------------------
 create function pg_temp.new_staff(p_id uuid, p_email text, p_name text, p_role text)
@@ -166,7 +168,7 @@ select is(
 );
 select lives_ok(
   $$ select pg_temp.remember('carla_car', public.save_vehicle(
-       p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_vehicle_class => 'utility',
+       p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'utility',
        p_brand_name => 'Mazda', p_line_name => 'CX-30', p_color => 'gray', p_plate => 'abc123')) $$,
   'CA-05: a car (utility) with three letters and three digits is registered'
 );
@@ -177,7 +179,7 @@ select is(
 );
 select is(
   pg_temp.error_hint($$ select public.save_vehicle(
-    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'automobile',
     p_brand_name => 'Mazda', p_line_name => 'Mazda 3', p_color => 'red', p_plate => 'ABC12D') $$),
   'vehicle_plate_invalid',
   'CA-05: a motorcycle plate (ABC12D) is rejected for a car'
@@ -202,14 +204,14 @@ select results_eq(
 );
 select is(
   pg_temp.error_hint($$ select public.save_vehicle(
-    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_brand_name => 'Kia',
+    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_brand_name => 'Kia',
     p_line_name => 'Picanto', p_color => 'white', p_plate => 'KIA123') $$),
   'vehicle_class_required',
   'CA-07, RN-10: a car without class is rejected'
 );
 select is(
   pg_temp.error_hint($$ select public.save_vehicle(
-    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_vehicle_class => 'mountain',
+    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'mountain',
     p_brand_name => 'Kia', p_line_name => 'Picanto', p_color => 'white', p_plate => 'KIA123') $$),
   'vehicle_class_required',
   'RN-10: a car cannot have a bicycle class'
@@ -235,7 +237,7 @@ select results_eq(
 );
 select lives_ok(
   $$ select pg_temp.remember('carla_sedan', public.save_vehicle(
-       p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+       p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'automobile',
        p_brand_name => 'Kia', p_line_name => 'Picanto', p_color => 'white', p_plate => 'kia 123',
        p_displacement_cc => 1600)) $$,
   'a car (automobile) is registered'
@@ -274,7 +276,7 @@ select is(
 );
 select is(
   pg_temp.error_hint($$ select public.save_vehicle(
-    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+    p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'automobile',
     p_brand_name => 'Kia', p_line_name => '   ', p_color => 'red', p_plate => 'NOL123') $$),
   'vehicle_line_required',
   'CA-07: a car with a blank line is rejected'
@@ -341,7 +343,7 @@ select is(
 );
 select lives_ok(
   $$ select public.save_vehicle(
-       p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+       p_customer_id => pg_temp.id_of('carla'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'automobile',
        p_brand_name => 'Zeta Motos', p_line_name => 'Sedán Z', p_color => 'black', p_plate => 'ZET123') $$,
   'RF-04: a car can use a brand with the same name as a motorcycle brand...'
 );
@@ -353,8 +355,9 @@ select is(
 reset role;
 
 select throws_ok(
-  format($$ insert into public.vehicles (customer_id, vehicle_type, vehicle_class, brand_id, line_id, color, plate)
-            values (%L, 'car', 'automobile', %L, %L, 'black', 'FKB123') $$,
+  format($$ insert into public.vehicles (customer_id, vehicle_type, vehicle_class, brand_id, line_id, color, plate,
+                                         plate_city_code)
+            values (%L, 'car', 'automobile', %L, %L, 'black', 'FKB123', '11001') $$,
          pg_temp.id_of('carla'),
          (select brand_id from public.vehicles where id = pg_temp.id_of('camilo_moto')),
          (select line_id from public.vehicles where id = pg_temp.id_of('camilo_moto'))),
@@ -515,7 +518,7 @@ select results_eq(
 );
 select is(
   pg_temp.error_hint($$ select public.save_vehicle(
-    p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+    p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'car', p_plate_city_code => '11001', p_vehicle_class => 'automobile',
     p_brand_name => 'Mazda', p_line_name => 'Mazda 3', p_color => 'red', p_plate => 'ABC 123') $$),
   'vehicle_plate_taken',
   'CA-25, RN-08: a customer learns that a plate is taken, and nothing else'
@@ -549,6 +552,100 @@ select results_eq(
   $$ select count(*)::int from public.vehicles where customer_id = pg_temp.id_of('dario') $$,
   $$ values (1) $$,
   'staff still see the vehicles of a disabled customer'
+);
+reset role;
+
+-- Plate city (spec 005, HU-07: CA-09, CA-20, CA-31, RN-11) -----------------------------------------
+select has_column('public', 'vehicles', 'plate_city_code', 'RN-11: a vehicle has the issuing city of its plate');
+select fk_ok('public', 'vehicles', array['plate_city_code'], 'public', 'municipalities', array['code'],
+  'RF-07: the plate city is a municipality of the list');
+select ok(
+  has_column_privilege('authenticated', 'public.vehicles', 'plate_city_code', 'INSERT')
+  and has_column_privilege('authenticated', 'public.vehicles', 'plate_city_code', 'UPDATE'),
+  'CA-20: the plate city is written when registering and when correcting a vehicle'
+);
+
+set local role authenticated;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000006b1');
+
+select lives_ok(
+  $$ select pg_temp.remember('city_car', public.save_vehicle(
+       p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+       p_brand_name => 'Renault', p_line_name => 'Logan', p_color => 'white', p_plate => 'CTY101',
+       p_plate_city_code => '25377')) $$,
+  'RN-11: a car is registered with the city of its plate (La Calera)'
+);
+select is(
+  (select plate_city_code from public.vehicles where id = pg_temp.id_of('city_car')),
+  '25377',
+  'RN-11: the car keeps La Calera (25377) as its plate city'
+);
+select is(
+  pg_temp.error_hint($$ select public.save_vehicle(
+    p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+    p_brand_name => 'Renault', p_line_name => 'Logan', p_color => 'white', p_plate => 'CTY102') $$),
+  'vehicle_plate_city_required',
+  'CA-07, RN-11: a car without the city of its plate is rejected'
+);
+select is(
+  pg_temp.error_hint($$ select public.save_vehicle(
+    p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'car', p_vehicle_class => 'automobile',
+    p_brand_name => 'Renault', p_line_name => 'Logan', p_color => 'white', p_plate => 'CTY102',
+    p_plate_city_code => '99999') $$),
+  'vehicle_plate_city_invalid',
+  'CA-31: a city that is not in the list (99999) is rejected'
+);
+select lives_ok(
+  $$ select pg_temp.remember('city_moto', public.save_vehicle(
+       p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'motorcycle', p_brand_name => 'Bajaj',
+       p_line_name => 'Pulsar NS 200', p_color => 'black', p_plate => 'CTY12A', p_plate_city_code => '11001')) $$,
+  'CA-31: a motorcycle sent with a plate city is still registered...'
+);
+select is(
+  (select plate_city_code from public.vehicles where id = pg_temp.id_of('city_moto')),
+  null,
+  '...without it: motorcycles have no plate city (their plate says COLOMBIA)'
+);
+select lives_ok(
+  $$ select pg_temp.remember('city_bike', public.save_vehicle(
+       p_customer_id => pg_temp.id_of('camilo'), p_vehicle_type => 'bicycle', p_vehicle_class => 'road',
+       p_brand_name => 'Trek', p_color => 'red', p_plate_city_code => '11001')) $$,
+  'CA-31: a bicycle sent with a plate city is still registered...'
+);
+select is(
+  (select plate_city_code from public.vehicles where id = pg_temp.id_of('city_bike')),
+  null,
+  '...without it: bicycles have no plate'
+);
+select lives_ok(
+  $$ select public.save_vehicle(
+       p_vehicle_id => pg_temp.id_of('city_car'), p_customer_id => pg_temp.id_of('camilo'),
+       p_vehicle_type => 'car', p_vehicle_class => 'automobile', p_brand_name => 'Renault',
+       p_line_name => 'Logan', p_color => 'white', p_plate => 'CTY101', p_plate_city_code => '25286') $$,
+  'CA-20: staff correct the plate city of a car...'
+);
+select is(
+  (select plate_city_code from public.vehicles where id = pg_temp.id_of('city_car')),
+  '25286',
+  '...which now is Funza (25286)'
+);
+select is(
+  pg_temp.error_hint(format($$ update public.vehicles set plate_city_code = null where id = %L $$,
+                            pg_temp.id_of('city_car'))),
+  'vehicle_plate_city_required',
+  'RN-11: a direct update cannot leave a car without its plate city'
+);
+select lives_ok(
+  $$ select public.save_vehicle(
+       p_vehicle_id => pg_temp.id_of('city_car'), p_customer_id => pg_temp.id_of('camilo'),
+       p_vehicle_type => 'motorcycle', p_brand_name => 'Bajaj', p_line_name => 'Pulsar NS 200',
+       p_color => 'white', p_plate => 'CTY10B', p_plate_city_code => '25286') $$,
+  'CA-09: the car becomes a motorcycle...'
+);
+select is(
+  (select plate_city_code from public.vehicles where id = pg_temp.id_of('city_car')),
+  null,
+  '...and loses its plate city'
 );
 reset role;
 

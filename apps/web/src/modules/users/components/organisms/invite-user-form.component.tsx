@@ -104,6 +104,8 @@ const InviteUserForm = ({ onInvited }: InviteUserFormProps) => {
                 description={t(`invite.roleDescriptions.${role}`)}
                 classNames={{
                   base: 'm-0 inline-flex w-full max-w-none cursor-pointer items-start gap-3 rounded-large border border-divider p-3 transition-colors hover:bg-default-50 data-[selected=true]:border-foreground',
+                  // Cards align the circle to the top: lower it to the optical centre of the role name.
+                  wrapper: 'mt-[1.75px]',
                   labelWrapper: 'ms-0',
                   label: 'font-medium',
                 }}

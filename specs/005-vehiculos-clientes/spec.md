@@ -1,7 +1,7 @@
 ---
 id: "005"
 titulo: "Vehículos de los clientes"
-estado: lista
+estado: implementada
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -174,10 +174,9 @@ vistazo, igual que en la calle.
 
 - **CA-27** — Dado un vehículo con placa en «Vehículos» (ficha del cliente) o en «Mis vehículos»,
   cuando se ve, entonces la placa se dibuja como una placa colombiana de servicio particular:
-  fondo amarillo, caracteres negros en mayúsculas y un filete negro junto al borde. La de carro va
-  en una fila (`ABC-123`) con su ciudad de expedición debajo (`BOGOTÁ, D.C.`); la de moto va en dos
-  filas, las tres letras sobre el resto (`UIH` sobre `03D`, `JWJ` sobre `07`), con «COLOMBIA»
-  debajo.
+  fondo amarillo, caracteres negros en mayúsculas y un filete negro junto al borde. Carro y moto se
+  ven igual: los caracteres en una fila, con guion (`ABC-123`, `UIH-03D`, `JWJ-07`), y debajo la
+  ciudad de expedición en la de carro (`BOGOTÁ, D.C.`) o «COLOMBIA» en la de moto.
 - **CA-28** — Dada una placa dibujada, cuando se recorre con un lector de pantalla, entonces se
   oye como texto con guion (`UIH-03D`) y, en un carro, también su ciudad; la placa nunca se
   comunica solo con el dibujo, y sus caracteres cumplen el contraste de la auditoría del proyecto.
@@ -359,3 +358,5 @@ alfabético; las motos no tienen el campo (ni en el formulario) y su placa dice 
 | 2026-11-19 | Cambio HU-07 aprobado por el usuario, con las suposiciones tal como están. |
 | 2026-11-19 | Plan del cambio HU-07 aprobado. |
 | 2026-11-19 | Tareas del cambio HU-07 (bloque C, T070–T091) aprobadas. |
+| 2026-11-19 | CA-27, a petición del usuario durante la implementación: la placa de moto se dibuja igual que la de carro (una fila con guion), con «COLOMBIA» debajo, en lugar de dos filas. |
+| 2026-11-19 | Cambio HU-07 implementado en local: 262 pgTAP, 462 unitarias, 30 sandbox y 69 E2E en verde; lint, tipos y build en verde. Pendiente: `/verificar` del bloque C y el despliegue (T064). |

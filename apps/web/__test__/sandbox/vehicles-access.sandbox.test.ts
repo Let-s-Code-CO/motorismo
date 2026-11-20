@@ -92,6 +92,7 @@ describe('a customer calling the API directly (CA-26)', () => {
       p_line_name: 'CX-30',
       p_color: 'red',
       p_plate: 'KDM482',
+      p_plate_city_code: '11001',
     });
 
     expect(changed.data).toEqual([]);
@@ -132,6 +133,7 @@ describe('a customer calling the API directly (CA-26)', () => {
       p_line_name: 'Mazda 3',
       p_color: 'black',
       p_plate: 'kdm-482',
+      p_plate_city_code: '11001',
     });
 
     expect(error?.hint).toBe('vehicle_plate_taken');

@@ -3,7 +3,7 @@ import 'server-only';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 
 const COLUMNS =
-  'id, vehicle_type, vehicle_class, displacement_cc, color, plate, retired_at, created_at, brand:vehicle_brands(name), line:vehicle_lines(name)';
+  'id, vehicle_type, vehicle_class, displacement_cc, color, plate, plate_city_code, retired_at, created_at, brand:vehicle_brands(name), line:vehicle_lines(name), plate_city:municipalities(name)';
 
 /**
  * The vehicles of a customer (spec 005), read with the user's own session: staff see any

@@ -31,6 +31,7 @@ vi.mock('@web/modules/vehicles/actions/vehicles.actions', () => ({
 vi.mock('@web/modules/vehicles/api/vehicles.client', () => ({
   fetchBrands: vi.fn().mockResolvedValue([]),
   fetchLines: vi.fn().mockResolvedValue([]),
+  fetchMunicipalities: vi.fn().mockResolvedValue([]),
 }));
 
 const CUSTOMER_ID = '6f1c0d2e-8a4b-4c3d-9e5f-0a1b2c3d4e5f';

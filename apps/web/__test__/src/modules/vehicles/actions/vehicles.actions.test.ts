@@ -7,7 +7,8 @@
  * - a customer always writes on THEIR OWN record, whatever customer id the request carries
  *   (CA-26): the id comes from their session, not from the browser;
  * - invalid input returns one error per field and calls nothing (CA-07);
- * - the vehicle goes to save_vehicle with the brand and line BY NAME (CA-13, CA-14), and the
+ * - the vehicle goes to save_vehicle with the brand and line BY NAME (CA-13, CA-14) and, only for
+ *   a car, the code of its plate city (RN-11, CA-31); the
  *   database refusals become messages for the right audience (CA-08 staff, CA-25 customer);
  * - retiring (CA-21, CA-24) is an update of the retirement date with the user's own session: a
  *   vehicle they may not change is "not found" (RLS hides it), a retired one says so (CA-22).
@@ -104,6 +105,38 @@ describe('saveVehicle', () => {
     expect(rpc).toHaveBeenCalledWith(
       'save_vehicle',
       expect.objectContaining({ p_vehicle_id: vehicleId })
+    );
+  });
+
+  it('sends the code of the plate city for a car (RN-11)', async () => {
+    vi.mocked(getActiveStaff).mockResolvedValue(STAFF);
+    const { rpc } = fakeSession();
+
+    await saveVehicle(
+      motorcycle({
+        vehicle_type: 'car',
+        vehicle_class: 'automobile',
+        displacement_cc: null,
+        plate: 'abc 123',
+        plate_city_code: '25377',
+      })
+    );
+
+    expect(rpc).toHaveBeenCalledWith(
+      'save_vehicle',
+      expect.objectContaining({ p_vehicle_type: 'car', p_plate_city_code: '25377' })
+    );
+  });
+
+  it('never sends a plate city for a motorcycle, even a stale one from the form (CA-31)', async () => {
+    vi.mocked(getActiveStaff).mockResolvedValue(STAFF);
+    const { rpc } = fakeSession();
+
+    await saveVehicle(motorcycle({ plate_city_code: '11001' }));
+
+    expect(rpc).toHaveBeenCalledWith(
+      'save_vehicle',
+      expect.not.objectContaining({ p_plate_city_code: expect.anything() })
     );
   });
 

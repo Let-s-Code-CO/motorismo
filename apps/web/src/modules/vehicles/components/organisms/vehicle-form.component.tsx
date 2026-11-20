@@ -14,8 +14,10 @@ import { saveVehicle } from '@web/modules/vehicles/actions/vehicles.actions';
 import type { VehicleView } from '@web/modules/vehicles/api/vehicles.server';
 import CatalogAutocomplete from '@web/modules/vehicles/components/molecules/catalog-autocomplete.component';
 import ColorSelect from '@web/modules/vehicles/components/molecules/color-select.component';
+import PlateCityAutocomplete from '@web/modules/vehicles/components/molecules/plate-city-autocomplete.component';
 import {
   CLASSES_BY_TYPE,
+  DEFAULT_PLATE_CITY,
   DEFAULT_VEHICLE_TYPE,
   VEHICLE_TYPES,
 } from '@web/modules/vehicles/constants/vehicle-options.constants';
@@ -23,6 +25,7 @@ import { vehicleKeys } from '@web/modules/vehicles/queries/vehicles.keys';
 import {
   brandsQueryOptions,
   linesQueryOptions,
+  municipalitiesQueryOptions,
 } from '@web/modules/vehicles/queries/vehicles.queries';
 import {
   type VehicleFormInput,
@@ -49,6 +52,7 @@ const NEW_VEHICLE: DefaultValues<VehicleFormInput> = {
   line_name: '',
   displacement_cc: null,
   plate: '',
+  plate_city_code: null,
 };
 
 const fromVehicle = (vehicle: VehicleView): VehicleFormInput => ({
@@ -59,6 +63,7 @@ const fromVehicle = (vehicle: VehicleView): VehicleFormInput => ({
   displacement_cc: vehicle.displacement_cc,
   color: vehicle.color,
   plate: vehicle.plate ? formatPlate(vehicle.plate) : '',
+  plate_city_code: vehicle.plate_city_code,
 });
 
 const FIELD = {
@@ -70,8 +75,9 @@ const FIELD = {
 /**
  * Registers or corrects a vehicle (spec 005, HU-01 / HU-05 / HU-06): type (Motocicleta first,
  * CA-02), class for cars and bicycles, brand and line from the catalog or new (HU-02), displacement
- * for motorcycles, colour (HU-03) and plate except for bicycles (CA-06). Changing the type empties
- * brand, line and class; changing the brand empties the line (CA-09).
+ * for motorcycles, colour (HU-03), plate except for bicycles (CA-06) and, for cars, the city that
+ * issued it, Bogotá, D.C. by default (HU-07, CA-30). Changing the type empties brand, line and
+ * class and resets the plate city; changing the brand empties the line (CA-09).
  */
 const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProps) => {
   const t = useTranslations('vehicles');
@@ -98,6 +104,8 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
   const brands = useQuery(brandsQueryOptions(type));
   const brand = findInCatalog(brands.data ?? [], brandName);
   const lines = useQuery({ ...linesQueryOptions(brand?.id ?? ''), enabled: !!brand });
+  // RN-11: only cars have a plate city; the list is loaded the first time one is needed.
+  const cities = useQuery({ ...municipalitiesQueryOptions(), enabled: type === 'car' });
   const classes = CLASSES_BY_TYPE[type];
 
   const changeType = (next: VehicleType) => {
@@ -106,6 +114,8 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
     setValue('line_name', '');
     setValue('vehicle_class', null);
     setValue('displacement_cc', null);
+    // CA-09, CA-30: a car starts in Bogotá, D.C.; other types have no plate city.
+    setValue('plate_city_code', next === 'car' ? DEFAULT_PLATE_CITY : null);
   };
 
   const changeBrand = (name: string) => {
@@ -130,6 +140,23 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
   });
 
   const fieldError = (message?: string) => message && t(`validation.${message}`);
+
+  const colorField = (
+    <Controller
+      control={control}
+      name="color"
+      render={({ field }) => (
+        <ColorSelect
+          value={field.value}
+          onChange={field.onChange}
+          onBlur={field.onBlur}
+          portalContainer={portalContainer}
+          isInvalid={!!errors.color}
+          errorMessage={fieldError(errors.color?.message)}
+        />
+      )}
+    />
+  );
 
   return (
     <form onSubmit={onSubmit} noValidate className="relative flex flex-col gap-5">
@@ -238,20 +265,7 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
             )}
           />
         )}
-        <Controller
-          control={control}
-          name="color"
-          render={({ field }) => (
-            <ColorSelect
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              portalContainer={portalContainer}
-              isInvalid={!!errors.color}
-              errorMessage={fieldError(errors.color?.message)}
-            />
-          )}
-        />
+        {type !== 'car' && colorField}
         {hasPlate(type) && (
           <Input
             {...register('plate')}
@@ -266,6 +280,26 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
             errorMessage={fieldError(errors.plate?.message)}
           />
         )}
+        {type === 'car' && (
+          <Controller
+            control={control}
+            name="plate_city_code"
+            render={({ field }) => (
+              <PlateCityAutocomplete
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                cities={cities.data ?? []}
+                isLoading={cities.isLoading}
+                portalContainer={portalContainer}
+                isInvalid={!!errors.plate_city_code}
+                errorMessage={fieldError(errors.plate_city_code?.message)}
+              />
+            )}
+          />
+        )}
+        {/* A car keeps its plate and plate city side by side: its colour goes after them. */}
+        {type === 'car' && colorField}
       </div>
 
       <div className="flex flex-wrap justify-end gap-2">

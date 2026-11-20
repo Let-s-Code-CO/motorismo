@@ -10,10 +10,27 @@
   [role='button']:not([aria-disabled='true']) {
     cursor: pointer;
   }
+
+  /* Radio labels: with Geist, the drawn word sits ~0.5 px above the centre of HeroUI's circle
+     (its line box is centred, its letters are not). Nudge every radio's text down to centre it. */
+  [role='radiogroup'] label > div > span {
+    translate: 0 0.5px;
+  }
 }
 
 @theme inline {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* The vehicle plate (spec 005, HU-07): a Colombian private plate, the only non-neutral colour of
+   the interface besides states — it depicts a real object. Black ink on yellow: over 12:1.
+   `static`: the plate uses these inside arbitrary values (gradient, rim shadows), which Tailwind
+   does not count as uses, so without it the variables would be left out of the CSS. */
+@theme static {
+  --color-plate: #f7c600;
+  --color-plate-light: #ffdb3d;
+  --color-plate-ink: #111111;
+  --color-plate-edge: #b48c00;
 }
 
 @theme {

@@ -609,9 +609,9 @@ definición de la guarda y de `save_vehicle`. Los entornos locales se rehacen co
 - **Carro** (`md`): una fila con `formatPlate` (`ABC-123`) y, debajo, la ciudad en mayúsculas
   (`BOGOTÁ, D.C.`). Los nombres largos se recortan con `truncate`, y el nombre completo queda en
   el texto accesible.
-- **Moto** (`md`): dos filas, las tres letras sobre el resto (`UIH` / `03D`), y «COLOMBIA» debajo.
-  Las filas visuales llevan `aria-hidden`, y un `sr-only` dice `UIH-03D` (CA-28). «COLOMBIA» es
-  decorativo.
+- **Moto** (`md`): igual que el carro, una fila con `formatPlate` (`UIH-03D`) y «COLOMBIA» debajo,
+  decorativo (`aria-hidden`); la fila de caracteres es el texto que se lee (CA-28). (Cambio pedido
+  por el usuario: al principio iba en dos filas.)
 - **Compacta** (`sm`, en la tabla de Clientes): una sola línea con `formatPlate`, sin ciudad ni
   «COLOMBIA» (CA-29).
 - **Estilo**: fondo amarillo reflectivo (degradado sutil entre `#FFD83A` y `#F5C400`), caracteres
@@ -697,3 +697,4 @@ desplegar, se comprueba en el remoto que `select count(*) from municipalities` d
 | 2026-11-19 | `/verificar`: nuevas pruebas de CA-07 (errores de clase y de cilindraje en el formulario) y de RF-05 (un cliente amplía el catálogo). Mutaciones: sin el mensaje de error de la clase, o sin el del cilindraje, falla su prueba; con la creación de marcas restringida al personal fallan las dos de RF-05 (y otras del cliente). Todas revertidas (`db:reset` después). |
 | 2026-11-19 | Cambio HU-07 (CA-27 a CA-31): municipios DANE, ciudad de la placa en carros y la placa dibujada como la colombiana. En borrador hasta su aprobación. |
 | 2026-11-19 | Cambio HU-07 aprobado por el usuario. |
+| 2026-11-19 | Implementación del cambio HU-07. Ajustes respecto al plan: el campo es `plate_city_code` (snake_case, como el resto del esquema); `fetchMunicipalities` lee por páginas de 1.000 porque la API corta en `max_rows = 1000` (perdería 104 municipios); la lista no se virtualiza (axe: `scrollable-region-focusable`) y muestra como máximo 50 ciudades, con la elegida siempre entre ellas, el departamento en la misma línea y «Escribe para ver más ciudades.» (plan B); los tokens de la placa van en `@theme static` (Tailwind no emite variables usadas solo en valores arbitrarios); a petición del usuario, la placa de moto es igual a la de carro (una fila) con «COLOMBIA» debajo. Mutaciones: sin la versión compacta fallan 2 pruebas de CA-29; con la ciudad conservada fuera de carro fallan la de la acción (CA-31) y la del esquema; las demás pruebas se escribieron antes que el código y se vieron en rojo. |

@@ -36,12 +36,17 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   Iconos con `lucide-react`, decorativos (`aria-hidden`); los botones solo-icono llevan
   `aria-label`. Todo lo clicable muestra la «manito»: `globals.css` la restaura para
   `button` y `[role=button]` (Tailwind 4 ya no lo hace); un enlace o elemento clicable de otro tipo
-  necesita `cursor-pointer`. Nada de colores llamativos: los semánticos solo para estados y para
+  necesita `cursor-pointer`. Nada de colores llamativos (salvo la placa amarilla de los vehículos, que reproduce la placa
+  colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
 - El tema conserva la escala de `foreground` de HeroUI (`src/app/hero.ts`): sus componentes pintan
-  placeholders y textos de ayuda con ella. Turbopack no recarga `hero.ts` en caliente; si un cambio
-  del tema no se ve, borra `apps/web/.next` y reinicia `pnpm dev`.
+  placeholders y textos de ayuda con ella. Turbopack no recarga `hero.ts` en caliente, y a veces
+  sirve una versión vieja de `globals.css` (p. ej. tras deshacer un cambio enseguida): si un cambio
+  de estilos no se ve, borra `apps/web/.next` y reinicia `pnpm dev`.
+- Radios: con Geist, el texto de un radio queda ~0,5 px por encima del centro del círculo;
+  `globals.css` lo corrige para todos. Las tarjetas de rol (`invite-user-form`) bajan el círculo
+  (`wrapper: 'mt-[1.75px]'`) para centrarlo en el nombre del rol.
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
@@ -96,8 +101,9 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   «Mi perfil»), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
   Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
 - Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada),
-  Valentina la camioneta `KDM-482` y Andrés una bicicleta. El catálogo de marcas y líneas llega
-  por migración (existe en todos los entornos), no por seed.
+  Valentina la camioneta `KDM-482` (placa de Bogotá, D.C.) y Andrés una bicicleta. El catálogo de
+  marcas y líneas y los 1.104 municipios (ciudad de la placa) llegan por migración (existen en
+  todos los entornos), no por seed.
 
 Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
 http://127.0.0.1:54324.

@@ -4,7 +4,10 @@
  * Guards CA-01 (the "Vehículos" section, empty at first), CA-02 (Motocicleta preselected), CA-03
  * (a motorcycle with its displacement, colour and plate shown with a hyphen), CA-04 (several
  * vehicles, newest first), CA-05 (a car with its class and an ABC-123 plate), CA-06 (a bicycle
- * without plate) and CA-08 (a plate with an active vehicle of another customer is refused).
+ * without plate) and CA-08 (a plate with an active vehicle of another customer is refused); and
+ * HU-07: the plate drawn like a Colombian one — a car's with its issuing city, Bogotá, D.C. by
+ * default (CA-27, CA-30), a motorcycle's with "COLOMBIA" — and a car's city chosen by typing and
+ * corrected (CA-20, CA-30).
  * Each test works on its own counter customer (tests run in parallel workers).
  */
 import { type Locator, type Page, expect, test } from '@playwright/test';
@@ -79,11 +82,16 @@ test('registers a motorcycle, a car and a bicycle; the newest is listed first (C
   await expect(moto).toContainText('600 cc');
   await expect(moto).toContainText('Negro');
   await expect(moto).toContainText(shownPlate(motoPlate));
+  await expect(moto).toContainText('COLOMBIA'); // CA-27: a motorcycle plate says COLOMBIA
 
   // A car (CA-05): its class, no displacement, a plate of three letters and three digits.
   dialog = await openForm(page, section);
   await dialog.getByRole('radio', { name: 'Carro' }).check();
   await expect(dialog.getByLabel('Cilindraje (opcional)')).toHaveCount(0);
+  // CA-30: the plate city comes with Bogotá, D.C.
+  await expect(dialog.getByRole('combobox', { name: 'Ciudad de la placa' })).toHaveValue(
+    'Bogotá, D.C.'
+  );
   await dialog.getByRole('radio', { name: 'Camioneta' }).check();
   await pick(page, dialog, 'Marca', 'Mazda', 'Mazda');
   await pick(page, dialog, 'Línea', 'CX-30', 'CX-30');
@@ -110,7 +118,45 @@ test('registers a motorcycle, a car and a bicycle; the newest is listed first (C
   await expect(items.nth(1)).toContainText('Mazda CX-30');
   await expect(items.nth(1)).toContainText('Camioneta');
   await expect(items.nth(1)).toContainText(shownPlate(carPlate));
+  await expect(items.nth(1)).toContainText('BOGOTÁ, D.C.'); // CA-27: the car plate shows its city
   await expect(items.nth(2)).toContainText('Suzuki GSX-R600');
+});
+
+test('registers a car from Medellín typing "medellin", and corrects its plate city to Funza (CA-20, CA-27, CA-30)', async ({
+  page,
+}) => {
+  const plate = uniquePlate('car');
+  const section = await openRecordOfNewCustomer(page, 'ciudad');
+
+  const dialog = await openForm(page, section);
+  await dialog.getByRole('radio', { name: 'Carro' }).check();
+  await dialog.getByRole('radio', { name: 'Automóvil' }).check();
+  await pick(page, dialog, 'Marca', 'Renault', 'Renault');
+  await pick(page, dialog, 'Línea', 'Logan', 'Logan');
+  await chooseColor(page, dialog, 'Blanco');
+  await dialog.getByRole('textbox', { name: 'Placa' }).fill(plate);
+  const city = dialog.getByRole('combobox', { name: 'Ciudad de la placa' });
+  await city.fill('medellin');
+  // Each option shows its department below the name.
+  await expect(page.getByRole('option', { name: /Medellín/ })).toContainText('Antioquia');
+  await page.getByRole('option', { name: /Medellín/ }).click();
+  await expect(city).toHaveValue('Medellín');
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+
+  const car = section.getByRole('list', { name: 'Vehículos' }).getByRole('listitem').first();
+  await expect(car).toContainText(shownPlate(plate));
+  await expect(car).toContainText('MEDELLÍN');
+
+  // Correct the city (CA-20): the edit form shows the car's own city, and saves the new one.
+  await section.getByRole('button', { name: /^Editar Renault Logan/ }).click();
+  const edit = page.getByRole('dialog', { name: 'Editar vehículo' });
+  const editCity = edit.getByRole('combobox', { name: 'Ciudad de la placa' });
+  await expect(editCity).toHaveValue('Medellín');
+  await editCity.fill('funza');
+  await page.getByRole('option', { name: /Funza/ }).click();
+  await edit.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByText('Vehículo actualizado.')).toBeVisible();
+  await expect(car).toContainText('FUNZA');
 });
 
 test('refuses a plate that an active vehicle of another customer has (CA-08)', async ({ page }) => {

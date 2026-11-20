@@ -71,6 +71,24 @@ export type Database = {
           },
         ]
       }
+      municipalities: {
+        Row: {
+          code: string
+          department: string
+          name: string
+        }
+        Insert: {
+          code: string
+          department: string
+          name: string
+        }
+        Update: {
+          code?: string
+          department?: string
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activated_at: string | null
@@ -216,6 +234,7 @@ export type Database = {
           id: string
           line_id: string | null
           plate: string | null
+          plate_city_code: string | null
           retired_at: string | null
           updated_at: string
           vehicle_class: Database["public"]["Enums"]["vehicle_class"] | null
@@ -230,6 +249,7 @@ export type Database = {
           id?: string
           line_id?: string | null
           plate?: string | null
+          plate_city_code?: string | null
           retired_at?: string | null
           updated_at?: string
           vehicle_class?: Database["public"]["Enums"]["vehicle_class"] | null
@@ -244,6 +264,7 @@ export type Database = {
           id?: string
           line_id?: string | null
           plate?: string | null
+          plate_city_code?: string | null
           retired_at?: string | null
           updated_at?: string
           vehicle_class?: Database["public"]["Enums"]["vehicle_class"] | null
@@ -270,6 +291,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vehicle_lines"
             referencedColumns: ["id", "brand_id"]
+          },
+          {
+            foreignKeyName: "vehicles_plate_city_code_fkey"
+            columns: ["plate_city_code"]
+            isOneToOne: false
+            referencedRelation: "municipalities"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -312,6 +340,7 @@ export type Database = {
           p_displacement_cc?: number
           p_line_name?: string
           p_plate?: string
+          p_plate_city_code?: string
           p_vehicle_class?: Database["public"]["Enums"]["vehicle_class"]
           p_vehicle_id?: string
           p_vehicle_type: Database["public"]["Enums"]["vehicle_type"]

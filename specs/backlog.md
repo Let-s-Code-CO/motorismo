@@ -47,4 +47,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [002](002-autenticacion-roles/spec.md) | Autenticación y roles | implementada (falta despliegue y prueba manual de Google) |
 | [003](003-rediseno-visual/spec.md) | Rediseño visual de la interfaz | implementada |
 | [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | implementada (falta despliegue y prueba manual de Google) |
-| [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | lista: cambio HU-07 (placa como la colombiana y ciudad de expedición de los carros); bloques A y B verificados, falta despliegue |
+| [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | implementada (bloque C, HU-07, pendiente de `/verificar`); falta despliegue |

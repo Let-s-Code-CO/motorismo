@@ -1,5 +1,9 @@
 import { createSupabaseBrowserClient } from '@web/modules/core/lib/supabase-browser.lib';
-import type { CatalogItem, VehicleType } from '@web/modules/vehicles/types/vehicles.types';
+import type {
+  CatalogItem,
+  Municipality,
+  VehicleType,
+} from '@web/modules/vehicles/types/vehicles.types';
 
 /**
  * The catalog, read from the browser with the user's session (any session may read it; nobody
@@ -24,4 +28,27 @@ export const fetchLines = async (brandId: string): Promise<CatalogItem[]> => {
     .order('name');
   if (error) throw new Error(`Could not load the lines: ${error.message}`);
   return data;
+};
+
+/** The API answers at most this many rows per request (PostgREST max_rows, Supabase default). */
+const API_PAGE = 1000;
+
+/**
+ * Every municipality a car plate can be issued in (spec 005, RF-07): 1,104 rows, more than the API
+ * returns at once, so they are read page by page in a stable order (DANE code) until a page comes
+ * back incomplete. A refusal fails the whole read: never a partial list.
+ */
+export const fetchMunicipalities = async (): Promise<Municipality[]> => {
+  const supabase = createSupabaseBrowserClient();
+  const all: Municipality[] = [];
+  for (let from = 0; ; from += API_PAGE) {
+    const { data, error } = await supabase
+      .from('municipalities')
+      .select('code, name, department')
+      .order('code')
+      .range(from, from + API_PAGE - 1);
+    if (error) throw new Error(`Could not load the municipalities: ${error.message}`);
+    all.push(...data);
+    if (data.length < API_PAGE) return all;
+  }
 };

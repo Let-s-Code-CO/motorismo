@@ -6,7 +6,8 @@
  *   with a hyphen (UIH03D → UIH-03D);
  * - CA-05 / RN-10: a car or bicycle shows its class (Camioneta, Ruta…) instead of a displacement;
  * - CA-06: a bicycle has no plate, and says so;
- * - CA-16: the colour shows its NAME next to the swatch (never the swatch alone).
+ * - CA-16: the colour shows its NAME next to the swatch (never the swatch alone);
+ * - CA-27: a car's plate shows the city that issued it.
  */
 import { screen } from '@testing-library/react';
 
@@ -43,6 +44,25 @@ describe('VehicleSummary', () => {
     expect(screen.getByText('Camioneta')).toBeInTheDocument();
     expect(screen.getByText('ABC-123')).toBeInTheDocument();
     expect(screen.queryByText(/cc$/)).not.toBeInTheDocument();
+  });
+
+  it("shows a car's plate with the city that issued it, in capitals (CA-27)", () => {
+    renderWithProviders(
+      <VehicleSummary
+        vehicle={buildVehicle({
+          vehicle_type: 'car',
+          vehicle_class: 'automobile',
+          displacement_cc: null,
+          brand: { name: 'Renault' },
+          line: { name: 'Logan' },
+          plate: 'FUN123',
+          plate_city: { name: 'Funza' },
+        })}
+      />
+    );
+
+    expect(screen.getByText('FUN-123')).toBeInTheDocument();
+    expect(screen.getByText('FUNZA')).toBeInTheDocument();
   });
 
   it('shows a bicycle without line or plate, with its class (CA-06)', () => {

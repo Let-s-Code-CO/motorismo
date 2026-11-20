@@ -21,6 +21,19 @@ export const CLASSES_BY_TYPE: Record<VehicleType, readonly VehicleClass[]> = {
 /** RN-09: displacement range of a motorcycle, in cc. */
 export const DISPLACEMENT_RANGE = { min: 50, max: 2500 } as const;
 
+/** RN-11: the plate city a car starts with — Bogotá, D.C. (DANE code). */
+export const DEFAULT_PLATE_CITY = '11001';
+
+/** CA-30: the cities listed first, in this order — Bogotá, D.C., La Calera, Funza (DANE codes). */
+export const PINNED_PLATE_CITIES: readonly string[] = ['11001', '25377', '25286'];
+
+/**
+ * The plate city list shows at most this many cities at a time; typing finds the rest. Not
+ * virtualised: HeroUI's virtual list scrolls a region the keyboard cannot reach (axe:
+ * scrollable-region-focusable), so the list is kept short instead.
+ */
+export const MAX_PLATE_CITY_OPTIONS = 50;
+
 /** Catalog names are 1–60 characters (same as the database checks). */
 export const CATALOG_NAME_MAX = 60;
 

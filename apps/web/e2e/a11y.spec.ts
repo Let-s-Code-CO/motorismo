@@ -141,6 +141,13 @@ test('the vehicles of a customer and the vehicle form have no serious accessibil
   await page.keyboard.press('Enter');
   await untilSettled(page.getByRole('option', { name: 'Vinotinto' }));
   expect(await audit(page)).toEqual([]);
+
+  // A car: the plate city with Bogotá, D.C., and its list of 1,104 cities open (HU-07, CA-28).
+  await page.keyboard.press('Escape');
+  await dialog.getByRole('radio', { name: 'Carro' }).check();
+  await dialog.getByRole('combobox', { name: 'Ciudad de la placa' }).click();
+  await untilSettled(page.getByRole('option', { name: /La Calera/ }));
+  expect(await audit(page)).toEqual([]);
 });
 
 test('retired vehicles and the retire dialog have no serious accessibility issues (spec 005)', async ({
