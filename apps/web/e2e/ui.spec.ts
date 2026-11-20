@@ -2,7 +2,8 @@
  * Layout checks of the redesign (spec 003).
  * CA-02 no horizontal scroll on a 360 px phone (spec 004 adds sign-up, Clientes, a customer record
  * and "Mi perfil": the customer signs up from their phone; spec 005 the vehicles and their form) · CA-03 brand panel beside the form on desktop only ·
- * every clickable element shows the hand cursor (Tailwind 4 no longer sets it on buttons).
+ * every clickable element shows the hand cursor (Tailwind 4 no longer sets it on buttons) ·
+ * placeholders look muted, distinct from typed text (theme foreground scale).
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -99,5 +100,24 @@ test.describe('pointer cursor', () => {
     await expect(page).toHaveURL('/');
     await page.goto('/admin/users');
     expect(await cursorOf(page.getByRole('button', { name: /^Activos \d+$/ }))).toBe('pointer');
+  });
+});
+
+test.describe('placeholders', () => {
+  test('are painted in the muted zinc-500 grey, not in the colour of typed text, so an empty field does not look filled in', async ({
+    page,
+  }) => {
+    // HeroUI paints placeholders with `foreground-500`; if the theme drops the foreground scale the
+    // rule becomes invalid and the placeholder inherits the near-black text colour (#18181b).
+    await page.goto('/auth/login');
+    const email = page.getByPlaceholder('tu@correo.com');
+
+    const colours = await email.evaluate((element) => ({
+      placeholder: getComputedStyle(element, '::placeholder').color,
+      text: getComputedStyle(element).color,
+    }));
+
+    expect(colours.placeholder).toBe('rgb(113, 113, 122)'); // zinc-500, #71717a
+    expect(colours.text).toBe('rgb(24, 24, 27)'); // foreground, #18181b
   });
 });
