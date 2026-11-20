@@ -139,7 +139,7 @@ test('a disabled customer is not offered for a new order (CA-10)', async ({ page
   await expect(page.getByText('No se encontró ningún cliente activo.')).toBeVisible();
 });
 
-test("staff see a customer's history, what is in the car wash and the closed orders (CA-15, CA-16, CA-18 to CA-20, CA-30)", async ({
+test("staff see a customer's history (her retired vehicle not offered), what is in the car wash and the closed orders (CA-10, CA-15, CA-16, CA-18 to CA-20, CA-30)", async ({
   page,
 }) => {
   await signIn(page, SEED.operator.email);
@@ -153,6 +153,8 @@ test("staff see a customer's history, what is in the car wash and the closed ord
   await expect(page.getByText('Lavado sencillo · Micropulido')).toBeVisible();
   // Her motorcycle already has the open order #4: it is offered instead.
   await expect(page.getByText('Ya tiene una orden abierta:')).toBeVisible();
+  // CA-10: her retired motorcycle (JWJ-07) is not offered for an order.
+  await expect(page.getByText(/JWJ-07/)).toHaveCount(0);
 
   // CA-18, CA-30: in progress with a minimum ready time; the queue by arrival, with its turn.
   await page.goto('/orders');

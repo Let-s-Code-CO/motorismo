@@ -316,6 +316,9 @@ Convenciones:
         sólido como «Desactivar cliente» (CA-21, CA-23).
       - El aviso «Instala Motorismo» (spec 006) pasa de `fixed` a `sticky`: ya no tapa lo último de
         la página (`pwa-install.spec.ts`).
+- [x] T087 Verificación (`/verificar 008`): CA-29 alineado con RN-12/CA-34 en la spec; pruebas
+      añadidas para el contenido de cada fila de «Órdenes» (CA-18, `orders-screen`, reloj fijo), el
+      vehículo retirado que no se ofrece (CA-10, `work-orders.spec.ts`) y la etiqueta CA-35 en pgTAP.
 
 ## Cobertura de criterios
 

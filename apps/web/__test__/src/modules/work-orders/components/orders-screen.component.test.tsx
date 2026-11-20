@@ -51,9 +51,15 @@ const sectionList = (name: string) =>
   within(screen.getByRole('list', { name })).getAllByRole('listitem');
 
 describe('OrdersScreen', () => {
-  afterEach(() => vi.clearAllMocks());
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
 
-  it('splits the open orders into «En proceso», with the ready time from the start, and «En cola», by arrival with its turn (CA-18, CA-34)', () => {
+  it('splits the open orders into «En proceso», with the ready time from the start, and «En cola», by arrival with its turn; each with vehicle, plate, services and total (CA-18, CA-34)', () => {
+    // A fixed «now» (3:00 p. m. in Bogotá), so «Llegó hace …» is deterministic.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-20T20:00:00Z'));
     renderWithProviders(
       <OrdersScreen
         open={[
@@ -93,6 +99,15 @@ describe('OrdersScreen', () => {
     expect(queue[0]).not.toHaveTextContent('Lista hacia');
     expect(queue[1]).toHaveTextContent('2.º');
     expect(queue[1]).toHaveTextContent('Sin tiempo estimado');
+
+    // Every order shows its vehicle with the plate, its services and its total; one in the queue,
+    // how long ago it arrived (3:00 p. m. − 2:10 p. m. = 50 minutes).
+    for (const row of [inProgress[0], queue[0]]) {
+      expect(row).toHaveTextContent('Suzuki GSX-R600 · UIH-03D');
+      expect(row).toHaveTextContent('Lavado sencillo');
+      expect(row).toHaveTextContent('$ 25.000');
+    }
+    expect(queue[0]).toHaveTextContent('Llegó hace 50 minutos');
   });
 
   it('starts an order from its row in the queue, and announces it (CA-33)', async () => {

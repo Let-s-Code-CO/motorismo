@@ -55,4 +55,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | verificada (bloques A, B y C); falta despliegue |
 | [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
 | [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | verificada; falta despliegue |
-| [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | implementada, con enmienda (falta despliegue) |
+| [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | verificada, con enmienda (falta despliegue) |

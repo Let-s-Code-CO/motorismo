@@ -365,7 +365,7 @@ select is(
   'CA-21: voiding needs a reason');
 select lives_ok(
   $$ select public.void_work_order(pg_temp.id_of('o3'), 'El cliente se fue sin el servicio') $$,
-  'CA-21: staff void an open order with a reason');
+  'CA-21, CA-35: staff void an open order with a reason, without starting it');
 select results_eq(
   $$ select status::text, voided_by, void_reason from public.work_orders where id = pg_temp.id_of('o3') $$,
   $$ values ('voided', '00000000-0000-0000-0000-00000000a8b1'::uuid, 'El cliente se fue sin el servicio') $$,

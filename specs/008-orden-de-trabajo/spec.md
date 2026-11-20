@@ -1,7 +1,7 @@
 ---
 id: "008"
 titulo: "Orden de trabajo"
-estado: implementada
+estado: verificada
 creada: 2026-11-20
 actualizada: 2026-11-20
 ---
@@ -168,9 +168,10 @@ se sepa cuándo estará listo el vehículo y se le pueda decir al cliente.
 - **CA-28** — Dada una línea «Otro» o de un servicio sin tiempo estimado, cuando se añade, entonces
   su tiempo queda vacío («Sin estimar») y el personal puede escribirlo en la orden.
 - **CA-29** — Dada una orden con todas sus líneas estimadas, cuando se muestra, entonces se ve el
-  tiempo total (la suma de las líneas) y la hora aproximada de entrega (la de recepción más ese
-  tiempo): «≈ 2 h 15 min · lista hacia las 4:15 p. m.». Se actualizan al añadir, quitar o cambiar
-  una línea.
+  tiempo total (la suma de las líneas) y, si ya se empezó, la hora aproximada de entrega (la de
+  inicio más ese tiempo): «≈ 2 h 15 min · lista hacia las 4:15 p. m.»; en cola o al abrirla, solo la
+  duración (RN-12, CA-34). Se actualizan al añadir, quitar o cambiar una línea. *(Enmienda
+  2026-11-20: antes contaba desde la recepción.)*
 - **CA-30** — Dada una orden con alguna línea sin estimar, cuando se muestra, entonces se ve la suma
   de las que sí tienen tiempo como un mínimo, con un aviso de cuáles faltan: «≈ 1 h 30 min · falta
   estimar: Otro»; la hora de entrega se muestra como «desde las 3:30 p. m.», nunca como una hora
@@ -330,3 +331,5 @@ Ninguna. Resueltas con el usuario el 2026-11-20:
 | 2026-11-20 | Implementada (bloques A, B y C). Ajustes visuales pedidos durante la implementación: resumen fijo solo en el móvil; colores de estado en «Órdenes». |
 | 2026-11-20 | Enmienda aprobada por el usuario: «En cola» y «En proceso» con «Empezar» (HU-07, CA-32 a CA-36, RN-12); «Órdenes» en tres secciones (CA-18); ficha del cliente con las 10 más recientes y «Ver más» (CA-16); páginas con total (CA-19). Agendamiento, a la spec 009. |
 | 2026-11-20 | Enmienda implementada: «En cola» / «En proceso» con «Empezar», tres secciones en «Órdenes», ficha con «Ver más», páginas con total. Revisado en teléfono (iPhone 440 px y 360 px). |
+| 2026-11-20 | Ajustes visuales del detalle: vehículo con el ícono de su tipo y la placa como en la ficha del cliente; historial con íconos; «Anular orden» en su propia sección al final, como «Desactivar cliente». |
+| 2026-11-20 | Verificada: CA-29 alineado con RN-12/CA-34 (la entrega cuenta desde el inicio); se añadieron pruebas del contenido de cada fila de «Órdenes» (CA-18), del vehículo retirado que no se ofrece (CA-10) y la etiqueta CA-35 en pgTAP. |
