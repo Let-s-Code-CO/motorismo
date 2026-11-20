@@ -160,13 +160,14 @@ e2e/                         # Playwright
   (`modules/pwa/utils/call-action.utils.ts`): si la red se cae al enviar, la app pasa a «sin
   conexión» y devuelve `null`, que la pantalla trata como «no pasó nada» (sin éxito ni error
   propio, el formulario intacto). Sin él, el error desmonta el formulario.
+  `call-action-coverage.test.ts` falla si un componente llama a una Server Action sin él.
 - Sin red, `ConnectionGate` pone `inert` en todos los hijos de `<body>` (también modales abiertos
   después) y muestra el aviso; su contenedor lleva `data-react-aria-top-layer` para que un modal
   abierto no lo oculte a los lectores de pantalla.
 - `/api/version` responde la versión del despliegue (`NEXT_PUBLIC_APP_VERSION`, la fija
   `next.config.ts` al construir): sirve para el aviso «Hay una versión nueva» y como sonda de
-  conexión. El `matcher` de `src/proxy.ts` excluye `manifest.webmanifest`, `sw.js`, `offline` y
-  `api/version` (sin sesión).
+  conexión. El `matcher` de `src/proxy.ts` excluye esas rutas **exactas** (`offline$`, …), sin
+  sesión: `manifest.webmanifest`, `sw.js`, `offline` y `api/version` (`__test__/src/proxy.test.ts`).
 - E2E: `context.setOffline` también corta la red del service worker; `page.route` no ve las
   peticiones que pasan por él, así que esas pruebas usan `test.use({ serviceWorkers: 'block' })`.
   Chromium sin ventana no informa errores de instalabilidad (`Page.getInstallabilityErrors`

@@ -156,7 +156,7 @@ pwa/
 
 | Criterio | Tipo | Archivo de prueba |
 |---|---|---|
-| CA-01 | unit + e2e | `__test__/src/app/manifest.test.ts`: nombre, nombre corto, `standalone`, íconos 192/512/maskable. `e2e/pwa-install.spec.ts`: sin sesión, `/manifest.webmanifest` responde JSON, los íconos responden PNG y Chromium no reporta errores de instalabilidad (CDP `Page.getInstallabilityErrors`). |
+| CA-01 | unit + e2e | `__test__/src/app/manifest.test.ts`: nombre, nombre corto, `standalone`, íconos 192/512/maskable. `e2e/pwa-install.spec.ts`: sin sesión, `/manifest.webmanifest` responde JSON, los íconos responden PNG y Chromium no reporta errores de instalabilidad (CDP `Page.getInstallabilityErrors`). | `__test__/src/proxy.test.ts`: el proxy deja fuera exactamente el manifiesto, `sw.js`, `/offline` y `/api/version`, y nada que solo empiece igual (añadida al verificar).
 | CA-02 | unit + manual | `manifest.test.ts` (`display`, `short_name`). Prueba manual al abrir desde el ícono. |
 | CA-03 | unit + e2e existente | `manifest.test.ts` (`start_url: '/'`). `e2e/roles.spec.ts` ya cubre que `/` lleva a cada uno a lo suyo. |
 | CA-04 | e2e + manual | `pwa-install.spec.ts`: `apple-touch-icon` (180 px, responde), `apple-mobile-web-app-capable` y título. Prueba manual en iPhone. |
@@ -165,7 +165,7 @@ pwa/
 | CA-07 | componente + e2e | `connection-gate.component.test.tsx`: `inert` en los hijos de `body`, también en un portal abierto después. `pwa-offline.spec.ts`: sin red, «Nuevo cliente» no responde al clic. |
 | CA-08 | e2e | `pwa-offline.spec.ts`: escribe en el formulario de cliente, corta y devuelve la red; lo escrito sigue y «Guardar» funciona. |
 | CA-09 | unit + e2e | `__test__/public/sw.test.ts`: la navegación fallida responde `/offline` y las demás peticiones no se interceptan. `__test__/src/app/offline/route.test.ts`: textos y ningún dato. `pwa-offline.spec.ts`: con el SW activo, sin red, recargar `/customers` muestra «Sin conexión» y ningún nombre de cliente. |
-| CA-10 | unit + componente + e2e | `call-action.utils.test.ts`: `TypeError` de red → `null` y `offline`; otro error se relanza. `customer-form.component.test.tsx`: la acción rechaza por red, no hay éxito y los valores siguen. `pwa-offline.spec.ts`: `page.route` aborta el POST de la acción; aparece el aviso y lo escrito sigue. |
+| CA-10 | unit + componente + e2e | `call-action.utils.test.ts`: `TypeError` de red → `null` y `offline`; otro error se relanza. `customer-form.component.test.tsx`: la acción rechaza por red, no hay éxito y los valores siguen. `pwa-offline.spec.ts`: `page.route` aborta el POST de la acción; aparece el aviso y lo escrito sigue. | Además, `call-action-coverage.test.ts` recorre los componentes que importan una Server Action y falla si alguno la llama sin `callAction` (añadida al verificar).
 | CA-11 | e2e | `pwa-offline.spec.ts`: en la página «Sin conexión», devuelve la red y pulsa «Reintentar»; llega a `/customers`. |
 | CA-12 | componente | `install-app-button.component.test.tsx`: un `beforeinstallprompt` simulado → el botón aparece y llama a `prompt()`. Chromium headless no emite el evento, así que no hay E2E. |
 | CA-13 | componente | Mismo archivo: con UA de iPhone, el botón abre los pasos. |

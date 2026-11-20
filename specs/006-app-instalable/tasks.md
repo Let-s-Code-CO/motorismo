@@ -227,6 +227,10 @@ Convenciones:
 - [x] T053 Mutación aplicada a cada prueba nueva que pasó al escribirla; fallo observado,
       revertida (`git diff` + grep sin marcas).
 - [x] T054 Spec (`implementada`), plan, tareas y backlog actualizados.
+- [x] T056 (Al verificar) `t/src/proxy.test.ts` y el `matcher` de `web/src/proxy.ts` con rutas
+      exactas (`offline$`, `api/version$`, …): `/offline-report` sigue pasando por el proxy. (CA-01)
+- [x] T057 (Al verificar) `t/src/modules/pwa/call-action-coverage.test.ts`: todo componente que
+      importa una Server Action la llama con `callAction` (o un ayudante que lo usa). (CA-10)
 - [ ] T055 (Manual, tras el despliegue — usuario)
       - instalar en Android/Chrome y en escritorio;
       - agregar a inicio en iPhone (CA-02, CA-04);
@@ -237,7 +241,7 @@ Convenciones:
 
 | Criterio | Tareas de prueba |
 |---|---|
-| CA-01 | T002, T003 |
+| CA-01 | T002, T003, T056 |
 | CA-02 | T002, T055 |
 | CA-03 | T002 (+ `e2e/roles.spec.ts` existente) |
 | CA-04 | T003, T055 |
@@ -246,7 +250,7 @@ Convenciones:
 | CA-07 | T015, T026 |
 | CA-08 | T013, T015, T026 |
 | CA-09 | T011, T012, T026 |
-| CA-10 | T013, T014, T016, T026 |
+| CA-10 | T013, T014, T016, T026, T057 |
 | CA-11 | T012, T026 |
 | CA-12 | T031 |
 | CA-13 | T030, T031, T050 |

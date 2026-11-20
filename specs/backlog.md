@@ -36,6 +36,8 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 - Clientes (spec 004): si se pulsa una tarjeta-filtro antes de que la búsqueda (con espera de
   300 ms) llegue a la URL, la búsqueda pisa el filtro. Poco probable con una persona; lo destapó
   la E2E de la spec 005 bajo carga.
+- E2E `vehicle-catalog.spec.ts` («adds a really new brand and line…», spec 005) agota los 30 s
+  a veces en la suite completa y pasa sola: revisar qué espera bajo carga (visto el 2026-11-20).
 - Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
   con la confirmación por WhatsApp o las reservas.
 - `minimatch` < 11 (aviso moderado, solo en desarrollo) llega vía
@@ -50,4 +52,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [003](003-rediseno-visual/spec.md) | Rediseño visual de la interfaz | verificada |
 | [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | implementada (falta despliegue y prueba manual de Google) |
 | [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | verificada (bloques A, B y C); falta despliegue |
-| [006](006-app-instalable/spec.md) | App instalable | implementada (falta despliegue y prueba manual en dispositivos) |
+| [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
