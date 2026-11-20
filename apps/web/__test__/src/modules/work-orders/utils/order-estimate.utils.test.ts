@@ -7,10 +7,12 @@
  *   and the vehicle is ready that long after it was received.
  * - CA-30: with lines not estimated, the sum of the others is only a minimum, and the missing ones
  *   are named; with none estimated there is no estimate at all.
+ * - CA-34 / RN-12: the ready time counts from when the order was started; an order not started
+ *   yet (in the queue, or being opened) has a duration but no ready time.
  */
 import { orderEstimate } from '@web/modules/work-orders/utils/order-estimate.utils';
 
-const RECEIVED = new Date('2026-11-20T19:00:00Z');
+const STARTED = new Date('2026-11-20T19:00:00Z');
 
 describe('orderEstimate', () => {
   it('adds up the lines and gives the ready time, when all are estimated (CA-29)', () => {
@@ -21,7 +23,7 @@ describe('orderEstimate', () => {
           { name: 'Lavado sencillo', estimated_minutes: 30 },
           { name: 'Lavado detallado', estimated_minutes: 90 },
         ],
-        RECEIVED
+        STARTED
       )
     ).toEqual({
       kind: 'complete',
@@ -38,7 +40,7 @@ describe('orderEstimate', () => {
           { name: 'Lavado sencillo', estimated_minutes: 30 },
           { name: 'Limpieza de cadena', estimated_minutes: null },
         ],
-        RECEIVED
+        STARTED
       )
     ).toEqual({
       kind: 'minimum',
@@ -49,7 +51,7 @@ describe('orderEstimate', () => {
   });
 
   it('has no estimate when no line has a time (CA-30)', () => {
-    expect(orderEstimate([{ name: 'Otro', estimated_minutes: null }], RECEIVED)).toEqual({
+    expect(orderEstimate([{ name: 'Otro', estimated_minutes: null }], STARTED)).toEqual({
       kind: 'none',
       minutes: 0,
       missing: ['Otro'],
@@ -58,6 +60,15 @@ describe('orderEstimate', () => {
   });
 
   it('has no estimate with no lines yet', () => {
-    expect(orderEstimate([], RECEIVED).kind).toBe('none');
+    expect(orderEstimate([], STARTED).kind).toBe('none');
+  });
+
+  it('gives the duration but no ready time to an order not started yet (CA-34, RN-12)', () => {
+    expect(orderEstimate([{ name: 'Lavado sencillo', estimated_minutes: 30 }], null)).toEqual({
+      kind: 'complete',
+      minutes: 30,
+      missing: [],
+      readyAt: null,
+    });
   });
 });

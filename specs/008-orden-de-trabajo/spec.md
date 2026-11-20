@@ -104,27 +104,35 @@ Como operador, quiero ver al encontrar al cliente cuántas veces ha venido y qu�
   servicios y total.
 - **CA-16** — Dada la ficha de un cliente (spec 004), cuando el personal la abre, entonces ve sus
   órdenes, de la más reciente a la más antigua, con número, fecha, vehículo, servicios, total y
-  estado.
+  estado: las 10 más recientes y, si hay más, «Ver más» trae las 10 siguientes (un cliente fiel no
+  alarga la ficha sin fin). *(Enmienda 2026-11-20.)*
 - **CA-17** — Dado un cliente sin órdenes, cuando se muestra su historial, entonces se dice que es
   su primera visita.
 
-### HU-04 (P2) — «Órdenes»: qué hay en el lavadero
+### HU-04 (P2) — «Órdenes»: la cola, lo que está en proceso y lo entregado
 
-Como miembro del personal, quiero ver las órdenes abiertas y las recientes, para saber qué
-vehículos están en el lavadero, cuándo estará listo cada uno, y retomar cualquiera.
+Como miembro del personal, quiero ver qué vehículos esperan turno, cuáles se están trabajando y
+cuándo estará listo cada uno, y lo ya entregado, para organizar el lavadero y retomar cualquiera.
 
 **Criterios de aceptación**
 
-- **CA-18** — Dado un miembro del personal, cuando abre «Órdenes», entonces ve primero las
-  **abiertas** («En el lavadero»), de la más antigua a la más reciente, con número, cliente, placa
-  (o tipo de vehículo), servicios, total, hace cuánto se recibió y la hora estimada de entrega
-  (HU-06).
+- **CA-18** — Dado un miembro del personal, cuando abre «Órdenes», entonces ve tres secciones, cada
+  una con su color:
+  - **«En proceso»**: las órdenes empezadas, con la hora estimada de entrega (HU-06);
+  - **«En cola»**: las abiertas sin empezar, por orden de llegada (la más antigua primero), con su
+    turno (1.º, 2.º…), hace cuánto llegaron y su tiempo estimado (sin hora de entrega: aún no se
+    sabe cuándo empezará);
+  - **«Cerradas»** (CA-19).
+
+  Cada orden muestra número, cliente, placa (o tipo de vehículo), servicios y total.
+  *(Enmienda 2026-11-20: antes, una sola sección «En el lavadero».)*
 - **CA-19** — Dado el mismo listado, cuando mira las **cerradas**, entonces las ve de la más reciente
-  a la más antigua, por páginas, con su fecha de entrega y su total; las anuladas aparecen
-  marcadas.
+  a la más antigua, por páginas («Página 2 de 14»), con su fecha de entrega y su total; las
+  anuladas aparecen marcadas.
 - **CA-20** — Dada una orden de la lista, cuando el personal la abre, entonces ve su detalle completo
   (servicios, empleados y participación, subtotal, descuento, total, tiempo estimado, pagos, quién
-  la abrió y cerró y cuándo) y, si está abierta, puede editarla o cerrarla.
+  la abrió, la empezó y la cerró y cuándo) y, si está abierta, puede editarla, empezarla (si está en
+  cola) o cerrarla.
 
 ### HU-05 (P3) — Corregir o anular con motivo
 
@@ -170,13 +178,34 @@ se sepa cuándo estará listo el vehículo y se le pueda decir al cliente.
 - **CA-31** — Dado un tiempo estimado de un servicio, cuando el administrador lo cambia en el
   catálogo, entonces las órdenes ya abiertas conservan el de sus líneas.
 
+### HU-07 (P2) — En cola y en proceso *(enmienda 2026-11-20)*
+
+Como operador, quiero distinguir los vehículos que esperan turno de los que ya se están
+trabajando, para saber qué sigue y dar una hora de entrega que cuente desde que empezamos.
+
+**Criterios de aceptación**
+
+- **CA-32** — Dada una orden recién abierta, cuando se guarda, entonces queda **«En cola»**, con su
+  hora de llegada.
+- **CA-33** — Dada una orden en cola, cuando un miembro del personal pulsa **«Empezar»** (en la lista
+  o en su detalle), entonces pasa a **«En proceso»**, con la hora de inicio y quién la empezó, y se
+  anuncia el resultado.
+- **CA-34** — Dada una orden en proceso, cuando se muestra su estimado, entonces la hora de entrega
+  cuenta desde que empezó (no desde que llegó): una moto que esperó 40 minutos en cola corre su
+  hora esos 40 minutos.
+- **CA-35** — Dada una orden en cola, cuando el personal la cierra o la anula sin haberla empezado
+  (p. ej. se olvidó «Empezar»), entonces puede: empezar no es obligatorio para cerrar.
+- **CA-36** — Dada una orden en proceso, cuando cualquiera intenta devolverla a la cola o empezarla
+  otra vez, por cualquier vía, entonces el sistema lo impide.
+
 ## Requisitos funcionales
 
 - **RF-01** — Una orden pertenece a un cliente y a uno de sus vehículos, y tiene un número
   consecutivo único.
 - **RF-02** — Una orden tiene una o más líneas de servicio. Cada línea es un servicio del catálogo,
   o «Otro» con descripción libre, y tiene un valor y uno o más empleados con su participación.
-- **RF-03** — Estados: abierta → cerrada, y abierta o cerrada → anulada. Se registra quién y cuándo
+- **RF-03** — Estados: abierta (en cola → en proceso) → cerrada, y abierta o cerrada → anulada. Se
+  registra quién y cuándo
   hizo cada cambio de estado.
 - **RF-04** — Al cerrar, se registran uno o más pagos (medio y monto) cuya suma es el total.
 - **RF-05** — Historial por cliente: total de visitas y últimas órdenes.
@@ -204,6 +233,9 @@ se sepa cuándo estará listo el vehículo y se le pueda decir al cliente.
   administrador la corrige o la anula, siempre con motivo. Anulada, nadie la cambia. Las reglas
   valen por cualquier vía.
 - **RN-06** — Las órdenes nunca se borran: se anulan, y siguen visibles y marcadas.
+- **RN-12** — Una orden abierta está en cola hasta que se empieza. Empezar se hace una sola vez y
+  no se deshace; no es obligatorio para cerrar (CA-35). El estimado cuenta desde el inicio si lo hay,
+  y una orden en cola solo muestra su duración (CA-18, CA-34).
 - **RN-07** — Una «visita» es una orden cerrada y no anulada.
 - **RN-08** — No se abre una orden para un cliente desactivado ni para un vehículo retirado.
 - **RN-09** — Los pagos de una orden suman exactamente su total. Los medios son efectivo,
@@ -219,7 +251,7 @@ se sepa cuándo estará listo el vehículo y se le pueda decir al cliente.
 
 | Entidad | Atributos relevantes | Notas |
 |---|---|---|
-| Orden | número, cliente, vehículo, estado, descuento, recibida (fecha, quién), cerrada (fecha, quién), anulada (fecha, quién, motivo), corregida (fecha, quién, motivo), observaciones | Subtotal, total y tiempo estimado se calculan de las líneas. |
+| Orden | número, cliente, vehículo, estado, descuento, recibida (fecha, quién), empezada (fecha, quién), cerrada (fecha, quién), anulada (fecha, quién, motivo), corregida (fecha, quién, motivo), observaciones | Subtotal, total y tiempo estimado se calculan de las líneas. |
 | Línea de servicio | orden, servicio (o «Otro»), nombre del servicio, valor, tiempo estimado (opcional) | Copia nombre, valor y tiempo al añadirse (RN-01); valor y tiempo se pueden editar en la orden. |
 | Servicio (spec 007) | + tiempo estimado (minutos, opcional) | Cambio al catálogo de la spec 007 (HU-06). |
 | Participación | línea, empleado, porcentaje | Por línea, suma 100. |
@@ -234,6 +266,10 @@ se sepa cuándo estará listo el vehículo y se le pueda decir al cliente.
 - Sin conexión no se opera (spec 006).
 
 ## Fuera de alcance
+
+- Agendamiento o reservas (guardar un puesto para una fecha y hora, con o sin servicios): spec 009.
+  Al llegar el cliente, la reserva se convertirá en una orden que entra a la cola.
+- Devolver a la cola una orden empezada, o reordenar la cola a mano.
 
 - Que el cliente vea sus órdenes en «Mi perfil».
 - Avisar al cliente (WhatsApp, «tu moto está lista»).
@@ -292,3 +328,5 @@ Ninguna. Resueltas con el usuario el 2026-11-20:
 | 2026-11-20 | Plan aprobado: estado `planificada`. |
 | 2026-11-20 | Tareas aprobadas: estado `lista`. |
 | 2026-11-20 | Implementada (bloques A, B y C). Ajustes visuales pedidos durante la implementación: resumen fijo solo en el móvil; colores de estado en «Órdenes». |
+| 2026-11-20 | Enmienda aprobada por el usuario: «En cola» y «En proceso» con «Empezar» (HU-07, CA-32 a CA-36, RN-12); «Órdenes» en tres secciones (CA-18); ficha del cliente con las 10 más recientes y «Ver más» (CA-16); páginas con total (CA-19). Agendamiento, a la spec 009. |
+| 2026-11-20 | Enmienda implementada: «En cola» / «En proceso» con «Empezar», tres secciones en «Órdenes», ficha con «Ver más», páginas con total. Revisado en teléfono (iPhone 440 px y 360 px). |

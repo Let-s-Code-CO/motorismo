@@ -69,7 +69,13 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Horas para el negocio en 12 horas, como se leen en Colombia («4:15 p. m.»), siempre con
   `core/hooks/clock.hook.ts` (`useClock`): Node y el navegador ponen espacios distintos en «p. m.» y
   sin normalizarlos la hidratación falla. Las fechas relativas («hace 40 minutos») con `useNow`,
-  nunca sin un «ahora» de referencia.
+  nunca sin un «ahora» de referencia: `src/i18n/request.ts` fija `now` por petición y el navegador
+  lo hereda. Fecha y hora juntas se formatean por separado (fecha + `useClock`), nunca con
+  `dateStyle` + `timeStyle` (Node y el navegador las unen distinto).
+- **Móvil siempre.** Toda pantalla nueva o cambiada se revisa en teléfono (capturas en 360 px y en
+  iPhone de 440 px con modo táctil) y se añade a la prueba «on an iPhone» de `e2e/ui.spec.ts`, que
+  exige cero desplazamiento lateral. El contenedor de la app lleva `overflow-x-clip` como red de
+  seguridad, no como sustituto de arreglar lo que desborde.
 - Menú principal (`nav-links`): con más de dos opciones, por debajo de `md` se recoge en un botón
   «Menú» (spec 007), para que el encabezado quepa en 360 px. Una sección nueva se añade a `LINKS`
   y, si es del personal, a las tarjetas de inicio (`src/app/(app)/page.tsx`).

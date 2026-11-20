@@ -14,6 +14,8 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 2. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
+3. **Agendamiento (reservas)** — guardar un puesto para una fecha y hora, con o sin servicios; al
+   llegar el cliente, la reserva pasa a ser una orden en cola (spec 008). Candidata a spec 009.
 4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
    retira y se registra de nuevo).
 5. **Confirmación por WhatsApp** (deseable).
@@ -53,4 +55,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | verificada (bloques A, B y C); falta despliegue |
 | [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
 | [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | verificada; falta despliegue |
-| [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | implementada (falta despliegue) |
+| [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | implementada, con enmienda (falta despliegue) |

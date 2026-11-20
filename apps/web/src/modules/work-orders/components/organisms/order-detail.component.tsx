@@ -7,9 +7,28 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Alert, Button } from '@heroui/react';
-import { ArrowLeft, Ban, FilePen, Pencil, Wallet } from 'lucide-react';
+import {
+  ArrowLeft,
+  Ban,
+  Bike,
+  CarFront,
+  CircleCheck,
+  FilePen,
+  Inbox,
+  type LucideIcon,
+  Motorbike,
+  NotebookPen,
+  Pencil,
+  Play,
+  UserRound,
+  Wallet,
+} from 'lucide-react';
 
+import useClock from '@web/modules/core/hooks/clock.hook';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
+import PlateLabel from '@web/modules/vehicles/components/atoms/plate-label.component';
+import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-status-chip.component';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
 import OrderSummary from '@web/modules/work-orders/components/molecules/order-summary.component';
@@ -18,8 +37,30 @@ import OrderEditor from '@web/modules/work-orders/components/organisms/order-edi
 import VoidOrderDialog from '@web/modules/work-orders/components/organisms/void-order-dialog.component';
 import type { WorkOrderValues } from '@web/modules/work-orders/schemas/work-order.schema';
 import type { WorkOrderDetail } from '@web/modules/work-orders/types/work-orders.types';
+import { orderStage } from '@web/modules/work-orders/utils/order-status.utils';
 import { orderTotals } from '@web/modules/work-orders/utils/order-totals.utils';
-import { vehicleLabel } from '@web/modules/work-orders/utils/vehicle-label.utils';
+
+const VEHICLE_ICONS: Record<string, LucideIcon> = {
+  motorcycle: Motorbike,
+  bicycle: Bike,
+  car: CarFront,
+};
+
+/** One step of the order's history («Recibido el … por …»), with its icon. */
+const HistoryLine = ({
+  icon: Icon,
+  className,
+  children,
+}: {
+  icon: LucideIcon;
+  className?: string;
+  children: React.ReactNode;
+}) => (
+  <li className={`flex items-start gap-2 ${className ?? ''}`}>
+    <Icon aria-hidden className="mt-0.5 size-4 shrink-0" />
+    <span>{children}</span>
+  </li>
+);
 
 type OrderDetailProps = {
   order: WorkOrderDetail;
@@ -30,12 +71,14 @@ type OrderDetailProps = {
 
 /**
  * One order (spec 008, CA-20): services with their employees and shares, totals, payments, who
- * received and handed it over and when. Open, staff edit, close or void it (CA-08, HU-02, CA-21);
+ * received, started and handed it over and when. In the queue, staff start it (CA-33); open, they
+ * edit, close or void it (CA-08, HU-02, CA-21);
  * closed, only an admin corrects or voids it (CA-22, CA-23, RN-05); voided, nothing more. A voided
  * or corrected order says by whom, when and why.
  */
 const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
   const t = useTranslations('orders');
+  const tVehicles = useTranslations('vehicles');
   const format = useFormatter();
   const router = useRouter();
   const { summary } = order;
@@ -48,11 +91,31 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
     saved === 'opened' ? t('editor.opened') : undefined
   );
   const isOpen = summary.status === 'open';
+  const stage = orderStage(summary);
+  const VehicleIcon = VEHICLE_ICONS[summary.vehicle_type ?? ''] ?? Motorbike;
+  const [starting, setStarting] = useState(false);
+  const start = async () => {
+    setNotice(undefined);
+    setStarting(true);
+    const result = await callAction(() => startWorkOrder({ id: summary.id ?? '' }));
+    setStarting(false);
+    if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
+    setNotice(result.ok ? t('detail.started') : t(`errors.${result.error}`));
+    router.refresh();
+  };
   const isClosed = summary.status === 'closed';
   const canVoid = isOpen || (isClosed && isAdmin);
   const busy = editing || correcting;
+  const clock = useClock();
+  // Date and time apart: Node and the browser join them differently («, » / « a las »), which would
+  // break hydration; the time on a 12-hour clock like the rest of the app.
   const when = (date: string | null) =>
-    date ? format.dateTime(new Date(date), { dateStyle: 'long', timeStyle: 'short' }) : '';
+    date
+      ? {
+          date: format.dateTime(new Date(date), { dateStyle: 'long' }),
+          time: clock(new Date(date)),
+        }
+      : { date: '', time: '' };
 
   return (
     <section className="flex flex-col gap-6">
@@ -68,39 +131,32 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
           <h1 className="text-3xl font-semibold tracking-tight">
             {t('number', { number: summary.number ?? 0 })}
           </h1>
-          {summary.status && <OrderStatusChip status={summary.status} />}
+          <OrderStatusChip stage={stage} />
         </div>
-        {!busy && (isOpen || canVoid || (isClosed && isAdmin)) && (
-          <div className="flex flex-wrap gap-2">
-            {canVoid && (
-              <Button
-                variant="light"
-                className="text-danger-600 data-[hover=true]:bg-danger-50"
-                startContent={<Ban aria-hidden className="size-4" />}
-                onPress={() => {
-                  setNotice(undefined);
-                  setVoiding(true);
-                }}
-              >
-                {t('detail.void')}
-              </Button>
-            )}
-            {isClosed && isAdmin && (
-              <Button
-                variant="bordered"
-                startContent={<FilePen aria-hidden className="size-4" />}
-                onPress={() => {
-                  setNotice(undefined);
-                  setCorrecting(true);
-                }}
-              >
-                {t('detail.correct')}
-              </Button>
-            )}
-          </div>
+        {!busy && isClosed && isAdmin && (
+          <Button
+            variant="bordered"
+            startContent={<FilePen aria-hidden className="size-4" />}
+            onPress={() => {
+              setNotice(undefined);
+              setCorrecting(true);
+            }}
+          >
+            {t('detail.correct')}
+          </Button>
         )}
         {isOpen && !busy && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {stage === 'queued' && (
+              <Button
+                variant="bordered"
+                startContent={<Play aria-hidden className="size-4" />}
+                isLoading={starting}
+                onPress={start}
+              >
+                {t('detail.start')}
+              </Button>
+            )}
             <Button
               variant="bordered"
               startContent={<Pencil aria-hidden className="size-4" />}
@@ -128,67 +184,102 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
 
       {notice && <Alert color="success" variant="faded" title={notice} />}
 
-      <div className="flex flex-col gap-4 rounded-large border border-divider bg-content1 p-5 text-sm shadow-small">
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <dt className="text-default-500">{t('detail.customer')}</dt>
-            <dd>
+      {/*
+       * The order's card, in three bands: what came in and whose it is (the vehicle with its plate,
+       * as on the customer record), its history (one line per step, each with its icon) and the
+       * notes. The same layout on a phone: the plate stays beside the name.
+       */}
+      <div className="flex flex-col divide-y divide-divider rounded-large border border-divider bg-content1 text-sm shadow-small">
+        <div className="flex items-center gap-3 p-4 sm:p-5">
+          {/* The type at a glance (moto, carro, bici); named for screen readers. */}
+          <span
+            role="img"
+            aria-label={
+              summary.vehicle_type ? tVehicles(`types.${summary.vehicle_type}`) : undefined
+            }
+            className="flex size-10 shrink-0 items-center justify-center rounded-medium bg-default-100 text-default-600"
+          >
+            <VehicleIcon aria-hidden className="size-5" />
+          </span>
+          <dl className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <dt className="sr-only">{t('detail.vehicle')}</dt>
+            <dd className="truncate text-base font-medium">
+              {[summary.brand_name, summary.line_name].filter(Boolean).join(' ')}
+            </dd>
+            <dt className="sr-only">{t('detail.customer')}</dt>
+            <dd className="flex min-w-0 items-center gap-1.5 text-default-500">
+              <UserRound aria-hidden className="size-4 shrink-0" />
               <Link
                 href={`/customers/${summary.customer_id}`}
-                className="font-medium underline-offset-4 hover:underline"
+                className="cursor-pointer truncate underline-offset-4 hover:text-foreground hover:underline"
               >
                 {summary.customer_name}
               </Link>
             </dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="text-default-500">{t('detail.vehicle')}</dt>
-            <dd className="font-medium">
-              {vehicleLabel(
-                {
-                  brand_name: summary.brand_name,
-                  line_name: summary.line_name,
-                  plate: summary.plate,
-                },
-                t('picker.noPlate')
-              )}
-            </dd>
-          </div>
-        </dl>
-        <p className="text-default-500">
-          {t('detail.openedBy', {
-            date: when(summary.opened_at),
-            name: summary.opened_by_name ?? '',
-          })}
+          </dl>
+          {/* The plate drawn like a Colombian one, as on the customer record (spec 005). */}
+          {summary.plate ? (
+            <PlateLabel plate={summary.plate} city={summary.plate_city_name} className="shrink-0" />
+          ) : (
+            <span className="shrink-0 whitespace-nowrap text-default-500">
+              {t('picker.noPlate')}
+            </span>
+          )}
+        </div>
+
+        <ul className="flex flex-col gap-2 p-4 text-default-500 sm:p-5">
+          <HistoryLine icon={Inbox}>
+            {t('detail.openedBy', {
+              ...when(summary.opened_at),
+              name: summary.opened_by_name ?? '',
+            })}
+          </HistoryLine>
+          {summary.started_at && (
+            <HistoryLine icon={Play}>
+              {t('detail.startedBy', {
+                ...when(summary.started_at),
+                name: summary.started_by_name ?? '',
+              })}
+            </HistoryLine>
+          )}
           {summary.closed_at && (
-            <>
-              <br />
+            <HistoryLine icon={CircleCheck}>
               {t('detail.closedBy', {
-                date: when(summary.closed_at),
+                ...when(summary.closed_at),
                 name: summary.closed_by_name ?? '',
               })}
-            </>
+            </HistoryLine>
           )}
-        </p>
-        {summary.corrected_at && (
-          <p className="text-default-500">
-            {t('detail.correctedBy', {
-              date: when(summary.corrected_at),
-              name: summary.corrected_by_name ?? '',
-              reason: summary.correction_reason ?? '',
-            })}
-          </p>
+          {summary.corrected_at && (
+            <HistoryLine icon={FilePen}>
+              {t('detail.correctedBy', {
+                ...when(summary.corrected_at),
+                name: summary.corrected_by_name ?? '',
+                reason: summary.correction_reason ?? '',
+              })}
+            </HistoryLine>
+          )}
+          {summary.voided_at && (
+            <HistoryLine icon={Ban} className="font-medium text-danger-600">
+              {t('detail.voidedBy', {
+                ...when(summary.voided_at),
+                name: summary.voided_by_name ?? '',
+                reason: summary.void_reason ?? '',
+              })}
+            </HistoryLine>
+          )}
+        </ul>
+
+        {summary.notes && (
+          // Labelled like the rest of the order, so it reads as the order's notes.
+          <dl className="flex flex-col gap-1 p-4 sm:p-5">
+            <dt className="flex items-center gap-1.5 text-default-500">
+              <NotebookPen aria-hidden className="size-4" />
+              {t('editor.notes')}
+            </dt>
+            <dd className="whitespace-pre-line">{summary.notes}</dd>
+          </dl>
         )}
-        {summary.voided_at && (
-          <p className="font-medium text-danger-600">
-            {t('detail.voidedBy', {
-              date: when(summary.voided_at),
-              name: summary.voided_by_name ?? '',
-              reason: summary.void_reason ?? '',
-            })}
-          </p>
-        )}
-        {summary.notes && <p className="sm:col-span-2">{summary.notes}</p>}
       </div>
 
       {correcting ? (
@@ -250,7 +341,10 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
             }
             estimate={
               isOpen ? (
-                <OrderEstimate lines={order.lines} receivedAt={new Date(summary.opened_at ?? 0)} />
+                <OrderEstimate
+                  lines={order.lines}
+                  startedAt={summary.started_at ? new Date(summary.started_at) : null}
+                />
               ) : undefined
             }
           />
@@ -272,6 +366,37 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
             </div>
           )}
         </>
+      )}
+
+      {/*
+       * Voiding lives at the end, in its own section, like «Desactivar cliente» on the customer
+       * record: away from the day-to-day actions at the top, so nobody voids by mistake, and a solid
+       * red button because it is destructive. danger-600, not danger-500: white text on it keeps AA.
+       */}
+      {canVoid && !busy && (
+        <section
+          aria-labelledby="void-order-title"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-large border border-divider bg-content1 p-5 shadow-small"
+        >
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2 id="void-order-title" className="text-sm font-semibold">
+              {t('detail.voidTitle')}
+            </h2>
+            <p className="text-sm text-default-500">{t('void.description')}</p>
+          </div>
+          <Button
+            color="danger"
+            variant="solid"
+            className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700"
+            startContent={<Ban aria-hidden className="size-4" />}
+            onPress={() => {
+              setNotice(undefined);
+              setVoiding(true);
+            }}
+          >
+            {t('detail.void')}
+          </Button>
+        </section>
       )}
 
       {canVoid && (

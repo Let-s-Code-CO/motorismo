@@ -6,7 +6,9 @@
 --   #2  Camila, UIH-03D       Lavado sencillo + Micropulido, $ 5.000 off  closed 3 days ago,
 --                                                                    cash + transfer
 --   #3  Camila, UIH-03D       Lavado sencillo                        voided (duplicated)
---   #4  Camila, UIH-03D       Lavado detallado + Otro «Limpieza de cadena», no time   open, 40 min ago
+--   #4  Camila, UIH-03D       Lavado detallado + Otro «Limpieza de cadena», no time   in progress
+--                             (arrived 40 min ago, started 20 min ago)
+--   #5  Andrés, bicycle       Lavado sencillo                       in the queue, arrived 10 min ago
 
 select set_config('request.jwt.claims',
   json_build_object('sub', (select id from auth.users where email = 'sebastian.pulido@motorismo.test'),
@@ -60,6 +62,16 @@ insert into seed_ids select 'o4', public.save_work_order(
     jsonb_build_object('name', 'Limpieza de cadena', 'price', 15000)),
   p_notes => 'Trae un rayón en el tanque');
 
+select public.start_work_order(pg_temp.sid('o4'));
+
+-- #5
+insert into seed_ids select 'andres_bike', v.id from public.vehicles v
+  join public.customers c on c.id = v.customer_id where c.full_name = 'Andrés Ñáñez';
+insert into seed_ids select 'o5', public.save_work_order(
+  (select customer_id from public.vehicles where id = pg_temp.sid('andres_bike')), pg_temp.sid('andres_bike'),
+  jsonb_build_array(jsonb_build_object('service_id', pg_temp.sid('Lavado sencillo'),
+    'employees', jsonb_build_array(jsonb_build_object('employee_id', pg_temp.sid('paula'), 'share_pct', 100)))));
+
 -- Dates as if they happened before today.
 update public.work_orders set opened_at = now() - interval '10 days 2 hours', closed_at = now() - interval '10 days'
  where id = pg_temp.sid('o1');
@@ -67,6 +79,8 @@ update public.work_orders set opened_at = now() - interval '3 days 3 hours', clo
  where id = pg_temp.sid('o2');
 update public.work_orders set opened_at = now() - interval '3 days 4 hours', voided_at = now() - interval '3 days 4 hours'
  where id = pg_temp.sid('o3');
-update public.work_orders set opened_at = now() - interval '40 minutes' where id = pg_temp.sid('o4');
+update public.work_orders set opened_at = now() - interval '40 minutes', started_at = now() - interval '20 minutes'
+ where id = pg_temp.sid('o4');
+update public.work_orders set opened_at = now() - interval '10 minutes' where id = pg_temp.sid('o5');
 
 select set_config('request.jwt.claims', null, true);

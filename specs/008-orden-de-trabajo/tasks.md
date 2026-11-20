@@ -279,6 +279,44 @@ Convenciones:
       revertida (`git diff` + grep sin marcas).
 - [x] T076 Spec (`implementada`), plan, tareas y backlog actualizados.
 
+## Bloque D — Enmienda: en cola, en proceso y ficha paginada (HU-07)
+
+- [x] T080 pgTAP (rojo):
+      - `start_work_order`: la empieza el operador, con `started_by` (CA-33);
+      - dos veces → `work_order_already_started`, una cerrada → `work_order_not_open` (CA-36);
+      - el cliente → `work_order_staff_only`;
+      - se puede cerrar sin empezar (CA-35);
+      - la vista da `started_at` y `started_by_name`.
+- [x] T081 Migración: `started_at`/`started_by`, su `check`, `start_work_order` y la vista. Seeds:
+      #4 empezada; una orden en cola para la bicicleta de Andrés. Tipos → `db:reset`, `db:test`
+      y `types:check` en verde.
+- [x] T082 [P] Pruebas de la app (rojo):
+      - `order-status.utils` (cuatro estados);
+      - `startWorkOrder`;
+      - `order-estimate` / `order-editor` (sin inicio: solo duración);
+      - `orders-screen`: tres secciones, turno, «Empezar» y «Página 1 de 3» (CA-18, CA-19);
+      - `order-detail`: «Empezar» en cola, «Empezada por…» (CA-33);
+      - `customer-history`: 10 y «Ver más» (CA-16).
+- [x] T083 Implementación:
+      - utils, acción, chip y estimado;
+      - «Órdenes» con tres secciones y «Empezar»;
+      - el detalle;
+      - el historial paginado;
+      - mensajes.
+
+      → T082 en verde.
+- [x] T084 E2E: `work-orders.spec.ts` (nueva orden → «En cola» → «Empezar» → «En proceso»;
+      secciones de «Órdenes») y las existentes al día; accesibilidad de las tres secciones → verde.
+- [x] T085 Definición de terminado completa; mutaciones revertidas; spec, plan, tareas y backlog.
+- [x] T086 Ajustes de interfaz tras revisar con el usuario (escritorio y teléfono):
+      - Detalle: tarjeta en tres franjas (vehículo con ícono de su tipo, cliente y placa dibujada
+        como en el registro del cliente —la vista trae `plate_city_name`, pgTAP—; historial con
+        íconos; «Observaciones» con su etiqueta).
+      - «Anular orden» sale del encabezado a su propia sección «Anulación» al final, botón rojo
+        sólido como «Desactivar cliente» (CA-21, CA-23).
+      - El aviso «Instala Motorismo» (spec 006) pasa de `fixed` a `sticky`: ya no tapa lo último de
+        la página (`pwa-install.spec.ts`).
+
 ## Cobertura de criterios
 
 | Criterio | Tareas de prueba |
@@ -315,3 +353,4 @@ Convenciones:
 | CA-30 | T003, T041, T043, T052 |
 | CA-31 | T003 |
 | RN-10 | T012, T016, T017 |
+| CA-32 a CA-36 | T080, T082, T084 |

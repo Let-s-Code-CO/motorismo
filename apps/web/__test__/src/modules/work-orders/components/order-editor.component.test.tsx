@@ -15,6 +15,7 @@
  *   line without one is «Sin estimar» and can be filled in.
  * - CA-29 / CA-30: the estimate and the ready time are in sight; with lines not estimated it is a
  *   minimum («desde las …») and names them.
+ * - CA-34 / RN-12: an order not started yet (a new one goes to the queue) shows only its duration.
  */
 import type { ReactNode } from 'react';
 
@@ -90,10 +91,13 @@ const PAULA: EmployeeOption = {
   full_name: 'Paula Pineda',
 };
 
-// Received at 2:00 p. m. in Bogotá (19:00 UTC).
-const RECEIVED = new Date('2026-11-20T19:00:00Z');
+// Started at 2:00 p. m. in Bogotá (19:00 UTC).
+const STARTED = new Date('2026-11-20T19:00:00Z');
 
-const renderEditor = (employees: EmployeeOption[] = [ELKIN, PAULA]) => {
+const renderEditor = (
+  employees: EmployeeOption[] = [ELKIN, PAULA],
+  startedAt: Date | null = STARTED
+) => {
   vi.mocked(fetchActiveServices).mockResolvedValue(SERVICES);
   vi.mocked(fetchActiveEmployees).mockResolvedValue(employees);
   const onSaved = vi.fn();
@@ -101,7 +105,14 @@ const renderEditor = (employees: EmployeeOption[] = [ELKIN, PAULA]) => {
     <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
   );
   renderWithProviders(
-    wrap(<OrderEditor customer={CUSTOMER} vehicle={MOTO} receivedAt={RECEIVED} onSaved={onSaved} />)
+    wrap(
+      <OrderEditor
+        customer={CUSTOMER}
+        vehicle={MOTO}
+        startedAt={startedAt ?? undefined}
+        onSaved={onSaved}
+      />
+    )
   );
   return { onSaved };
 };
@@ -255,5 +266,14 @@ describe('OrderEditor', () => {
     await addService(/Añadir Otro/);
 
     expect(summary()).toHaveTextContent('Sin tiempo estimado');
+  });
+
+  it('shows only the duration for an order not started yet, as a new one (CA-34, RN-12)', async () => {
+    renderEditor([ELKIN, PAULA], null);
+
+    await addService(/Añadir Lavado detallado/);
+
+    expect(summary()).toHaveTextContent('≈ 1 h 30 min');
+    expect(summary()).not.toHaveTextContent('lista hacia');
   });
 });

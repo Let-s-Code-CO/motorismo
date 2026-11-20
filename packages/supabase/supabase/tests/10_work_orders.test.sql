@@ -17,10 +17,12 @@
 -- Nobody writes the tables directly, and nobody deletes (CA-14, CA-24). A customer and anon read
 -- nothing. The summary view adds up subtotal, total and estimate, and names what is not estimated
 -- (CA-29, CA-30). Changing a service's time does not change existing lines (CA-31).
+-- Amendment (HU-07): start_work_order moves an open order from the queue to «En proceso» once and
+-- for good (CA-33, CA-36); closing does not need it (CA-35).
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(56);
+select plan(64);
 
 -- Fixtures -------------------------------------------------------------------------------------
 create function pg_temp.new_staff(p_id uuid, p_email text, p_name text, p_role text)
@@ -305,6 +307,10 @@ select lives_ok(
        jsonb_build_array(jsonb_build_object('name', 'Lavado de cortesía', 'price', 0,
          'employees', jsonb_build_array(pg_temp.share('WO Elena', 100)))))) $$,
   'a courtesy line of $ 0 is valid');
+select is(
+  (select plate_city_name from public.work_order_summaries where id = pg_temp.id_of('o2')),
+  'Bogotá, D.C.',
+  'a car order carries the city of its plate, to draw it as on the customer record');
 select results_eq(
   $$ select total, unestimated from public.work_order_summaries where id = pg_temp.id_of('o2') $$,
   $$ values (0::bigint, array['Lavado de cortesía']) $$,
@@ -312,6 +318,32 @@ select results_eq(
 select lives_ok(
   $$ select public.close_work_order(pg_temp.id_of('o2'), '[]'::jsonb) $$,
   'CA-13: an order of $ 0 closes without payments');
+
+-- Queue and in progress (HU-07) --------------------------------------------------------------------
+select is(
+  (select started_at from public.work_orders where id = pg_temp.id_of('o1')),
+  null,
+  'CA-35: an order can be closed without being started');
+select lives_ok(
+  $$ select pg_temp.remember('o4', public.save_work_order(pg_temp.id_of('carla'), pg_temp.id_of('carla_car'),
+       jsonb_build_array(jsonb_build_object('name', 'Encerado', 'price', 20000, 'estimated_minutes', 40)))) $$,
+  'CA-32: a new order is open and not started: in the queue');
+select lives_ok(
+  $$ select public.start_work_order(pg_temp.id_of('o4')) $$,
+  'CA-33: staff start an order in the queue');
+select results_eq(
+  $$ select o.started_by, o.started_at is not null, s.started_by_name from public.work_orders o
+     join public.work_order_summaries s using (id) where o.id = pg_temp.id_of('o4') $$,
+  $$ values ('00000000-0000-0000-0000-00000000a8b1'::uuid, true, 'Oscar Operador') $$,
+  'CA-33: it records when it started and who started it');
+select is(
+  pg_temp.error_hint($$ select public.start_work_order(pg_temp.id_of('o4')) $$),
+  'work_order_already_started',
+  'CA-36: an order is started only once');
+select is(
+  pg_temp.error_hint($$ select public.start_work_order(pg_temp.id_of('o2')) $$),
+  'work_order_not_open',
+  'CA-36: a closed order is not started');
 
 -- Voiding and correcting -----------------------------------------------------------------------------
 select is(
@@ -387,6 +419,10 @@ select is(
      jsonb_build_array(jsonb_build_object('name', 'Mío', 'price', 1))) $$),
   'work_order_staff_only',
   'a customer cannot open an order');
+select is(
+  pg_temp.error_hint($$ select public.start_work_order(pg_temp.id_of('o4')) $$),
+  'work_order_staff_only',
+  'a customer cannot start an order');
 
 reset role;
 select * from finish();

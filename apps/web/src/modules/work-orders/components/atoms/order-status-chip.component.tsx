@@ -4,17 +4,23 @@ import { useTranslations } from 'next-intl';
 
 import { Chip } from '@heroui/react';
 
-import type { WorkOrderStatus } from '@web/modules/work-orders/types/work-orders.types';
+import type { OrderStage } from '@web/modules/work-orders/utils/order-status.utils';
 
-const COLOR = { open: 'warning', closed: 'success', voided: 'default' } as const;
+/** State colours (CLAUDE.md): waiting grey, in progress amber, done green, voided grey. */
+const COLOR = {
+  queued: 'default',
+  in_progress: 'warning',
+  closed: 'success',
+  voided: 'default',
+} as const;
 
-/** «En el lavadero», «Cerrada» or «Anulada» (spec 008, RF-03). */
-const OrderStatusChip = ({ status }: { status: WorkOrderStatus }) => {
+/** «En cola», «En proceso», «Cerrada» or «Anulada» (spec 008, RF-03, HU-07). */
+const OrderStatusChip = ({ stage }: { stage: OrderStage }) => {
   const t = useTranslations('orders.status');
 
   return (
-    <Chip size="sm" variant="dot" color={COLOR[status]}>
-      {t(status)}
+    <Chip size="sm" variant="dot" color={COLOR[stage]}>
+      {t(stage)}
     </Chip>
   );
 };

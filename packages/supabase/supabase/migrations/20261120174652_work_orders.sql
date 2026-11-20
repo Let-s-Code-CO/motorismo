@@ -40,6 +40,9 @@ create table public.work_orders (
   notes text check (char_length(notes) <= 500),
   opened_at timestamptz not null default now(),
   opened_by uuid not null references public.profiles (id),
+  -- HU-07: an open order is in the queue until it is started (once, for good).
+  started_at timestamptz,
+  started_by uuid references public.profiles (id),
   closed_at timestamptz,
   closed_by uuid references public.profiles (id),
   voided_at timestamptz,
@@ -48,6 +51,7 @@ create table public.work_orders (
   corrected_at timestamptz,
   corrected_by uuid references public.profiles (id),
   correction_reason text,
+  constraint work_orders_started_consistent check ((started_at is null) = (started_by is null)),
   constraint work_orders_closed_consistent check ((closed_at is null) = (closed_by is null)),
   constraint work_orders_closed_has_date check (status <> 'closed' or closed_at is not null),
   constraint work_orders_voided_consistent check (
@@ -135,11 +139,15 @@ select
   o.vehicle_id,
   v.vehicle_type,
   v.plate,
+  -- A car plate shows the city that issued it (spec 005, RN-11), as on the customer record.
+  m.name as plate_city_name,
   b.name as brand_name,
   l.name as line_name,
   o.notes,
   o.opened_at,
   private.staff_name(o.opened_by) as opened_by_name,
+  o.started_at,
+  private.staff_name(o.started_by) as started_by_name,
   o.closed_at,
   private.staff_name(o.closed_by) as closed_by_name,
   o.voided_at,
@@ -160,6 +168,7 @@ join public.customers c on c.id = o.customer_id
 join public.vehicles v on v.id = o.vehicle_id
 join public.vehicle_brands b on b.id = v.brand_id
 left join public.vehicle_lines l on l.id = v.line_id
+left join public.municipalities m on m.code = v.plate_city_code
 left join lateral (
   select
     sum(wl.price) as subtotal,
@@ -506,6 +515,36 @@ begin
 end;
 $$;
 
+-- start_work_order -------------------------------------------------------------------------------
+-- Staff start an order in the queue: it moves to «En proceso», once and for good (HU-07, CA-33,
+-- CA-36). Closing does not need it (CA-35).
+create function public.start_work_order(p_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_order public.work_orders;
+begin
+  if not (select public.is_staff()) then
+    perform private.work_order_fail('42501', 'work_order_staff_only', 'only staff manage work orders');
+  end if;
+  select * into v_order from public.work_orders where id = p_id for update;
+  if not found then
+    perform private.work_order_fail('P0002', 'work_order_not_found', 'work order not found');
+  end if;
+  if v_order.status <> 'open' then
+    perform private.work_order_fail('23514', 'work_order_not_open', 'only an open order is started');
+  end if;
+  if v_order.started_at is not null then
+    perform private.work_order_fail('23514', 'work_order_already_started', 'the order is already started');
+  end if;
+
+  update public.work_orders set started_at = now(), started_by = (select auth.uid()) where id = p_id;
+end;
+$$;
+
 -- void_work_order --------------------------------------------------------------------------------
 -- Staff void an open order; only an admin a closed one; always with a reason (CA-21, CA-23).
 create function public.void_work_order(p_id uuid, p_reason text)
@@ -544,6 +583,8 @@ revoke execute on function public.save_work_order(uuid, uuid, jsonb, integer, te
 revoke execute on function public.close_work_order(uuid, jsonb) from public, anon;
 revoke execute on function public.correct_work_order(uuid, jsonb, jsonb, text, integer, text) from public, anon;
 revoke execute on function public.void_work_order(uuid, text) from public, anon;
+revoke execute on function public.start_work_order(uuid) from public, anon;
+grant execute on function public.start_work_order(uuid) to authenticated, service_role;
 grant execute on function public.save_work_order(uuid, uuid, jsonb, integer, text, uuid) to authenticated, service_role;
 grant execute on function public.close_work_order(uuid, jsonb) to authenticated, service_role;
 grant execute on function public.correct_work_order(uuid, jsonb, jsonb, text, integer, text) to authenticated, service_role;

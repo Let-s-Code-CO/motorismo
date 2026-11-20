@@ -525,6 +525,8 @@ export type Database = {
           number: number
           opened_at: string
           opened_by: string
+          started_at: string | null
+          started_by: string | null
           status: Database["public"]["Enums"]["work_order_status"]
           vehicle_id: string
           void_reason: string | null
@@ -544,6 +546,8 @@ export type Database = {
           number?: never
           opened_at?: string
           opened_by: string
+          started_at?: string | null
+          started_by?: string | null
           status?: Database["public"]["Enums"]["work_order_status"]
           vehicle_id: string
           void_reason?: string | null
@@ -563,6 +567,8 @@ export type Database = {
           number?: never
           opened_at?: string
           opened_by?: string
+          started_at?: string | null
+          started_by?: string | null
           status?: Database["public"]["Enums"]["work_order_status"]
           vehicle_id?: string
           void_reason?: string | null
@@ -594,6 +600,13 @@ export type Database = {
           {
             foreignKeyName: "work_orders_opened_by_fkey"
             columns: ["opened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_started_by_fkey"
+            columns: ["started_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -635,7 +648,10 @@ export type Database = {
           opened_at: string | null
           opened_by_name: string | null
           plate: string | null
+          plate_city_name: string | null
           services: string[] | null
+          started_at: string | null
+          started_by_name: string | null
           status: Database["public"]["Enums"]["work_order_status"] | null
           subtotal: number | null
           total: number | null
@@ -743,6 +759,7 @@ export type Database = {
         }
         Returns: string
       }
+      start_work_order: { Args: { p_id: string }; Returns: undefined }
       void_work_order: {
         Args: { p_id: string; p_reason: string }
         Returns: undefined

@@ -18,6 +18,7 @@ export type WorkOrdersErrorKey =
   | 'paymentsMismatch'
   | 'reasonRequired'
   | 'alreadyVoided'
+  | 'alreadyStarted'
   | 'adminOnly'
   | 'notFound'
   | 'generic';
@@ -41,6 +42,7 @@ const BY_HINT: Record<string, WorkOrdersErrorKey> = {
   work_order_payments_mismatch: 'paymentsMismatch',
   work_order_reason_required: 'reasonRequired',
   work_order_already_voided: 'alreadyVoided',
+  work_order_already_started: 'alreadyStarted',
   work_order_admin_only: 'adminOnly',
   work_order_not_found: 'notFound',
   work_order_line_not_found: 'notFound',

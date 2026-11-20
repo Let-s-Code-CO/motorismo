@@ -123,6 +123,43 @@ test.describe('on a 360 px phone', () => {
   });
 });
 
+test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
+  test.use({
+    viewport: { width: 440, height: 956 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 3,
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+  });
+
+  test('every staff screen of specs 007 and 008 has no horizontal scroll', async ({ page }) => {
+    const { data: open } = await adminClient()
+      .from('work_orders')
+      .select('id, customer_id')
+      .eq('status', 'open')
+      .order('number')
+      .limit(1)
+      .single();
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    for (const path of [
+      '/',
+      '/orders',
+      '/orders/new',
+      `/orders/${open!.id}`,
+      `/customers/${open!.customer_id}`,
+      '/services',
+      '/employees',
+    ]) {
+      await page.goto(path);
+      await expect(page.getByRole('main')).toBeVisible();
+      await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
+    }
+  });
+});
+
 test.describe('on a desktop', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 

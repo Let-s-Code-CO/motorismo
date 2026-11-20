@@ -5,13 +5,12 @@
     "new": "Nueva orden",
     "number": "Orden #{number}",
     "status": {
-      "open": "En el lavadero",
+      "queued": "En cola",
+      "in_progress": "En proceso",
       "closed": "Cerrada",
       "voided": "Anulada"
     },
     "list": {
-      "openTitle": "En el lavadero",
-      "openEmpty": "No hay vehículos en el lavadero.",
       "closedTitle": "Cerradas",
       "closedEmpty": "Aún no hay órdenes cerradas.",
       "receivedAgo": "Recibido {ago}",
@@ -19,11 +18,22 @@
       "voidedOn": "Anulada el {date}",
       "previous": "Anteriores",
       "next": "Siguientes",
-      "page": "Página {page}",
-      "label": "Órdenes en el lavadero",
+      "page": "Página {page} de {pages}",
       "closedLabel": "Órdenes cerradas",
       "readyAt": "Lista hacia las {time}",
-      "readyFrom": "Lista desde las {time}"
+      "readyFrom": "Lista desde las {time}",
+      "inProgressTitle": "En proceso",
+      "inProgressEmpty": "Nada en proceso.",
+      "inProgressLabel": "Órdenes en proceso",
+      "queueTitle": "En cola",
+      "queueEmpty": "No hay vehículos esperando turno.",
+      "queueLabel": "Órdenes en cola",
+      "turn": "{turn}.º",
+      "arrivedAgo": "Llegó {ago}",
+      "start": "Empezar",
+      "startLabel": "Empezar la orden #{number}",
+      "started": "Orden #{number} en proceso.",
+      "startedAgo": "Empezó {ago}"
     },
     "picker": {
       "customerSearch": "Buscar cliente",
@@ -71,7 +81,8 @@
       "estimatePartial": "≈ {duration} · desde las {time}",
       "missing": "Falta estimar: {names}",
       "noEstimate": "Sin tiempo estimado",
-      "label": "Resumen de la orden"
+      "label": "Resumen de la orden",
+      "estimateDuration": "≈ {duration}"
     },
     "close": {
       "action": "Cerrar y cobrar",
@@ -99,17 +110,21 @@
       "back": "Volver a «Órdenes»",
       "customer": "Cliente",
       "vehicle": "Vehículo",
-      "openedBy": "Recibido el {date} por {name}",
-      "closedBy": "Entregado el {date} por {name}",
-      "voidedBy": "Anulada el {date} por {name}: {reason}",
-      "correctedBy": "Corregida el {date} por {name}: {reason}",
+      "openedBy": "Recibido el {date} a las {time} por {name}",
+      "closedBy": "Entregado el {date} a las {time} por {name}",
+      "voidedBy": "Anulada el {date} a las {time} por {name}: {reason}",
+      "correctedBy": "Corregida el {date} a las {time} por {name}: {reason}",
       "payments": "Pagos",
       "noPayments": "Sin pagos",
       "edit": "Editar",
       "employeesOf": "{names}",
       "noEmployees": "Sin empleados asignados",
-      "void": "Anular",
-      "correct": "Corregir"
+      "void": "Anular orden",
+      "voidTitle": "Anulación",
+      "correct": "Corregir",
+      "startedBy": "Empezada el {date} a las {time} por {name}",
+      "start": "Empezar",
+      "started": "Orden en proceso."
     },
     "history": {
       "title": "Historial",
@@ -118,7 +133,8 @@
       "last": "Últimas visitas",
       "all": "Órdenes",
       "empty": "Aún no tiene órdenes.",
-      "date": "{date}"
+      "date": "{date}",
+      "more": "Ver más"
     },
     "void": {
       "title": "Anular la orden #{number}",
@@ -174,7 +190,8 @@
       "alreadyVoided": "Esta orden ya está anulada.",
       "adminOnly": "Solo un administrador puede hacer esto con una orden cerrada.",
       "notFound": "No se encontró la orden.",
-      "generic": "No se pudo guardar. Inténtalo de nuevo."
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "alreadyStarted": "Esta orden ya está en proceso."
     }
   }
 }

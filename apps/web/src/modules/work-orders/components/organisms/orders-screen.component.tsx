@@ -1,12 +1,17 @@
 'use client';
 
+import { type ReactNode, useState, useTransition } from 'react';
+
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-import { Button } from '@heroui/react';
-import { Plus } from 'lucide-react';
+import { Alert, Button } from '@heroui/react';
+import { Play, Plus } from 'lucide-react';
 
 import { formatPesos } from '@web/modules/core/utils/money.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
+import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-status-chip.component';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
 import { CLOSED_PAGE_SIZE } from '@web/modules/work-orders/constants/work-orders.constants';
@@ -14,12 +19,14 @@ import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-order
 import { vehicleLabel } from '@web/modules/work-orders/utils/vehicle-label.utils';
 
 type OrdersScreenProps = {
-  /** «En el lavadero»: the open orders, oldest first (CA-18). */
+  /** The open orders, oldest first: split into «En proceso» and «En cola» (CA-18). */
   open: WorkOrderSummary[];
   /** One page of the closed and voided orders, newest first (CA-19). */
   closed: { rows: WorkOrderSummary[]; total: number };
   page: number;
 };
+
+type Notice = { tone: 'success' | 'danger'; text: string };
 
 /** The lines of an order as the estimate needs them: the view gives the sum and the missing ones. */
 const estimateLines = (order: WorkOrderSummary) => [
@@ -27,21 +34,66 @@ const estimateLines = (order: WorkOrderSummary) => [
   ...(order.unestimated ?? []).map((name) => ({ name, estimated_minutes: null })),
 ];
 
+const LIST =
+  'flex flex-col divide-y divide-divider overflow-hidden rounded-large border border-divider bg-content1 shadow-small';
+const EMPTY =
+  'rounded-medium border border-dashed border-default-300 p-4 text-center text-sm text-default-500';
+const ROW_LINK =
+  'flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3 p-4 outline-none hover:bg-default-50 focus-visible:bg-default-50';
+
+/** A section title with its state colour (CLAUDE.md: state colours only), said in words too. */
+const SectionTitle = ({ dot, children }: { dot: string; children: ReactNode }) => (
+  <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+    <span aria-hidden className={`size-2.5 rounded-full ${dot}`} />
+    {children}
+  </h2>
+);
+
 /**
- * «Órdenes» (spec 008, HU-04): what is in the car wash now, with when each vehicle should be ready
- * (CA-18), and what was handed over, by pages, voided ones marked (CA-19).
+ * «Órdenes» (spec 008, HU-04, HU-07): what is being done now, with when each vehicle should be
+ * ready from its start (CA-18, CA-34); what waits its turn, by arrival, to start with one tap
+ * (CA-33); and what was handed over, by pages, voided ones marked (CA-19).
  */
 const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
   const t = useTranslations('orders');
   const format = useFormatter();
-  // «Recibido hace …» counts from a shared «now», refreshed every minute.
+  const router = useRouter();
+  // «hace …» counts from a shared «now», refreshed every minute.
   const now = useNow({ updateInterval: 60_000 });
+  const [notice, setNotice] = useState<Notice>();
+  const [isPending, startTransition] = useTransition();
   const pages = Math.max(1, Math.ceil(closed.total / CLOSED_PAGE_SIZE));
+  const inProgress = open.filter((order) => order.started_at);
+  const queue = open.filter((order) => !order.started_at);
+
   const vehicleOf = (order: WorkOrderSummary) =>
     vehicleLabel(
       { brand_name: order.brand_name, line_name: order.line_name, plate: order.plate },
       t('picker.noPlate')
     );
+  const ago = (date: string | null) => format.relativeTime(date ? new Date(date) : now, now);
+
+  const start = (order: WorkOrderSummary) =>
+    startTransition(async () => {
+      const result = await callAction(() => startWorkOrder({ id: order.id }));
+      if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
+      setNotice(
+        result.ok
+          ? { tone: 'success', text: t('list.started', { number: order.number ?? 0 }) }
+          : { tone: 'danger', text: t(`errors.${result.error}`) }
+      );
+      router.refresh();
+    });
+
+  const heading = (order: WorkOrderSummary) => (
+    <span className="flex min-w-0 flex-col gap-0.5">
+      <span className="font-medium">
+        {t('number', { number: order.number ?? 0 })} · {order.customer_name}
+      </span>
+      <span className="text-xs text-default-500">{vehicleOf(order)}</span>
+      <span className="text-xs text-default-500">{(order.services ?? []).join(' · ')}</span>
+    </span>
+  );
 
   return (
     <section className="flex flex-col gap-8">
@@ -61,86 +113,147 @@ const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
         </Button>
       </div>
 
+      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
+
       <div className="flex flex-col gap-3">
-        <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
-          <span aria-hidden className="size-2.5 rounded-full bg-warning-400" />
-          {t('list.openTitle')}
-        </h2>
-        {open.length === 0 ? (
-          <p className="rounded-medium border border-dashed border-default-300 p-4 text-center text-sm text-default-500">
-            {t('list.openEmpty')}
-          </p>
+        <SectionTitle dot="bg-warning-400">{t('list.inProgressTitle')}</SectionTitle>
+        {inProgress.length === 0 ? (
+          <p className={EMPTY}>{t('list.inProgressEmpty')}</p>
         ) : (
-          <ul
-            aria-label={t('list.label')}
-            className="flex flex-col divide-y divide-divider overflow-hidden rounded-large border border-divider bg-content1 shadow-small"
-          >
-            {open.map((order) => (
-              // In progress: an amber bar (state colours, CLAUDE.md); the section says it in words.
-              <li key={order.id} className="border-l-4 border-l-warning-400">
-                <Link
-                  href={`/orders/${order.id}`}
-                  className="flex flex-wrap items-start justify-between gap-3 p-4 outline-none hover:bg-default-50 focus-visible:bg-default-50"
-                >
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="font-medium">
-                      {t('number', { number: order.number ?? 0 })} · {order.customer_name}
+          <ul aria-label={t('list.inProgressLabel')} className={LIST}>
+            {inProgress.map((order) => {
+              const times = (
+                <>
+                  <span>{t('list.startedAgo', { ago: ago(order.started_at) })}</span>
+                  <OrderEstimate
+                    lines={estimateLines(order)}
+                    startedAt={order.started_at ? new Date(order.started_at) : null}
+                    compact
+                  />
+                </>
+              );
+              return (
+                <li key={order.id} className="border-l-4 border-l-warning-400">
+                  {/* The total stays top right; on a phone the times go under the order. */}
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="flex items-start justify-between gap-3 p-4 outline-none hover:bg-default-50 focus-visible:bg-default-50"
+                  >
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      {heading(order)}
+                      <span className="mt-1 flex flex-col text-xs text-default-500 sm:hidden">
+                        {times}
+                      </span>
                     </span>
-                    <span className="text-xs text-default-500">{vehicleOf(order)}</span>
-                    <span className="text-xs text-default-500">
-                      {(order.services ?? []).join(' · ')}
+                    <span className="flex shrink-0 flex-col items-end gap-0.5 text-sm">
+                      <span className="font-medium tabular-nums">
+                        {formatPesos(order.total ?? 0)}
+                      </span>
+                      <span className="hidden flex-col items-end text-xs text-default-500 sm:flex">
+                        {times}
+                      </span>
                     </span>
-                  </span>
-                  <span className="flex flex-col items-end gap-0.5 text-sm">
-                    <span className="font-medium tabular-nums">
-                      {formatPesos(order.total ?? 0)}
-                    </span>
-                    <span className="text-xs text-default-500">
-                      {t('list.receivedAgo', {
-                        ago: format.relativeTime(new Date(order.opened_at ?? now), now),
-                      })}
-                    </span>
-                    <OrderEstimate
-                      lines={estimateLines(order)}
-                      receivedAt={order.opened_at ? new Date(order.opened_at) : now}
-                      compact
-                    />
-                  </span>
-                </Link>
-              </li>
-            ))}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
-          <span aria-hidden className="size-2.5 rounded-full bg-success-500" />
-          {t('list.closedTitle')}
-        </h2>
-        {closed.rows.length === 0 ? (
-          <p className="rounded-medium border border-dashed border-default-300 p-4 text-center text-sm text-default-500">
-            {t('list.closedEmpty')}
-          </p>
+        <SectionTitle dot="bg-default-400">{t('list.queueTitle')}</SectionTitle>
+        {queue.length === 0 ? (
+          <p className={EMPTY}>{t('list.queueEmpty')}</p>
         ) : (
-          <ul
-            aria-label={t('list.closedLabel')}
-            className="flex flex-col divide-y divide-divider overflow-hidden rounded-large border border-divider bg-content1 shadow-small"
-          >
+          <ul aria-label={t('list.queueLabel')} className={LIST}>
+            {queue.map((order, index) => {
+              const times = (
+                <>
+                  <span>{t('list.arrivedAgo', { ago: ago(order.opened_at) })}</span>
+                  <OrderEstimate lines={estimateLines(order)} startedAt={null} compact />
+                </>
+              );
+              return (
+                // The whole card opens the order, like the other sections: the link stretches over it
+                // (after:inset-0) and «Empezar» sits above (a button inside a link is not valid).
+                // Total and times stacked on the right; on a phone the times and «Empezar» go on
+                // their own line under the order.
+                <li
+                  key={order.id}
+                  className="relative flex items-start gap-3 border-l-4 border-l-default-300 p-4 hover:bg-default-50 has-[a:focus-visible]:bg-default-50"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-default-100 text-xs font-semibold text-default-700 tabular-nums">
+                    {t('list.turn', { turn: index + 1 })}
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="flex min-w-0 flex-1 items-start justify-between gap-3 outline-none after:absolute after:inset-0 after:content-['']"
+                    >
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="font-medium">
+                          {t('number', { number: order.number ?? 0 })} · {order.customer_name}
+                        </span>
+                        <span className="text-xs text-default-500">{vehicleOf(order)}</span>
+                        <span className="text-xs text-default-500">
+                          {(order.services ?? []).join(' · ')}
+                        </span>
+                      </span>
+                      <span className="flex shrink-0 flex-col items-end gap-0.5 text-sm">
+                        <span className="font-medium tabular-nums">
+                          {formatPesos(order.total ?? 0)}
+                        </span>
+                        <span className="hidden flex-col items-end text-xs text-default-500 sm:flex">
+                          {times}
+                        </span>
+                      </span>
+                    </Link>
+                    <div className="flex items-center justify-between gap-3 sm:justify-end">
+                      <span className="flex flex-col text-xs text-default-500 sm:hidden">
+                        {times}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="bordered"
+                        // Above the stretched link: starting does not open the order.
+                        className="relative z-10 shrink-0 bg-content1"
+                        aria-label={t('list.startLabel', { number: order.number ?? 0 })}
+                        startContent={<Play aria-hidden className="size-3.5" />}
+                        isDisabled={isPending}
+                        onPress={() => {
+                          setNotice(undefined);
+                          start(order);
+                        }}
+                      >
+                        {t('list.start')}
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <SectionTitle dot="bg-success-500">{t('list.closedTitle')}</SectionTitle>
+        {closed.rows.length === 0 ? (
+          <p className={EMPTY}>{t('list.closedEmpty')}</p>
+        ) : (
+          <ul aria-label={t('list.closedLabel')} className={LIST}>
             {closed.rows.map((order) => (
               // Done: green; voided: grey (and its «Anulada» label, never colour alone).
               <li
                 key={order.id}
                 className={`border-l-4 ${order.status === 'voided' ? 'border-l-default-300' : 'border-l-success-500'}`}
               >
-                <Link
-                  href={`/orders/${order.id}`}
-                  className="flex flex-wrap items-start justify-between gap-3 p-4 outline-none hover:bg-default-50 focus-visible:bg-default-50"
-                >
+                <Link href={`/orders/${order.id}`} className={ROW_LINK}>
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="flex flex-wrap items-center gap-2 font-medium">
                       {t('number', { number: order.number ?? 0 })} · {order.customer_name}
-                      {order.status === 'voided' && <OrderStatusChip status="voided" />}
+                      {order.status === 'voided' && <OrderStatusChip stage="voided" />}
                     </span>
                     <span className="text-xs text-default-500">{vehicleOf(order)}</span>
                   </span>
@@ -175,7 +288,7 @@ const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
             ) : (
               <span />
             )}
-            <span className="text-default-500">{t('list.page', { page })}</span>
+            <span className="text-default-500">{t('list.page', { page, pages })}</span>
             {page < pages ? (
               <Link
                 href={`/orders?page=${page + 1}`}

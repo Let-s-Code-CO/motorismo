@@ -1,11 +1,16 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
+
+import { Button } from '@heroui/react';
 
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-status-chip.component';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
+import { orderStage } from '@web/modules/work-orders/utils/order-status.utils';
 import { vehicleLabel } from '@web/modules/work-orders/utils/vehicle-label.utils';
 
 type CustomerHistoryProps = {
@@ -15,20 +20,25 @@ type CustomerHistoryProps = {
   variant: 'summary' | 'full';
 };
 
+/** On the record, how many orders show at first and how many more each «Ver más» adds (CA-16). */
+const PAGE = 10;
+
 /** RN-07: a visit is a closed order that was not voided. */
 const visitsOf = (orders: WorkOrderSummary[]) =>
   orders.filter((order) => order.status === 'closed');
 
 /**
  * How many times a customer has come and what was done (spec 008, HU-03): the number of visits
- * and the last two (CA-15), or every order with its status on the record (CA-16); a customer
+ * and the last two (CA-15), or every order with its status on the record, 10 at a time with «Ver
+ * más» (CA-16); a customer
  * without visits is on their first one (CA-17).
  */
 const CustomerHistory = ({ orders, variant }: CustomerHistoryProps) => {
   const t = useTranslations('orders');
   const format = useFormatter();
+  const [limit, setLimit] = useState(PAGE);
   const visits = visitsOf(orders);
-  const shown = variant === 'summary' ? visits.slice(0, 2) : orders;
+  const shown = variant === 'summary' ? visits.slice(0, 2) : orders.slice(0, limit);
   const dateOf = (order: WorkOrderSummary) =>
     format.dateTime(new Date(order.closed_at ?? order.opened_at ?? 0), {
       dateStyle: 'medium',
@@ -68,7 +78,7 @@ const CustomerHistory = ({ orders, variant }: CustomerHistoryProps) => {
                     {t('number', { number: order.number ?? 0 })}
                   </Link>
                   <span className="text-xs text-default-500">{dateOf(order)}</span>
-                  {variant === 'full' && order.status && <OrderStatusChip status={order.status} />}
+                  {variant === 'full' && <OrderStatusChip stage={orderStage(order)} />}
                 </span>
                 <span className="text-xs text-default-500">
                   {vehicleLabel(
@@ -88,6 +98,16 @@ const CustomerHistory = ({ orders, variant }: CustomerHistoryProps) => {
             </li>
           ))}
         </ul>
+      )}
+      {variant === 'full' && orders.length > limit && (
+        <Button
+          size="sm"
+          variant="light"
+          className="w-max"
+          onPress={() => setLimit((current) => current + PAGE)}
+        >
+          {t('history.more')}
+        </Button>
       )}
     </div>
   );

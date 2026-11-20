@@ -34,7 +34,12 @@ const InstallBanner = () => {
 
   return (
     <>
-      <div className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-xl shadow-large">
+      {/*
+       * Sticky, not fixed: it floats at the bottom while scrolling, but at the end of the page it
+       * takes its own room below the footer, so it never covers the last thing on a page (such as
+       * «Anular orden», spec 008). It is the last child of the signed-in layout for that.
+       */}
+      <div className="sticky bottom-4 z-40 mx-4 mb-4 rounded-medium shadow-large sm:mx-auto sm:w-full sm:max-w-xl">
         <Alert
           color="default"
           variant="faded"

@@ -299,7 +299,7 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   await expect(page).toHaveURL('/');
 
   await page.goto('/orders');
-  await expect(page.getByRole('heading', { name: 'En el lavadero' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'En proceso' })).toBeVisible();
   expect(await audit(page)).toEqual([]);
 
   // A new order for Valentina (one vehicle, chosen by itself), sent without services.
@@ -321,7 +321,10 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Anular' }).click();
+  await page
+    .getByRole('region', { name: 'Anulación' })
+    .getByRole('button', { name: 'Anular orden' })
+    .click();
   await untilDialogSettled(page);
   await page.getByRole('dialog').getByRole('button', { name: 'Anular orden' }).click();
   await expect(page.getByText('Escribe el motivo.')).toBeVisible();

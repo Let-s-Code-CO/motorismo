@@ -4,10 +4,11 @@
  * Guards:
  * - CA-15 / RN-07: a visit is a closed order that was not voided; staff see how many, and the last
  *   two (date, vehicle, services and total).
- * - CA-16: on the customer record, every order, newest first, with its status.
+ * - CA-16: on the customer record, every order, newest first, with its status: 10 at a time, «Ver
+ *   más» adds 10 more (a loyal customer does not stretch the record without end).
  * - CA-17: a customer without visits is told apart: it is their first one.
  */
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 
 import CustomerHistory from '@web/modules/work-orders/components/organisms/customer-history.component';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
@@ -88,7 +89,7 @@ describe('CustomerHistory', () => {
     const rows = screen.getAllByRole('listitem');
     expect(rows).toHaveLength(5);
     expect(rows[0]).toHaveTextContent('Orden #4');
-    expect(rows[0]).toHaveTextContent('En el lavadero');
+    expect(rows[0]).toHaveTextContent('En cola');
     expect(rows[1]).toHaveTextContent('Anulada');
     expect(screen.getByRole('link', { name: /Orden #2/ })).toHaveAttribute('href', '/orders/o2');
   });
@@ -97,5 +98,43 @@ describe('CustomerHistory', () => {
     renderWithProviders(<CustomerHistory orders={[ORDERS[0]!]} variant="summary" />);
 
     expect(screen.getByText('Primera visita: aún no tiene órdenes cerradas.')).toBeVisible();
+  });
+
+  it('shows 10 orders on the record, and «Ver más» adds the next ones (CA-16)', () => {
+    const many = Array.from({ length: 12 }, (_, i) =>
+      order({
+        id: `m${i}`,
+        number: 100 - i,
+        opened_at: `2026-10-${String(20 - i).padStart(2, '0')}T15:00:00Z`,
+      })
+    );
+    renderWithProviders(<CustomerHistory orders={many} variant="full" />);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(10);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver más' }));
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(12);
+    expect(screen.queryByRole('button', { name: 'Ver más' })).not.toBeInTheDocument();
+  });
+
+  it('shows «En cola» or «En proceso» for an open order (HU-07)', () => {
+    renderWithProviders(
+      <CustomerHistory
+        orders={[
+          order({ id: 'q', number: 7, status: 'open', closed_at: null, started_at: null }),
+          order({
+            id: 'p',
+            number: 8,
+            status: 'open',
+            closed_at: null,
+            started_at: '2026-11-20T15:00:00Z',
+          }),
+        ]}
+        variant="full"
+      />
+    );
+
+    expect(screen.getByText('En cola')).toBeVisible();
+    expect(screen.getByText('En proceso')).toBeVisible();
   });
 });

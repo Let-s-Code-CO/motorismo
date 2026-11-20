@@ -338,3 +338,62 @@ Ninguna.
 | `useClock` formatea las horas en 12 h («4:15 p. m.») y cambia los espacios especiales por normales; «hace …» con `useNow`. | Node y Chromium ponen espacios distintos en «p. m.»: el texto del servidor no coincidía con el del navegador (error de hidratación). |
 | Los botones «Añadir …» llevan «Añadir» en `sr-only` delante del texto visible; el detalle separa la `<dl>` de los párrafos sueltos. | Auditoría de accesibilidad: el nombre accesible debe contener el texto visible (WCAG 2.5.3) y una `<dl>` solo admite pares `dt`/`dd`. |
 | Las pruebas pgTAP de catálogos y órdenes vacían primero las órdenes de los seeds, dentro de su transacción. | Los seeds de órdenes apuntan a servicios y empleados. |
+
+## Enmienda 2026-11-20: en cola, en proceso y ficha paginada (HU-07)
+
+**Base de datos.** La migración `work_orders` aún no se ha aplicado en remoto, así que se edita.
+
+- `work_orders` gana `started_at` y `started_by`, con un `check` de coherencia: los dos o ninguno, y
+  solo en una orden que no esté en cola.
+- El estado sigue siendo `open`, `closed` o `voided`:
+  - **«En cola»** = abierta sin `started_at`;
+  - **«En proceso»** = abierta con `started_at`.
+
+  Un enum nuevo obligaría a tocar las cuatro funciones sin ganar nada.
+- **`start_work_order(p_id)`** (`security definer`, personal):
+  - solo una orden abierta y sin empezar;
+  - pistas `work_order_not_open` y `work_order_already_started` (CA-33, CA-36);
+  - cerrar no exige haberla empezado (CA-35).
+- La vista gana `started_at` y `started_by_name`.
+- pgTAP: empezar, empezar dos veces, empezar una cerrada, el cliente, el nombre en la vista.
+- Seeds:
+  - #4 de Camila, empezada hace 20 minutos;
+  - una nueva orden en cola para la bicicleta de Andrés, para que haya algo en cada sección.
+
+**App.**
+
+- **Acción** `startWorkOrder`.
+- **`order-status.utils`**: `queued`, `in_progress`, `closed` o `voided`, derivado del estado y de
+  `started_at`. `OrderStatusChip` lo usa, con «En cola», «En proceso», «Cerrada» y «Anulada».
+- **«Órdenes»**:
+  - tres secciones: «En proceso» en ámbar, «En cola» en gris y «Cerradas» en verde (colores de
+    estado, CLAUDE.md);
+  - la cola, por llegada y con su turno;
+  - en cada fila de la cola, el enlace a la orden y, aparte, un botón «Empezar» (un botón dentro de
+    un enlace no es válido);
+  - «Página X de Y».
+- **Estimado**:
+  - con inicio (en proceso), da la hora de entrega desde el inicio (CA-34);
+  - sin inicio (en cola o una orden nueva), solo la duración: «≈ 2 h 15 min», sin hora;
+  - el editor recibe `startedAt` en lugar de `receivedAt`.
+- **Detalle**: «Empezar» si está en cola, y la línea «Empezada el … por …».
+- **Ficha del cliente**: `CustomerHistory` muestra 10 órdenes y «Ver más» añade 10 más, en el
+  cliente, porque la página ya trae todas (CA-16).
+
+**Pruebas.**
+
+| Criterio | Prueba |
+|---|---|
+| CA-32 a CA-36 | pgTAP; `work-orders.actions` (`startWorkOrder`); `orders-screen` (secciones, turno, «Empezar»); `order-detail`; `order-estimate`; `work-orders.spec.ts` (abrir → en cola → empezar → en proceso). |
+| CA-16 | `customer-history` (10 + «Ver más»). |
+| CA-18 y CA-19 | `orders-screen` (tres secciones, «Página 1 de 3»). |
+
+Al implementar la enmienda:
+- Las filas de «En cola» y «En proceso» se reordenan en el teléfono: el total arriba a la derecha y
+  los tiempos (y «Empezar») en su propia línea.
+- `now` se fija por petición en `src/i18n/request.ts`: con «hace …» calculado en servidor y
+  navegador, cruzar un minuto entre ambos rompía la hidratación.
+- Las fechas con hora del detalle se formatean por separado (fecha larga + `useClock`): Node y el
+  navegador las unían distinto.
+- Red de seguridad `overflow-x-clip` en el contenedor de la app, y la prueba «on an iPhone» de
+  `e2e/ui.spec.ts` con todas las pantallas de las specs 007 y 008.

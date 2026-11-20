@@ -3,7 +3,7 @@
  * operator would leave them.
  *
  * - CA-21: an operator voids an open order with a reason; it says by whom and why.
- * - RN-05: on a closed order, an operator sees neither «Corregir» nor «Anular».
+ * - RN-05: on a closed order, an operator sees neither «Corregir» nor the «Anulación» section.
  * - CA-22: an admin corrects a closed order (a price, the payments) with a reason; it says by whom
  *   and why, with the new total.
  * - CA-23: an admin voids a closed order; it stops counting as a visit of the customer.
@@ -112,7 +112,10 @@ test('an operator voids an open order with a reason, and cannot touch a closed o
 }) => {
   await openAs(page, SEED.operator.email, openOrder);
 
-  await page.getByRole('button', { name: 'Anular' }).click();
+  await page
+    .getByRole('region', { name: 'Anulación' })
+    .getByRole('button', { name: 'Anular orden' })
+    .click();
   const dialog = page.getByRole('dialog', { name: /Anular la orden/ });
   await dialog.getByLabel('Motivo').fill('El cliente se fue sin el servicio');
   await dialog.getByRole('button', { name: 'Anular orden' }).click();
@@ -125,7 +128,7 @@ test('an operator voids an open order with a reason, and cannot touch a closed o
   await page.goto(`/orders/${closedOrder}`);
   await expect(page.getByRole('heading', { name: /^Orden #\d+$/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Corregir' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Anular' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Anulación' })).toHaveCount(0);
 });
 
 test('an admin corrects a closed order with a reason, then voids it; it stops counting as a visit (CA-22, CA-23)', async ({
@@ -151,7 +154,10 @@ test('an admin corrects a closed order with a reason, then voids it; it stops co
   );
 
   // CA-23: void it; it stops counting as a visit.
-  await page.getByRole('button', { name: 'Anular' }).click();
+  await page
+    .getByRole('region', { name: 'Anulación' })
+    .getByRole('button', { name: 'Anular orden' })
+    .click();
   const voidDialog = page.getByRole('dialog', { name: /Anular la orden/ });
   await voidDialog.getByLabel('Motivo').fill('Orden duplicada');
   await voidDialog.getByRole('button', { name: 'Anular orden' }).click();

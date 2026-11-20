@@ -150,3 +150,24 @@ export const correctWorkOrder = async (
   revalidatePath(ORDERS_PATH, 'layout');
   return { ok: true };
 };
+
+const startSchema = z.object({ id: z.uuid() });
+
+/**
+ * Staff start an order in the queue: it moves to «En proceso» (spec 008, CA-33). The database
+ * refuses an order already started or no longer open (CA-36).
+ */
+export const startWorkOrder = async (input: unknown): Promise<ActionResult<WorkOrdersErrorKey>> => {
+  const staff = await getActiveStaff();
+  if (!staff) return { ok: false, error: 'forbidden' };
+
+  const parsed = startSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalidInput' };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc('start_work_order', { p_id: parsed.data.id });
+  if (error) return { ok: false, error: fromWorkOrderError(error) };
+
+  revalidatePath(ORDERS_PATH, 'layout');
+  return { ok: true };
+};

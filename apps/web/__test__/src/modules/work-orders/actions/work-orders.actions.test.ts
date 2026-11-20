@@ -12,6 +12,7 @@
  * - CA-11: closing sends the payments to close_work_order.
  * - CA-21 / CA-23: staff void with a reason (the database decides who may void a closed order).
  * - CA-22 / RN-05: only an ACTIVE ADMIN corrects a closed order, always with a reason.
+ * - CA-33 / CA-36: staff start an order in the queue; starting twice is refused by the database.
  */
 import { revalidatePath } from 'next/cache';
 
@@ -21,6 +22,7 @@ import {
   closeWorkOrder,
   correctWorkOrder,
   saveWorkOrder,
+  startWorkOrder,
   voidWorkOrder,
 } from '@web/modules/work-orders/actions/work-orders.actions';
 
@@ -273,5 +275,33 @@ describe('work-orders.actions — voiding and correcting (HU-05)', () => {
 
     expect(result).toMatchObject({ ok: false, error: 'invalidInput' });
     expect(rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe('work-orders.actions — starting (HU-07)', () => {
+  beforeEach(() => vi.mocked(getActiveStaff).mockResolvedValue(STAFF));
+  afterEach(() => vi.clearAllMocks());
+
+  it('refuses anyone who is not active staff (RN-05)', async () => {
+    vi.mocked(getActiveStaff).mockResolvedValue(null);
+
+    await expect(startWorkOrder({ id: ORDER })).resolves.toEqual({ ok: false, error: 'forbidden' });
+    expect(createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it('starts an order in the queue (CA-33)', async () => {
+    const rpc = fakeSession({ data: null });
+
+    await expect(startWorkOrder({ id: ORDER })).resolves.toEqual({ ok: true });
+    expect(rpc).toHaveBeenCalledWith('start_work_order', { p_id: ORDER });
+  });
+
+  it('reports an order already started (CA-36)', async () => {
+    fakeSession({ data: null, error: { hint: 'work_order_already_started', message: 'refused' } });
+
+    await expect(startWorkOrder({ id: ORDER })).resolves.toEqual({
+      ok: false,
+      error: 'alreadyStarted',
+    });
   });
 });

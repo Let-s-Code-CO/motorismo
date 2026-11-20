@@ -6,15 +6,16 @@
  * - CA-03 / CA-04: add two services with one tap each, at their reference price; the total is in
  *   sight and changes before saving.
  * - CA-06: share a service between two employees (50/50 by default), changed to 80/20.
- * - CA-07: opening the order shows «Orden #N» in the car wash.
+ * - CA-07 / CA-32 / CA-33: opening the order shows «Orden #N» in the queue; «Empezar» moves it to
+ *   «En proceso».
  * - CA-11: closing with two payment methods adding up to the total.
  * - CA-10: a disabled customer is not offered.
  * - HU-03 / HU-04 / HU-06, on the seed orders of Camila (#2 closed, #3 voided, #4 open with an
  *   «Otro» without time):
  *   - choosing her in «Nueva orden» shows 1 visit and the last one (CA-15);
  *   - her record lists every order (CA-16);
- *   - «Órdenes» shows #4 in the car wash with a minimum ready time, and #2 and #3 closed (CA-18,
- *     CA-19, CA-30);
+ *   - «Órdenes» shows #4 in progress with a minimum ready time, Andrés's bicycle in the queue
+ *     (1.º), and #2 and #3 closed (CA-18, CA-19, CA-30);
  *   - the detail of #4 names what is not estimated, and #2 its payments (CA-20, CA-30).
  */
 import { type Locator, type Page, expect, test } from '@playwright/test';
@@ -106,7 +107,12 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   await page.getByRole('button', { name: 'Abrir orden' }).click();
   await expect(page.getByText('Orden abierta.')).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Orden #\d+$/ })).toBeVisible();
-  await expect(page.getByText('En el lavadero')).toBeVisible();
+  await expect(page.getByText('En cola', { exact: true })).toBeVisible();
+  // CA-33: start it.
+  await page.getByRole('button', { name: 'Empezar' }).click();
+  await expect(page.getByText('Orden en proceso.')).toBeVisible();
+  await expect(page.getByText('En proceso', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Empezada el .* por Óscar Operador/)).toBeVisible();
   await expect(page.getByText('Elkin Estrada (80 %) · Paula Pineda (20 %)')).toBeVisible();
 
   // CA-11: close it, half cash half transfer.
@@ -148,11 +154,24 @@ test("staff see a customer's history, what is in the car wash and the closed ord
   // Her motorcycle already has the open order #4: it is offered instead.
   await expect(page.getByText('Ya tiene una orden abierta:')).toBeVisible();
 
-  // CA-18, CA-30: «En el lavadero», with a minimum ready time.
+  // CA-18, CA-30: in progress with a minimum ready time; the queue by arrival, with its turn.
   await page.goto('/orders');
-  const open = page.getByRole('list', { name: 'Órdenes en el lavadero' });
-  const camilaOpen = open.getByRole('listitem').filter({ hasText: SEED_CUSTOMERS.customer.name });
+  const inProgress = page.getByRole('list', { name: 'Órdenes en proceso' });
+  const camilaOpen = inProgress
+    .getByRole('listitem')
+    .filter({ hasText: SEED_CUSTOMERS.customer.name });
   await expect(camilaOpen).toContainText('Lista desde las');
+  const queue = page.getByRole('list', { name: 'Órdenes en cola' });
+  await expect(
+    queue.getByRole('listitem').filter({ hasText: SEED_CUSTOMERS.phoneOnly.name })
+  ).toContainText('1.º');
+  // The whole card opens the order, also where there is no text (its turn).
+  const andres = queue.getByRole('listitem').filter({ hasText: SEED_CUSTOMERS.phoneOnly.name });
+  // A point of the card with no text (by its turn): the stretched link receives the click.
+  await andres.click({ position: { x: 24, y: 60 } });
+  await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
+  await expect(page.getByText(SEED_CUSTOMERS.phoneOnly.name).first()).toBeVisible();
+  await page.goto('/orders');
   // CA-19: closed and voided, newest first.
   const closed = page.getByRole('list', { name: 'Órdenes cerradas' });
   await expect(closed.getByRole('listitem').filter({ hasText: 'Anulada' }).first()).toBeVisible();
@@ -168,7 +187,7 @@ test("staff see a customer's history, what is in the car wash and the closed ord
     .getByRole('heading', { name: 'Órdenes', level: 2 })
     .locator('..')
     .locator('..');
-  await expect(history).toContainText('En el lavadero');
+  await expect(history).toContainText('En proceso');
   await expect(history).toContainText('Anulada');
   await expect(history).toContainText('Cerrada');
 });

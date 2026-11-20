@@ -13,7 +13,8 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
   const account = await requireAccount();
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    // Safety net: nothing may scroll the app sideways on a phone (clip keeps the sticky header).
+    <div className="flex min-h-dvh flex-col overflow-x-clip">
       <AppHeader account={account} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">{children}</main>
       <div className="border-t border-divider">

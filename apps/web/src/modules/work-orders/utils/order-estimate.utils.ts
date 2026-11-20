@@ -3,13 +3,13 @@ export type EstimateKind = 'complete' | 'minimum' | 'none';
 
 /**
  * How long an order should take and when the vehicle should be ready (spec 008, HU-06): the sum of
- * the lines' times, one service after another (RN-11), from when it was received (CA-29). With lines
- * not estimated the sum is only a minimum and they are named (CA-30); with none, there is no
- * estimate.
+ * the lines' times, one service after another (RN-11), from when it was started (CA-29, CA-34). With
+ * lines not estimated the sum is only a minimum and they are named (CA-30); with none, there is no
+ * estimate. An order not started yet has a duration but no ready time (RN-12).
  */
 export const orderEstimate = (
   lines: readonly { name: string; estimated_minutes: number | null }[],
-  receivedAt: Date
+  startedAt: Date | null
 ) => {
   const missing = lines.filter((line) => line.estimated_minutes == null).map((line) => line.name);
   const minutes = lines.reduce((sum, line) => sum + (line.estimated_minutes ?? 0), 0);
@@ -18,6 +18,7 @@ export const orderEstimate = (
     kind,
     minutes,
     missing,
-    readyAt: kind === 'none' ? null : new Date(receivedAt.getTime() + minutes * 60_000),
+    readyAt:
+      kind === 'none' || !startedAt ? null : new Date(startedAt.getTime() + minutes * 60_000),
   };
 };

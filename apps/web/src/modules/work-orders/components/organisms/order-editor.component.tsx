@@ -44,8 +44,11 @@ type OrderEditorProps = {
   vehicle: { id: string; vehicle_type: VehicleType };
   /** The open order being edited (CA-08); without it a new order is opened (CA-07). */
   order?: WorkOrderDetail;
-  /** When the vehicle was received: now for a new order; the estimate counts from it (CA-29). */
-  receivedAt?: Date;
+  /**
+   * When the order was started: the ready time counts from it (CA-34). Absent for a new order or one
+   * still in the queue, which show only their duration (RN-12).
+   */
+  startedAt?: Date;
   onSaved: (orderId: string) => void;
   onCancel?: () => void;
   /**
@@ -80,7 +83,7 @@ const OrderEditor = ({
   customer,
   vehicle,
   order,
-  receivedAt,
+  startedAt,
   onSaved,
   onCancel,
   onCorrect,
@@ -113,10 +116,9 @@ const OrderEditor = ({
     typedPesos(discount)
   );
 
-  // The ready time counts from reception: the order's own, or now for a new one (CA-29).
-  const [start] = useState(
-    () => receivedAt ?? (order?.summary.opened_at ? new Date(order.summary.opened_at) : new Date())
-  );
+  // The ready time counts from the start (CA-34); not started yet, only the duration (RN-12).
+  const start =
+    startedAt ?? (order?.summary.started_at ? new Date(order.summary.started_at) : null);
   const estimateLines = lines.map((line) => ({
     name: line?.service_id ? (line.name ?? '') : line?.name?.trim() || t('editor.other'),
     estimated_minutes: /^\d+$/.test(String(line?.estimated_minutes ?? '').trim())
@@ -271,7 +273,7 @@ const OrderEditor = ({
               </dd>
             </>
           }
-          estimate={<OrderEstimate lines={estimateLines} receivedAt={start} />}
+          estimate={<OrderEstimate lines={estimateLines} startedAt={start} />}
         />
         <div className="mt-3 flex justify-end gap-2">
           {onCancel && (
