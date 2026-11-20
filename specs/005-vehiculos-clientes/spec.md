@@ -1,7 +1,7 @@
 ---
 id: "005"
 titulo: "Vehículos de los clientes"
-estado: verificada
+estado: lista
 creada: 2026-11-19
 actualizada: 2026-11-19
 ---
@@ -46,11 +46,13 @@ para saber qué vehículos trae y reconocerlos por su placa.
 - **CA-02** — Dado un miembro del personal que elige «Agregar vehículo», cuando se abre el
   formulario, entonces ve tipo (Motocicleta, Bicicleta o Carro), con **Motocicleta** ya elegido,
   marca, línea, cilindraje, color y placa. El cilindraje solo aparece para Motocicleta; al elegir
-  Carro aparece la clase Automóvil o Camioneta, y al elegir Bicicleta, Montaña o Ruta.
+  Carro aparecen la clase Automóvil o Camioneta y la ciudad de la placa (CA-30), y al elegir
+  Bicicleta, Montaña o Ruta.
 - **CA-03** — Dado un miembro del personal, cuando registra una motocicleta con marca, línea,
   cilindraje (por ejemplo, 600), color y una placa válida (RN-03), entonces el vehículo aparece en
-  la sección «Vehículos» del cliente con el cilindraje como «600 cc» y la placa en mayúsculas y con guion (por ejemplo, `uih03d` se ve como `UIH-03D` y
-  `jwj 07` como `JWJ-07`).
+  la sección «Vehículos» del cliente con el cilindraje como «600 cc» y la placa en mayúsculas,
+  dibujada como una placa de moto (CA-27) y leída con guion (por ejemplo, `uih03d` se lee
+  `UIH-03D` y `jwj 07`, `JWJ-07`).
 - **CA-04** — Dado un cliente que ya tiene un vehículo, cuando el personal le registra otro,
   entonces el cliente queda con los dos, del más reciente al más antiguo.
 - **CA-05** — Dado el tipo Carro, cuando se registra como Automóvil o como Camioneta con una placa
@@ -60,16 +62,17 @@ para saber qué vehículos trae y reconocerlos por su placa.
   aparecen la placa ni el cilindraje, la línea es opcional y la bicicleta se registra sin placa y
   se ve con su clase.
 - **CA-07** — Dado un miembro del personal, cuando envía el formulario sin marca, sin color, sin
-  línea (en moto o carro), sin placa (en moto o carro), sin clase (en carro o bicicleta), con un cilindraje
-  fuera de RN-09 o con una placa que no cumple el formato de su tipo, entonces ve el error junto a cada campo y no se registra el vehículo.
+  línea (en moto o carro), sin placa (en moto o carro), sin clase (en carro o bicicleta), sin
+  ciudad de la placa (en carro), con un cilindraje fuera de RN-09 o con una placa que no cumple el
+  formato de su tipo, entonces ve el error junto a cada campo y no se registra el vehículo.
 - **CA-08** — Dada una placa que ya tiene un vehículo vigente (no retirado, HU-05) de cualquier
   cliente, cuando alguien registra otro vehículo con ella, escrita de cualquier forma
   (`uih-03d`, `UIH 03D`), entonces no se guarda y ve «Ya hay un vehículo registrado con esta
   placa.», sin que se revele de qué cliente es.
 - **CA-09** — Dado el formulario con una marca o línea elegidas, cuando se cambia el tipo,
   entonces la marca y la línea se vacían (las de un tipo no sirven para otro) y el vehículo no
-  guarda el cilindraje ni la clase que no corresponden a su tipo; y cuando se cambia la marca, la
-  línea se vacía.
+  guarda el cilindraje, la clase ni la ciudad de la placa que no corresponden a su tipo; y cuando
+  se cambia la marca, la línea se vacía.
 
 ### HU-02 (P1) — Marcas y líneas de un catálogo que crece solo
 
@@ -133,7 +136,7 @@ perder el historial.
 **Criterios de aceptación**
 
 - **CA-20** — Dado un vehículo en la ficha de un cliente, cuando el personal cambia su tipo,
-  clase, marca, línea, cilindraje, color o placa con datos válidos y guarda, entonces el vehículo se ve con los datos
+  clase, marca, línea, cilindraje, color, placa o ciudad de la placa con datos válidos y guarda, entonces el vehículo se ve con los datos
   nuevos; con datos inválidos o una placa de otro vehículo vigente se aplican CA-07 y CA-08.
 - **CA-21** — Dado un vehículo, cuando el personal lo retira y confirma, entonces deja de verse
   entre los vehículos del cliente, pasa a «Vehículos retirados» de la ficha con su fecha de
@@ -161,6 +164,36 @@ el negocio ya los tenga cuando llegue.
   ejemplo, peticiones directas con su sesión), entonces el sistema lo rechaza y no entrega ni
   cambia ningún dato.
 
+### HU-07 (P2) — La placa como se ve en la calle
+
+Como persona que reconoce los vehículos que llegan, quiero ver la placa dibujada como una placa
+colombiana, con la ciudad donde se expidió en los carros, para identificar el vehículo de un
+vistazo, igual que en la calle.
+
+**Criterios de aceptación**
+
+- **CA-27** — Dado un vehículo con placa en «Vehículos» (ficha del cliente) o en «Mis vehículos»,
+  cuando se ve, entonces la placa se dibuja como una placa colombiana de servicio particular:
+  fondo amarillo, caracteres negros en mayúsculas y un filete negro junto al borde. La de carro va
+  en una fila (`ABC-123`) con su ciudad de expedición debajo (`BOGOTÁ, D.C.`); la de moto va en dos
+  filas, las tres letras sobre el resto (`UIH` sobre `03D`, `JWJ` sobre `07`), con «COLOMBIA»
+  debajo.
+- **CA-28** — Dada una placa dibujada, cuando se recorre con un lector de pantalla, entonces se
+  oye como texto con guion (`UIH-03D`) y, en un carro, también su ciudad; la placa nunca se
+  comunica solo con el dibujo, y sus caracteres cumplen el contraste de la auditoría del proyecto.
+- **CA-29** — Dado un cliente encontrado por placa en «Clientes» (CA-19), cuando se mira la fila,
+  entonces la placa que coincidió se ve con los mismos colores, en una sola línea (`UIH-03D`) y
+  sin ciudad ni «COLOMBIA», para que quepa en la fila.
+- **CA-30** — Dado el formulario de vehículo, cuando el tipo es Carro, entonces aparece «Ciudad de
+  la placa» con «Bogotá, D.C.» ya elegida (al editar, la que tiene el carro); al abrir la lista,
+  las tres primeras opciones son Bogotá, D.C., La Calera y Funza, y después el resto de municipios
+  de Colombia en orden alfabético; al escribir se filtra sin distinguir mayúsculas ni tildes
+  («medellin» encuentra «Medellín»), y un municipio cuyo nombre se repite en otro departamento se
+  distingue por su departamento. Con Motocicleta o Bicicleta el campo no aparece.
+- **CA-31** — Dado un carro, cuando se registra o se corrige con una ciudad que no está en la
+  lista (RF-07), entonces no se guarda y se ve el error junto al campo; y una motocicleta o una
+  bicicleta nunca se guardan con ciudad de la placa, por ninguna vía.
+
 ## Requisitos funcionales
 
 - **RF-01** — Un vehículo pertenece a un solo cliente (con o sin cuenta). Un cliente puede tener
@@ -177,6 +210,9 @@ el negocio ya los tenga cuando llegue.
   catálogo con una marca o línea nueva al registrarlo (CA-13).
 - **RF-06** — En la ficha del cliente, el personal ve los vehículos vigentes y, aparte, los
   retirados con su fecha de retiro.
+- **RF-07** — La lista de municipios de Colombia para la ciudad de la placa se entrega precargada
+  con los nombres oficiales (fuente en el plan) y es fija en esta versión: a diferencia de las
+  marcas y líneas, nadie la amplía al registrar un vehículo.
 
 ## Reglas de negocio
 
@@ -185,7 +221,8 @@ el negocio ya los tenga cuando llegue.
   otro: se retira y se registra en el nuevo dueño.
 - **RN-02** — Motocicletas y carros llevan placa; las bicicletas no.
 - **RN-03** — Formatos de placa colombiana (se aceptan minúsculas, espacios y guiones, y se
-  guarda en mayúsculas y sin separadores; se muestra con un guion tras las tres letras):
+  guarda en mayúsculas y sin separadores; se lee con un guion tras las tres letras y se dibuja
+  como en CA-27):
   - Motocicleta: tres letras, dos números y una letra (`UIH03D` → `UIH-03D`), o tres letras y dos
     números en las placas antiguas (`JWJ07` → `JWJ-07`).
   - Carro: tres letras y tres números (`ABC123` → `ABC-123`).
@@ -203,14 +240,19 @@ el negocio ya los tenga cuando llegue.
 - **RN-10** — La clase aplica a carros (Automóvil o Camioneta) y bicicletas (Montaña o Ruta), y en
   ellos es obligatoria; las motocicletas no tienen clase. El catálogo de marcas y líneas es por
   tipo, el mismo para todas sus clases.
+- **RN-11** — La ciudad de expedición de la placa solo aplica a los carros, y en ellos es
+  obligatoria: es un municipio de Colombia de la lista de RF-07, y por defecto Bogotá, D.C. Las
+  motocicletas no tienen ciudad (su placa muestra siempre «COLOMBIA») y las bicicletas no tienen
+  placa.
 
 ## Datos (vista conceptual)
 
 | Entidad | Atributos relevantes | Notas |
 |---|---|---|
-| Vehículo | cliente, tipo, clase (carro o bicicleta), marca, línea, cilindraje (moto), color, placa, fecha de registro, fecha de retiro | Vigente si no tiene fecha de retiro. Placa única entre los vigentes. |
+| Vehículo | cliente, tipo, clase (carro o bicicleta), marca, línea, cilindraje (moto), color, placa, ciudad de la placa (carro), fecha de registro, fecha de retiro | Vigente si no tiene fecha de retiro. Placa única entre los vigentes. |
 | Marca | tipo, nombre | Precargada o añadida al registrar un vehículo. Única por tipo (RN-06). |
 | Línea | marca, nombre | Precargada o añadida al registrar un vehículo. Única por marca (RN-06). |
+| Municipio | departamento, nombre | Precargado con los nombres oficiales y fijo (RF-07). |
 
 ## Requisitos no funcionales
 
@@ -235,6 +277,10 @@ el negocio ya los tenga cuando llegue.
 - Deshacer un retiro.
 - Validar la placa contra el RUNT u otra fuente oficial.
 - Placas especiales (diplomáticas, de remolque, de motocarro u otros formatos distintos de RN-03).
+- Dibujar placas de otros servicios (público en blanco, oficial, diplomático): toda placa se dibuja
+  como de servicio particular, en amarillo.
+- La ciudad de expedición de las motocicletas, y buscar o filtrar clientes por la ciudad de la
+  placa.
 - Total de lavadas y últimas lavadas del cliente (llegan con la orden de trabajo).
 - Mostrar los vehículos en la lista de clientes salvo la placa que coincide en una búsqueda
   (CA-19).
@@ -258,6 +304,16 @@ el negocio ya los tenga cuando llegue.
   se une a su ficha (spec 004, CA-28), los ve en «Mis vehículos».
 - La lista de colores de RN-05 cubre los casos habituales; un color no listado se aproxima al más
   cercano o se usa «Multicolor».
+- La lista de la **ciudad de la placa** trae todos los municipios de Colombia de la división
+  oficial del DANE (incluido Bogotá, D.C.), no solo los que tienen organismo de tránsito: es una
+  fuente oficial y completa, y ninguna placa real queda fuera (las «áreas no municipalizadas» no
+  son municipios y quedan fuera). Los nombres conservan la ortografía y las tildes de esa fuente;
+  en la lista van con mayúsculas iniciales («Bogotá, D.C.», «La Calera») y en la placa dibujada,
+  en mayúsculas.
+- Los carros registrados antes de este cambio (solo existen en local: aún no hay despliegue)
+  quedan con Bogotá, D.C. como ciudad de la placa.
+- El amarillo de la placa es la única excepción a la paleta neutra del sistema visual (spec 003):
+  reproduce un objeto real y no comunica un estado.
 
 ## Cambios que esta spec introduce en otras specs
 
@@ -273,6 +329,11 @@ cualquier cliente y el cliente los suyos desde «Mi perfil»; la placa se valida
 catálogo precargado que sugiere mientras se escribe y, si de verdad son nuevas, se añaden solas
 para próximas veces; un vehículo que deja de ser del cliente se retira, no se borra, y su placa
 queda libre.
+
+Cambio del 2026-11-19 (HU-07), decidido con el usuario: la placa se dibuja como la colombiana; la
+ciudad de expedición solo la tienen los carros, es obligatoria y se elige de la lista de
+municipios con Bogotá, D.C. por defecto y el orden Bogotá, D.C., La Calera, Funza y luego
+alfabético; las motos no tienen el campo (ni en el formulario) y su placa dice «COLOMBIA».
 
 ## Checklist de calidad de la spec
 
@@ -294,3 +355,7 @@ queda libre.
 | 2026-11-19 | Plan técnico aprobado. |
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local: 229 pgTAP (89 nuevas), 418 unitarias, 30 sandbox y 60 E2E en verde, lint, tipos y build en verde. Cada prueba nueva se vio fallar, escrita antes que el código o por mutación (ver el Historial del plan). Pendiente: el despliegue (T064). |
 | 2026-11-19 | `/verificar`: 23 de 26 criterios ✅ al empezar. Corregidos: CA-07 (el formulario muestra junto a su campo los errores de clase y de cilindraje) y RF-05 (un cliente también amplía el catálogo), con pruebas vistas fallar por mutación. Se precisa la suposición de los nombres nuevos (los espacios internos se reducen a uno). Todo ✅: verificada en local. Pendiente: el despliegue (T064). |
+| 2026-11-19 | Cambio en borrador, a petición del usuario: HU-07 (P2), la placa dibujada como la colombiana y la ciudad de expedición de los carros (CA-27 a CA-31, RF-07, RN-11); se ajustan CA-02, CA-03, CA-07, CA-09, CA-20 y RN-03. Vuelve a `borrador` hasta que se apruebe. |
+| 2026-11-19 | Cambio HU-07 aprobado por el usuario, con las suposiciones tal como están. |
+| 2026-11-19 | Plan del cambio HU-07 aprobado. |
+| 2026-11-19 | Tareas del cambio HU-07 (bloque C, T070–T091) aprobadas. |

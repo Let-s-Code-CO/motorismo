@@ -482,6 +482,210 @@ primera tarea de la app. Si da ambigüedad, se nombra la FK en el `select`
 3. Tras desplegar, comprobar en el entorno remoto que el catálogo trae marcas de los tres tipos:
    un `select count(*)` por tipo desde el panel de SQL, solo lectura.
 
+## Cambio HU-07 — La placa como se ve en la calle (CA-27 a CA-31, RF-07, RN-11)
+
+### Resumen
+
+- Una tabla nueva, `public.municipalities`, con los municipios de Colombia de la DIVIPOLA del DANE.
+  La clave es el **código DANE** (`11001` = Bogotá, D.C.), que es igual en todos los entornos.
+- `vehicles` gana `plate_city_code`, obligatorio en carro y siempre `null` en moto y bicicleta. Lo
+  garantizan un `check`, la guarda y una FK a `municipalities`.
+- `save_vehicle` recibe `p_plate_city_code`.
+- En la app, el formulario muestra «Ciudad de la placa» solo para Carro. `plate-label` dibuja la
+  placa colombiana: la de carro en una fila con la ciudad debajo y la de moto en dos filas con
+  «COLOMBIA». En la tabla de Clientes va la versión compacta.
+
+### Verificación contra la constitución (cambio)
+
+| Principio | Cumple | Notas |
+|---|---|---|
+| I. Spec como fuente de verdad | ✅ | Spec 005 aprobada con HU-07; CA-02, 03, 07, 09 y 20 ajustados en la misma spec. |
+| II. Qué antes que cómo | ✅ | La spec nombra la fuente oficial (DANE) como dato de negocio, no como tecnología. |
+| III. Criterios verificables | ✅ | CA-27 a CA-31 mapeados a pruebas (tabla abajo). |
+| IV. Ambigüedad explícita | ✅ | Sin marcas abiertas. Suposiciones aplicadas: lista DANE completa, carros previos con Bogotá, D.C., toda placa en amarillo. |
+| V. Simplicidad y stack | ✅ | Sin dependencias nuevas. El `Autocomplete` de HeroUI ya virtualiza listas largas (`isVirtualized`). La lista (≈1.100 filas, unos 60 KB) se lee una vez y se filtra en el navegador con la `catalogKey` que ya existe. |
+| VI. Seguridad y datos personales | ✅ | `municipalities` es un dato público: `select` para `authenticated` y nada más (ni escritura desde la API, ni `anon`). La ciudad de la placa se rige por la RLS de `vehicles`. |
+| VII. Trazabilidad | ✅ | Misma rama; cada prueba cita su CA. |
+| VIII. Incrementos pequeños | ✅ | Un bloque C en la misma rama, antes del PR. |
+
+### Base de datos
+
+**Migración existente `20261119211115_vehicles.sql` (se edita).** Nunca se ha aplicado en un
+entorno remoto: no existe ninguno todavía y `db-deploy` solo corre al entrar en `develop`. Por eso
+la regla de no editar migraciones aplicadas no aplica, y así el esquema queda con una sola
+definición de la guarda y de `save_vehicle`. Los entornos locales se rehacen con `pnpm db:reset`.
+
+- **Tabla `public.municipalities`**, creada antes de `vehicles`:
+
+  | Columna | Tipo | Reglas |
+  |---|---|---|
+  | `code` | `text` PK | `check (code ~ '^[0-9]{5}$')`: código DANE del municipio |
+  | `name` | `text not null` | Nombre con la ortografía del DANE, en mayúsculas iniciales («Bogotá, D.C.», «Villa de San Diego de Ubaté») |
+  | `department` | `text not null` | Departamento, con el mismo criterio («Cundinamarca») |
+
+  RLS activado, con `select` para `authenticated` (`using (true)`) y sin ninguna otra política ni
+  privilegio. `anon` no tiene nada.
+- **`vehicles.plate_city_code text null references municipalities (code)`**, con
+  `check (case vehicle_type when 'car' then plate_city_code is not null else plate_city_code is
+  null end)` (RN-11) y un índice para la FK.
+- **Guarda** (`vehicles_guard`):
+  - fuera de carro, pone `plate_city_code := null` (CA-09, CA-31: ninguna vía guarda ciudad en
+    moto o bicicleta);
+  - en carro sin ciudad, da el `hint` `vehicle_plate_city_required`;
+  - con un código que no existe, da el `hint` `vehicle_plate_city_invalid`, antes de que lo
+    rechace la FK (CA-31). La FK queda de respaldo.
+- **Privilegios por columna**: `plate_city_code` entra en los `grant insert (…)` y
+  `grant update (…)` de `vehicles`.
+- **`save_vehicle`** recibe `p_plate_city_code text default null` como último parámetro, y lo
+  escribe en el `insert` y en el `update`. Se actualizan su firma en `revoke` y `grant`.
+
+**Migración nueva `<ts>_municipalities_data.sql` (RF-07).**
+- Solo `insert … on conflict (code) do nothing`, repetible. Lleva la línea
+  `-- seeds: unchanged — municipalities live in this migration`.
+- **Fuente**: DIVIPOLA del DANE en datos.gov.co, conjunto `gdxc-w37w` («DIVIPOLA - Códigos
+  municipios»). La URL y la fecha de descarga se anotan en la cabecera.
+- **Qué entra**: las filas de tipo «Municipio» (1.103) y la «Isla» de San Andrés, en total
+  **1.104**. Las 18 «Áreas no municipalizadas» se dejan fuera: no son municipios ni tienen
+  organismo de tránsito.
+- **Nombres**: el DANE los publica en mayúsculas. Un script de un solo uso, que no se versiona,
+  genera el SQL. Conserva la ortografía y las tildes y pasa a mayúsculas iniciales, con los
+  conectores en minúscula salvo al principio (de, del, la, las, los, el, y). «D.C.» se queda como
+  está. Una prueba pgTAP comprueba los casos difíciles.
+
+**Seeds** (`03_vehicles.sql`): la camioneta `KDM-482` de Valentina se guarda con `11001`
+(Bogotá, D.C.), por la suposición de los carros previos.
+
+**pgTAP**
+- `06_vehicles.test.sql` (ampliado):
+  - la columna, el `check`, la FK y los privilegios por columna;
+  - carro sin ciudad → `vehicle_plate_city_required`;
+  - código inexistente → `vehicle_plate_city_invalid`;
+  - moto y bicicleta enviadas con ciudad → se guardan con `null`;
+  - pasar un carro a moto borra la ciudad;
+  - corregir la ciudad de un carro (CA-20);
+  - las altas de carro que ya existían reciben `11001`.
+- `08_municipalities.test.sql` (nuevo):
+  - esquema, RLS, políticas y privilegios: solo `select` para `authenticated`, nada para `anon`;
+  - 1.104 municipios en 33 departamentos;
+  - `11001` = «Bogotá, D.C.», `25377` = «La Calera» (Cundinamarca), `25286` = «Funza»
+    (Cundinamarca);
+  - nombres difíciles: «Villa de San Diego de Ubaté» y «El Carmen de Viboral»;
+  - homónimos en varios departamentos (Armenia);
+  - ninguna «área no municipalizada» (`La Chorrera` no está).
+
+### Aplicación
+
+**Datos y tipos**
+- `vehicles.client.ts`: `fetchMunicipalities()` lee `code, name, department` con el cliente del
+  navegador. Se añaden `vehicleKeys.municipalities()` y `municipalitiesQueryOptions`, con
+  `staleTime: Infinity` porque la lista es fija (RF-07).
+- `vehicles.server.ts`: el `select` incrusta `plate_city:municipalities(name)`, y `VehicleView`
+  gana `plate_city`.
+- `constants/vehicle-options.constants.ts`: `DEFAULT_PLATE_CITY = '11001'` y
+  `PINNED_PLATE_CITIES = ['11001', '25377', '25286']` (Bogotá, D.C., La Calera, Funza).
+- `utils/plate-city.utils.ts`:
+  - `sortPlateCities(list)`: primero las fijadas, en ese orden, y después el resto por nombre
+    (`localeCompare('es')`) y, a igual nombre, por departamento;
+  - `filterPlateCities(list, q)`: reutiliza `catalogKey`, así que no distingue mayúsculas, tildes,
+    espacios ni guiones.
+
+**Formulario** (`vehicle.schema.ts`, `vehicle-form`)
+- **Esquema**: `plateCityCode` (string). En `superRefine`, es obligatorio en carro
+  (`plateCityRequired`) y se ignora en los demás tipos. El input de la acción solo lo envía en
+  carro.
+- **Campo nuevo**: molécula `plate-city-autocomplete`, un `Autocomplete` sin valor libre
+  (`allowsCustomValue` en `false`) y con `isVirtualized`. Cada opción muestra el nombre y, como
+  descripción, el departamento, que distingue los homónimos (CA-30). Recibe `portalContainer`
+  dentro del modal, como pide el `CLAUDE.md`.
+- **Valor inicial**: al elegir Carro, `DEFAULT_PLATE_CITY`; al editar un carro, su ciudad. Al
+  cambiar de tipo se vacía, y al volver a Carro vuelve a Bogotá, D.C. (CA-09).
+- **Acción** `saveVehicle`: pasa `p_plate_city_code` solo en carro. `vehicles-errors.utils` traduce
+  `vehicle_plate_city_required` y `vehicle_plate_city_invalid` al error del campo.
+
+**La placa** (`atoms/plate-label`)
+- **Props**: `plate`, `city?: string` y `size?: 'md' | 'sm'`.
+- **Forma**: se deduce de la placa. `^[A-Z]{3}\d{3}$` es carro; lo demás es moto (los formatos de
+  RN-03 no se solapan).
+- **Carro** (`md`): una fila con `formatPlate` (`ABC-123`) y, debajo, la ciudad en mayúsculas
+  (`BOGOTÁ, D.C.`). Los nombres largos se recortan con `truncate`, y el nombre completo queda en
+  el texto accesible.
+- **Moto** (`md`): dos filas, las tres letras sobre el resto (`UIH` / `03D`), y «COLOMBIA» debajo.
+  Las filas visuales llevan `aria-hidden`, y un `sr-only` dice `UIH-03D` (CA-28). «COLOMBIA» es
+  decorativo.
+- **Compacta** (`sm`, en la tabla de Clientes): una sola línea con `formatPlate`, sin ciudad ni
+  «COLOMBIA» (CA-29).
+- **Estilo**: fondo amarillo reflectivo (degradado sutil entre `#FFD83A` y `#F5C400`), caracteres
+  `#111` en negrita, esquinas redondeadas y el filete negro en relieve hecho con dos sombras
+  interiores (un hilo amarillo y luego uno negro). Una sombra exterior suave, y en `md` dos
+  tornillos discretos.
+  - Los colores van como tokens `--color-plate`, `--color-plate-ink` y `--color-plate-edge` en el
+    `@theme` de `globals.css`.
+  - Son la única excepción a la paleta neutra: es un objeto real, no un estado. Se anota en el
+    `CLAUDE.md`.
+  - Contraste del texto: más de 12:1.
+- **Usos**: `vehicle-summary` pasa `city={vehicle.plate_city?.name}`, y `customers-table` usa
+  `size="sm"`.
+
+**Mensajes** (`vehicles`): `form.plateCity` («Ciudad de la placa»),
+`form.plateCityPlaceholder` («Escribe o elige la ciudad»), `errors.plateCityRequired` («Elige la
+ciudad de la placa.»), `errors.plateCityInvalid` («Elige una ciudad de la lista.») y
+`plate.country` («COLOMBIA»).
+
+### Estrategia de pruebas (cambio)
+
+| Criterio | Tipo | Archivo de prueba |
+|---|---|---|
+| CA-27 | componente + e2e | `plate-label.component.test.tsx` (carro en una fila con su ciudad; moto `UIH`/`03D` y `JWJ`/`07` con «COLOMBIA»), `vehicle-summary.component.test.tsx` (el carro muestra su ciudad), `e2e/ui.spec.ts` (color de fondo y de los caracteres de la placa), `e2e/vehicles.spec.ts` (el carro registrado muestra «BOGOTÁ, D.C.») |
+| CA-28 | componente + axe | `plate-label.component.test.tsx` (texto accesible `UIH-03D`; en carro, también la ciudad), `e2e/a11y.spec.ts` (contraste) |
+| CA-29 | componente + e2e | `plate-label.component.test.tsx` (`size="sm"`: una línea, sin ciudad ni «COLOMBIA»), `e2e/vehicles-search.spec.ts` |
+| CA-30 | unit + componente + e2e | `plate-city.utils.test.ts` (orden fijado y luego alfabético con tildes; «medellin» → Medellín), `vehicle-form.component.test.tsx` (solo en Carro, Bogotá, D.C. elegida, al editar la del carro, departamento en la opción), `e2e/vehicles.spec.ts` (elegir Medellín y verlo en la placa) |
+| CA-31 | pgTAP + unit | `06_vehicles.test.sql` (requerida, inválida, `null` fuera de carro), `vehicle.schema.test.ts` (carro sin ciudad), `vehicles-errors.utils.test.ts` (los dos `hint`) |
+| RF-07 | pgTAP | `08_municipalities.test.sql` |
+| CA-02, CA-07, CA-09, CA-20 (ajustados) | componente + pgTAP + e2e | `vehicle-form.component.test.tsx` (campo según tipo; vaciar al cambiar de tipo), `vehicle.schema.test.ts`, `06_vehicles.test.sql` (corregir la ciudad), `e2e/vehicles.spec.ts` (editar la ciudad) |
+
+Además, `vehicles-access.sandbox.test.ts` añade la ciudad a sus altas de carro. Las rechaza la
+RLS, y sin ciudad la guarda las pararía antes con otro motivo.
+
+### Archivos afectados (cambio)
+
+**Nuevos**
+- `packages/supabase`: la migración `<ts>_municipalities_data.sql` y la prueba
+  `tests/08_municipalities.test.sql`.
+- `apps/web`:
+  - `utils/plate-city.utils.ts` y la molécula `plate-city-autocomplete`;
+  - las pruebas `plate-label.component.test.tsx` y `plate-city.utils.test.ts`.
+
+**Modificados**
+- `packages/supabase`: la migración `20261119211115_vehicles.sql`, `seeds/03_vehicles.sql`,
+  `tests/06_vehicles.test.sql` y `types/database.types.ts`, que se regenera.
+- Módulo `vehicles`: el cliente, el servidor, las queries y keys, las constantes, el esquema, el
+  formulario, la acción, los errores, `plate-label`, `vehicle-summary` y los mensajes.
+- Módulo `customers`: `customers-table` (`size="sm"`).
+- `globals.css`: los tokens de la placa.
+- Pruebas: las de componente, esquema y errores afectadas; `e2e/{vehicles,vehicles-search,ui}.spec.ts`
+  y la sandbox.
+- `CLAUDE.md` (la excepción del amarillo, la ciudad en el seed y los municipios por migración) y
+  `packages/supabase/CLAUDE.md` (los municipios por migración).
+
+### Riesgos y decisiones (cambio)
+
+| Decisión | Alternativas descartadas | Motivo |
+|---|---|---|
+| **8.** Clave natural: el código DANE | `uuid` con el código como columna aparte. | Es estable y oficial, y es el mismo en todos los entornos. La app puede fijar Bogotá, D.C. (`11001`) sin consultar nada. |
+| **9.** Editar la migración `vehicles` en lugar de añadir otra | Una migración nueva que altere `vehicles` y redefina la guarda y `save_vehicle`. | No se ha aplicado en ningún remoto. Una sola definición de la guarda y de `save_vehicle` es más legible que una redefinición completa. |
+| **10.** Lista completa del DANE (1.104) | Solo los municipios con organismo de tránsito (RUNT). | Es la suposición aprobada: una fuente oficial y descargable, sin dejar fuera ninguna placa real. La del RUNT no se publica como datos abiertos. |
+| **11.** Orden fijado en la app (constante) | Una columna `sort_order` en la tabla. | Es una preferencia de uso del negocio sobre tres valores, no un dato del municipio. |
+| **12.** Lista entera en el navegador, con virtualización | Búsqueda en el servidor a cada tecla. | 60 KB una sola vez, con caché infinita, y respuesta instantánea, como el catálogo. |
+
+**Riesgo**: el rendimiento y la accesibilidad del `Autocomplete` virtualizado dentro del modal,
+con más de 1.100 opciones. Se comprueba en la auditoría axe y en la E2E del formulario. Si
+falla, el plan B es mostrar solo las coincidencias, con un máximo de 50, sin virtualizar.
+
+### Despliegue (cambio)
+
+Sin cambios en el procedimiento. `db-deploy` aplica también `municipalities_data`. Tras
+desplegar, se comprueba en el remoto que `select count(*) from municipalities` da 1.104.
+
 ## Historial
 
 | Fecha | Cambio |
@@ -491,3 +695,5 @@ primera tarea de la app. Si da ambigüedad, se nombra la FK en el `select`
 | 2026-11-19 | Durante las E2E aparecieron dos fallos de accesibilidad y uno de comportamiento. **Accesibilidad**: (1) dentro de un `Modal`, los desplegables de HeroUI se pintaban fuera de él y el modal los ocultaba (`aria-hidden`), así que ahora se pintan dentro del formulario (`portalContainer`); (2) el botón «×» del `Autocomplete` no tenía nombre accesible y se quitó (`isClearable={false}`); además se corrigió el contraste del «cc» y de la lista de retirados. **Comportamiento**: (3) la caché del catálogo se invalida al guardar, para que una marca nueva se sugiera enseguida (CA-13). |
 | 2026-11-19 | Mutaciones (todas revertidas). Base de datos, en vivo y con `db:reset` después: sin la comprobación de placa ocupada fallan CA-08, CA-20, CA-25 y la marca que no debe quedar; con la política de alta abierta falla el alta en un cliente desactivado; con un retiro reversible falla CA-22 (×2); con las políticas de lectura y actualización abiertas falla la prueba sandbox de acceso (3 de 6). App: si el cliente se trata como personal fallan 5 pruebas de la sección; si los retirados se muestran al cliente falla CA-24; si `retireVehicle` acepta una fila invisible o no traduce el error fallan sus pruebas; si el cliente puede elegir la ficha falla CA-26; si la placa conserva sus separadores en la búsqueda fallan 4 pruebas de CA-17. Las demás pruebas se escribieron antes que el código y se vieron en rojo. |
 | 2026-11-19 | `/verificar`: nuevas pruebas de CA-07 (errores de clase y de cilindraje en el formulario) y de RF-05 (un cliente amplía el catálogo). Mutaciones: sin el mensaje de error de la clase, o sin el del cilindraje, falla su prueba; con la creación de marcas restringida al personal fallan las dos de RF-05 (y otras del cliente). Todas revertidas (`db:reset` después). |
+| 2026-11-19 | Cambio HU-07 (CA-27 a CA-31): municipios DANE, ciudad de la placa en carros y la placa dibujada como la colombiana. En borrador hasta su aprobación. |
+| 2026-11-19 | Cambio HU-07 aprobado por el usuario. |
