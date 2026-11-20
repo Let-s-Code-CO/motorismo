@@ -184,3 +184,4 @@ Ninguna.
 | 2026-11-20 | Implementada. |
 | 2026-11-20 | Verificada: pruebas añadidas para el fondo oculto al lector con el panel abierto (CA-03), el nombre corto de los mosaicos (CA-06), «Órdenes» oscura y del mismo tamaño en escritorio (CA-09) y la franja en «Enlace no válido» (CA-10). |
 | 2026-11-20 | Spec 010: el menú de la cuenta gana «Tema» y el encabezado de escritorio, su menú de tema. |
+| 2026-11-20 | Spec 011: al iniciar sesión, el logo de la marca mientras carga el inicio; esqueletos con la forma de cada pantalla. |

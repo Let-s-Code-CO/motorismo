@@ -154,21 +154,29 @@ test.describe('following the device (HU-01)', () => {
     const email = page.getByLabel('Correo');
     while (!(await email.evaluate((input) => input === document.activeElement)))
       await page.keyboard.press('Tab');
-    const fieldBorder = await email.evaluate(
-      (input) => getComputedStyle(input.closest('[data-slot="input-wrapper"]')!).borderColor
-    );
-    expect(contrast(fieldBorder, DARK_BG)).toBeGreaterThanOrEqual(3);
+    // Polled: the border animates to its focus colour; the settled colour is what counts.
+    await expect
+      .poll(async () =>
+        contrast(
+          await email.evaluate(
+            (input) => getComputedStyle(input.closest('[data-slot="input-wrapper"]')!).borderColor
+          ),
+          DARK_BG
+        )
+      )
+      .toBeGreaterThanOrEqual(3);
 
     // A button reached with the keyboard: its focus ring (outline) against the page.
     const enter = page.getByRole('button', { name: 'Entrar' });
     while (!(await enter.evaluate((button) => button === document.activeElement)))
       await page.keyboard.press('Tab');
-    const ring = await enter.evaluate((button) => {
-      const style = getComputedStyle(button);
-      return style.outlineStyle === 'none' ? '' : style.outlineColor;
-    });
-    expect(ring).not.toBe('');
-    expect(contrast(ring, DARK_BG)).toBeGreaterThanOrEqual(3);
+    const ring = () =>
+      enter.evaluate((button) => {
+        const style = getComputedStyle(button);
+        return style.outlineStyle === 'none' ? '' : style.outlineColor;
+      });
+    await expect.poll(ring).not.toBe('');
+    await expect.poll(async () => contrast(await ring(), DARK_BG)).toBeGreaterThanOrEqual(3);
   });
 
   test('on a phone, the brand band keeps its edge against the dark page (CA-06)', async ({

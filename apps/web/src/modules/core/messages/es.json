@@ -115,6 +115,10 @@
       "minutes": "{minutes} min",
       "hours": "{hours} h",
       "hoursMinutes": "{hours} h {minutes} min"
+    },
+    "loading": {
+      "label": "Cargando…",
+      "entering": "Entrando…"
     }
   }
 }

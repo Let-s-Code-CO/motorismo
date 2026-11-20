@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { Alert, Button, Input } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +18,7 @@ import PasswordInput from '@web/modules/auth/components/molecules/password-input
 import ResendConfirmation from '@web/modules/auth/components/molecules/resend-confirmation.component';
 import { type LoginValues, loginSchema } from '@web/modules/auth/schemas/login.schema';
 import type { AuthErrorKey } from '@web/modules/auth/utils/auth-errors.utils';
+import BrandMoment from '@web/modules/core/components/brand-moment.component';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type LoginFormProps = {
@@ -29,6 +31,10 @@ type LoginFormProps = {
 const LoginForm = ({ next, initialError }: LoginFormProps) => {
   const t = useTranslations('auth');
   const [serverError, setServerError] = useState<AuthErrorKey | undefined>(initialError);
+  const router = useRouter();
+  // Signed in, on the way in: the brand shows until the destination replaces this page (spec 011,
+  // CA-12). Only after the server said the credentials are right, never while it checks them.
+  const [entering, startEntering] = useTransition();
   const {
     register,
     handleSubmit,
@@ -41,14 +47,20 @@ const LoginForm = ({ next, initialError }: LoginFormProps) => {
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
-    // On success the action redirects and never returns.
     const result = await callAction(() => signIn(values, next));
     // null: no network (spec 006, CA-10), the app-wide notice speaks.
-    if (result && !result.ok) setServerError(result.error);
+    if (!result) return;
+    if (!result.ok) {
+      setServerError(result.error);
+      return;
+    }
+    // The server chose the destination (spec 004, RF-02); go there showing the brand meanwhile.
+    startEntering(() => router.replace(result.destination));
   });
 
   return (
     <div className="flex flex-col gap-6">
+      {entering && <BrandMoment />}
       <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
         {serverError && (
           <Alert

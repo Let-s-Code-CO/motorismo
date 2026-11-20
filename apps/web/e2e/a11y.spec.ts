@@ -353,3 +353,31 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   await expect(page.getByText('Escribe el motivo.')).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });
+
+test('a screen still loading, with its skeleton, has no serious accessibility issues (spec 011, CA-03)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+  // A bad signal, so the skeleton stays on screen while it is audited.
+  // Fully loaded first, as for a real user (a tap before hydration is a plain page load).
+  await page.waitForLoadState('networkidle');
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.enable');
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 800,
+    downloadThroughput: 30 * 1024,
+    uploadThroughput: -1,
+  });
+
+  await page
+    .getByRole('navigation', { name: 'Navegación principal' })
+    .getByRole('link', { name: 'Clientes', exact: true })
+    .click();
+  await expect(page.getByRole('status').filter({ hasText: 'Cargando…' })).toBeVisible();
+  // Past its 300 ms appearance, fully drawn.
+  await page.waitForTimeout(500);
+
+  expect(await audit(page)).toEqual([]);
+});

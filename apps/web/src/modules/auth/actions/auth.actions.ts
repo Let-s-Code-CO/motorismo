@@ -16,14 +16,17 @@ import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-serve
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
 import { getSiteUrl } from '@web/modules/core/utils/site-url.utils';
 
+/** A sign-in that worked says where to go; one that did not, why (as any action). */
+export type SignInResult =
+  { ok: true; destination: string } | Exclude<ActionResult<AuthErrorKey>, { ok: true }>;
+
 /**
- * Email + password sign-in (HU-01). On success, goes to the requested page or home — for a
- * customer, only to a page of theirs (spec 004, RF-02).
+ * Email + password sign-in (HU-01). On success, it answers where to go: the requested page or
+ * home — for a customer, only a page of theirs (spec 004, RF-02); never another site. It does not
+ * redirect itself, so the form can show the brand while that page loads (spec 011, CA-12); the
+ * destination is still decided here, on the server.
  */
-export const signIn = async (
-  input: unknown,
-  next?: string | null
-): Promise<ActionResult<AuthErrorKey>> => {
+export const signIn = async (input: unknown, next?: string | null): Promise<SignInResult> => {
   const parsed = loginSchema.safeParse(input);
   // Same message as wrong credentials: nothing to learn from a malformed request (RN-06).
   if (!parsed.success) return { ok: false, error: 'invalidCredentials' };
@@ -35,7 +38,10 @@ export const signIn = async (
   // Spec 004, RF-02: a customer only goes to the requested page if it is theirs.
   const { data: account } = await supabase.rpc('current_account');
   await touchActivityCookie();
-  redirect(destinationAfterSignIn(account?.[0]?.kind, sanitizeNextPath(next)));
+  return {
+    ok: true,
+    destination: destinationAfterSignIn(account?.[0]?.kind, sanitizeNextPath(next)),
+  };
 };
 
 export const signOut = async () => {

@@ -66,3 +66,4 @@ Como usuario, quiero una interfaz moderna, sobria y coherente para trabajar con 
 | 2026-11-19 | `/verificar`: CA-01 a CA-09 ✅ (462 unitarias y 69 E2E en verde, lint y tipos OK). CA-07 tenía cubierto el menú de acciones pero no los números de las tarjetas: se añade `users-screen.component.test.tsx` (2 activos, 1 invitado, 1 desactivado), vista fallar por mutación (contar uno de más). Verificada. |
 | 2026-11-20 | Spec 009: en teléfono y tablet el acceso lleva una franja de marca arriba (CA-03 queda solo para escritorio). |
 | 2026-11-20 | Spec 010: el sistema visual gana su versión oscura (mismas reglas; colores por tokens o con su variante `dark:`). |
+| 2026-11-20 | Spec 011: transiciones entre pantallas, esqueletos de carga y barra de progreso, todo con `motion-safe`. |

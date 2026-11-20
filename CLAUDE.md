@@ -40,6 +40,21 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
+- **Carga y transiciones (spec 011).**
+  - **Esqueletos:** toda pantalla nueva con datos lleva su `loading.tsx`, con un `PageSkeleton`
+    de `core` (`home`, `list`, `detail`, `form` o `profile`). Aparece a los 300 ms solo con
+    CSS, se anuncia una vez como «Cargando…» y sus formas van ocultas al lector de pantalla.
+  - **Transición:** el contenido entra con `(app)/template.tsx`, `page-in` de 200 ms y
+    `motion-safe`.
+  - **Barra:** `NavigationProgress` arranca al tocar un enlace interno o ir atrás, y termina al
+    cambiar la ruta.
+  - **Inicio de sesión:** `signIn` devuelve el destino (no redirige) para mostrar `BrandMoment`
+    mientras se navega.
+  - **Pruebas con red lenta:** `e2e/loading.spec.ts` la simula con CDP
+    (`Network.emulateNetworkConditions`), después de `waitForLoadState('networkidle')`.
+  - **Título de la pestaña:** `next.config.ts` lleva `htmlLimitedBots: /.*/`, que pone los
+    metadatos en el `<head>` desde el principio. Así la pestaña tiene título también mientras se
+    ve el esqueleto (WCAG 2.4.2).
 - **Modo oscuro (spec 010).**
   - **Temas:** claro y oscuro en `src/app/hero.ts`, con «Sistema» por defecto.
   - **Dónde se guarda:** en la cookie del dispositivo `motorismo-theme`. El layout raíz pinta
