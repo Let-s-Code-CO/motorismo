@@ -41,7 +41,8 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
 - El tema conserva la escala de `foreground` de HeroUI (`src/app/hero.ts`): sus componentes pintan
-  placeholders y textos de ayuda con ella. Turbopack no recarga `hero.ts` en caliente, y a veces
+  placeholders y textos de ayuda con ella. `danger` usa por defecto el tono 600 de la escala roja
+  (spec 007): así los errores de los campos (`text-danger`) y los botones `danger` cumplen AA. Turbopack no recarga `hero.ts` en caliente, y a veces
   sirve una versión vieja de `globals.css` (p. ej. tras deshacer un cambio enseguida): si un cambio
   de estilos no se ve, borra `apps/web/.next` y reinicia `pnpm dev`.
 - Radios: con Geist, el texto de un radio queda ~0,5 px por encima del centro del círculo;
@@ -58,6 +59,10 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   `filter-bar` y `status-filter.utils` (specs 003 CA-09 y 004 CA-17; los usan Usuarios y Clientes).
 - Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
   pantallas nuevas se añaden a esa auditoría.
+  Audita también los formularios con sus errores a la vista.
+- Menú principal (`nav-links`): con más de dos opciones, por debajo de `md` se recoge en un botón
+  «Menú» (spec 007), para que el encabezado quepa en 360 px. Una sección nueva se añade a `LINKS`
+  y, si es del personal, a las tarjetas de inicio (`src/app/(app)/page.tsx`).
 - i18n: next-intl 4, **solo español**, sin segmento de idioma en la URL.
 - Estado de servidor: TanStack Query 5. Formularios: React Hook Form + Zod 4.
 - Supabase: `@supabase/ssr` con clientes tipados (`createClient<Database>`).
@@ -104,6 +109,10 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   Valentina la camioneta `KDM-482` (placa de Bogotá, D.C.) y Andrés una bicicleta. El catálogo de
   marcas y líneas y los 1.104 municipios (ciudad de la placa) llegan por migración (existen en
   todos los entornos), no por seed.
+- Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
+  «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
+  (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real
+  los carga el administrador.
 
 Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
 http://127.0.0.1:54324.

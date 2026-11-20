@@ -71,6 +71,59 @@ export type Database = {
           },
         ]
       }
+      employee_details: {
+        Row: {
+          commission_pct: number
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          employee_id: string
+          phone: string | null
+        }
+        Insert: {
+          commission_pct: number
+          document_number: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          employee_id: string
+          phone?: string | null
+        }
+        Update: {
+          commission_pct?: number
+          document_number?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          employee_id?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_details_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          full_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          full_name: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
       municipalities: {
         Row: {
           code: string
@@ -135,6 +188,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      services: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          id: string
+          name: string
+          name_key: string
+          price_bicycle: number | null
+          price_car: number | null
+          price_motorcycle: number | null
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          id?: string
+          name: string
+          name_key?: string
+          price_bicycle?: number | null
+          price_car?: number | null
+          price_motorcycle?: number | null
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          id?: string
+          name?: string
+          name_key?: string
+          price_bicycle?: number | null
+          price_car?: number | null
+          price_motorcycle?: number | null
+        }
+        Relationships: []
       }
       staff_invitations: {
         Row: {
@@ -332,6 +418,17 @@ export type Database = {
       email_in_use: { Args: { p_email: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      save_employee: {
+        Args: {
+          p_commission_pct: number
+          p_document_number: string
+          p_document_type: Database["public"]["Enums"]["document_type"]
+          p_full_name: string
+          p_id?: string
+          p_phone?: string
+        }
+        Returns: string
+      }
       save_vehicle: {
         Args: {
           p_brand_name: string
@@ -351,6 +448,7 @@ export type Database = {
     Enums: {
       customer_origin: "self_signup" | "google" | "counter"
       customer_status: "registered" | "walk_in" | "disabled"
+      document_type: "cc" | "ce" | "ppt" | "passport"
       user_role: "operator" | "admin"
       user_status: "invited" | "active" | "disabled"
       vehicle_class: "automobile" | "utility" | "mountain" | "road"
@@ -501,6 +599,7 @@ export const Constants = {
     Enums: {
       customer_origin: ["self_signup", "google", "counter"],
       customer_status: ["registered", "walk_in", "disabled"],
+      document_type: ["cc", "ce", "ppt", "passport"],
       user_role: ["operator", "admin"],
       user_status: ["invited", "active", "disabled"],
       vehicle_class: ["automobile", "utility", "mountain", "road"],

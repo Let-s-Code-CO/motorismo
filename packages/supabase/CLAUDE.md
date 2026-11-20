@@ -68,6 +68,8 @@ pnpm db:stop
 - `seeds/02_customers.sql`: `cliente@` (cuenta de prueba de cliente), `cliente.google@` (con
   foto), `cliente.desactivado@` y dos clientes sin cuenta del punto de atención.
 - `seeds/03_vehicles.sql`: vehículos de esos clientes (spec 005), guardados con `save_vehicle`.
+- `seeds/04_catalogs.sql`: servicios y empleados de ejemplo (spec 007), solo locales: los reales
+  los carga el administrador. Las pruebas pgTAP de catálogos vacían esas tablas en su transacción.
 - **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
   municipios DANE de `municipalities_data`) van en
   una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo

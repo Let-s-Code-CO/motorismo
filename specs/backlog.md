@@ -12,8 +12,8 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 ### Operación
 
-2. **Catálogos** — servicios (con valor de referencia) y empleados; administrar marcas y líneas
-   de vehículos (renombrar, unir duplicados; la spec 005 solo las precarga y amplía).
+2. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
+   las precarga y amplía; servicios y empleados pasaron a la spec 007).
 3. **Orden de trabajo** — servicios elegidos (incluido «otro» con valor libre), empleados
    asociados y valor final; al encontrar al cliente, total de lavadas y las dos últimas.
 4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
@@ -53,3 +53,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | implementada (falta despliegue y prueba manual de Google) |
 | [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | verificada (bloques A, B y C); falta despliegue |
 | [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
+| [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | implementada (falta despliegue) |

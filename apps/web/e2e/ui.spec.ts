@@ -7,7 +7,7 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
-import { SEED, SEED_CUSTOMERS, signIn } from './support/sandbox';
+import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 
 const horizontalOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -34,6 +34,29 @@ test.describe('on a 360 px phone', () => {
     await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
     await expect(page.getByRole('heading', { name: SEED_CUSTOMERS.walkIn.name })).toBeVisible();
     expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('with every staff section, the menu fits: it moves into «Menú»; a long service fits too (spec 007, CA-19)', async ({
+    page,
+  }) => {
+    // A long name with high prices in every type: the widest row «Servicios» can have.
+    const longName = `E2E Servicio con un nombre bastante largo para un teléfono ${Date.now()}`;
+    await adminClient().from('services').insert({
+      name: longName,
+      price_motorcycle: 9_500_000,
+      price_car: 9_800_000,
+      price_bicycle: 9_900_000,
+    });
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    await page.getByRole('button', { name: 'Menú' }).click();
+    await page.getByRole('menuitemradio', { name: 'Servicios' }).click();
+    await expect(page).toHaveURL('/services');
+    await expect(page.getByRole('grid', { name: 'Servicios activos' })).toContainText(longName);
+    const overflow = await horizontalOverflow(page);
+    await adminClient().from('services').delete().eq('name', longName);
+    expect(overflow).toBe(0);
   });
 
   test('the vehicles of a customer and the vehicle form have no horizontal scroll (spec 005)', async ({

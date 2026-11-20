@@ -2,13 +2,21 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
-import { ArrowRight, Contact, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, Contact, HardHat, type LucideIcon, Sparkles, Tags, Users } from 'lucide-react';
 
 import { getStaffForPage } from '@web/modules/auth/api/auth.server';
 
 const CARD = 'flex flex-col gap-4 rounded-large border border-divider bg-content1 p-6 shadow-small';
 
 const LINK_CARD = `${CARD} group transition-[box-shadow,border-color] hover:border-default-300 hover:shadow-medium`;
+
+/** Where staff can go from home; «Usuarios» only for an admin (spec 002, CA-07; spec 007, CA-19). */
+const SECTIONS: { href: string; key: string; icon: LucideIcon; adminOnly?: boolean }[] = [
+  { href: '/customers', key: 'customers', icon: Contact },
+  { href: '/services', key: 'services', icon: Tags },
+  { href: '/employees', key: 'employees', icon: HardHat },
+  { href: '/admin/users', key: 'users', icon: Users, adminOnly: true },
+];
 
 /** Home of the staff: who they are, their role and where to go (CA-01). Customers have "Mi perfil". */
 const HomePage = async () => {
@@ -29,33 +37,22 @@ const HomePage = async () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Link href="/customers" className={LINK_CARD}>
-          <span className="grid size-10 place-items-center rounded-medium bg-zinc-900 text-white">
-            <Contact aria-hidden className="size-5" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold">{t('home.customersTitle')}</span>
-            <span className="text-sm text-default-500">{t('home.customersText')}</span>
-          </div>
-          <ArrowRight
-            aria-hidden
-            className="mt-auto size-4 text-default-400 transition-transform group-hover:translate-x-1"
-          />
-        </Link>
-        {user.role === 'admin' && (
-          <Link href="/admin/users" className={LINK_CARD}>
-            <span className="grid size-10 place-items-center rounded-medium bg-zinc-900 text-white">
-              <Users aria-hidden className="size-5" />
-            </span>
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold">{t('home.usersTitle')}</span>
-              <span className="text-sm text-default-500">{t('home.usersText')}</span>
-            </div>
-            <ArrowRight
-              aria-hidden
-              className="mt-auto size-4 text-default-400 transition-transform group-hover:translate-x-1"
-            />
-          </Link>
+        {SECTIONS.filter(({ adminOnly }) => !adminOnly || user.role === 'admin').map(
+          ({ href, key, icon: Icon }) => (
+            <Link key={href} href={href} className={LINK_CARD}>
+              <span className="grid size-10 place-items-center rounded-medium bg-zinc-900 text-white">
+                <Icon aria-hidden className="size-5" />
+              </span>
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold">{t(`home.${key}Title`)}</span>
+                <span className="text-sm text-default-500">{t(`home.${key}Text`)}</span>
+              </div>
+              <ArrowRight
+                aria-hidden
+                className="mt-auto size-4 text-default-400 transition-transform group-hover:translate-x-1"
+              />
+            </Link>
+          )
         )}
         <div className={`${CARD} border-dashed bg-transparent shadow-none`}>
           <span className="grid size-10 place-items-center rounded-medium bg-default-100 text-default-600">
