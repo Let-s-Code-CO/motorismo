@@ -2,7 +2,8 @@
  * CustomerManage — what staff can do on a customer record (spec 004, HU-06 / HU-07).
  *
  * Guards:
- * - CA-27: staff (operator or admin) can open the edit form.
+ * - CA-27: editing is NOT a section here any more: it opens from the contact card
+ *   (customer-contact-card).
  * - CA-31 / RN-09: only an admin sees "Desactivar cliente" / "Reactivar cliente"; an operator does
  *   not (the database refuses it anyway).
  * - CA-29 / CA-30: the admin disables an enabled customer and reactivates a disabled one, and the
@@ -34,10 +35,10 @@ const customer = {
 describe('CustomerManage', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('lets an operator edit but not disable (CA-27, CA-31)', () => {
+  it('offers an operator neither disable nor reactivate, and no edit section of its own (CA-31; editing lives in the contact card, CA-27)', () => {
     renderWithProviders(<CustomerManage customer={customer} isAdmin={false} />);
 
-    expect(screen.getByRole('button', { name: 'Editar datos' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Editar datos' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Desactivar cliente' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Reactivar cliente' })).not.toBeInTheDocument();
   });

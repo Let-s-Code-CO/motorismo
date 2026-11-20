@@ -124,6 +124,10 @@ const VehiclesSection = ({
                     <Button
                       size="sm"
                       variant="light"
+                      color="danger"
+                      // Destructive, but a secondary action in a list: red text and icon, no red
+                      // background. danger-600 keeps AA contrast on white (6.1:1).
+                      className="text-danger-600 data-[hover=true]:bg-danger-50"
                       aria-label={t('section.retireLabel', { vehicle: name })}
                       startContent={<Archive aria-hidden className="size-3.5" />}
                       onPress={() => {
@@ -186,8 +190,9 @@ const VehiclesSection = ({
         isOpen={editing !== null}
         onOpenChange={(open) => !open && setEditing(null)}
         size="xl"
-        placement="center"
-        scrollBehavior="inside"
+        // The form's drop-downs are drawn inside the modal (accessibility); "outside" scrolls the
+        // whole overlay instead of the card, so an open list can extend past the card unclipped.
+        scrollBehavior="outside"
       >
         <ModalContent>
           {(onClose) => (

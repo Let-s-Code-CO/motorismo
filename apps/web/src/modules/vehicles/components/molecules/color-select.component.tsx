@@ -45,7 +45,9 @@ const ColorSelect = ({
         if (key) onChange(key as VehicleColor);
       }}
       onClose={onBlur}
-      popoverProps={{ portalContainer }}
+      // The list is drawn inside the form (portalContainer): without padding against that
+      // container, a field in the left column would get its list shifted 12 px to the right.
+      popoverProps={{ portalContainer, containerPadding: 0 }}
       isInvalid={isInvalid}
       errorMessage={errorMessage}
       renderValue={(items) =>

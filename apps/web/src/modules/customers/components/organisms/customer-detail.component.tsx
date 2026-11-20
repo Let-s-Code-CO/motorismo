@@ -5,13 +5,13 @@ import type { ReactNode } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 
 import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component';
-import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import type { CustomerRecord } from '@web/modules/customers/api/customers.server';
 import CustomerStatusChip from '@web/modules/customers/components/atoms/customer-status-chip.component';
+import CustomerContactCard from '@web/modules/customers/components/organisms/customer-contact-card.component';
 
 type CustomerDetailProps = {
   customer: CustomerRecord;
-  /** Edit form, access actions… rendered under the record (spec 004, HU-06 / HU-07). */
+  /** Vehicles, access actions… rendered under the record (spec 004 HU-07, spec 005). */
   children?: ReactNode;
 };
 
@@ -25,6 +25,7 @@ const Field = ({ label, children }: { label: string; children: ReactNode }) => (
 /**
  * A customer's record for staff (spec 004, CA-18): name, email, phone, status, origin, date,
  * when they authorised the processing of their data and, for the counter, who registered them.
+ * The contact card carries the "Editar datos" icon button (CA-27).
  */
 const CustomerDetail = ({ customer, children }: CustomerDetailProps) => {
   const t = useTranslations('customers');
@@ -49,15 +50,7 @@ const CustomerDetail = ({ customer, children }: CustomerDetailProps) => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-large border border-divider bg-content1 p-5 shadow-small">
-          <h2 className="mb-4 text-sm font-semibold">{t('detail.contact')}</h2>
-          <dl className="flex flex-col gap-4">
-            <Field label={t('detail.email')}>{customer.email ?? t('detail.none')}</Field>
-            <Field label={t('detail.phone')}>
-              {customer.phone ? formatMobile(customer.phone) : t('detail.none')}
-            </Field>
-          </dl>
-        </section>
+        <CustomerContactCard customer={customer} />
         <section className="rounded-large border border-divider bg-content1 p-5 shadow-small">
           <h2 className="mb-4 text-sm font-semibold">{t('detail.record')}</h2>
           <dl className="grid gap-4 sm:grid-cols-2">

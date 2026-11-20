@@ -103,6 +103,198 @@ test.describe('pointer cursor', () => {
   });
 });
 
+test.describe('customer record actions', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('"Desactivar cliente" is a strong call to action: solid danger-600 red with white text (AA contrast, 6.1:1)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+
+    const disable = page.getByRole('button', { name: 'Desactivar cliente' });
+    const colours = await disable.evaluate((element) => ({
+      background: getComputedStyle(element).backgroundColor,
+      text: getComputedStyle(element).color,
+    }));
+
+    expect(colours.background).toBe('rgb(194, 14, 77)'); // danger-600, #c20e4d
+    expect(colours.text).toBe('rgb(255, 255, 255)');
+  });
+
+  test('"Retirar" a vehicle reads as danger: red text and icon without a red background; the confirmation is solid red', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.customer.email)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
+
+    const retire = page.getByRole('button', { name: /^Retirar Suzuki GSX-R600/ });
+    const row = await retire.evaluate((element) => ({
+      text: getComputedStyle(element).color,
+      icon: getComputedStyle(element.querySelector('svg')!).color,
+      background: getComputedStyle(element).backgroundColor,
+    }));
+    expect(row.text).toBe('rgb(194, 14, 77)'); // danger-600, #c20e4d
+    expect(row.icon).toBe('rgb(194, 14, 77)');
+    expect(row.background).toBe('rgba(0, 0, 0, 0)'); // no red background at rest
+
+    await retire.click();
+    const confirm = page.getByRole('dialog').getByRole('button', { name: 'Retirar', exact: true });
+    expect(await confirm.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(
+      'rgb(194, 14, 77)'
+    );
+    await page.keyboard.press('Escape'); // nothing is retired
+  });
+
+  test('in the vehicle form, fields side by side start at the same height even when one has help text below (Color beside Placa)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    await page.getByRole('button', { name: /^Editar Mazda CX-30/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editar vehículo' });
+    await expect(dialog.getByText('Tres letras y tres números. Ej.: ABC-123.')).toBeVisible();
+
+    const top = async (text: string) =>
+      (await dialog.getByText(text, { exact: true }).boundingBox())!.y;
+    // Same row: the labels line up (1 px of rounding allowed).
+    expect(Math.abs((await top('Color')) - (await top('Placa')))).toBeLessThanOrEqual(1);
+  });
+
+  test('the colour list of a car (Color in the left column) opens right under the field, over the modal without being clipped, and each swatch is centred on its name', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    await page.getByRole('button', { name: /^Editar Mazda CX-30/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editar vehículo' });
+    await dialog.getByRole('button', { name: /Color/ }).click();
+    const listbox = page.getByRole('listbox');
+    await expect(listbox.getByRole('option', { name: 'Gris' })).toBeVisible();
+    await page.waitForTimeout(400); // popover animation
+
+    // Nothing covers or clips the bottom of the open list. The list scrolls inside its own
+    // viewport (the nearest scrolling ancestor): the point just above that viewport's bottom edge
+    // must belong to the list (a list clipped by the modal leaves the modal's content there).
+    const reachesBottom = await listbox.evaluate((element) => {
+      let viewport: Element = element;
+      while (
+        viewport.parentElement &&
+        !/(auto|scroll)/.test(getComputedStyle(viewport).overflowY)
+      ) {
+        viewport = viewport.parentElement;
+      }
+      const box = viewport.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.bottom - 6);
+      return hit !== null && viewport.contains(hit);
+    });
+    expect(reachesBottom).toBe(true);
+
+    // The list opens right under the field, not shifted sideways: same left edge (±1 px).
+    const fieldBox = (await dialog.getByRole('button', { name: /Color/ }).boundingBox())!;
+    const popoverBox = (await page
+      .locator('[data-slot="content"]', { has: listbox })
+      .boundingBox())!;
+    expect(Math.abs(popoverBox.x - fieldBox.x)).toBeLessThanOrEqual(1);
+
+    // Swatch and name share the same vertical centre in the options and in the chosen value.
+    const offCentre = (scope: import('@playwright/test').Locator, name: string) =>
+      scope.evaluate((element, colourName) => {
+        const swatch = element.querySelector('[data-swatch]')!.getBoundingClientRect();
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
+        while (node && node.textContent?.trim() !== colourName) node = walker.nextNode();
+        const range = document.createRange();
+        range.selectNodeContents(node!);
+        const text = range.getBoundingClientRect();
+        return Math.abs(swatch.top + swatch.height / 2 - (text.top + text.height / 2));
+      }, name);
+    expect(
+      await offCentre(listbox.getByRole('option', { name: 'Rojo' }), 'Rojo')
+    ).toBeLessThanOrEqual(1);
+    await page.keyboard.press('Escape');
+    expect(
+      await offCentre(dialog.getByRole('button', { name: /Color/ }), 'Gris')
+    ).toBeLessThanOrEqual(1);
+
+    // Any drop-down of the form behaves the same: the brand list (also in the left column).
+    const brand = dialog.getByRole('combobox', { name: /Marca/ });
+    await brand.click();
+    await expect(page.getByRole('option', { name: 'Mazda' })).toBeVisible();
+    await page.waitForTimeout(400); // popover animation
+    const brandField = (await dialog
+      .locator('[data-slot="input-wrapper"]', {
+        has: page.getByRole('combobox', { name: /Marca/ }),
+      })
+      .boundingBox())!;
+    const brandPopover = (await page
+      .locator('[data-slot="content"]', { has: page.getByRole('listbox') })
+      .boundingBox())!;
+    expect(Math.abs(brandPopover.x - brandField.x)).toBeLessThanOrEqual(1);
+  });
+
+  test('in the vehicle form, each radio label is vertically centred on its circle (Tipo and Clase)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+    await page.getByRole('button', { name: /^Editar Mazda CX-30/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editar vehículo' });
+    await expect(dialog.getByRole('radio', { name: 'Camioneta' })).toBeAttached();
+
+    // Optical centring: the circle's centre against the middle of the capital letters (between
+    // the baseline and the cap height of the font), not against the text's line box, which the
+    // font's uneven vertical metrics leave off the letters.
+    const offCentre = await dialog.evaluate((element) =>
+      [...element.querySelectorAll('input[type="radio"]')].map((input) => {
+        const label = input.closest('label')!;
+        const circle = input.nextElementSibling!.getBoundingClientRect();
+        const text = label.querySelector('div > span')! as HTMLElement;
+        const probe = document.createElement('span');
+        probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+        text.appendChild(probe);
+        const baseline = probe.getBoundingClientRect().top;
+        probe.remove();
+        const style = getComputedStyle(text);
+        const context = document.createElement('canvas').getContext('2d')!;
+        context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        const capHeight = context.measureText('H').actualBoundingBoxAscent;
+        return {
+          name: text.textContent,
+          off: Math.abs(circle.top + circle.height / 2 - (baseline - capHeight / 2)),
+        };
+      })
+    );
+    expect(offCentre.length).toBe(5); // Motocicleta, Bicicleta, Carro · Automóvil, Camioneta
+    for (const { name, off } of offCentre) expect(off, name ?? '').toBeLessThanOrEqual(1);
+  });
+
+  test('"Editar datos" is an icon button inside "Datos de contacto", with the hand cursor', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.walkIn.name)}`);
+    await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
+
+    const edit = page
+      .getByRole('region', { name: 'Datos de contacto' })
+      .getByRole('button', { name: 'Editar datos' });
+    await expect(edit).toBeVisible();
+    expect(await edit.evaluate((element) => getComputedStyle(element).cursor)).toBe('pointer');
+  });
+});
+
 test.describe('placeholders', () => {
   test('are painted in the muted zinc-500 grey, not in the colour of typed text, so an empty field does not look filled in', async ({
     page,

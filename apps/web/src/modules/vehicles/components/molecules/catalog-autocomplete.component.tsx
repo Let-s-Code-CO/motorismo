@@ -68,7 +68,9 @@ const CatalogAutocomplete = ({
       errorMessage={errorMessage}
       description={isNew ? t('form.newName') : undefined}
       listboxProps={{ emptyContent: t('form.noSuggestions') }}
-      popoverProps={{ portalContainer }}
+      // The list is drawn inside the form (portalContainer): without padding against that
+      // container, a field in the left column would get its list shifted 12 px to the right.
+      popoverProps={{ portalContainer, containerPadding: 0 }}
     >
       {(item) => <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>}
     </Autocomplete>

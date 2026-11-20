@@ -106,6 +106,7 @@ test('the new-customer dialog and the edit form have no serious accessibility is
   await page.keyboard.press('Escape');
   await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
   await page.getByRole('button', { name: 'Editar datos' }).click();
+  await untilDialogSettled(page);
   await expect(page.getByRole('button', { name: 'Guardar cambios' })).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });

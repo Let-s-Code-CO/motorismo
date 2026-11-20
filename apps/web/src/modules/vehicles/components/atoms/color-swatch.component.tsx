@@ -11,7 +11,9 @@ const ColorSwatch = ({ color, className = 'size-3.5' }: ColorSwatchProps) => (
   <span
     aria-hidden="true"
     data-swatch={color}
-    className={`inline-block shrink-0 rounded-full ring-1 ring-black/15 ring-inset dark:ring-white/25 ${className}`}
+    // Block, not inline-block: an inline swatch sits on the text baseline of its wrapper (e.g. the
+    // option's startContent) and drifts off the centre of its name.
+    className={`block shrink-0 rounded-full ring-1 ring-black/15 ring-inset dark:ring-white/25 ${className}`}
     style={{ background: COLOR_SWATCHES[color] }}
   />
 );

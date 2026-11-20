@@ -106,18 +106,26 @@ test('edits a counter customer, and the email of an account is read-only (CA-27)
   await page.getByRole('link', { name: /E2E Mostrador Editable/ }).click();
 
   await page.getByRole('button', { name: 'Editar datos' }).click();
-  await page.getByLabel('Nombre completo').fill('E2E Mostrador Editado');
-  await page.getByLabel('Celular (opcional)').fill('3015550000');
-  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Editar datos' });
+  await dialog.getByLabel('Nombre completo').fill('E2E Mostrador Editado');
+  await dialog.getByLabel('Celular (opcional)').fill('3015550000');
+  await dialog.getByRole('button', { name: 'Guardar cambios' }).click();
 
-  await expect(page.getByText('Datos del cliente guardados.')).toBeVisible();
+  await expect(dialog).toBeHidden();
+  await expect(
+    page
+      .getByRole('region', { name: 'Datos de contacto' })
+      .getByText('Datos del cliente guardados.')
+  ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'E2E Mostrador Editado' })).toBeVisible();
   await expect(page.getByText('301 555 0000')).toBeVisible();
 
   await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.customer.email)}`);
   await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
   await page.getByRole('button', { name: 'Editar datos' }).click();
-  await expect(page.getByLabel('Correo (opcional)')).toHaveAttribute('readonly', '');
+  await expect(
+    page.getByRole('dialog', { name: 'Editar datos' }).getByLabel('Correo (opcional)')
+  ).toHaveAttribute('readonly', '');
   await expect(
     page.getByText('Es el correo con el que entra a su cuenta: no se puede cambiar.')
   ).toBeVisible();

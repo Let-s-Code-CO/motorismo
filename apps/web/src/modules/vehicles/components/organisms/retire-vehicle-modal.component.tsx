@@ -71,7 +71,13 @@ const RetireVehicleModal = ({ vehicle, audience, onClose, onRetired }: RetireVeh
           <Button variant="light" onPress={onClose}>
             {t('retire.cancel')}
           </Button>
-          <Button color="primary" className="font-medium" isLoading={isPending} onPress={confirm}>
+          <Button
+            // The destructive confirmation: solid red, danger-600 for AA contrast with white text.
+            color="danger"
+            className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700"
+            isLoading={isPending}
+            onPress={confirm}
+          >
             {t('retire.confirm')}
           </Button>
         </ModalFooter>

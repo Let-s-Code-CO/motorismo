@@ -60,6 +60,7 @@
       "registeredBy": "Registrado por",
       "none": "—",
       "edit": "Editar datos",
+      "editDescription": "Corrige el nombre, el correo o el celular del cliente.",
       "cancel": "Cancelar",
       "save": "Guardar cambios",
       "emailLocked": "Es el correo con el que entra a su cuenta: no se puede cambiar.",

@@ -175,7 +175,7 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
         />
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid items-start gap-5 sm:grid-cols-2">
         <Controller
           control={control}
           name="brand_name"
@@ -214,7 +214,7 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid items-start gap-5 sm:grid-cols-2">
         {type === 'motorcycle' && (
           <Controller
             control={control}
