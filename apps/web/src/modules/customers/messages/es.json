@@ -4,7 +4,7 @@
     "description": "Consulta, busca y registra a los clientes del negocio.",
     "newButton": "Nuevo cliente",
     "searchLabel": "Buscar clientes",
-    "searchPlaceholder": "Buscar por nombre, correo o celular",
+    "searchPlaceholder": "Buscar por nombre, correo, celular o placa",
     "created": "Cliente registrado.",
     "updated": "Datos del cliente guardados.",
     "disabledNotice": "Cliente desactivado. Si tiene una sesión abierta, se cerrará en su siguiente acción.",
@@ -42,7 +42,9 @@
       "emptyFiltered": "No hay clientes con este estado.",
       "noEmail": "Sin correo",
       "open": "Ver ficha de {name}",
-      "plate": "Placa"
+      "plate": "Placa",
+      "actions": "Acciones de {name}",
+      "actionsColumn": "Acciones"
     },
     "pagination": {
       "label": "Páginas de clientes"

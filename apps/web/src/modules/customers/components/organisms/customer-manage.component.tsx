@@ -16,8 +16,6 @@ type CustomerManageProps = {
     id: string;
     disabled_at: string | null;
   };
-  /** Only an admin disables or reactivates (RN-09, CA-31). */
-  isAdmin: boolean;
 };
 
 type Notice = { tone: 'success'; text: string } | { tone: 'danger'; error: CustomersErrorKey };
@@ -25,10 +23,10 @@ type Notice = { tone: 'success'; text: string } | { tone: 'danger'; error: Custo
 const CARD = 'rounded-large border border-divider bg-content1 p-5 shadow-small';
 
 /**
- * Access to a customer's account (spec 004): an admin disables or reactivates the customer
- * (CA-29, CA-30); an operator gets nothing here (CA-31). Editing lives in the contact card (CA-27).
+ * Access to a customer's account (spec 004): staff — operator or admin — disable or reactivate the
+ * customer (RN-09, CA-29, CA-30); the record is staff-only. Editing lives in the contact card (CA-27).
  */
-const CustomerManage = ({ customer, isAdmin }: CustomerManageProps) => {
+const CustomerManage = ({ customer }: CustomerManageProps) => {
   const t = useTranslations('customers');
   const router = useRouter();
   const [notice, setNotice] = useState<Notice>();
@@ -45,8 +43,6 @@ const CustomerManage = ({ customer, isAdmin }: CustomerManageProps) => {
       );
       router.refresh();
     });
-
-  if (!isAdmin) return null;
 
   return (
     <div className="flex flex-col gap-4">

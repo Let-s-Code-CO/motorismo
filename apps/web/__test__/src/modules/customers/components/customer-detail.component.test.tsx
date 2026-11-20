@@ -4,9 +4,9 @@
  * Guards:
  * - CA-27: editing is NOT a section here any more: it opens from the contact card
  *   (customer-contact-card).
- * - CA-31 / RN-09: only an admin sees "Desactivar cliente" / "Reactivar cliente"; an operator does
- *   not (the database refuses it anyway).
- * - CA-29 / CA-30: the admin disables an enabled customer and reactivates a disabled one, and the
+ * - CA-31 / RN-09: every staff member — operator or admin — sees "Desactivar cliente" /
+ *   "Reactivar cliente" (the record is a staff-only page); a customer never reaches it.
+ * - CA-29 / CA-30: staff disable an enabled customer and reactivate a disabled one, and the
  *   result is announced.
  */
 import { fireEvent, screen } from '@testing-library/react';
@@ -35,17 +35,17 @@ const customer = {
 describe('CustomerManage', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('offers an operator neither disable nor reactivate, and no edit section of its own (CA-31; editing lives in the contact card, CA-27)', () => {
-    renderWithProviders(<CustomerManage customer={customer} isAdmin={false} />);
+  it('offers any staff member "Desactivar cliente", and no edit section of its own (RN-09, CA-31; editing lives in the contact card, CA-27)', () => {
+    renderWithProviders(<CustomerManage customer={customer} />);
 
     expect(screen.queryByRole('button', { name: 'Editar datos' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Desactivar cliente' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desactivar cliente' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Reactivar cliente' })).not.toBeInTheDocument();
   });
 
-  it('lets an admin disable an enabled customer and announces it (CA-29)', async () => {
+  it('lets staff disable an enabled customer and announces it (CA-29)', async () => {
     vi.mocked(setCustomerDisabled).mockResolvedValue({ ok: true });
-    renderWithProviders(<CustomerManage customer={customer} isAdmin />);
+    renderWithProviders(<CustomerManage customer={customer} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Desactivar cliente' }));
 
@@ -57,10 +57,10 @@ describe('CustomerManage', () => {
     expect(setCustomerDisabled).toHaveBeenCalledWith({ id: 'c-1', disabled: true });
   });
 
-  it('offers an admin to reactivate a disabled customer (CA-30)', async () => {
+  it('offers staff to reactivate a disabled customer (CA-30)', async () => {
     vi.mocked(setCustomerDisabled).mockResolvedValue({ ok: true });
     renderWithProviders(
-      <CustomerManage customer={{ ...customer, disabled_at: '2026-11-19T10:00:00Z' }} isAdmin />
+      <CustomerManage customer={{ ...customer, disabled_at: '2026-11-19T10:00:00Z' }} />
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Reactivar cliente' }));

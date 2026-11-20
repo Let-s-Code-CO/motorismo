@@ -17,7 +17,7 @@ type CustomerPageProps = { params: Promise<{ id: string }> };
 
 /**
  * A customer's record (spec 004, CA-18) with their vehicles (spec 005, HU-01), where staff edit it
- * (CA-27) and an admin disables or reactivates it (CA-29 to CA-31). Staff only; data protected by RLS and the database guard.
+ * (CA-27) and staff disable or reactivate it (RN-09, CA-29 to CA-31). Staff only; data protected by RLS and the database guard.
  */
 const CustomerPage = async ({ params }: CustomerPageProps) => {
   const staff = await getStaffForPage();
@@ -48,7 +48,7 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
           retired={vehicles.retired}
           readOnly={customer.disabled_at !== null}
         />
-        <CustomerManage customer={customer} isAdmin={staff.role === 'admin'} />
+        <CustomerManage customer={customer} />
       </CustomerDetail>
     </section>
   );

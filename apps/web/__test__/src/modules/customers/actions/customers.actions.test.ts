@@ -8,13 +8,13 @@
  * - CA-25: invalid input returns one error per field and nothing is written.
  * - CA-26: the guard's "email already in use" becomes its own message.
  * - CA-27 / RN-10: the email of a customer WITH account is never sent in an edit.
- * - CA-29 / CA-30 / CA-31 / RN-09: only an ACTIVE ADMIN disables or reactivates; for a customer with
+ * - CA-29 / CA-30 / CA-31 / RN-09: ACTIVE STAFF (operator or admin) disable or reactivate; for a customer with
  *   an account, Auth also bans (or lifts the ban on) the account — no new session can be issued —
  *   and if Auth fails the change is reverted. A customer without account has nothing to ban.
  */
 import { revalidatePath } from 'next/cache';
 
-import { getActiveAdmin, getActiveStaff } from '@web/modules/auth/api/auth.server';
+import { getActiveStaff } from '@web/modules/auth/api/auth.server';
 import { createSupabaseAdminClient } from '@web/modules/core/lib/supabase-admin.lib';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 import {
@@ -37,7 +37,6 @@ vi.mock('@web/modules/core/lib/supabase-server.lib', () => ({
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 const STAFF = buildProfile({ id: 'op-id', role: 'operator' });
-const ADMIN = buildProfile({ id: 'admin-id', role: 'admin' });
 const ID = '6f1c0d2e-8a4b-4c3d-9e5f-0a1b2c3d4e5f';
 
 type Outcome = { data?: unknown; error?: { code?: string; hint?: string; message: string } | null };
@@ -163,11 +162,12 @@ describe('updateCustomer', () => {
 });
 
 describe('setCustomerDisabled', () => {
-  beforeEach(() => vi.mocked(getActiveAdmin).mockResolvedValue(ADMIN));
+  // RN-09: any active staff member — an operator here — disables and reactivates.
+  beforeEach(() => vi.mocked(getActiveStaff).mockResolvedValue(STAFF));
   afterEach(() => vi.clearAllMocks());
 
-  it('rejects anyone who is not an active admin (CA-31, RN-09)', async () => {
-    vi.mocked(getActiveAdmin).mockResolvedValue(null);
+  it('rejects anyone who is not active staff, e.g. a customer (CA-31, RN-09)', async () => {
+    vi.mocked(getActiveStaff).mockResolvedValue(null);
 
     await expect(setCustomerDisabled({ id: ID, disabled: true })).resolves.toEqual({
       ok: false,

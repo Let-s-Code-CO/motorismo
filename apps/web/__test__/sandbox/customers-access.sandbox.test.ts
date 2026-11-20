@@ -4,7 +4,8 @@
  * Guards CA-10: a customer who bypasses the UI only reads their own customer record, cannot read
  * staff profiles, cannot change their status or email, cannot create customers, cannot change
  * another customer, and cannot probe which emails exist (email_in_use is server-only, RN-06).
- * Also CA-31 / RN-09: an operator calling the API directly cannot disable a customer.
+ * Also RN-09 / CA-31: an operator calling the API directly disables and reactivates a customer; a
+ * customer cannot disable an account, not even their own.
  */
 import { SEED, adminClient, signedInAs } from './support/sandbox';
 
@@ -79,21 +80,41 @@ describe('a customer calling the API directly (CA-10)', () => {
   });
 });
 
-describe('an operator calling the API directly (CA-31)', () => {
-  it('cannot disable a customer: only an admin can', async () => {
+describe('disabling through the API directly (RN-09, CA-29 to CA-31)', () => {
+  it('lets an operator disable and reactivate a customer (RN-09)', async () => {
     const { client } = await signedInAs(SEED.operator);
+    const status = async () =>
+      (
+        await adminClient()
+          .from('customers')
+          .select('status')
+          .eq('email', 'valentina.vasquez@correo.test')
+          .single()
+      ).data?.status;
+
+    const disabled = await client
+      .from('customers')
+      .update({ disabled_at: new Date().toISOString() })
+      .eq('email', 'valentina.vasquez@correo.test');
+    expect(disabled.error).toBeNull();
+    expect(await status()).toBe('disabled');
+
+    const reactivated = await client
+      .from('customers')
+      .update({ disabled_at: null })
+      .eq('email', 'valentina.vasquez@correo.test');
+    expect(reactivated.error).toBeNull();
+    expect(await status()).toBe('walk_in');
+  });
+
+  it('refuses a customer disabling their own account (CA-31)', async () => {
+    const { client, userId } = await signedInAs(SEED.customer);
 
     const { error } = await client
       .from('customers')
       .update({ disabled_at: new Date().toISOString() })
-      .eq('email', 'valentina.vasquez@correo.test');
+      .eq('user_id', userId);
 
     expect(error?.code).toBe('42501');
-    const { data } = await adminClient()
-      .from('customers')
-      .select('status')
-      .eq('email', 'valentina.vasquez@correo.test')
-      .single();
-    expect(data?.status).toBe('walk_in');
   });
 });
