@@ -1,0 +1,30 @@
+{
+  "pwa": {
+    "offline": {
+      "banner": "Sin conexión. No puedes guardar ni consultar nada hasta que vuelva la red."
+    },
+    "offlinePage": {
+      "title": "Sin conexión",
+      "body": "No hay conexión a internet. Motorismo solo funciona conectado: cuando vuelva la red, pulsa «Reintentar».",
+      "retry": "Reintentar"
+    },
+    "update": {
+      "title": "Hay una versión nueva",
+      "description": "Actualiza cuando termines lo que estás haciendo.",
+      "action": "Actualizar"
+    },
+    "install": {
+      "label": "Instalar app",
+      "iosTitle": "Instalar Motorismo en tu iPhone o iPad",
+      "iosIntro": "En Safari, agrégala a tu pantalla de inicio:",
+      "iosStep1": "Toca el botón Compartir, en la barra de Safari.",
+      "iosStep2": "Elige «Agregar a inicio».",
+      "iosStep3": "Toca «Agregar»: Motorismo aparecerá con su ícono en tu pantalla de inicio.",
+      "close": "Entendido",
+      "bannerTitle": "Instala Motorismo en este dispositivo",
+      "bannerDescription": "Ábrela desde su ícono, a pantalla completa, como cualquier otra app.",
+      "bannerAction": "Instalar",
+      "bannerDismiss": "Ahora no"
+    }
+  }
+}

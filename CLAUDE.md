@@ -148,6 +148,30 @@ e2e/                         # Playwright
   `normal` (por defecto) o `inside` la tarjeta del modal recorta la lista abierta. Ver
   `vehicle-form` y `vehicles-section` (spec 005).
 
+## App instalable y sin conexión (spec 006)
+
+- La app se instala (manifiesto en `src/app/manifest.ts`, íconos en `public/icons/` y
+  `src/app/apple-icon.png`). **No funciona sin conexión** y no guarda datos en el dispositivo.
+- `public/sw.js` (escrito a mano) solo guarda la página «Sin conexión» (`src/app/offline/route.ts`,
+  HTML autocontenido) y su ícono, y la muestra cuando falla una navegación. **Nunca** caches de
+  páginas, de `_next/static` ni de datos (RN-02). Si cambia lo que guarda, sube el nombre de la
+  caché (`motorismo-offline-vN`).
+- **Toda llamada nueva a una Server Action desde un componente va con `callAction`**
+  (`modules/pwa/utils/call-action.utils.ts`): si la red se cae al enviar, la app pasa a «sin
+  conexión» y devuelve `null`, que la pantalla trata como «no pasó nada» (sin éxito ni error
+  propio, el formulario intacto). Sin él, el error desmonta el formulario.
+- Sin red, `ConnectionGate` pone `inert` en todos los hijos de `<body>` (también modales abiertos
+  después) y muestra el aviso; su contenedor lleva `data-react-aria-top-layer` para que un modal
+  abierto no lo oculte a los lectores de pantalla.
+- `/api/version` responde la versión del despliegue (`NEXT_PUBLIC_APP_VERSION`, la fija
+  `next.config.ts` al construir): sirve para el aviso «Hay una versión nueva» y como sonda de
+  conexión. El `matcher` de `src/proxy.ts` excluye `manifest.webmanifest`, `sw.js`, `offline` y
+  `api/version` (sin sesión).
+- E2E: `context.setOffline` también corta la red del service worker; `page.route` no ve las
+  peticiones que pasan por él, así que esas pruebas usan `test.use({ serviceWorkers: 'block' })`.
+  Chromium sin ventana no informa errores de instalabilidad (`Page.getInstallabilityErrors`
+  siempre vacío): se prueba el manifiesto con `Page.getAppManifest`.
+
 ## Autenticación y permisos (specs 002 y 004)
 
 - Dos tipos de cuenta, nunca ambos a la vez: **personal** en `public.profiles` (rol

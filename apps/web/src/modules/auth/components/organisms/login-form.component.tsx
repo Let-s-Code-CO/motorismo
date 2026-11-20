@@ -17,6 +17,7 @@ import PasswordInput from '@web/modules/auth/components/molecules/password-input
 import ResendConfirmation from '@web/modules/auth/components/molecules/resend-confirmation.component';
 import { type LoginValues, loginSchema } from '@web/modules/auth/schemas/login.schema';
 import type { AuthErrorKey } from '@web/modules/auth/utils/auth-errors.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type LoginFormProps = {
   /** Page to return to after signing in (CA-03); already sanitized by the page. */
@@ -41,7 +42,8 @@ const LoginForm = ({ next, initialError }: LoginFormProps) => {
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
     // On success the action redirects and never returns.
-    const result = await signIn(values, next);
+    const result = await callAction(() => signIn(values, next));
+    // null: no network (spec 006, CA-10), the app-wide notice speaks.
     if (result && !result.ok) setServerError(result.error);
   });
 

@@ -15,6 +15,7 @@ import FilterBar from '@web/modules/core/components/filter-bar.component';
 import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
 import { filterByStatus, parseStatusParam } from '@web/modules/core/utils/status-filter.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import {
   type UsersErrorKey,
   changeRole,
@@ -67,7 +68,8 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
 
   const run = (action: () => Promise<ActionResult<UsersErrorKey>>, successKey: string) => {
     startTransition(async () => {
-      const result = await action();
+      const result = await callAction(action);
+      if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       setNotice(
         result.ok
           ? { tone: 'success', text: t(successKey) }

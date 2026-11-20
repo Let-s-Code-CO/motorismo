@@ -16,6 +16,7 @@ import {
   setPasswordSchema,
 } from '@web/modules/auth/schemas/set-password.schema';
 import type { AuthErrorKey } from '@web/modules/auth/utils/auth-errors.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 /** New password for an invited user (CA-14) or after a recovery link (CA-23). RN-04. */
 const SetPasswordForm = () => {
@@ -32,7 +33,8 @@ const SetPasswordForm = () => {
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
-    const result = await setPassword(values);
+    const result = await callAction(() => setPassword(values));
+    // null: no network (spec 006, CA-10), the app-wide notice speaks.
     if (result && !result.ok) setServerError(result.error);
   });
 

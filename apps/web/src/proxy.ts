@@ -65,6 +65,9 @@ export const proxy = async (request: NextRequest) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    // Also left out (spec 006): the manifest, which browsers fetch without cookies (a visitor
+    // would get a redirect to the login instead); the service worker and its "Sin conexión" page;
+    // and /api/version, polled every few seconds while offline, which needs no session.
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline|api/version|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

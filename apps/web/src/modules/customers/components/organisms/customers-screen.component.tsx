@@ -32,6 +32,7 @@ import {
   customersQueryString,
   pageCount,
 } from '@web/modules/customers/utils/customers-filter.utils';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 /**
  * Summary cards = filters (project standard): order and status dot of each card. "Activos" is the
@@ -79,7 +80,10 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
   const toggleAccess = (customer: CustomerListRow) =>
     startToggle(async () => {
       const disable = customer.status !== 'disabled';
-      const result = await setCustomerDisabled({ id: customer.id, disabled: disable });
+      const result = await callAction(() =>
+        setCustomerDisabled({ id: customer.id, disabled: disable })
+      );
+      if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       setNotice(
         result.ok
           ? { tone: 'success', text: disable ? t('disabledNotice') : t('reactivated') }

@@ -15,6 +15,7 @@ import {
   type ForgotPasswordValues,
   forgotPasswordSchema,
 } from '@web/modules/auth/schemas/forgot-password.schema';
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 /** Requests a recovery link; always the same neutral answer (CA-22, RN-06). */
 const ForgotPasswordForm = () => {
@@ -30,8 +31,9 @@ const ForgotPasswordForm = () => {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    const result = await requestPasswordReset(values);
-    if (result.ok) setSent(true);
+    const result = await callAction(() => requestPasswordReset(values));
+    // null: no network (spec 006, CA-10), the app-wide notice speaks.
+    if (result?.ok) setSent(true);
   });
 
   if (sent) {

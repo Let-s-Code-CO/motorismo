@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Input, NumberInput, Radio, RadioGroup } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { saveVehicle } from '@web/modules/vehicles/actions/vehicles.actions';
 import type { VehicleView } from '@web/modules/vehicles/api/vehicles.server';
 import CatalogAutocomplete from '@web/modules/vehicles/components/molecules/catalog-autocomplete.component';
@@ -125,11 +126,10 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
-    const result = await saveVehicle({
-      ...values,
-      customer_id: customerId,
-      vehicle_id: vehicle?.id ?? null,
-    });
+    const result = await callAction(() =>
+      saveVehicle({ ...values, customer_id: customerId, vehicle_id: vehicle?.id ?? null })
+    );
+    if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
     if (!result.ok) {
       setServerError(result.error);
       return;

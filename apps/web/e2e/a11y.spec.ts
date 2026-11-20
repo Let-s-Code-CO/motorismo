@@ -2,7 +2,9 @@
  * Automatic accessibility audit (spec 003, CA-04): WCAG 2.1 A/AA rules, colour contrast included,
  * on the login, the home page and user management; spec 004 adds the sign-up, the data policy,
  * "Mi perfil", Clientes and a customer record; spec 005 the vehicles of a customer ("Mis vehículos"
- * in "Mi perfil" too), the vehicle form, the retired vehicles and the retire dialog. Serious and critical findings fail the test.
+ * in "Mi perfil" too), the vehicle form, the retired vehicles and the retire dialog; spec 006 the
+ * "Sin conexión" page and notice, the new-version notice and the iPhone install notice and steps. Serious and
+ * critical findings fail the test.
  */
 import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page, expect, test } from '@playwright/test';
@@ -168,4 +170,57 @@ test('retired vehicles and the retire dialog have no serious accessibility issue
   await untilDialogSettled(page);
   expect(await audit(page)).toEqual([]);
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+});
+
+test('the "Sin conexión" page and notice have no serious accessibility issues (spec 006)', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/offline');
+  await expect(page.getByRole('heading', { name: 'Sin conexión', level: 1 })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/customers');
+  await expect(page.getByRole('grid')).toBeVisible();
+  await context.setOffline(true);
+  await untilSettled(page.getByRole('alert').filter({ hasText: 'Sin conexión' }));
+  expect(await audit(page)).toEqual([]);
+  await context.setOffline(false);
+});
+
+test.describe('the new-version notice (spec 006)', () => {
+  // /api/version is answered with page.route, which only sees requests without a service worker.
+  test.use({ serviceWorkers: 'block' });
+
+  test('has no serious accessibility issues', async ({ page }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.route('**/api/version', (route) => route.fulfill({ json: { version: 'e2e-new' } }));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+
+    await untilSettled(page.getByText('Hay una versión nueva'));
+    expect(await audit(page)).toEqual([]);
+  });
+});
+
+test.describe('the install notice and steps on an iPhone (spec 006)', () => {
+  test.use({
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+  });
+
+  test('the install notice and the steps have no serious accessibility issues (CA-13, CA-18)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    await untilSettled(page.getByText('Instala Motorismo en este dispositivo'));
+    expect(await audit(page)).toEqual([]);
+
+    await page.getByRole('button', { name: 'Instalar app' }).click();
+
+    await untilDialogSettled(page);
+    expect(await audit(page)).toEqual([]);
+  });
 });

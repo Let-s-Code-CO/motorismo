@@ -1,6 +1,7 @@
 import auth from '@web/modules/auth/messages/es.json';
 import core from '@web/modules/core/messages/es.json';
 import customers from '@web/modules/customers/messages/es.json';
+import pwa from '@web/modules/pwa/messages/es.json';
 import users from '@web/modules/users/messages/es.json';
 import vehicles from '@web/modules/vehicles/messages/es.json';
 
@@ -19,4 +20,5 @@ export const messages = {
   ...users,
   ...customers,
   ...vehicles,
+  ...pwa,
 };
