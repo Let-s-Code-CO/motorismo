@@ -21,6 +21,7 @@ import { Search, UserPlus } from 'lucide-react';
 import type { CustomerStatus } from '@web/modules/auth/types/auth.types';
 import FilterBar from '@web/modules/core/components/filter-bar.component';
 import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
+import { setCustomerDisabled } from '@web/modules/customers/actions/customers.actions';
 import type { CustomerListRow } from '@web/modules/customers/api/customers.server';
 import CustomerForm from '@web/modules/customers/components/organisms/customer-form.component';
 import CustomersTable from '@web/modules/customers/components/organisms/customers-table.component';
@@ -69,9 +70,23 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(filters.q);
-  const [notice, setNotice] = useState<string>();
+  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string }>();
+  const [isToggling, startToggle] = useTransition();
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const lastSent = useRef(filters.q);
+
+  // RN-09, CA-32: staff disable or reactivate from the row actions menu, as from the record.
+  const toggleAccess = (customer: CustomerListRow) =>
+    startToggle(async () => {
+      const disable = customer.status !== 'disabled';
+      const result = await setCustomerDisabled({ id: customer.id, disabled: disable });
+      setNotice(
+        result.ok
+          ? { tone: 'success', text: disable ? t('disabledNotice') : t('reactivated') }
+          : { tone: 'danger', text: t(`errors.${result.error}`) }
+      );
+      router.refresh();
+    });
 
   const navigate = (next: CustomerFilters) =>
     startTransition(() =>
@@ -153,7 +168,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
         onSelect={(status) => navigate({ ...filters, status, page: 1 })}
       />
 
-      {notice && <Alert color="success" variant="faded" title={notice} />}
+      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
 
       <div className="flex flex-col gap-3">
         <Input
@@ -178,7 +193,13 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
           }}
         />
         <div aria-busy={isPending} className={isPending ? 'opacity-60 transition-opacity' : ''}>
-          <CustomersTable customers={rows} query={filters.q} emptyLabel={emptyLabel} />
+          <CustomersTable
+            customers={rows}
+            query={filters.q}
+            emptyLabel={emptyLabel}
+            onToggleAccess={toggleAccess}
+            isBusy={isToggling}
+          />
         </div>
         {pageCount(matching) > 1 && (
           <nav aria-label={t('pagination.label')} className="flex justify-center pt-2">
@@ -205,7 +226,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
               onCancel={onClose}
               onSaved={() => {
                 onClose();
-                setNotice(t('created'));
+                setNotice({ tone: 'success', text: t('created') });
                 router.refresh();
               }}
             />

@@ -6,6 +6,6 @@ export type CustomersErrorKey =
 export const fromCustomerGuardError = (error: { hint?: string | null }): CustomersErrorKey => {
   if (error.hint === 'customer_email_taken') return 'emailTaken';
   if (error.hint === 'customer_email_locked') return 'emailLocked';
-  if (error.hint === 'customer_admin_only') return 'forbidden';
+  if (error.hint === 'customer_staff_only') return 'forbidden';
   return 'generic';
 };

@@ -19,6 +19,8 @@ test('finds the owner by the plate written any way, and shows it (CA-17, CA-19)'
   await expect(page).toHaveURL('/');
   await page.goto('/customers');
   const search = page.getByRole('searchbox', { name: 'Buscar clientes' });
+  // The search box says it also takes a plate (spec 004, CA-16, extended by spec 005).
+  await expect(search).toHaveAttribute('placeholder', 'Buscar por nombre, correo, celular o placa');
   const camila = page.getByRole('row', { name: new RegExp(CAMILA) });
 
   for (const typed of ['uih03', 'UIH-03', 'uih 03d']) {

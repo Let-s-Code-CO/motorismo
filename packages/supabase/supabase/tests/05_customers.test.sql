@@ -17,7 +17,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(54);
+select plan(56);
 
 -- Fixtures -------------------------------------------------------------------------------------
 create function pg_temp.new_staff(p_id uuid, p_email text, p_name text, p_role text)
@@ -335,10 +335,19 @@ select lives_ok(
 );
 
 -- Enabling and disabling (CA-29, CA-30, CA-31, RN-09) -------------------------------------------
+select lives_ok(
+  $$ update public.customers set disabled_at = now() where email = 'carla@test.local' $$,
+  'CA-29 / RN-09: an operator disables a customer too'
+);
+select lives_ok(
+  $$ update public.customers set disabled_at = null where email = 'carla@test.local' $$,
+  'CA-30 / RN-09: an operator reactivates a customer too'
+);
+select pg_temp.act_as('00000000-0000-0000-0000-0000000005c2');
 select throws_ok(
   $$ update public.customers set disabled_at = now() where email = 'carla@test.local' $$,
   '42501', null,
-  'CA-31 / RN-09: an operator cannot disable a customer'
+  'CA-31 / RN-09: a customer cannot disable an account, not even their own'
 );
 select pg_temp.act_as('00000000-0000-0000-0000-0000000005a1');
 update public.customers set disabled_at = now() where email in ('carla@test.local', 'marta@test.local');

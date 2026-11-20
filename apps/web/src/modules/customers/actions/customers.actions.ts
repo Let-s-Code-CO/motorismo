@@ -4,11 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { z } from 'zod';
 
-import {
-  getActiveAdmin,
-  getActiveCustomer,
-  getActiveStaff,
-} from '@web/modules/auth/api/auth.server';
+import { getActiveCustomer, getActiveStaff } from '@web/modules/auth/api/auth.server';
 import { createSupabaseAdminClient } from '@web/modules/core/lib/supabase-admin.lib';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
@@ -123,16 +119,16 @@ export const updateCustomer = async (input: unknown): Promise<ActionResult<Custo
 const setDisabledSchema = z.object({ id: z.uuid(), disabled: z.boolean() });
 
 /**
- * Disables or reactivates a customer (spec 004, CA-29 / CA-30). Only an active admin (RN-09); the
- * database refuses anyone else too (CA-31). The customer record is the source of truth (the proxy
+ * Disables or reactivates a customer (spec 004, CA-29 / CA-30). Active staff, operator or admin
+ * (RN-09); the database refuses anyone else too (CA-31). The customer record is the source of truth (the proxy
  * signs a disabled customer out on their next request); for a customer with an account, the Auth
  * ban additionally stops any NEW session. If Auth fails, the record goes back to how it was.
  */
 export const setCustomerDisabled = async (
   input: unknown
 ): Promise<ActionResult<CustomersErrorKey>> => {
-  const admin = await getActiveAdmin();
-  if (!admin) return { ok: false, error: 'forbidden' };
+  const staff = await getActiveStaff();
+  if (!staff) return { ok: false, error: 'forbidden' };
 
   const parsed = setDisabledSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: 'invalidInput' };

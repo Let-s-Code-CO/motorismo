@@ -174,13 +174,19 @@ su historial.
 
 **Criterios de aceptación**
 
-- **CA-29** — Dado un administrador, cuando desactiva a un cliente, entonces este aparece como
+- **CA-29** — Dado un miembro del personal (operador o administrador), cuando desactiva a un cliente, entonces este aparece como
   «Desactivado», no puede entrar (CA-22) y, si tenía una sesión abierta, en su siguiente acción es
   llevado al inicio de sesión con el mensaje de cuenta desactivada.
-- **CA-30** — Dado un administrador, cuando reactiva a un cliente desactivado, entonces vuelve a
+- **CA-30** — Dado un miembro del personal, cuando reactiva a un cliente desactivado, entonces vuelve a
   «Con cuenta» (y puede entrar como siempre) o a «Sin cuenta» si nunca la creó.
-- **CA-31** — Dado un operador, cuando mira la ficha de un cliente, entonces no ve la opción de
-  desactivar o reactivar, y si lo intenta por cualquier otra vía el sistema lo rechaza.
+- **CA-31** — Dado un cliente, cuando intenta desactivar o reactivar una cuenta de cliente (la suya
+  o la de otro) por cualquier vía, entonces el sistema lo rechaza; el personal (operador y
+  administrador) ve la opción en la ficha y en la lista de «Clientes».
+- **CA-32** — Dado un miembro del personal en la lista de «Clientes», cuando abre el menú de acciones de
+  una fila («Acciones de {nombre}»), entonces encuentra «Desactivar cliente» si el cliente está
+  activo, o «Reactivar cliente» si está desactivado, con el mismo efecto que desde su ficha
+  (CA-29, CA-30) y el resultado anunciado sobre la lista. El menú es el mismo de «Usuarios» y
+  recibirá más acciones en el futuro.
 
 ## Requisitos funcionales
 
@@ -216,7 +222,7 @@ su historial.
 - **RN-07** — Un registro sin confirmar no es todavía un cliente: no entra ni aparece en la lista.
 - **RN-08** — Los clientes no se borran: se desactivan, para conservar su relación con el
   historial.
-- **RN-09** — Solo el administrador desactiva y reactiva clientes.
+- **RN-09** — El personal (operador y administrador) desactiva y reactiva clientes; un cliente nunca.
 - **RN-10** — En esta versión nadie cambia el correo de un cliente con cuenta.
 - **RN-11** — Una cuenta de cliente nunca obtiene permisos del personal por ninguna vía.
 
@@ -310,3 +316,6 @@ opcional (los vehículos van en otra spec).
 | 2026-11-19 | Implementada (bloques A y B) y verificada en local: 140 pgTAP, 289 unitarias, 24 sandbox y 46 E2E en verde, con cada prueba nueva vista fallar por mutación. Pendiente: despliegue y verificación manual con Google real (T090, T092). |
 | 2026-11-19 | `/verificar`: 27 de 31 criterios ✅ al empezar. Corregidos, con pruebas vistas fallar: RF-02 (un cliente que pidió una página del personal entra a su perfil), CA-24 (se comprueba que no llega ningún correo), CA-15 (la fecha de alta se ve) y RF-06 (recuperación de contraseña de un cliente). Se precisa RN-04 para el punto de atención. Quedan CA-20 y CA-21, que esperan la verificación manual con Google real (T092): la spec sigue en `implementada`. |
 | 2026-11-19 | CA-17: «Activos» agrupa visualmente a «Con cuenta» y «Sin cuenta» (sus subconjuntos, con su proporción) y «Desactivados» queda aparte, a petición del usuario. Cada tarjeta sigue filtrando por sí sola. |
+| 2026-11-20 | A petición del usuario: el administrador también desactiva y reactiva desde un menú de acciones en cada fila de «Clientes», como en «Usuarios» (CA-32); CA-31 abarca también la lista. |
+| 2026-11-20 | A petición del usuario: el operador también desactiva y reactiva clientes (RN-09, CA-29 a CA-32); un cliente sigue sin poder hacerlo. |
+| 2026-11-20 | El buscador de «Clientes» dice «Buscar por nombre, correo, celular o placa» (la búsqueda por placa existe desde la spec 005, CA-17). |
