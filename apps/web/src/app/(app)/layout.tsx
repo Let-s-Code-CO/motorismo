@@ -16,7 +16,9 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
     // Safety net: nothing may scroll the app sideways on a phone (clip keeps the sticky header).
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <AppHeader account={account} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">{children}</main>
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-10 sm:px-6">
+        {children}
+      </main>
       <div className="border-t border-divider">
         <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
           <SiteFooter />

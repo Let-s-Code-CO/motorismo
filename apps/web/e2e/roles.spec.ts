@@ -3,6 +3,8 @@
  * CA-07 an operator does not see admin options · CA-08 an admin URL shows "No tienes permiso…".
  * Spec 007: staff find «Servicios» and «Empleados» in the menu and on their home page (CA-19); a
  * customer opening them is told they have no permission (CA-18).
+ * Spec 009 (CA-02, RN-01): on a phone, «Menú» opens a side panel with exactly the role's sections,
+ * and choosing one goes there.
  */
 import { expect, test } from '@playwright/test';
 
@@ -74,4 +76,32 @@ test('a customer opening «Servicios» or «Empleados» is told they have no per
     ).toBeVisible();
     await expect(page.getByRole('grid')).toHaveCount(0);
   }
+});
+
+test.describe('on a phone (spec 009)', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test('the panel shows an operator no «Usuarios» and an admin does see it (CA-02, RN-01)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.getByRole('button', { name: 'Menú' }).click();
+    const panel = page.getByRole('dialog', { name: 'Menú principal' });
+    await expect(panel.getByRole('link', { name: 'Clientes' })).toBeVisible();
+    await expect(panel.getByRole('link', { name: 'Usuarios' })).toHaveCount(0);
+  });
+
+  test('an admin goes to «Usuarios» from the panel (CA-02)', async ({ page }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.getByRole('button', { name: 'Menú' }).click();
+    const panel = page.getByRole('dialog', { name: 'Menú principal' });
+
+    await panel.getByRole('link', { name: 'Usuarios' }).click();
+
+    await expect(page).toHaveURL('/admin/users');
+    await expect(panel).toHaveCount(0);
+    await expect(page.getByRole('grid', { name: 'Usuarios de la aplicación' })).toBeVisible();
+  });
 });

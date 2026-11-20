@@ -76,9 +76,19 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   iPhone de 440 px con modo táctil) y se añade a la prueba «on an iPhone» de `e2e/ui.spec.ts`, que
   exige cero desplazamiento lateral. El contenedor de la app lleva `overflow-x-clip` como red de
   seguridad, no como sustituto de arreglar lo que desborde.
-- Menú principal (`nav-links`): con más de dos opciones, por debajo de `md` se recoge en un botón
-  «Menú» (spec 007), para que el encabezado quepa en 360 px. Una sección nueva se añade a `LINKS`
-  y, si es del personal, a las tarjetas de inicio (`src/app/(app)/page.tsx`).
+- **Encabezado e inicio en el teléfono (spec 009).**
+  - **Una sola lista de secciones:** `auth/constants/nav.constants.ts` (`NAV_LINKS`, con ícono y
+    audiencias) alimenta el menú de escritorio (`nav-links`), el panel del teléfono y el inicio del
+    personal (`staff-home`). Una sección nueva se añade ahí, con sus textos en `auth.header` y
+    `auth.home`.
+  - **Encabezado:** por debajo de `md` hay tres columnas: «Menú» (`mobile-nav`, un `Drawer` desde
+    la izquierda), el logo centrado y el avatar (`account-menu`). El avatar abre un menú con nombre
+    y rol como cabecera, «Instalar app» y «Cerrar sesión». Desde `md`, el encabezado de siempre.
+    Los dos se dibujan y el CSS muestra uno según el ancho.
+  - **Inicio:** «Órdenes» va destacada y oscura con los números; el resto son mosaicos en dos
+    columnas y el inicio queda centrado en el teléfono.
+  - **Acceso:** por debajo de `lg` lleva la franja de marca (`brand-band`), que comparte los adornos
+    con el panel (`brand-ornaments`, `brand-ring-logo`).
 - i18n: next-intl 4, **solo español**, sin segmento de idioma en la URL.
 - Estado de servidor: TanStack Query 5. Formularios: React Hook Form + Zod 4.
 - Supabase: `@supabase/ssr` con clientes tipados (`createClient<Database>`).

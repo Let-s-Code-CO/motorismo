@@ -7,11 +7,11 @@
  * - CA-08: a page reserved to the admin shows "No tienes permiso…" with a way back home.
  * - Spec 004: a customer is labelled "Cliente" and only sees "Mi perfil" (CA-08); on a staff page
  *   they get "No tienes permiso…" with a link to their profile (CA-09).
- * - Spec 007, CA-19: staff also find «Servicios» and «Empleados»; a customer does not (CA-18). With
- *   that many options the menu no longer fits a phone: below the desktop width staff get a «Menú»
- *   button with the same links, the current one marked.
+ * - Spec 007, CA-19: staff also find «Servicios» and «Empleados»; a customer does not (CA-18).
+ * - Spec 009, CA-01 / CA-02: on a phone everyone gets «Menú», which opens the side panel with the
+ *   same links as the desktop menu, the current one marked (the panel itself: mobile-nav tests).
  */
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 
 import UserMenu from '@web/modules/auth/components/molecules/user-menu.component';
 import AppHeader from '@web/modules/auth/components/organisms/app-header.component';
@@ -107,39 +107,38 @@ describe('AppHeader', () => {
     expect(screen.getByRole('link', { name: 'Empleados' })).toHaveAttribute('href', '/employees');
   });
 
-  it('gives staff a «Menú» button with the same links, for narrow screens (spec 007, CA-19)', async () => {
+  it('gives staff a «Menú» that opens the same links, the current one marked (spec 007, CA-19; spec 009, CA-02)', async () => {
     renderWithProviders(
       <AppHeader account={{ kind: 'staff', ...buildProfile({ role: 'admin' }) }} />
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Menú' }));
 
-    const items = await screen.findAllByRole('menuitemradio');
-    expect(items.map((item) => item.textContent)).toEqual([
-      'Inicio',
-      'Órdenes',
-      'Clientes',
-      'Servicios',
-      'Empleados',
-      'Usuarios',
-    ]);
+    const panel = await screen.findByRole('dialog', { name: 'Menú principal' });
+    expect(
+      within(panel)
+        .getAllByRole('link')
+        .map((link) => link.textContent)
+    ).toEqual(['Inicio', 'Órdenes', 'Clientes', 'Servicios', 'Empleados', 'Usuarios']);
     // The current section is marked (spec 003, CA-06).
-    expect(screen.getByRole('menuitemradio', { name: 'Servicios' })).toHaveAttribute(
-      'aria-checked',
-      'true'
-    );
-    expect(screen.getByRole('menuitemradio', { name: 'Inicio' })).toHaveAttribute(
-      'aria-checked',
-      'false'
+    expect(within(panel).getByRole('link', { name: 'Servicios' })).toHaveAttribute(
+      'aria-current',
+      'page'
     );
   });
 
-  it('never offers a customer the catalogs, nor the «Menú» button (spec 007, CA-18)', () => {
+  it('never offers a customer the catalogs, not even in «Menú» (spec 007, CA-18; spec 009, CA-02)', async () => {
     renderWithProviders(<AppHeader account={{ kind: 'customer', ...buildCustomer() }} />);
 
     expect(screen.queryByRole('link', { name: 'Servicios' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Empleados' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Menú' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Menú' }));
+    const panel = await screen.findByRole('dialog', { name: 'Menú principal' });
+    expect(
+      within(panel)
+        .getAllByRole('link')
+        .map((link) => link.textContent)
+    ).toEqual(['Mi perfil']);
   });
 });
 

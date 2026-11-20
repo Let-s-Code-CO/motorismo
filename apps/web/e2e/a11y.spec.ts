@@ -5,7 +5,7 @@
  * in "Mi perfil" too), the vehicle form, the retired vehicles and the retire dialog; spec 006 the
  * "Sin conexión" page and notice, the new-version notice and the iPhone install notice and steps;
  * spec 007 «Servicios» and «Empleados» with their forms, the confirmation to disable and the
- * «Menú» of a phone; spec 008 «Órdenes», a new order (with errors), the detail of an open order and
+ * «Menú» of a phone (spec 009: the side panel, the account's menu, the home and the login band); spec 008 «Órdenes», a new order (with errors), the detail of an open order and
  * its close and void dialogs. Serious and
  * critical findings fail the test.
  */
@@ -272,15 +272,35 @@ test('«Empleados» and its form, with the document types open, have no serious 
   expect(await audit(page)).toEqual([]);
 });
 
-test.describe('the «Menú» of a phone (spec 007)', () => {
-  test.use({ viewport: { width: 360, height: 780 } });
+test.describe('the phone experience (spec 007; spec 009)', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-  test('has no serious accessibility issues', async ({ page }) => {
+  test("the home, the side panel and the account's menu have no serious accessibility issues; a touch outside closes the panel (CA-03)", async ({
+    page,
+  }) => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
+    expect(await audit(page)).toEqual([]);
 
     await page.getByRole('button', { name: 'Menú' }).click();
-    await untilSettled(page.getByRole('menu'));
+    const panel = page.getByRole('dialog', { name: 'Menú principal' });
+    await untilSettled(panel);
+    expect(await audit(page)).toEqual([]);
+    // A touch outside the panel (on the right, over the dimmed page) closes it.
+    await page.mouse.click(370, 400);
+    await expect(panel).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Menú' })).toBeFocused();
+
+    await page.getByRole('button', { name: /tu cuenta$/i }).click();
+    await untilSettled(page.getByRole('menu', { name: 'Tu cuenta' }));
+    expect(await audit(page)).toEqual([]);
+  });
+
+  test('the login with the brand band has no serious accessibility issues (CA-10)', async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+    await expect(page.getByRole('banner', { name: 'Motorismo Detailing' })).toBeVisible();
     expect(await audit(page)).toEqual([]);
   });
 });

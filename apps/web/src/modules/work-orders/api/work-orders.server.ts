@@ -6,6 +6,10 @@ import type {
   WorkOrderDetail,
   WorkOrderSummary,
 } from '@web/modules/work-orders/types/work-orders.types';
+import { countOpenOrders } from '@web/modules/work-orders/utils/open-orders-count.lib';
+
+/** In progress and queued, for the staff home, with the person's session (spec 009, CA-07). */
+export const openOrdersCount = async () => countOpenOrders(await createSupabaseServerClient());
 
 /** «En el lavadero»: the open orders, oldest first (spec 008, CA-18). */
 export const listOpenOrders = async (): Promise<WorkOrderSummary[]> => {
