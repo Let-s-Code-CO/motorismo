@@ -4,10 +4,16 @@
  * and "Mi perfil": the customer signs up from their phone; spec 005 the vehicles and their form) · CA-03 brand panel beside the form on desktop only ·
  * every clickable element shows the hand cursor (Tailwind 4 no longer sets it on buttons) ·
  * placeholders look muted, distinct from typed text (theme foreground scale).
+ * Spec 009 (phone experience): an app's header (CA-01) whose «Menú» opens a side panel (CA-02);
+ * the staff home as two columns of tiles with the open orders on «Órdenes» and no «Muy pronto»
+ * (CA-06 to CA-08); the sign-in pages with the brand band on top, «Entrar» in sight and no motion
+ * when the device asks for less (CA-10 to CA-12); the desktop as before (CA-05, CA-09, CA-13).
  */
 import { type Page, expect, test } from '@playwright/test';
 
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
+
+type Box = { x: number; y: number; width: number; height: number };
 
 const horizontalOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -63,7 +69,7 @@ test.describe('on a 360 px phone', () => {
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
-  test('with every staff section, the menu fits: it moves into «Menú»; a long service fits too (spec 007, CA-19)', async ({
+  test('with every staff section, the menu fits: «Menú» opens the side panel; a long service fits too (spec 007, CA-19; spec 009, CA-02)', async ({
     page,
   }) => {
     // A long name with high prices in every type: the widest row «Servicios» can have.
@@ -78,12 +84,13 @@ test.describe('on a 360 px phone', () => {
     await expect(page).toHaveURL('/');
 
     await page.getByRole('button', { name: 'Menú' }).click();
-    await page.getByRole('menuitemradio', { name: 'Servicios' }).click();
+    const panel = page.getByRole('dialog', { name: 'Menú principal' });
+    await panel.getByRole('link', { name: 'Servicios' }).click();
     await expect(page).toHaveURL('/services');
-    // Measured once the menu has closed: its popover is not part of the page.
-    await expect(page.getByRole('menu')).toHaveCount(0);
+    // Measured once the panel has closed: it is not part of the page.
+    await expect(panel).toHaveCount(0);
     await expect(page.getByRole('grid', { name: 'Servicios activos' })).toContainText(longName);
-    // The steady state: the menu's popover may still be animating out for a moment under load.
+    // The steady state: the panel may still be animating out for a moment under load.
     await expect.poll(() => horizontalOverflow(page)).toBe(0);
     await adminClient().from('services').delete().eq('name', longName);
   });
@@ -115,11 +122,18 @@ test.describe('on a 360 px phone', () => {
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
-  test('the login shows only the form, without the brand panel (CA-03)', async ({ page }) => {
-    await page.goto('/auth/login');
-
-    await expect(page.getByRole('complementary', { name: 'Motorismo Detailing' })).toBeHidden();
-    await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
+  test('every sign-in page shows the brand band on top, not the side panel, and fits (spec 009, CA-10)', async ({
+    page,
+  }) => {
+    for (const path of ['/auth/login', '/auth/sign-up', '/auth/forgot-password']) {
+      await page.goto(path);
+      const band = page.getByRole('banner', { name: 'Motorismo Detailing' });
+      await expect(band, path).toBeVisible();
+      await expect(band.getByText('Especialistas en PPF y Detailing')).toBeVisible();
+      await expect(band.getByRole('img', { name: 'Logo de Motorismo Detailing' })).toBeVisible();
+      await expect(page.getByRole('complementary', { name: 'Motorismo Detailing' })).toBeHidden();
+      expect(await horizontalOverflow(page), path).toBe(0);
+    }
   });
 });
 
@@ -157,17 +171,145 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       await expect(page.getByRole('main')).toBeVisible();
       await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
     }
+
+    // Spec 009: with the side panel or the account's menu open, nothing scrolls sideways either.
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Menú' }).click();
+    await expect(page.getByRole('dialog', { name: 'Menú principal' })).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Menú principal' })).toHaveCount(0);
+    await page.getByRole('button', { name: /tu cuenta$/i }).click();
+    await expect(page.getByRole('menu', { name: 'Tu cuenta' })).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+});
+
+test.describe('on an iPhone (390 × 844) — the phone experience (spec 009)', () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 3,
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+  });
+
+  test('the header shows only «Menú», the logo in the centre and the avatar (CA-01)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    const header = page.locator('header').first();
+    await expect(header.getByRole('button', { name: 'Menú' })).toBeVisible();
+    await expect(header.getByRole('button', { name: /tu cuenta$/i })).toBeVisible();
+    const logo = header.getByRole('link', { name: 'Motorismo Detailing, ir al inicio' });
+    await expect(logo).toBeVisible();
+    // Nothing else: the inline sections and «Cerrar sesión» live in the panel and the avatar.
+    await expect(header.getByRole('navigation', { name: 'Navegación principal' })).toBeHidden();
+    await expect(header.getByRole('button', { name: 'Cerrar sesión' })).toBeHidden();
+    // Centred: the logo's centre is the screen's (390 / 2 = 195), give or take 2 px.
+    const box = (await logo.boundingBox())!;
+    expect(Math.abs(box.x + box.width / 2 - 195)).toBeLessThanOrEqual(2);
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('the home leads with «Órdenes» and what is open, then tiles in two columns, centred, without «Muy pronto» (CA-06 to CA-08)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+
+    const tiles = page.getByRole('list', { name: 'Secciones' }).getByRole('link');
+    await expect(tiles).toHaveCount(4);
+    const [orders, customers, services, employees] = (await Promise.all(
+      [0, 1, 2, 3].map(async (index) => (await tiles.nth(index).boundingBox())!)
+    )) as [Box, Box, Box, Box];
+    // «Órdenes» leads, full width; then two per row: Clientes and Servicios side by side, and the
+    // lone last one (Empleados, for an operator) takes the whole row.
+    expect(Math.abs(customers.y - services.y)).toBeLessThanOrEqual(1);
+    expect(services.x).toBeGreaterThan(customers.x + customers.width - 1);
+    expect(customers.y).toBeGreaterThan(orders.y + orders.height - 1);
+    expect(
+      Math.abs(orders.width - (services.x + services.width - customers.x))
+    ).toBeLessThanOrEqual(1);
+    expect(Math.abs(employees.width - orders.width)).toBeLessThanOrEqual(1);
+    // Centred in the screen, not stuck to the top: about as much room above as below.
+    const main = (await page.getByRole('main').boundingBox())!;
+    const greeting = (await page.getByRole('heading', { name: /Hola/ }).boundingBox())!;
+    const above = greeting.y - main.y;
+    const below = main.y + main.height - (employees.y + employees.height);
+    expect(Math.abs(above - below)).toBeLessThanOrEqual(8);
+    // No description on a phone; the open orders on «Órdenes» (CA-07).
+    await expect(
+      page.getByText('Consulta, busca y registra a los clientes del negocio.')
+    ).toBeHidden();
+    await expect(tiles.first()).toContainText(/\d+En proceso\d+En cola|Sin órdenes abiertas/);
+    await expect(page.getByText('Muy pronto')).toBeHidden();
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('the login keeps «Entrar» in sight below the brand band (CA-10, CA-11)', async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+
+    await expect(page.getByRole('banner', { name: 'Motorismo Detailing' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Entrar' })).toBeInViewport();
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('the band moves only when the device allows motion (CA-12)', async ({ page }) => {
+    const shine = page.locator('[data-ornament="shine"]').last();
+    const animation = () => shine.evaluate((element) => getComputedStyle(element).animationName);
+
+    await page.goto('/auth/login');
+    expect(await animation()).toBe('shine');
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.reload();
+    expect(await animation()).toBe('none');
   });
 });
 
 test.describe('on a desktop', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test('the login shows the brand panel beside the form (CA-03)', async ({ page }) => {
+  test('the login shows the brand panel beside the form, without the band (CA-03; spec 009, CA-13)', async ({
+    page,
+  }) => {
     await page.goto('/auth/login');
 
     await expect(page.getByRole('complementary', { name: 'Motorismo Detailing' })).toBeVisible();
+    await expect(page.getByRole('banner', { name: 'Motorismo Detailing' })).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
+  });
+
+  test('the header and the home are as before, with the open orders on «Órdenes» (spec 009, CA-05, CA-09)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    const header = page.locator('header').first();
+    await expect(
+      header
+        .getByRole('navigation', { name: 'Navegación principal' })
+        .getByRole('link', { name: 'Órdenes', exact: true })
+    ).toBeVisible();
+    await expect(header.getByText(SEED.admin.name)).toBeVisible();
+    await expect(header.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible();
+    await expect(header.getByRole('button', { name: 'Menú' })).toBeHidden();
+    await expect(header.getByRole('button', { name: /tu cuenta$/i })).toBeHidden();
+
+    await expect(
+      page.getByText('Consulta, busca y registra a los clientes del negocio.')
+    ).toBeVisible();
+    await expect(page.getByText('Muy pronto')).toBeVisible();
+    await expect(
+      page.getByRole('list', { name: 'Secciones' }).getByRole('link').first()
+    ).toContainText(/\d+En proceso\d+En cola|Sin órdenes abiertas/);
   });
 });
 

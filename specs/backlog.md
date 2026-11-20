@@ -15,10 +15,16 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 2. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
 3. **Agendamiento (reservas)** — guardar un puesto para una fecha y hora, con o sin servicios; al
-   llegar el cliente, la reserva pasa a ser una orden en cola (spec 008). Candidata a spec 009.
-4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
+   llegar el cliente, la reserva pasa a ser una orden en cola (spec 008). Candidata a spec 010 o 011.
+4. **Modo oscuro** — claro, oscuro y «Sistema» (por defecto), en toda la app: tokens del tema,
+   placa amarilla, colores de estado y auditoría de contraste en los dos temas. Candidata a spec
+   010 o 011 (a decidir frente al agendamiento).
+5. **Transiciones al navegar** — animaciones suaves al iniciar y cerrar sesión y al pasar entre
+   secciones, respetando «reducir movimiento». Candidata a spec propia (después del modo oscuro o
+   junto a él, a decidir).
+6. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
    retira y se registra de nuevo).
-5. **Confirmación por WhatsApp** (deseable).
+7. **Confirmación por WhatsApp** (deseable).
 
 ### Administración
 
@@ -56,3 +62,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
 | [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | verificada; falta despliegue |
 | [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | verificada, con enmienda (falta despliegue) |
+| [009](009-experiencia-movil/spec.md) | Experiencia móvil | implementada |

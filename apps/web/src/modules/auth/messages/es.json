@@ -71,7 +71,11 @@
       "users": "Usuarios",
       "profile": "Mi perfil",
       "menu": "Menú",
-      "brandLabel": "Motorismo Detailing, ir al inicio"
+      "brandLabel": "Motorismo Detailing, ir al inicio",
+      "mainMenu": "Menú principal",
+      "closeMenu": "Cerrar menú",
+      "accountMenu": "Tu cuenta",
+      "accountMenuOf": "{initials}, tu cuenta"
     },
     "userMenu": {
       "signOut": "Cerrar sesión"
@@ -91,7 +95,11 @@
       "employeesTitle": "Empleados",
       "employeesText": "Quiénes hacen el trabajo, para asociarlos a las órdenes.",
       "ordersTitle": "Órdenes",
-      "ordersText": "Abre órdenes, mira qué hay en el lavadero y cobra al entregar."
+      "ordersText": "Abre órdenes, mira qué hay en el lavadero y cobra al entregar.",
+      "sectionsLabel": "Secciones",
+      "ordersNone": "Sin órdenes abiertas",
+      "inProgress": "En proceso",
+      "queued": "En cola"
     },
     "noPermission": {
       "title": "No tienes permiso para ver esta página.",

@@ -7,8 +7,12 @@
  *   deletes an order: every change goes through the functions, which apply the rules.
  * - RN-05: an operator cannot correct a closed order.
  * - A customer reads nothing of the orders (seeing their own is out of scope).
+ * - Spec 009, CA-07 / RN-03: the staff home counts the open orders in progress (started) and in
+ *   the queue (not started) with the person's session; a customer counts nothing.
  */
-import { SEED, signedInAs } from './support/sandbox';
+import { countOpenOrders } from '@web/modules/work-orders/utils/open-orders-count.lib';
+
+import { SEED, adminClient, signedInAs } from './support/sandbox';
 
 describe('work orders through the API (spec 008)', () => {
   it('an operator reads the orders, with totals, through the summary view', async () => {
@@ -71,5 +75,29 @@ describe('work orders through the API (spec 008)', () => {
 
     expect(orders.data).toEqual([]);
     expect(summaries.data).toEqual([]);
+  });
+
+  it('counts the open orders in progress and in the queue for the staff home (spec 009, CA-07, RN-03)', async () => {
+    const { client } = await signedInAs(SEED.operator);
+    // What is open right now, read without RLS and split by hand: started or not.
+    const { data: open } = await adminClient()
+      .from('work_orders')
+      .select('started_at')
+      .eq('status', 'open');
+    const expected = {
+      inProgress: open!.filter(({ started_at }) => started_at !== null).length,
+      queued: open!.filter(({ started_at }) => started_at === null).length,
+    };
+    // The seeds leave #4 in progress and #5 in the queue.
+    expect(expected.inProgress).toBeGreaterThanOrEqual(1);
+    expect(expected.queued).toBeGreaterThanOrEqual(1);
+
+    expect(await countOpenOrders(client)).toEqual(expected);
+  });
+
+  it('counts nothing for a customer, who reads no order (spec 009, CA-07)', async () => {
+    const { client } = await signedInAs(SEED.customer);
+
+    expect(await countOpenOrders(client)).toEqual({ inProgress: 0, queued: 0 });
   });
 });

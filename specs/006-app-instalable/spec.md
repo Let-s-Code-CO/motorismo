@@ -214,3 +214,4 @@ iPhone; la instalan personal y clientes.
 | 2026-11-20 | Cambio pedido por el usuario durante la implementación: aviso flotante de instalación con «Instalar» y «Ahora no» (CA-18 a CA-20); el ícono del encabezado deja de parecer una descarga. |
 | 2026-11-20 | Implementada (bloques A a D y el aviso de instalación). Falta la prueba manual en dispositivos reales tras el despliegue (T055). |
 | 2026-11-20 | Verificada: CA-01 a CA-20 cubiertos. Correcciones al verificar: el proxy excluye solo rutas exactas, y una prueba exige `callAction` en todo componente que llama a una Server Action. Queda la prueba manual en dispositivos (T055). |
+| 2026-11-20 | Spec 009: en el teléfono, «Instalar app» vive en el menú del avatar (CA-12); en escritorio no cambia. |

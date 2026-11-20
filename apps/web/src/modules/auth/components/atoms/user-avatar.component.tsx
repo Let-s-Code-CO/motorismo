@@ -2,6 +2,8 @@
 
 import { Avatar } from '@heroui/react';
 
+import { initialsOf } from '@web/modules/auth/utils/initials.utils';
+
 type UserAvatarProps = {
   name: string;
   /** Photo of the linked Google account (CA-30; spec 004 CA-20); initials while it loads or if missing. */
@@ -17,6 +19,7 @@ const UserAvatar = ({ name, src, size = 'sm', className = '' }: UserAvatarProps)
     name={name}
     src={src ?? undefined}
     showFallback
+    getInitials={initialsOf}
     size={size}
     imgProps={{ referrerPolicy: 'no-referrer' }}
     className={`shrink-0 text-xs font-medium ${className}`}
