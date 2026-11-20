@@ -3,8 +3,8 @@
  * operator (spec 007, HU-02 to HU-04).
  *
  * Guards:
- * - CA-16 / RN-07: an admin sees each employee's document, phone and commission; an operator
- *   sees only the names, without actions.
+ * - CA-16 / RN-07: an admin sees each employee's document, phone and commission (on phones the
+ *   document and the phone go under the name); an operator sees only the names, without actions.
  * - CA-11: with no employees, an admin is invited to register the first one.
  * - CA-12: disabling asks first, then announces the result.
  * - CA-13: the disabled employees are apart, in «Desactivados», where they can be reactivated.
@@ -53,6 +53,27 @@ describe('EmployeesScreen', () => {
     expect(row).toHaveTextContent('CC 1020304050');
     expect(row).toHaveTextContent('300 111 2233');
     expect(row).toHaveTextContent('35 %');
+  });
+
+  it('repeats the document and the phone under the name, for phones, where those columns are hidden (CA-07, RN-07)', () => {
+    renderWithProviders(<EmployeesScreen employees={[employee()]} isAdmin />);
+
+    expect(screen.getByRole('rowheader', { name: /Elkin Estrada/ })).toHaveTextContent(
+      'Elkin EstradaCC 1020304050 · 300 111 2233'
+    );
+  });
+
+  it('says «Sin celular» under the name when an employee has none', () => {
+    renderWithProviders(
+      <EmployeesScreen
+        employees={[employee({ details: { ...employee().details!, phone: null } })]}
+        isAdmin
+      />
+    );
+
+    expect(screen.getByRole('rowheader', { name: /Elkin Estrada/ })).toHaveTextContent(
+      'CC 1020304050 · Sin celular'
+    );
   });
 
   it('shows an operator only the names, without any action (CA-16)', () => {

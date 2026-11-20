@@ -53,4 +53,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [004](004-registro-clientes/spec.md) | Registro de clientes y sección Clientes | implementada (falta despliegue y prueba manual de Google) |
 | [005](005-vehiculos-clientes/spec.md) | Vehículos de los clientes | verificada (bloques A, B y C); falta despliegue |
 | [006](006-app-instalable/spec.md) | App instalable | verificada; falta despliegue y prueba manual en dispositivos |
-| [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | implementada (falta despliegue) |
+| [007](007-catalogos-servicios-empleados/spec.md) | Catálogos de servicios y empleados | verificada; falta despliegue |

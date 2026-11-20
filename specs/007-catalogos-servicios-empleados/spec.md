@@ -1,7 +1,7 @@
 ---
 id: "007"
 titulo: "Catálogos de servicios y empleados"
-estado: implementada
+estado: verificada
 creada: 2026-11-20
 actualizada: 2026-11-20
 ---
@@ -196,3 +196,4 @@ documento y % de comisión; lo que ya no se usa se desactiva, nunca se borra.
 | 2026-11-20 | Al planificar: CA-19 incluye las tarjetas de «Servicios» y «Empleados» en la página de inicio del personal (pedido por el usuario). Plan aprobado: estado `planificada`. |
 | 2026-11-20 | Tareas aprobadas: estado `lista`. |
 | 2026-11-20 | Implementada (bloques A y B). |
+| 2026-11-20 | Verificada: CA-01 a CA-19 cubiertos. Corrección al verificar: en el teléfono, el documento y el celular de cada empleado van bajo su nombre (antes el celular no se veía por debajo de 768 px). |

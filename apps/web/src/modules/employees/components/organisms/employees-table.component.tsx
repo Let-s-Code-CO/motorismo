@@ -109,7 +109,7 @@ const EmployeesTable = ({
     </TableColumn>,
     ...(showDetails
       ? [
-          <TableColumn key="document" className="hidden sm:table-cell">
+          <TableColumn key="document" className="hidden md:table-cell">
             {t('table.document')}
           </TableColumn>,
           <TableColumn key="phone" className="hidden md:table-cell">
@@ -149,10 +149,11 @@ const EmployeesTable = ({
             <TableCell key="name">
               <span className="flex flex-col">
                 <span className="font-medium break-words">{employee.full_name}</span>
-                {/* On phones the document goes under the name: nothing behind a scroll. */}
+                {/* On phones the document and the phone go under the name: nothing behind a
+                    sideways scroll (like the phone in «Clientes»). */}
                 {showDetails && (
-                  <span className="text-xs text-default-500 tabular-nums sm:hidden">
-                    {document}
+                  <span className="text-xs text-default-500 tabular-nums md:hidden">
+                    {document} · {phone}
                   </span>
                 )}
                 {variant === 'disabled' && employee.disabled_at && (
@@ -166,7 +167,7 @@ const EmployeesTable = ({
             </TableCell>,
             ...(showDetails
               ? [
-                  <TableCell key="document" className="hidden tabular-nums sm:table-cell">
+                  <TableCell key="document" className="hidden tabular-nums md:table-cell">
                     {document}
                   </TableCell>,
                   <TableCell key="phone" className="hidden tabular-nums md:table-cell">
