@@ -1,0 +1,63 @@
+{
+  "services": {
+    "title": "Servicios",
+    "description": "Los servicios que ofrece el negocio y su valor de referencia por tipo de vehículo.",
+    "new": "Nuevo servicio",
+    "empty": "Aún no hay servicios. Registra el primero con «Nuevo servicio».",
+    "emptyReadOnly": "Aún no hay servicios registrados.",
+    "disabledTitle": "Desactivados ({count})",
+    "created": "Servicio registrado.",
+    "updated": "Servicio actualizado.",
+    "disabledNotice": "Servicio desactivado.",
+    "reactivated": "Servicio reactivado.",
+    "confirmDisable": {
+      "title": "¿Desactivar «{name}»?",
+      "description": "Dejará de ofrecerse en las órdenes nuevas. Puedes reactivarlo cuando quieras desde «Desactivados».",
+      "confirm": "Desactivar"
+    },
+    "table": {
+      "label": "Servicios activos",
+      "disabledLabel": "Servicios desactivados",
+      "name": "Servicio",
+      "motorcycle": "Moto",
+      "car": "Carro",
+      "bicycle": "Bicicleta",
+      "notOffered": "No disponible",
+      "disabledOn": "Desactivado el {date}",
+      "actionsColumn": "Acciones",
+      "actions": "Acciones de {name}",
+      "edit": "Editar",
+      "disable": "Desactivar",
+      "reactivate": "Reactivar"
+    },
+    "form": {
+      "titleNew": "Nuevo servicio",
+      "titleEdit": "Editar servicio",
+      "name": "Nombre del servicio",
+      "namePlaceholder": "P. ej. Lavado sencillo",
+      "prices": "Valor de referencia",
+      "pricesHint": "Déjalo vacío para el tipo de vehículo al que no se le ofrece.",
+      "motorcycle": "Moto",
+      "car": "Carro",
+      "bicycle": "Bicicleta",
+      "pricePlaceholder": "0",
+      "submitNew": "Registrar servicio",
+      "submitEdit": "Guardar cambios",
+      "cancel": "Cancelar"
+    },
+    "validation": {
+      "nameRequired": "Escribe el nombre del servicio.",
+      "nameTooLong": "El nombre admite hasta 80 caracteres.",
+      "priceInvalid": "Escribe un valor en pesos, sin decimales, entre $ 1 y $ 10.000.000.",
+      "priceRequired": "Indica el valor de al menos un tipo de vehículo."
+    },
+    "errors": {
+      "forbidden": "Solo un administrador puede cambiar los servicios.",
+      "invalidInput": "Revisa los datos del formulario.",
+      "nameTaken": "Ya existe un servicio con ese nombre.",
+      "nameTakenDisabled": "Ya existe un servicio desactivado con ese nombre: reactívalo desde «Desactivados».",
+      "notFound": "Este servicio ya no existe.",
+      "generic": "No se pudo guardar. Inténtalo de nuevo."
+    }
+  }
+}

@@ -3,7 +3,9 @@
  * on the login, the home page and user management; spec 004 adds the sign-up, the data policy,
  * "Mi perfil", Clientes and a customer record; spec 005 the vehicles of a customer ("Mis vehículos"
  * in "Mi perfil" too), the vehicle form, the retired vehicles and the retire dialog; spec 006 the
- * "Sin conexión" page and notice, the new-version notice and the iPhone install notice and steps. Serious and
+ * "Sin conexión" page and notice, the new-version notice and the iPhone install notice and steps;
+ * spec 007 «Servicios» and «Empleados» with their forms, the confirmation to disable and the
+ * «Menú» of a phone. Serious and
  * critical findings fail the test.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -221,6 +223,63 @@ test.describe('the install notice and steps on an iPhone (spec 006)', () => {
     await page.getByRole('button', { name: 'Instalar app' }).click();
 
     await untilDialogSettled(page);
+    expect(await audit(page)).toEqual([]);
+  });
+});
+
+test('«Servicios», its form and the confirmation to disable have no serious accessibility issues (spec 007)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/services');
+  await expect(page.getByRole('grid', { name: 'Servicios activos' })).toBeVisible();
+  await page.getByRole('button', { name: /^Desactivados/ }).click();
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: 'Nuevo servicio' }).click();
+  await untilDialogSettled(page);
+  await page.getByRole('dialog').getByRole('button', { name: 'Registrar servicio' }).click();
+  await expect(page.getByText('Escribe el nombre del servicio.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Acciones de Lavado sencillo' }).click();
+  await page.getByRole('menuitem', { name: 'Desactivar' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+});
+
+test('«Empleados» and its form, with the document types open, have no serious accessibility issues (spec 007)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/employees');
+  await expect(page.getByRole('grid', { name: 'Empleados activos' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: 'Nuevo empleado' }).click();
+  await untilDialogSettled(page);
+  await page.getByRole('dialog').getByRole('button', { name: 'Registrar empleado' }).click();
+  await expect(page.getByText('Escribe el número de documento.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: /Tipo de documento/ }).click();
+  await untilSettled(page.getByRole('listbox'));
+  expect(await audit(page)).toEqual([]);
+});
+
+test.describe('the «Menú» of a phone (spec 007)', () => {
+  test.use({ viewport: { width: 360, height: 780 } });
+
+  test('has no serious accessibility issues', async ({ page }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    await page.getByRole('button', { name: 'Menú' }).click();
+    await untilSettled(page.getByRole('menu'));
     expect(await audit(page)).toEqual([]);
   });
 });

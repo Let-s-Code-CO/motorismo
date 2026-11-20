@@ -1,8 +1,10 @@
 /**
- * NavLinks — main menu (spec 003, CA-06; spec 002, CA-07; spec 004, CA-08 and RF-04).
+ * NavLinks — main menu (spec 003, CA-06; spec 002, CA-07; spec 004, CA-08 and RF-04; spec 007,
+ * CA-19).
  *
- * Guards: the section the user is in is marked as current (aria-current="page"); staff see Inicio
- * and Clientes and only admins also see Usuarios; a customer only sees "Mi perfil".
+ * Guards: the section the user is in is marked as current (aria-current="page"); staff see Inicio,
+ * Clientes, Servicios and Empleados, and only admins also see Usuarios; a customer only sees
+ * "Mi perfil".
  */
 import { usePathname } from 'next/navigation';
 
@@ -32,18 +34,18 @@ describe('NavLinks', () => {
     expect(screen.getByRole('link', { name: 'Clientes' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows Inicio, Clientes and Usuarios to an admin', () => {
+  it('shows Inicio, Clientes, Servicios, Empleados and Usuarios to an admin (spec 007, CA-19)', () => {
     vi.mocked(usePathname).mockReturnValue('/');
     renderWithProviders(<NavLinks audience="admin" />);
 
-    expect(linkNames()).toEqual(['Inicio', 'Clientes', 'Usuarios']);
+    expect(linkNames()).toEqual(['Inicio', 'Clientes', 'Servicios', 'Empleados', 'Usuarios']);
   });
 
-  it('shows Inicio and Clientes to an operator, without Usuarios (CA-07, RF-04)', () => {
+  it('shows an operator the same sections without Usuarios (CA-07, RF-04; spec 007, CA-19)', () => {
     vi.mocked(usePathname).mockReturnValue('/');
     renderWithProviders(<NavLinks audience="operator" />);
 
-    expect(linkNames()).toEqual(['Inicio', 'Clientes']);
+    expect(linkNames()).toEqual(['Inicio', 'Clientes', 'Servicios', 'Empleados']);
   });
 
   it('shows only "Mi perfil" to a customer (spec 004, CA-08)', () => {

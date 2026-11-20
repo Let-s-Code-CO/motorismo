@@ -8,6 +8,10 @@ import { colors, heroui } from '@heroui/react';
  * `foreground-500` and helper text with `foreground-400`, and a plain colour string would drop
  * the scale (the placeholder then inherits the text colour and looks filled in). Step 400 is
  * raised to zinc-500 so helper text keeps AA contrast (4.6:1 on #fafafa; zinc-400 is 2.5:1).
+ *
+ * `danger` keeps HeroUI's red scale with step 600 as its DEFAULT: field errors (`text-danger`)
+ * and solid danger buttons then reach AA contrast on white (6.1:1; red-500 is below 4.5:1). Found by
+ * the accessibility audit of the spec 007 forms with their errors showing.
  */
 export default heroui({
   layout: {
@@ -20,6 +24,7 @@ export default heroui({
         background: '#fafafa',
         foreground: { ...colors.zinc, 400: colors.zinc[500], DEFAULT: '#18181b' },
         primary: { DEFAULT: '#18181b', foreground: '#ffffff' },
+        danger: { ...colors.red, DEFAULT: colors.red[600], foreground: '#ffffff' },
         focus: '#3f3f46',
       },
     },

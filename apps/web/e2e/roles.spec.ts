@@ -1,10 +1,12 @@
 /**
  * Role permissions in the UI (spec 002, HU-02).
  * CA-07 an operator does not see admin options · CA-08 an admin URL shows "No tienes permiso…".
+ * Spec 007: staff find «Servicios» and «Empleados» in the menu and on their home page (CA-19); a
+ * customer opening them is told they have no permission (CA-18).
  */
 import { expect, test } from '@playwright/test';
 
-import { SEED, signIn } from './support/sandbox';
+import { SEED, SEED_CUSTOMERS, signIn } from './support/sandbox';
 
 test('an operator does not see user management (CA-07)', async ({ page }) => {
   await signIn(page, SEED.operator.email);
@@ -36,4 +38,40 @@ test('an admin sees user management', async ({ page }) => {
   await page.getByRole('link', { name: 'Usuarios', exact: true }).click();
 
   await expect(page.getByRole('grid', { name: 'Usuarios de la aplicación' })).toBeVisible();
+});
+
+test('staff find «Servicios» and «Empleados» in the menu and on their home page (spec 007, CA-19)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+
+  const nav = page.getByRole('navigation', { name: 'Navegación principal' });
+  await expect(nav.getByRole('link', { name: 'Servicios', exact: true })).toHaveAttribute(
+    'href',
+    '/services'
+  );
+  await expect(nav.getByRole('link', { name: 'Empleados', exact: true })).toHaveAttribute(
+    'href',
+    '/employees'
+  );
+  const main = page.getByRole('main');
+  await expect(main.getByRole('link', { name: /Servicios/ })).toHaveAttribute('href', '/services');
+  await expect(main.getByRole('link', { name: /Empleados/ })).toHaveAttribute('href', '/employees');
+  await expect(main.getByRole('link', { name: /Gestionar usuarios/ })).toHaveCount(0);
+});
+
+test('a customer opening «Servicios» or «Empleados» is told they have no permission (spec 007, CA-18)', async ({
+  page,
+}) => {
+  await signIn(page, SEED_CUSTOMERS.customer.email);
+  await expect(page).toHaveURL('/profile');
+
+  for (const path of ['/services', '/employees']) {
+    await page.goto(path);
+    await expect(
+      page.getByRole('heading', { name: 'No tienes permiso para ver esta página.' })
+    ).toBeVisible();
+    await expect(page.getByRole('grid')).toHaveCount(0);
+  }
 });

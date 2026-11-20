@@ -1,0 +1,82 @@
+{
+  "employees": {
+    "title": "Empleados",
+    "description": "Quienes hacen el trabajo, para asociarlos a las órdenes.",
+    "new": "Nuevo empleado",
+    "empty": "Aún no hay empleados. Registra el primero con «Nuevo empleado».",
+    "emptyReadOnly": "Aún no hay empleados registrados.",
+    "disabledTitle": "Desactivados ({count})",
+    "created": "Empleado registrado.",
+    "updated": "Empleado actualizado.",
+    "disabledNotice": "Empleado desactivado.",
+    "reactivated": "Empleado reactivado.",
+    "confirmDisable": {
+      "title": "¿Desactivar a «{name}»?",
+      "description": "Dejará de aparecer para las órdenes nuevas. Sus datos se conservan y puedes reactivarlo desde «Desactivados».",
+      "confirm": "Desactivar"
+    },
+    "documentTypes": {
+      "cc": "Cédula de ciudadanía (CC)",
+      "ce": "Cédula de extranjería (CE)",
+      "ppt": "Permiso por protección temporal (PPT)",
+      "passport": "Pasaporte"
+    },
+    "documentShort": {
+      "cc": "CC",
+      "ce": "CE",
+      "ppt": "PPT",
+      "passport": "Pasaporte"
+    },
+    "table": {
+      "label": "Empleados activos",
+      "disabledLabel": "Empleados desactivados",
+      "name": "Empleado",
+      "document": "Documento",
+      "phone": "Celular",
+      "commission": "Comisión",
+      "commissionValue": "{value} %",
+      "noPhone": "Sin celular",
+      "disabledOn": "Desactivado el {date}",
+      "actionsColumn": "Acciones",
+      "actions": "Acciones de {name}",
+      "edit": "Editar",
+      "disable": "Desactivar",
+      "reactivate": "Reactivar"
+    },
+    "form": {
+      "titleNew": "Nuevo empleado",
+      "titleEdit": "Editar empleado",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Nombre y apellidos",
+      "documentType": "Tipo de documento",
+      "documentNumber": "Número de documento",
+      "documentNumberPlaceholder": "Sin puntos ni espacios",
+      "phone": "Celular (opcional)",
+      "phonePlaceholder": "300 123 4567",
+      "commission": "Comisión",
+      "commissionPlaceholder": "0",
+      "commissionHint": "Porcentaje que gana por servicio; se usará en la liquidación.",
+      "submitNew": "Registrar empleado",
+      "submitEdit": "Guardar cambios",
+      "cancel": "Cancelar"
+    },
+    "validation": {
+      "fullNameRequired": "Escribe el nombre completo.",
+      "fullNameTooLong": "El nombre no puede superar 120 caracteres.",
+      "documentTypeRequired": "Elige el tipo de documento.",
+      "documentRequired": "Escribe el número de documento.",
+      "documentInvalid": "Revisa el número: solo dígitos (de 3 a 15), o letras y dígitos (de 5 a 20) si es pasaporte.",
+      "phoneInvalid": "Introduce un celular colombiano de 10 dígitos que empiece por 3.",
+      "commissionRequired": "Escribe la comisión.",
+      "commissionInvalid": "Escribe un porcentaje entero entre 0 y 100."
+    },
+    "errors": {
+      "forbidden": "Solo un administrador puede cambiar los empleados.",
+      "invalidInput": "Revisa los datos del formulario.",
+      "documentTaken": "Ya existe un empleado con ese documento.",
+      "documentTakenDisabled": "Ese documento es de un empleado desactivado: reactívalo desde «Desactivados».",
+      "notFound": "Este empleado ya no existe.",
+      "generic": "No se pudo guardar. Inténtalo de nuevo."
+    }
+  }
+}
