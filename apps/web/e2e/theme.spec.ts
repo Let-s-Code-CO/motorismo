@@ -17,6 +17,8 @@
  * - CA-10 / CA-13: on the desktop, the theme's own menu shows and says the chosen theme, and is used
  *   with the keyboard alone.
  * - CA-12: never chosen → «Sistema».
+ * - After choosing a theme, the app keeps navigating: the next screen shows, with no error (the
+ *   page's own `theme-color` tags are recoloured, never removed from under React).
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -290,5 +292,30 @@ test.describe('choosing the theme on a desktop (HU-02)', () => {
 
     await expect.poll(() => isDark(page)).toBe(true);
     await expect(page.getByRole('button', { name: 'Tema: Oscuro' })).toBeVisible();
+  });
+
+  test('after choosing a theme, navigating still shows the next screen, with no error', async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: 'Tema: Sistema' }).click();
+    await page
+      .getByRole('menu', { name: /^Tema/ })
+      .getByRole('menuitemradio', { name: 'Oscuro' })
+      .click();
+    await expect.poll(() => isDark(page)).toBe(true);
+
+    const nav = page.getByRole('navigation', { name: 'Navegación principal' });
+    for (const section of ['Órdenes', 'Clientes']) {
+      await nav.getByRole('link', { name: section, exact: true }).click();
+      await expect(page.getByRole('heading', { name: section, level: 1 })).toBeVisible();
+      await expect(page.locator('[data-navigation-progress]')).toHaveCount(0);
+    }
+    expect(errors).toEqual([]);
   });
 });

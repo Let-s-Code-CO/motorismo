@@ -22,14 +22,25 @@ export const themeCookie = (choice: ThemeChoice) =>
 /**
  * Paints a theme on the page: the `dark` class (Tailwind and HeroUI), the browser's colour
  * scheme (scrollbars, form controls) and the system bar (CA-07).
+ *
+ * The page's `theme-color` tags come from the layout's viewport and belong to React: they are
+ * recoloured in place (and lose their media query, so the chosen theme wins over the device's),
+ * never removed. Removing them makes React's next navigation fail when it replaces them, and the
+ * new screen never shows. On the next navigation the server renders them again for the saved
+ * choice. A tag of our own is added only when the page has none.
  */
 export const applyTheme = (theme: Theme, doc: Document = document) => {
   const root = doc.documentElement;
   root.classList.toggle('dark', theme === 'dark');
   root.style.colorScheme = theme;
-  doc.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.remove());
-  const meta = doc.createElement('meta');
-  meta.name = 'theme-color';
-  meta.content = THEME_COLORS[theme];
-  doc.head.append(meta);
+
+  if (!doc.querySelector('meta[name="theme-color"]')) {
+    const meta = doc.createElement('meta');
+    meta.name = 'theme-color';
+    doc.head.append(meta);
+  }
+  doc.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.removeAttribute('media');
+    meta.content = THEME_COLORS[theme];
+  });
 };
