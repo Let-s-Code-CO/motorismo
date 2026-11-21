@@ -78,7 +78,9 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
-  botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Sobre la
+  botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Al pasar el
+  ratón la tarjeta se ilumina y nunca se mueve: en claro crecen la sombra y el borde; en oscuro, donde
+  la sombra no se ve, se aclaran el fondo y el borde (`e2e/summary-hover.spec.ts`). Sobre la
   lista va una línea de conteo («1 de 4 usuarios · Invitados», `aria-live`) con un botón fantasma
   «Ver todos» (no un chip). Si una tarjeta es la suma de otras (p. ej. «Activos» = «Con cuenta»
   + «Sin cuenta»), se dibuja como un panel que las contiene (`parts`) y cada una sigue filtrando
