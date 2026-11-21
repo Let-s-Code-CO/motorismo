@@ -16,20 +16,16 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
 3. **Agendamiento (reservas)** — guardar un puesto para una fecha y hora, con o sin servicios; al
    llegar el cliente, la reserva pasa a ser una orden en cola (spec 008). Candidata a spec 012.
-4. **Transiciones y estados de carga** — animaciones suaves al iniciar y cerrar sesión y al pasar
-   entre secciones, respetando «reducir movimiento»; y esqueletos con la forma de cada pantalla
-   mientras llegan los datos (listas, fichas, detalle de órdenes, inicio), para que con red lenta
-   siempre se vea algo. Candidata a spec 011 (después del modo oscuro, spec 010).
-5. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
+4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
    retira y se registra de nuevo).
-6. **Confirmación por WhatsApp** (deseable).
+5. **Confirmación por WhatsApp** (deseable).
 
 ### Administración
 
-7. **Reporte de clientes** (la lista con búsqueda está en la spec 004; falta exportarla).
-8. **Reporte de servicios** con filtros por fecha, empleado y placa.
-9. **Exportar liquidación por empleado** en un rango de fechas, con el total.
-10. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
+6. **Reporte de clientes** (la lista con búsqueda está en la spec 004; falta exportarla).
+7. **Reporte de servicios** con filtros por fecha, empleado y placa.
+8. **Exportar liquidación por empleado** en un rango de fechas, con el total.
+9. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
    personales de los clientes (hoy se atienden por los canales de la política publicada en la
    spec 004).
 
@@ -62,3 +58,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | verificada, con enmienda (falta despliegue) |
 | [009](009-experiencia-movil/spec.md) | Experiencia móvil | verificada; falta despliegue |
 | [010](010-modo-oscuro/spec.md) | Modo oscuro | verificada; falta despliegue |
+| [011](011-transiciones-carga/spec.md) | Transiciones y estados de carga | verificada |

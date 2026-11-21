@@ -278,23 +278,39 @@ describe('signIn', () => {
 
   const credentials = { email: 'cliente@motorismo.test', password: 'motorismo-local' };
 
+  // Spec 011, CA-12: on success it answers where to go instead of redirecting, so the form can
+  // show the brand while that page loads; the destination is still decided here, on the server.
   it('sends a customer who asked for a staff page to their profile (spec 004, RF-02)', async () => {
     signInWithPassword.mockResolvedValue({ error: null });
     rpc.mockResolvedValue({ data: [{ kind: 'customer', role: null, status: 'active' }] });
 
-    await signIn(credentials, '/customers');
-
+    await expect(signIn(credentials, '/customers')).resolves.toEqual({
+      ok: true,
+      destination: '/profile',
+    });
     expect(rpc).toHaveBeenCalledWith('current_account');
-    expect(redirect).toHaveBeenCalledWith('/profile');
+    expect(redirect).not.toHaveBeenCalled();
   });
 
   it('sends staff to the page they asked for (CA-03)', async () => {
     signInWithPassword.mockResolvedValue({ error: null });
     rpc.mockResolvedValue({ data: [{ kind: 'staff', role: 'admin', status: 'active' }] });
 
-    await signIn(credentials, '/customers');
+    await expect(signIn(credentials, '/customers')).resolves.toEqual({
+      ok: true,
+      destination: '/customers',
+    });
+    expect(redirect).not.toHaveBeenCalled();
+  });
 
-    expect(redirect).toHaveBeenCalledWith('/customers');
+  it('never sends anyone to another site: an unsafe requested page goes home (open redirect)', async () => {
+    signInWithPassword.mockResolvedValue({ error: null });
+    rpc.mockResolvedValue({ data: [{ kind: 'staff', role: 'admin', status: 'active' }] });
+
+    await expect(signIn(credentials, 'https://evil.example.com')).resolves.toEqual({
+      ok: true,
+      destination: '/',
+    });
   });
 
   it('does not redirect when the credentials are wrong (CA-02)', async () => {

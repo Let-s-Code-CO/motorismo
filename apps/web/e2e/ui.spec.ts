@@ -283,6 +283,44 @@ test.describe('on an iPhone (390 × 844) — the phone experience (spec 009)', (
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
+  test('with a slow network, a loading screen and its content fit the phone (spec 011, CA-05)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    // Fully loaded first, as for a real user (a tap before hydration is a plain page load).
+    await page.waitForLoadState('networkidle');
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.emulateNetworkConditions', {
+      offline: false,
+      latency: 800,
+      downloadThroughput: 30 * 1024,
+      uploadThroughput: -1,
+    });
+
+    await page.getByRole('button', { name: 'Menú' }).click();
+    await page
+      .getByRole('dialog', { name: 'Menú principal' })
+      .getByRole('link', { name: 'Órdenes' })
+      .click();
+    await expect(page.locator('[data-skeleton="list"]')).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+    // Not merely clipped by the app's safety net: every shape fits inside the screen.
+    const overflowingShapes = await page.evaluate(
+      () =>
+        [...document.querySelectorAll('[data-skeleton] [data-shape]')].filter(
+          (shape) => shape.getBoundingClientRect().right > window.innerWidth
+        ).length
+    );
+    expect(overflowingShapes).toBe(0);
+
+    await expect(page.getByRole('heading', { name: 'Órdenes', level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+    expect(await horizontalOverflow(page)).toBe(0);
+  });
+
   test('the login keeps «Entrar» in sight below the brand band (CA-10, CA-11)', async ({
     page,
   }) => {

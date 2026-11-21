@@ -8,14 +8,18 @@
  * - The page the user originally asked for (CA-03) travels with the sign-in.
  * - Spec 004: a link to "Crear cuenta" (CA-01); an unconfirmed account is told to confirm its
  *   email and can have the confirmation re-sent to the typed email (CA-04).
+ * - Spec 011, CA-12: once the credentials are right, the brand («Entrando…» with the logo) shows
+ *   while the app goes to the destination the server chose; never after a failure.
  */
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 
 import { resendConfirmation, signIn } from '@web/modules/auth/actions/auth.actions';
 import LoginForm from '@web/modules/auth/components/organisms/login-form.component';
 
 import { renderWithProviders } from '@tests/test-utils/render';
 
+const replace = vi.fn();
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('@web/modules/auth/actions/auth.actions', () => ({
   signIn: vi.fn(),
   signInWithGoogle: vi.fn(),
@@ -91,5 +95,29 @@ describe('LoginForm', () => {
       )
     ).toBeVisible();
     expect(resendConfirmation).toHaveBeenCalledWith('camila@correo.test');
+  });
+
+  it('shows the brand while going where the server said, once signed in (spec 011, CA-12)', async () => {
+    vi.mocked(signIn).mockResolvedValue({ ok: true, destination: '/customers' });
+    renderWithProviders(<LoginForm next="/customers" />);
+    fill('ana@motorismo.test', 'una-clave-larga');
+
+    submit();
+
+    expect(await screen.findByRole('status', { name: 'Entrando…' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Logo de Motorismo Detailing' })).toBeInTheDocument();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/customers'));
+  });
+
+  it('never shows the brand after a failed sign-in (spec 011, CA-12)', async () => {
+    vi.mocked(signIn).mockResolvedValue({ ok: false, error: 'invalidCredentials' });
+    renderWithProviders(<LoginForm />);
+    fill('ana@motorismo.test', 'una-clave-larga');
+
+    submit();
+
+    expect(await screen.findByText('Correo o contraseña incorrectos.')).toBeVisible();
+    expect(screen.queryByRole('status', { name: 'Entrando…' })).not.toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 });

@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@motorismo/supabase'],
   // Dev logs Server Function arguments by default: that would print passwords and personal data.
   logging: { serverFunctions: false },
+  // Metadata in the <head> from the first byte, for everyone (spec 011, CA-03): a screen still
+  // loading behind its skeleton already has its title (WCAG 2.4.2). Our metadata is only the
+  // translated app name, resolved at once, so blocking on it costs nothing.
+  htmlLimitedBots: /.*/,
   async headers() {
     return [
       {

@@ -40,6 +40,54 @@
   --animate-twinkle: twinkle 3.2s ease-in-out infinite;
   /* Small elements appearing in place (e.g. the "Ver todos" filter reset). */
   --animate-fade-in: fade-in 180ms ease-out;
+  /* Spec 011: a screen's content entering (a short fade, rising a few pixels). */
+  --animate-page-in: page-in 200ms ease-out;
+  /* Spec 011: a skeleton only shows if loading takes over 300 ms, so a fast load never flashes it. */
+  --animate-skeleton-in: skeleton-in 150ms ease-out 300ms both;
+  /* Spec 011: the navigation bar shows after ~120 ms and creeps towards 80 % while it waits… */
+  --animate-progress: progress 8s cubic-bezier(0.1, 0.7, 0.3, 1) 120ms both;
+  /* …and fills up and fades out once the new screen is shown. */
+  --animate-progress-done: progress-done 300ms ease-out both;
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes skeleton-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes progress {
+    from {
+      width: 0;
+    }
+    to {
+      width: 80%;
+    }
+  }
+
+  @keyframes progress-done {
+    from {
+      width: 80%;
+      opacity: 1;
+    }
+    to {
+      width: 100%;
+      opacity: 0;
+    }
+  }
 
   @keyframes fade-in {
     from {
@@ -73,5 +121,17 @@
       opacity: 1;
       transform: scale(1);
     }
+  }
+}
+
+/* Spec 011, «reducir movimiento»: a skeleton still waits its 300 ms but appears without a fade,
+   and the navigation bar stays still (full width) instead of creeping. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-skeleton-in {
+    animation: skeleton-in 1ms linear 300ms both;
+  }
+  .animate-progress {
+    width: 100%;
+    animation: skeleton-in 1ms linear 120ms both;
   }
 }

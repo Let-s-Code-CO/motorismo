@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, Suspense } from 'react';
 
 import BrandBand from '@web/modules/core/components/brand-band.component';
 import BrandPanel from '@web/modules/core/components/brand-panel.component';
+import NavigationProgress from '@web/modules/core/components/navigation-progress.component';
 import SiteFooter from '@web/modules/core/components/site-footer.component';
 
 /**
@@ -13,6 +14,10 @@ import SiteFooter from '@web/modules/core/components/site-footer.component';
 const AuthLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+      {/* While the next screen loads, a thin bar on top (spec 011, HU-02). */}
+      <Suspense fallback={null}>
+        <NavigationProgress />
+      </Suspense>
       <BrandPanel />
 
       <div className="flex flex-col">

@@ -40,6 +40,21 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
+- **Carga y transiciones (spec 011).**
+  - **Esqueletos:** toda pantalla nueva con datos lleva su `loading.tsx`, con un `PageSkeleton`
+    de `core` (`home`, `list`, `detail`, `form` o `profile`). Aparece a los 300 ms solo con
+    CSS, se anuncia una vez como «Cargando…» y sus formas van ocultas al lector de pantalla.
+  - **Transición:** el contenido entra con `(app)/template.tsx`, `page-in` de 200 ms y
+    `motion-safe`.
+  - **Barra:** `NavigationProgress` arranca al tocar un enlace interno o ir atrás, y termina al
+    cambiar la ruta.
+  - **Inicio de sesión:** `signIn` devuelve el destino (no redirige) para mostrar `BrandMoment`
+    mientras se navega.
+  - **Pruebas con red lenta:** `e2e/loading.spec.ts` la simula con CDP
+    (`Network.emulateNetworkConditions`), después de `waitForLoadState('networkidle')`.
+  - **Título de la pestaña:** `next.config.ts` lleva `htmlLimitedBots: /.*/`, que pone los
+    metadatos en el `<head>` desde el principio. Así la pestaña tiene título también mientras se
+    ve el esqueleto (WCAG 2.4.2).
 - **Modo oscuro (spec 010).**
   - **Temas:** claro y oscuro en `src/app/hero.ts`, con «Sistema» por defecto.
   - **Dónde se guarda:** en la cookie del dispositivo `motorismo-theme`. El layout raíz pinta
@@ -63,7 +78,9 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
-  botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Sobre la
+  botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Al pasar el
+  ratón la tarjeta se ilumina y nunca se mueve: en claro crecen la sombra y el borde; en oscuro, donde
+  la sombra no se ve, se aclaran el fondo y el borde (`e2e/summary-hover.spec.ts`). Sobre la
   lista va una línea de conteo («1 de 4 usuarios · Invitados», `aria-live`) con un botón fantasma
   «Ver todos» (no un chip). Si una tarjeta es la suma de otras (p. ej. «Activos» = «Con cuenta»
   + «Sin cuenta»), se dibuja como un panel que las contiene (`parts`) y cada una sigue filtrando

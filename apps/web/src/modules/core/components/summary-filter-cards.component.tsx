@@ -25,6 +25,9 @@ const MOTION =
   'outline-none transition-[transform,box-shadow,opacity,border-color,background-color] duration-200 focus-visible:ring-2 focus-visible:ring-focus';
 const CHOSEN = 'border-foreground ring-1 ring-foreground';
 const DIMMED = 'opacity-55 hover:opacity-100';
+// Hover lights a card up, never moves it: a stronger shadow and border in light; in dark, where a
+// shadow does not show on the near-black page, a lighter background and border.
+const LIT_BORDER = 'hover:border-default-300';
 
 /** Label with its status dot, and the count below. */
 const CardText = ({ label, count, dot }: { label: string; count: number; dot: string }) => (
@@ -85,8 +88,8 @@ const SummaryFilterCards = <T extends string>({
         aria-pressed={isSelected}
         onClick={() => toggle(value)}
         style={grow ? { flexGrow: grow } : undefined}
-        className={`min-w-0 rounded-large border bg-content1 p-3 text-left shadow-small hover:shadow-medium motion-safe:hover:-translate-y-0.5 sm:basis-0 sm:p-4 ${MOTION} ${
-          isSelected ? CHOSEN : 'border-divider'
+        className={`min-w-0 rounded-large border bg-content1 p-3 text-left shadow-small hover:shadow-medium dark:hover:bg-content2 sm:basis-0 sm:p-4 ${MOTION} ${
+          isSelected ? CHOSEN : `border-divider ${LIT_BORDER}`
         } ${selected !== null && !isSelected ? DIMMED : ''}`}
       >
         <CardText label={optionLabel} count={count} dot={dot} />
@@ -134,8 +137,10 @@ const SummaryFilterCards = <T extends string>({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => toggle(value)}
-                className={`min-w-0 rounded-medium border p-2.5 text-left hover:bg-content1 hover:shadow-small motion-safe:hover:-translate-y-0.5 sm:p-3 ${MOTION} ${
-                  isSelected ? `bg-content1 ${CHOSEN}` : 'border-transparent bg-default-100/60'
+                className={`min-w-0 rounded-medium border p-2.5 text-left hover:bg-content1 hover:shadow-small dark:hover:bg-content3 sm:p-3 ${MOTION} ${
+                  isSelected
+                    ? `bg-content1 ${CHOSEN}`
+                    : `border-transparent bg-default-100/60 ${LIT_BORDER}`
                 } ${isDimmed ? DIMMED : ''}`}
               >
                 <CardText label={partLabel} count={count} dot={dot} />
