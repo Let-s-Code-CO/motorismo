@@ -18,7 +18,10 @@ import { useDayTitle } from '@web/modules/reservations/components/molecules/day-
 import { useReservationVehicle } from '@web/modules/reservations/components/molecules/reservation-row.component';
 import CancelReservationDialog from '@web/modules/reservations/components/organisms/cancel-reservation-dialog.component';
 import ToleranceDialog from '@web/modules/reservations/components/organisms/tolerance-dialog.component';
-import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
+import type {
+  ReservationExtension,
+  ReservationSummary,
+} from '@web/modules/reservations/types/reservations.types';
 import type { ReservationsErrorKey } from '@web/modules/reservations/utils/reservations-errors.utils';
 
 type ReservationDetailProps = {
@@ -29,6 +32,10 @@ type ReservationDetailProps = {
   generalTolerance: number;
   /** The notice of what was just done (`?saved=1` after booking or changing it). */
   saved?: boolean;
+  /** Each «+5 min» it was given, oldest first (CA-38). */
+  extensions?: ReservationExtension[];
+  /** Where «Volver» goes: the agenda, or «Órdenes» when it was opened from the queue. */
+  backTo?: 'agenda' | 'orders';
 };
 
 type Notice = { tone: 'success' | 'danger'; text: string };
@@ -46,6 +53,8 @@ const ReservationDetail = ({
   isAdmin,
   generalTolerance,
   saved,
+  extensions = [],
+  backTo = 'agenda',
 }: ReservationDetailProps) => {
   const t = useTranslations('reservations');
   const format = useFormatter();
@@ -103,11 +112,11 @@ const ReservationDetail = ({
   return (
     <section className="flex flex-col gap-6">
       <Link
-        href={`/agenda?date=${day}`}
+        href={backTo === 'orders' ? '/orders' : `/agenda?date=${day}`}
         className="flex w-max items-center gap-1 text-sm text-default-500 hover:text-foreground"
       >
         <ArrowLeft aria-hidden className="size-4" />
-        {t('detail.back')}
+        {backTo === 'orders' ? t('detail.backToOrders') : t('detail.back')}
       </Link>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -115,6 +124,12 @@ const ReservationDetail = ({
           {t('detail.title', { name: r.customer_name ?? '' })}
         </h1>
         {r.status && <ReservationStatusChip status={r.status} />}
+        {/* CA-37: pending past its tolerance, next to «No asistió»; never marked by itself (RN-12). */}
+        {pending && graceOver && (
+          <Chip size="sm" variant="flat" color="warning">
+            {t('flags.graceOver')}
+          </Chip>
+        )}
         {r.out_of_hours && (
           <Chip size="sm" variant="flat" color="warning">
             {t('flags.outOfHours')}
@@ -228,6 +243,40 @@ const ReservationDetail = ({
             </Button>
           )}
         </div>
+      )}
+
+      {/* CA-38: every «+5 min» it was given, so staff know how much time the customer had. */}
+      {extensions.length > 0 && (
+        <section
+          aria-labelledby="reservation-extensions"
+          className="flex flex-col gap-2 rounded-large border border-divider bg-content1 p-5 shadow-small"
+        >
+          <h2 id="reservation-extensions" className="font-semibold tracking-tight">
+            {t('detail.extensionsTitle')}
+          </h2>
+          <p className="text-sm">
+            {t('detail.extensionsSummary', {
+              times: extensions.length,
+              minutes: extensions.reduce((sum, extension) => sum + (extension.minutes ?? 0), 0),
+            })}
+          </p>
+          <ol className="flex flex-col gap-1 text-sm text-default-500">
+            {extensions.map((extension) => (
+              <li key={extension.id}>
+                {t('detail.extension', {
+                  minutes: extension.minutes ?? 0,
+                  name: extension.created_by_name ?? '',
+                  date: format.dateTime(new Date(extension.created_at ?? 0), {
+                    day: 'numeric',
+                    month: 'long',
+                  }),
+                  time: clock(new Date(extension.created_at ?? 0)),
+                  until: clock(new Date(extension.grace_until ?? 0)),
+                })}
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
 
       {trail.length > 0 && (

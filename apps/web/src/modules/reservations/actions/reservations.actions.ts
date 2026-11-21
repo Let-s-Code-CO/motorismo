@@ -140,6 +140,27 @@ export const setReservationTolerance = async (
 };
 
 /**
+ * Staff give a customer on their way 5 more minutes to keep their turn (spec 012, CA-34), up to 60:
+ * extend_reservation_tolerance checks it is still pending and within its tolerance. Returns the new
+ * tolerance.
+ */
+export const extendReservationTolerance = async (
+  input: unknown
+): Promise<{ ok: true; minutes: number } | Failure> => {
+  if (!(await getActiveStaff())) return { ok: false, error: 'forbidden' };
+  const parsed = z.object({ id: z.uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalidInput' };
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc('extend_reservation_tolerance', {
+    p_id: parsed.data.id,
+  });
+  if (error) return { ok: false, error: fromReservationError(error) };
+  refresh();
+  return { ok: true, minutes: data };
+};
+
+/**
  * The admin saves a week's seven days and whether it is enabled (CA-26 to CA-28). A day that
  * cannot hold a full slot comes back named (CA-30).
  */

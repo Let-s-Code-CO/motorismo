@@ -475,7 +475,9 @@ begin
   end if;
   update public.agenda_settings
      set slot_minutes = p_slot_minutes, seats = p_seats, tolerance_minutes = p_tolerance_minutes,
-         updated_at = now(), updated_by = (select auth.uid());
+         updated_at = now(), updated_by = (select auth.uid())
+   -- The single row. The API's connections refuse an UPDATE without WHERE (safeupdate).
+   where id;
 end;
 $$;
 

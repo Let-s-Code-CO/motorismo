@@ -7,11 +7,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Alert, Button } from '@heroui/react';
-import { CalendarClock, Play, Plus } from 'lucide-react';
+import { CalendarClock, Play, Plus, Timer } from 'lucide-react';
 
 import useClock from '@web/modules/core/hooks/clock.hook';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
+import { extendReservationTolerance } from '@web/modules/reservations/actions/reservations.actions';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-status-chip.component';
@@ -89,10 +90,13 @@ const SectionTitle = ({ dot, children }: { dot: string; children: ReactNode }) =
  */
 const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) => {
   const t = useTranslations('orders');
+  const tReservations = useTranslations('reservations');
   const format = useFormatter();
   const router = useRouter();
   // «hace …» counts from a shared «now», refreshed every minute.
-  const now = useNow({ updateInterval: 60_000 });
+  // Every 30 s: «hace …», the countdown of a reservation on its way (spec 012, CA-33) and when it
+  // leaves the queue.
+  const now = useNow({ updateInterval: 30_000 });
   const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
   const pages = Math.max(1, Math.ceil(closed.total / CLOSED_PAGE_SIZE));
@@ -108,6 +112,29 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
       t('picker.noPlate')
     );
   const ago = (date: string | null) => format.relativeTime(date ? new Date(date) : now, now);
+
+  // Spec 012, CA-34: 5 more minutes for a customer on their way.
+  const extend = (reservation: ReservationSummary) =>
+    startTransition(async () => {
+      const result = await callAction(() => extendReservationTolerance({ id: reservation.id }));
+      if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
+      setNotice(
+        result.ok
+          ? {
+              tone: 'success',
+              text: t('list.extended', {
+                name: reservation.customer_name ?? '',
+                time: clock(
+                  new Date(
+                    new Date(reservation.slot_start ?? now).getTime() + result.minutes * 60_000
+                  )
+                ),
+              }),
+            }
+          : { tone: 'danger', text: tReservations(`errors.${result.error}`) }
+      );
+      router.refresh();
+    });
 
   const start = (order: WorkOrderSummary) =>
     startTransition(async () => {
@@ -207,6 +234,12 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
               if (entry.kind === 'arriving') {
                 const { reservation } = entry;
                 const name = reservation.customer_name ?? '';
+                const minutesLeft = Math.max(
+                  0,
+                  Math.ceil(
+                    (new Date(reservation.grace_until ?? now).getTime() - now.getTime()) / 60_000
+                  )
+                );
                 return (
                   // CA-18: a reservation on its way, in its place, without a turn.
                   <li
@@ -218,7 +251,8 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                       <CalendarClock aria-hidden className="size-4" />
                     </span>
                     <Link
-                      href={`/agenda/${reservation.id}`}
+                      // «Volver» from the reservation comes back here.
+                      href={`/agenda/${reservation.id}?from=orders`}
                       className="flex min-w-0 flex-1 flex-col gap-0.5 outline-none after:absolute after:inset-0 after:content-['']"
                     >
                       <span className="flex flex-wrap items-center gap-2">
@@ -235,7 +269,42 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                           time: clock(new Date(reservation.slot_start ?? now)),
                         })}
                       </span>
+                      {/* CA-33: until when it keeps its turn, counting down; the last 5 minutes stand out. */}
+                      <span
+                        className={`flex items-center gap-1 text-xs ${
+                          minutesLeft <= 5 ? 'font-semibold text-foreground' : 'text-default-600'
+                        }`}
+                      >
+                        <Timer aria-hidden className="size-3.5" />
+                        {t('list.keepsTurn', {
+                          time: clock(new Date(reservation.grace_until ?? now)),
+                          minutes: minutesLeft,
+                        })}
+                      </span>
+                      {/* CA-38: the time already given, so staff know how many chances it had. */}
+                      {(reservation.extensions ?? 0) > 0 && (
+                        <span className="text-xs text-default-500">
+                          {t('list.extendedSoFar', {
+                            minutes: reservation.extended_minutes ?? 0,
+                            times: reservation.extensions ?? 0,
+                          })}
+                        </span>
+                      )}
                     </Link>
+                    {(reservation.effective_tolerance_minutes ?? 0) + 5 <= 60 && (
+                      <Button
+                        size="sm"
+                        variant="bordered"
+                        // Above the stretched link: giving more time does not open the reservation.
+                        className="relative z-10 shrink-0 self-center bg-content1"
+                        isDisabled={isPending}
+                        onPress={() => extend(reservation)}
+                      >
+                        {/* WCAG 2.5.3: who it is for, before the visible text. */}
+                        <span className="sr-only">{t('list.extendFor', { name })}</span>
+                        {t('list.extend')}
+                      </Button>
+                    )}
                   </li>
                 );
               }

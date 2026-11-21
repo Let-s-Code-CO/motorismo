@@ -31,6 +31,9 @@ export type AgendaWeek = {
   days: AgendaWeekDay[];
 };
 
+/** Each «+5 min» given to a customer on their way (spec 012, CA-38). */
+export type ReservationExtension = Tables<'reservation_extension_summaries'>;
+
 export type AgendaSettings = Pick<
   Tables<'agenda_settings'>,
   'slot_minutes' | 'seats' | 'tolerance_minutes'

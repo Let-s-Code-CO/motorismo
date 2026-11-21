@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useId, useState, useTransition } from 'react';
 
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -49,7 +49,11 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
   const [schedule, setSchedule] = useState<AgendaWeekDay[]>(week.days);
   const [enabled, setEnabled] = useState(week.enabled || !week.saved);
   const [dayErrors, setDayErrors] = useState<Record<number, string>>({});
-  const [notice, setNotice] = useState<Notice>();
+  // Each save speaks next to its own button: the settings are at the bottom of the page (CA-29).
+  const [weekNotice, setWeekNotice] = useState<Notice>();
+  const [settingsNotice, setSettingsNotice] = useState<Notice>();
+  const weekTitleId = useId();
+  const settingsTitleId = useId();
   const [fields, setFields] = useState<SettingsFields>({
     slot_minutes: String(settings.slot_minutes),
     seats: String(settings.seats),
@@ -80,13 +84,13 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
       const result = await callAction(() => saveAgendaWeek(input));
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       if (result.ok) {
-        setNotice({ tone: 'success', text: t('scheduleScreen.saved') });
+        setWeekNotice({ tone: 'success', text: t('scheduleScreen.saved') });
         router.refresh();
         return;
       }
       const index = result.day ? days.indexOf(result.day) : -1;
       if (index >= 0) setDayErrors({ [index]: t('validation.dayInvalid') });
-      setNotice({ tone: 'danger', text: t(`errors.${result.error}`) });
+      setWeekNotice({ tone: 'danger', text: t(`errors.${result.error}`) });
     });
   };
 
@@ -104,7 +108,7 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
     startSettings(async () => {
       const result = await callAction(() => saveAgendaSettings(parsed.data));
       if (!result) return;
-      setNotice(
+      setSettingsNotice(
         result.ok
           ? { tone: 'success', text: t('scheduleScreen.settingsSaved') }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
@@ -141,8 +145,6 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
         <p className="text-default-500">{t('scheduleScreen.description')}</p>
       </div>
 
-      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
-
       <nav aria-label={t('scheduleScreen.title')} className="flex items-center gap-2">
         <Button
           as={Link}
@@ -153,7 +155,7 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
         >
           <ChevronLeft aria-hidden className="size-4" />
         </Button>
-        <h2 className="min-w-0 flex-1 text-center font-semibold tracking-tight">
+        <h2 id={weekTitleId} className="min-w-0 flex-1 text-center font-semibold tracking-tight">
           {t('scheduleScreen.week', {
             // «del 30 de noviembre al 6 de diciembre» when the week changes month.
             from: format.dateTime(
@@ -179,7 +181,7 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
         </Button>
       </nav>
 
-      <div className={`${CARD} flex flex-col`}>
+      <section aria-labelledby={weekTitleId} className={`${CARD} flex flex-col`}>
         <div className="flex flex-col gap-1 border-b border-divider p-4">
           <Switch isSelected={enabled} onValueChange={setEnabled}>
             {t('scheduleScreen.enabled')}
@@ -202,15 +204,23 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
             />
           ))}
         </ul>
-        <div className="border-t border-divider p-4">
-          <Button color="primary" className="font-medium" isLoading={savingWeek} onPress={saveWeek}>
+        <div className="flex flex-col gap-3 border-t border-divider p-4">
+          <Button
+            color="primary"
+            className="w-max font-medium"
+            isLoading={savingWeek}
+            onPress={saveWeek}
+          >
             {t('scheduleScreen.save')}
           </Button>
+          {weekNotice && <Alert color={weekNotice.tone} variant="faded" title={weekNotice.text} />}
         </div>
-      </div>
+      </section>
 
-      <div className={`${CARD} flex flex-col gap-4 p-5`}>
-        <h2 className="font-semibold tracking-tight">{t('scheduleScreen.settingsTitle')}</h2>
+      <section aria-labelledby={settingsTitleId} className={`${CARD} flex flex-col gap-4 p-5`}>
+        <h2 id={settingsTitleId} className="font-semibold tracking-tight">
+          {t('scheduleScreen.settingsTitle')}
+        </h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {setting('slot_minutes', t('scheduleScreen.slotMinutes'))}
           {setting('seats', t('scheduleScreen.seats'))}
@@ -224,7 +234,10 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
         >
           {t('scheduleScreen.saveSettings')}
         </Button>
-      </div>
+        {settingsNotice && (
+          <Alert color={settingsNotice.tone} variant="faded" title={settingsNotice.text} />
+        )}
+      </section>
     </section>
   );
 };

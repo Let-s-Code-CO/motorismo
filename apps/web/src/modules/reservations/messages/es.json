@@ -18,13 +18,17 @@
       "slot": "{start} – {end}",
       "seats": "{free} de {seats} libres",
       "full": "Llena",
-      "started": "Ya empezó",
+      "inProgress": "En curso",
+      "past": "Ya pasó",
+      "hiddenPast": "{count, plural, one {Se oculta # franja que ya pasó sin reservas} other {Se ocultan # franjas que ya pasaron sin reservas}}",
+      "allPast": "Ya pasaron todas las franjas de este día",
+      "allPastText": "Elige otro día para reservar.",
       "book": "Reservar",
       "outOfHoursTitle": "Fuera del horario",
       "summary": "{reservations, plural, =0 {Sin reservas} one {# reserva} other {# reservas}} · {free, plural, =0 {sin puestos libres} one {# puesto libre} other {# puestos libres}}",
-      "free": "Libre",
       "seatsLabel": "Puestos de {range}",
-      "inactive": "No ocupan puesto:"
+      "inactive": "No ocupan puesto:",
+      "free": "Libre"
     },
     "status": {
       "pending": "Pendiente",
@@ -34,12 +38,14 @@
     },
     "flags": {
       "outOfHours": "Fuera del horario",
-      "overCapacity": "Sobrecupo"
+      "overCapacity": "Sobrecupo",
+      "graceOver": "Pasó su tolerancia"
     },
     "row": {
       "noVehicle": "Sin vehículo",
       "noServices": "Sin servicios",
-      "noPlate": "Sin placa"
+      "noPlate": "Sin placa",
+      "extended": "+{minutes} min de espera"
     },
     "form": {
       "titleNew": "Nueva reserva",
@@ -85,7 +91,11 @@
       "saved": "Reserva guardada.",
       "cancelledNotice": "Reserva cancelada.",
       "noShowNotice": "Reserva marcada como «No asistió».",
-      "toleranceNotice": "Tolerancia guardada."
+      "toleranceNotice": "Tolerancia guardada.",
+      "backToOrders": "Volver a órdenes",
+      "extensionsTitle": "Más tiempo para llegar",
+      "extensionsSummary": "{times, plural, one {Se le dio más tiempo una vez} other {Se le dio más tiempo # veces}}: {minutes} min en total",
+      "extension": "+{minutes} min, dados por {name} el {date} a las {time}: conservó su turno hasta las {until}"
     },
     "cancelDialog": {
       "title": "Cancelar la reserva",
@@ -156,7 +166,9 @@
       "settingsOutOfRange": "Algún valor está fuera de rango.",
       "weekInvalid": "La semana no es válida.",
       "dayInvalid": "Revisa el horario del día marcado.",
-      "generic": "No se pudo guardar. Inténtalo de nuevo."
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "toleranceMax": "Ya tiene el máximo de 60 minutos de espera.",
+      "tolerancePassed": "Ya pasó su tolerancia: no se le puede dar más tiempo."
     }
   }
 }

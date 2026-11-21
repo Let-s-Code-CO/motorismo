@@ -320,13 +320,13 @@ Leyenda: **pgTAP** = `tests/11_reservations.test.sql`; **unit/comp.** = Vitest e
 |---|---|---|
 | CA-01 | comp. + e2e | `reservation-form`: buscar y elegir cliente; un solo vehículo ya elegido; vehículo opcional. e2e: reservar a Camila. |
 | CA-02 | comp. | `reservation-form`: registrar un cliente sin cuenta desde la reserva y quedar elegido (reutiliza la prueba del picker de la 008). |
-| CA-03 | pgTAP + comp. | `agenda_slots`: franjas del día, última completa, `started`, sin franjas si está cerrado o sin habilitar. `slot-picker`: llenas y empezadas deshabilitadas, «1 de 2 libres», «Cerrado», «Semana sin habilitar». |
+| CA-03 | pgTAP + comp. | `agenda_slots`: franjas del día, última completa, `started`, sin franjas si está cerrado o sin habilitar. `slot-picker`: llenas y en curso deshabilitadas, las terminadas fuera (y aviso si no queda ninguna), «1 de 2 libres», «Cerrado», «Semana sin habilitar». |
 | CA-04 | pgTAP + comp. | Rechazo de un servicio inactivo o sin precio para el tipo. Comp.: solo se ofrecen los activos para el tipo. |
 | CA-05 | pgTAP + e2e | Queda `pending` con quién y cuándo y ocupa un puesto (`taken`). e2e: aparece en la agenda y se anuncia. |
 | CA-06 | sandbox | `reservations.sandbox.test.ts`: dos `save_reservation` simultáneas sobre el último puesto → una sola se guarda; la otra recibe `reservation_slot_full`. |
 | CA-07 | pgTAP + comp. | Rechazo de un cliente desactivado o un vehículo retirado. Comp.: no se ofrecen. |
 | CA-08 | pgTAP | Segunda reserva pendiente del mismo vehículo en la franja → `reservation_vehicle_taken`; en otra franja, sí. |
-| CA-09 | comp. + e2e | `agenda-screen`: franjas en orden, puestos libres, filas con cliente, celular, vehículo, servicios y estado. |
+| CA-09 | comp. + e2e | `agenda-screen`: franjas en orden, puestos libres, filas con cliente, celular, vehículo, servicios y estado; «En curso», «Ya pasó» y las terminadas sin reservas ocultas, con su conteo. |
 | CA-10 | unit + e2e | `agenda-date.utils`: días anterior y siguiente, fecha inválida → hoy. e2e: navegar y recargar conserva la fecha. |
 | CA-11 | comp. | `reservation-detail`: todos los campos, la tolerancia general o propia y la trazabilidad. |
 | CA-12 | unit + e2e | `reservation-lines.utils`: líneas con el valor actual y los que no aplican separados. e2e: «Llegó» → «Nueva orden» con cliente, vehículo y servicios. |
@@ -452,6 +452,39 @@ Ninguna.
   asistió».
 - **Auditoría de accesibilidad:** `audit()` espera a que termine el fundido de entrada de la página
   (spec 011) antes de medir el contraste.
+
+## Enmienda HU-06 — Al día sin recargar (2026-11-21)
+
+- **Migración** `<ts>_reservations_live.sql`:
+  - `extend_reservation_tolerance(p_id)` (`security definer`, personal): solo pendiente y antes de su
+    `grace_until`; suma 5 minutos a la tolerancia efectiva y la guarda como propia; nunca pasa de 60
+    (`reservation_tolerance_max`); pasada su tolerancia, `reservation_tolerance_passed` (CA-34).
+  - Publica `work_orders`, `reservations`, `agenda_days`, `agenda_weeks` y `agenda_settings` en
+    `supabase_realtime`. Realtime respeta las políticas de lectura: solo el personal recibe cambios.
+  - pgTAP `12_reservations_live.test.sql`.
+- **App:**
+  - `core/components/realtime-refresh.component.tsx`, en el layout con sesión para el personal: se
+    suscribe a esos cambios (`postgres_changes`) y hace `router.refresh()` agrupando ráfagas (500 ms);
+    también al volver a la pestaña. `router.refresh()` conserva el estado del cliente (lo escrito y
+    los diálogos) (CA-35).
+  - Lo que depende de la hora usa el reloj de la pantalla (`useNow`): la cuenta regresiva (CA-33), las
+    franjas que empiezan (CA-36) y «Pasó su tolerancia» (CA-37).
+  - «+5 min» en la fila de la reserva por llegar, con `callAction` (CA-34).
+- **Pruebas:** unitarias de la cuenta, el botón, las franjas y la señal; componente de
+  `realtime-refresh` con el canal simulado; E2E: un cambio en la base aparece sin recargar, y «+5 min».
+- **Registro de «+5 min» (CA-38):** tabla `reservation_extensions` (quién, cuándo, minutos y la
+  tolerancia que dejó), solo lectura para el personal y escrita solo por
+  `extend_reservation_tolerance`; vista `reservation_extension_summaries`; `reservation_summaries`
+  suma `extensions` y `extended_minutes`. Va en la misma migración `reservations_live`, que aún no se
+  ha aplicado en ningún entorno remoto.
+- **«Volver» (CA-39):** desde la cola, el enlace lleva `?from=orders` y el detalle vuelve a
+  «Órdenes».
+- **Horas pasadas (CA-03, CA-09):** con el mismo reloj de la pantalla, la agenda no dibuja las
+  franjas que terminaron (`slot_end <= ahora`) sin ninguna reserva, de ningún estado, y dice cuántas
+  ocultó; las que terminaron con reservas dicen «Ya pasó» y la actual «En curso». `slot-picker` no
+  ofrece las terminadas y avisa si no queda ninguna. Sin cambios en la base: `agenda_slots` ya
+  rechaza reservar una franja empezada.
+- **Sandbox:** `sandbox:start` ya no excluye Realtime.
 
 ## Despliegue
 

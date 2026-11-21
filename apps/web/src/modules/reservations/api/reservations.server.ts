@@ -6,6 +6,7 @@ import type {
   AgendaDay,
   AgendaSettings,
   AgendaWeek,
+  ReservationExtension,
   ReservationSummary,
 } from '@web/modules/reservations/types/reservations.types';
 import { weekDays } from '@web/modules/reservations/utils/agenda-date.utils';
@@ -61,6 +62,18 @@ export const getReservation = async (id: string): Promise<ReservationSummary | n
     .eq('id', id)
     .maybeSingle();
   if (error) throw new Error(`Could not load the reservation: ${error.message}`);
+  return data;
+};
+
+/** The «+5 min» a reservation was given, oldest first, with who and when (CA-38). */
+export const listReservationExtensions = async (id: string): Promise<ReservationExtension[]> => {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('reservation_extension_summaries')
+    .select('*')
+    .eq('reservation_id', id)
+    .order('created_at');
+  if (error) throw new Error(`Could not list the time given: ${error.message}`);
   return data;
 };
 

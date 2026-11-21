@@ -38,7 +38,12 @@
       "arriving": "Reserva por llegar",
       "arrivingText": "{name} reservó a las {time}; aún no llega.",
       "reservedLate": "Reserva {time} · llegó tarde",
-      "reservedEarly": "Reserva {time} · llegó antes"
+      "reservedEarly": "Reserva {time} · llegó antes",
+      "keepsTurn": "Conserva su turno hasta las {time} · {minutes, plural, one {queda # min} other {quedan # min}}",
+      "extend": "+5 min",
+      "extendFor": "Dar 5 minutos más a {name}: ",
+      "extended": "{name} conserva su turno hasta las {time}",
+      "extendedSoFar": "Ya se le dio +{minutes} min ({times, plural, one {# vez} other {# veces}})"
     },
     "picker": {
       "customerSearch": "Buscar cliente",

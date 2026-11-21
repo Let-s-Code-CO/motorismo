@@ -17,7 +17,16 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
-import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
+import {
+  SEED,
+  SEED_CUSTOMERS,
+  adminClient,
+  createWalkInCustomer,
+  deleteCustomers,
+  publicClient,
+  signIn,
+  uniquePlate,
+} from './support/sandbox';
 
 const TIME_ZONE = 'America/Bogota';
 
@@ -33,18 +42,23 @@ const at = (day: string, time: string) => new Date(`${day}T${time}:00-05:00`).to
 const minutesFromNow = (minutes: number) => new Date(Date.now() + minutes * 60_000).toISOString();
 
 const created: string[] = [];
+const customers: string[] = [];
 const orders: string[] = [];
 const weeks: string[] = [];
 
 /** Writes a pending reservation directly (setup only), as the first admin. */
 const reserve = async ({
   customerEmail,
+  customerId,
+  vehicleId,
   plate,
   start,
   minutes = 60,
   services = [],
 }: {
-  customerEmail: string;
+  customerEmail?: string;
+  customerId?: string;
+  vehicleId?: string;
   plate?: string;
   start: string;
   minutes?: number;
@@ -53,11 +67,15 @@ const reserve = async ({
   const admin = adminClient();
   const [{ data: customer }, { data: profile }, { data: vehicle }, { data: catalog }] =
     await Promise.all([
-      admin.from('customers').select('id').eq('email', customerEmail).single(),
+      customerId
+        ? Promise.resolve({ data: { id: customerId } })
+        : admin.from('customers').select('id').eq('email', customerEmail!).single(),
       admin.from('profiles').select('id').eq('email', SEED.admin.email).single(),
-      plate
-        ? admin.from('vehicles').select('id').eq('plate', plate).single()
-        : Promise.resolve({ data: null }),
+      vehicleId
+        ? Promise.resolve({ data: { id: vehicleId } })
+        : plate
+          ? admin.from('vehicles').select('id').eq('plate', plate).single()
+          : Promise.resolve({ data: null }),
       admin.from('services').select('id, name').in('name', services),
     ]);
   const { data, error } = await admin
@@ -92,6 +110,7 @@ test.afterAll(async () => {
   orders.push(
     ...(linked ?? []).flatMap(({ work_order_id }) => (work_order_id ? [work_order_id] : []))
   );
+  await admin.from('reservation_extensions').delete().in('reservation_id', created);
   await admin.from('reservation_services').delete().in('reservation_id', created);
   await admin.from('reservations').delete().in('id', created);
   const { data: lines } = await admin
@@ -107,6 +126,7 @@ test.afterAll(async () => {
     );
   await admin.from('work_order_lines').delete().in('work_order_id', orders);
   await admin.from('work_orders').delete().in('id', orders);
+  await deleteCustomers(customers);
   for (const week of weeks) {
     const { data: inWeek } = await admin
       .from('reservations')
@@ -215,9 +235,23 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
   test('a reservation on its way shows in the queue; «Llegó» opens its order, which keeps its turn (CA-12, CA-13, CA-14, CA-18)', async ({
     page,
   }) => {
+    // Its own customer and motorcycle: no other test opens an order for them meanwhile.
+    const name = `E2E Llegada ${Date.now()}`;
+    const customerId = await createWalkInCustomer(name);
+    customers.push(customerId);
+    const operator = publicClient();
+    await operator.auth.signInWithPassword({ email: SEED.operator.email, password: SEED.password });
+    const { data: vehicleId } = await operator.rpc('save_vehicle', {
+      p_customer_id: customerId,
+      p_vehicle_type: 'motorcycle',
+      p_brand_name: 'Suzuki',
+      p_line_name: 'GSX-R600',
+      p_color: 'black',
+      p_plate: uniquePlate('motorcycle'),
+    });
     const id = await reserve({
-      customerEmail: SEED_CUSTOMERS.walkIn.email,
-      plate: 'KDM482',
+      customerId,
+      vehicleId: vehicleId!,
       start: minutesFromNow(-5),
       services: ['Lavado sencillo'],
     });
@@ -228,9 +262,9 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     const queue = page.getByRole('list', { name: 'Órdenes en cola' });
     await expect(
       queue.getByRole('link', {
-        name: new RegExp(`^Reserva por llegar.*${SEED_CUSTOMERS.walkIn.name}`),
+        name: new RegExp(`^Reserva por llegar.*${name}`),
       })
-    ).toHaveAttribute('href', `/agenda/${id}`);
+    ).toHaveAttribute('href', `/agenda/${id}?from=orders`);
 
     // Leaving «Nueva orden» without saving keeps it pending (CA-13).
     await page.goto(`/agenda/${id}`);
@@ -251,12 +285,12 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     );
 
     await page.goto('/orders');
-    const entry = queue.getByRole('listitem').filter({ hasText: SEED_CUSTOMERS.walkIn.name });
+    const entry = queue.getByRole('listitem').filter({ hasText: name });
     await expect(entry).toContainText(/Reserva \d{1,2}:\d{2} [ap]\. m\./);
     // Valentina is no longer on her way (the seeds keep another reservation on its way).
     await expect(
       queue.getByRole('link', {
-        name: new RegExp(`^Reserva por llegar.*${SEED_CUSTOMERS.walkIn.name}`),
+        name: new RegExp(`^Reserva por llegar.*${name}`),
       })
     ).toHaveCount(0);
 
@@ -323,5 +357,70 @@ test.describe('changing, cancelling and no-shows (spec 012, HU-04)', () => {
     await dialog.getByLabel('Minutos (de 0 a 60)').fill('30');
     await dialog.getByRole('button', { name: 'Guardar' }).click();
     await expect(page.getByText('30 min (propia de esta reserva)')).toBeVisible();
+  });
+});
+
+test.describe('up to date without reloading (spec 012, HU-06)', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test('a reservation written meanwhile appears in the queue by itself; «+5 min» gives more time, recorded in the reservation (CA-34, CA-35, CA-38, CA-39)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/orders');
+    const queue = page.getByRole('list', { name: 'Órdenes en cola' });
+    const arriving = queue.getByRole('link', {
+      name: new RegExp(`^Reserva por llegar.*${SEED_CUSTOMERS.phoneOnly.name}`),
+    });
+    await expect(arriving).toHaveCount(0);
+
+    // Someone else books Andrés for a minute ago: no reload here.
+    // Andrés was registered at the counter with a phone only: written directly, as setup.
+    const admin = adminClient();
+    const [{ data: customer }, { data: profile }] = await Promise.all([
+      admin.from('customers').select('id').eq('full_name', SEED_CUSTOMERS.phoneOnly.name).single(),
+      admin.from('profiles').select('id').eq('email', SEED.admin.email).single(),
+    ]);
+    const start = minutesFromNow(-1);
+    const { data: booked } = await admin
+      .from('reservations')
+      .insert({
+        customer_id: customer!.id,
+        slot_start: start,
+        slot_end: new Date(new Date(start).getTime() + 3_600_000).toISOString(),
+        created_by: profile!.id,
+      })
+      .select('id')
+      .single();
+    const id = booked!.id;
+    created.push(id);
+
+    await expect(arriving).toHaveAttribute('href', `/agenda/${id}?from=orders`, {
+      timeout: 15_000,
+    });
+    const row = queue
+      .getByRole('listitem')
+      .filter({ hasText: 'Reserva por llegar' })
+      .filter({ hasText: SEED_CUSTOMERS.phoneOnly.name });
+    await expect(row).toContainText(/quedan 1[45] min/);
+
+    await row
+      .getByRole('button', { name: new RegExp(`${SEED_CUSTOMERS.phoneOnly.name}: \\+5 min$`) })
+      .click();
+    await expect(
+      page.getByText(new RegExp(`^${SEED_CUSTOMERS.phoneOnly.name} conserva su turno hasta las`))
+    ).toBeVisible();
+    await expect(row).toContainText(/quedan (19|20) min/);
+    await expect(row).toContainText('Ya se le dio +5 min (1 vez)');
+
+    // CA-38: the reservation keeps the record; opened from the queue, «Volver» comes back here.
+    await arriving.click();
+    await expect(page).toHaveURL(`/agenda/${id}?from=orders`);
+    await expect(page.getByRole('region', { name: 'Más tiempo para llegar' })).toContainText(
+      `+5 min, dados por ${SEED.operator.name}`
+    );
+    await page.getByRole('link', { name: 'Volver a órdenes' }).click();
+    await expect(page).toHaveURL('/orders');
   });
 });

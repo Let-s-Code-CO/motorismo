@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 import { Button, Chip } from '@heroui/react';
@@ -31,7 +31,7 @@ const takesSeat = (reservation: ReservationSummary) =>
   reservation.status === 'pending' || reservation.status === 'attended';
 
 /** A taken seat: who, their phone, which vehicle, the services and the state; it opens the reservation. */
-const SeatCard = ({ reservation }: { reservation: ReservationSummary }) => {
+const SeatCard = ({ reservation, now }: { reservation: ReservationSummary; now: Date }) => {
   const t = useTranslations('reservations');
   const vehicleOf = useReservationVehicle();
   const services = reservation.services ?? [];
@@ -51,8 +51,21 @@ const SeatCard = ({ reservation }: { reservation: ReservationSummary }) => {
       <span className="truncate text-xs text-default-500">
         {services.length ? services.join(' · ') : t('row.noServices')}
       </span>
+      {(reservation.extended_minutes ?? 0) > 0 && (
+        <span className="truncate text-xs text-default-500">
+          {t('row.extended', { minutes: reservation.extended_minutes ?? 0 })}
+        </span>
+      )}
       <span className="mt-auto flex flex-wrap items-center gap-1 pt-1">
         {reservation.status && <ReservationStatusChip status={reservation.status} />}
+        {/* CA-37: pending past its tolerance; nobody marks it but staff (RN-12). */}
+        {reservation.status === 'pending' &&
+          reservation.grace_until &&
+          new Date(reservation.grace_until) < now && (
+            <Chip size="sm" variant="flat" color="warning">
+              {t('flags.graceOver')}
+            </Chip>
+          )}
         {reservation.out_of_hours && (
           <Chip size="sm" variant="flat" color="warning">
             {t('flags.outOfHours')}
@@ -70,24 +83,38 @@ const SeatCard = ({ reservation }: { reservation: ReservationSummary }) => {
 
 /**
  * «Agenda» (spec 012, HU-02) as a board of seats: each slot is a row with its time and how many seats
- * are free («1 de 2 libres», «Llena», «Ya empezó»), and one box per seat, taken by a reservation or
- * free to book (CA-09); cancelled ones and no-shows are listed apart, since they take no seat. Another
- * day is one tap away (CA-10). A closed day or a week not enabled says so (CA-03); reservations that
+ * are free («1 de 2 libres», «Llena», «En curso», «Ya pasó»), and one box per seat, taken by a
+ * reservation or free to book (CA-09); cancelled ones and no-shows are listed apart, since they take
+ * no seat. A slot that ended with no reservation at all is left out, and a line says how many were
+ * (CA-09); one that ended with reservations stays, as the day's record. Another day is one tap away
+ * (CA-10). A closed day or a week not enabled says so (CA-03); reservations that
  * no longer fit the hours are listed apart, flagged (CA-31).
  */
 const AgendaScreen = ({ day, today, isAdmin }: AgendaScreenProps) => {
   const t = useTranslations('reservations');
   const clock = useClock();
+  // The time moves without reloading: slots start (CA-36), tolerances pass (CA-37).
+  const now = useNow({ updateInterval: 30_000 });
+  const hasStarted = (slot: { slot_start: string; started: boolean }) =>
+    slot.started || new Date(slot.slot_start) <= now;
+  const hasEnded = (slot: { slot_end: string }) => new Date(slot.slot_end) <= now;
   const range = (start: string, end: string) =>
     t('day.slot', { start: clock(new Date(start)), end: clock(new Date(end)) });
 
   const slotStarts = new Set(day.slots.map((slot) => slot.slot_start));
+  // CA-09: an empty slot of the past is only noise; with any reservation, it is the day's record.
+  const slots = day.slots.filter(
+    (slot) =>
+      !hasEnded(slot) ||
+      day.reservations.some((reservation) => reservation.slot_start === slot.slot_start)
+  );
+  const hiddenPast = day.slots.length - slots.length;
   const apart = day.reservations.filter(
     (reservation) => !slotStarts.has(reservation.slot_start ?? '')
   );
   const booked = day.reservations.filter(takesSeat).length;
   const freeSeats = day.slots
-    .filter((slot) => !slot.started)
+    .filter((slot) => !hasStarted(slot))
     .reduce((sum, slot) => sum + Math.max(0, slot.seats - slot.taken), 0);
 
   return (
@@ -139,19 +166,26 @@ const AgendaScreen = ({ day, today, isAdmin }: AgendaScreenProps) => {
         </p>
       )}
 
-      {day.slots.length > 0 && (
+      {hiddenPast > 0 && (
+        <p className="text-xs text-default-500">{t('day.hiddenPast', { count: hiddenPast })}</p>
+      )}
+
+      {slots.length > 0 && (
         <ol aria-label={t('day.slotsLabel')} className="flex flex-col divide-y divide-divider">
-          {day.slots.map((slot) => {
+          {slots.map((slot) => {
             const free = Math.max(0, slot.seats - slot.taken);
             const inSlot = day.reservations.filter((r) => r.slot_start === slot.slot_start);
             const seated = inSlot.filter(takesSeat);
             const inactive = inSlot.filter((r) => !takesSeat(r));
             const title = range(slot.slot_start, slot.slot_end);
-            const status = slot.started
-              ? t('day.started')
-              : free === 0
-                ? t('day.full')
-                : t('day.seats', { free, seats: slot.seats });
+            const started = hasStarted(slot);
+            const status = hasEnded(slot)
+              ? t('day.past')
+              : started
+                ? t('day.inProgress')
+                : free === 0
+                  ? t('day.full')
+                  : t('day.seats', { free, seats: slot.seats });
             const bookHref = `/agenda/new?date=${day.date}&start=${encodeURIComponent(slot.slot_start)}`;
 
             return (
@@ -168,12 +202,12 @@ const AgendaScreen = ({ day, today, isAdmin }: AgendaScreenProps) => {
                   <ul aria-label={t('day.seatsLabel', { range: title })} className={SEATS}>
                     {seated.map((reservation) => (
                       <li key={reservation.id} className="min-w-0">
-                        <SeatCard reservation={reservation} />
+                        <SeatCard reservation={reservation} now={now} />
                       </li>
                     ))}
                     {Array.from({ length: free }, (_, index) => (
                       <li key={`free-${index}`} className="min-w-0">
-                        {slot.started ? (
+                        {started ? (
                           <span className="flex min-h-24 items-center justify-center rounded-medium border border-dashed border-default-300 text-sm text-default-500">
                             {t('day.free')}
                           </span>

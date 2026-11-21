@@ -8,6 +8,9 @@
  *   reservations than seats; the others are told it is full. save_reservation locks the day before
  *   counting, so concurrent bookings line up.
  * - RN-06: a customer cannot book.
+ * - CA-29: an admin changes the seats per slot (and the slot length and the tolerance) through the
+ *   API. The API's connections refuse an UPDATE without WHERE (Supabase's safeupdate), which pgTAP,
+ *   run as the superuser, never sees: only this test does.
  */
 import { SEED, adminClient, signedInAs } from './support/sandbox';
 
@@ -78,5 +81,34 @@ describe('reservations through the API (spec 012)', () => {
     });
 
     expect(error?.hint).toBe('reservation_staff_only');
+  });
+});
+
+describe('the agenda settings through the API (spec 012, CA-29)', () => {
+  const restore = async () => {
+    const { client } = await signedInAs(SEED.admin);
+    await client.rpc('save_agenda_settings', {
+      p_slot_minutes: 60,
+      p_seats: 2,
+      p_tolerance_minutes: 15,
+    });
+  };
+  afterEach(restore);
+
+  it('an admin sets a third seat per slot', async () => {
+    const { client } = await signedInAs(SEED.admin);
+
+    const { error } = await client.rpc('save_agenda_settings', {
+      p_slot_minutes: 60,
+      p_seats: 3,
+      p_tolerance_minutes: 15,
+    });
+
+    expect(error).toBeNull();
+    const { data } = await adminClient()
+      .from('agenda_settings')
+      .select('slot_minutes, seats, tolerance_minutes')
+      .single();
+    expect(data).toEqual({ slot_minutes: 60, seats: 3, tolerance_minutes: 15 });
   });
 });

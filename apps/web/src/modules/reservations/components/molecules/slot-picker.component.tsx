@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useNow, useTranslations } from 'next-intl';
 
 import { Radio, RadioGroup } from '@heroui/react';
 
@@ -22,9 +22,10 @@ type SlotPickerProps = {
 };
 
 /**
- * The slots of the chosen day (spec 012, CA-03), each with its free seats («1 de 2 libres»). Full
- * ones and the ones that have started show, but cannot be chosen; a closed day or a week not
- * enabled says so and offers none.
+ * The slots of the chosen day that have not ended (spec 012, CA-03), each with its free seats («1 de
+ * 2 libres»). Full ones and the one in progress («En curso») show, but cannot be chosen; the ones
+ * that ended are not offered, and when none is left it says so. A closed day or a week not enabled
+ * says so and offers none.
  */
 const SlotPicker = ({
   state,
@@ -37,6 +38,23 @@ const SlotPicker = ({
 }: SlotPickerProps) => {
   const t = useTranslations('reservations.day');
   const clock = useClock();
+  // A slot that starts while the form is open can no longer be chosen (CA-36).
+  const now = useNow({ updateInterval: 30_000 });
+
+  // Nobody books the past: a slot that ended is not even offered (CA-03).
+  const ahead = slots.filter((slot) => new Date(slot.slot_end) > now);
+
+  if (state === 'open' && slots.length > 0 && ahead.length === 0) {
+    return (
+      <div
+        role="status"
+        className="rounded-medium border border-dashed border-default-300 p-4 text-sm"
+      >
+        <p className="font-medium">{t('allPast')}</p>
+        <p className="text-default-500">{t('allPastText')}</p>
+      </div>
+    );
+  }
 
   if (state !== 'open') {
     return (
@@ -59,15 +77,16 @@ const SlotPicker = ({
       errorMessage={errorMessage}
       classNames={{ wrapper: 'grid gap-2 sm:grid-cols-2' }}
     >
-      {slots.map((slot) => {
+      {ahead.map((slot) => {
         const own = slot.slot_start === ownSlot;
         const free = slot.seats - slot.taken + (own ? 1 : 0);
         const range = t('slot', {
           start: clock(new Date(slot.slot_start)),
           end: clock(new Date(slot.slot_end)),
         });
-        const status = slot.started
-          ? t('started')
+        const started = slot.started || new Date(slot.slot_start) <= now;
+        const status = started
+          ? t('inProgress')
           : free <= 0
             ? t('full')
             : t('seats', { free, seats: slot.seats });
@@ -76,7 +95,7 @@ const SlotPicker = ({
           <Radio
             key={slot.slot_start}
             value={slot.slot_start}
-            isDisabled={slot.started || free <= 0}
+            isDisabled={started || free <= 0}
             description={status}
             classNames={{
               base: 'm-0 max-w-none rounded-medium border border-divider px-3 py-2 data-[selected=true]:border-foreground',

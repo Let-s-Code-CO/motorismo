@@ -9,6 +9,8 @@
  * - CA-30: a day that closes before it opens, or cannot hold a full slot, is said next to it and
  *   nothing is sent; a refusal of the database names the day too.
  * - CA-29: the settings (slot length, seats, tolerance) are checked next to each field and saved.
+ * - Each save says how it went right below its own button: the week's in the week's card, the
+ *   settings' in the settings' card (at the bottom of the page, a notice at the top goes unseen).
  */
 import { fireEvent, screen, within } from '@testing-library/react';
 
@@ -47,6 +49,8 @@ const renderSchedule = (agendaWeek: AgendaWeek = week()) =>
   );
 
 const dayRow = (name: RegExp) => screen.getByRole('listitem', { name });
+const weekCard = () => screen.getByRole('region', { name: /^Semana del/ });
+const settingsCard = () => screen.getByRole('region', { name: 'Configuración de la agenda' });
 const saveWeek = () => fireEvent.click(screen.getByRole('button', { name: 'Guardar semana' }));
 
 describe('ScheduleScreen', () => {
@@ -68,6 +72,7 @@ describe('ScheduleScreen', () => {
       'domingo, 29 de noviembre',
     ]);
     expect(screen.getByRole('switch', { name: 'Semana habilitada' })).toBeChecked();
+    const saveButton = screen.getByRole('button', { name: 'Guardar semana' });
     saveWeek();
 
     await vi.waitFor(() =>
@@ -77,7 +82,11 @@ describe('ScheduleScreen', () => {
         days: Array.from({ length: 7 }, () => PROPOSAL),
       })
     );
-    expect(await screen.findByText('Semana guardada.')).toBeVisible();
+    const saved = await within(weekCard()).findByText('Semana guardada.');
+    expect(saved).toBeVisible();
+    expect(
+      saveButton.compareDocumentPosition(saved) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(refresh).toHaveBeenCalled();
   });
 
@@ -139,7 +148,7 @@ describe('ScheduleScreen', () => {
     renderSchedule();
     saveWeek();
 
-    expect(await screen.findByText('Revisa el horario del día marcado.')).toBeVisible();
+    expect(await within(weekCard()).findByText('Revisa el horario del día marcado.')).toBeVisible();
     expect(
       within(dayRow(/miércoles/)).getByText(
         'Debe cerrar después de abrir y caber al menos una franja completa.'
@@ -182,6 +191,21 @@ describe('ScheduleScreen', () => {
         tolerance_minutes: 10,
       })
     );
-    expect(await screen.findByText('Configuración guardada.')).toBeVisible();
+    expect(await within(settingsCard()).findByText('Configuración guardada.')).toBeVisible();
+    expect(within(weekCard()).queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('says a refusal of the settings next to their button, not at the top (CA-29)', async () => {
+    vi.mocked(saveAgendaSettings).mockResolvedValue({ ok: false, error: 'generic' });
+    renderSchedule();
+
+    const button = screen.getByRole('button', { name: 'Guardar configuración' });
+    fireEvent.click(button);
+
+    const notice = await within(settingsCard()).findByRole('alert');
+    expect(notice).toBeVisible();
+    // Right below the button, where the eyes already are.
+    expect(button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(weekCard()).queryByRole('alert')).not.toBeInTheDocument();
   });
 });

@@ -17,6 +17,8 @@ export type ReservationsErrorKey =
   | 'slotFull'
   | 'noShowTooEarly'
   | 'toleranceOutOfRange'
+  | 'toleranceMax'
+  | 'tolerancePassed'
   | 'settingsOutOfRange'
   | 'weekInvalid'
   | 'dayInvalid'
@@ -42,6 +44,9 @@ const BY_HINT: Record<string, ReservationsErrorKey> = {
   reservation_slot_full: 'slotFull',
   reservation_no_show_too_early: 'noShowTooEarly',
   reservation_tolerance_out_of_range: 'toleranceOutOfRange',
+  // Spec 012, CA-34: «+5 min».
+  reservation_tolerance_max: 'toleranceMax',
+  reservation_tolerance_passed: 'tolerancePassed',
   agenda_settings_out_of_range: 'settingsOutOfRange',
   agenda_week_invalid: 'weekInvalid',
 };

@@ -12,7 +12,7 @@
  * - CA-24 / CA-25: the admin changes its tolerance; an operator only sees it.
  * - CA-31: «Fuera del horario» and «Sobrecupo».
  */
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 
 import { markNoShow } from '@web/modules/reservations/actions/reservations.actions';
 import ReservationDetail from '@web/modules/reservations/components/organisms/reservation-detail.component';
@@ -230,5 +230,88 @@ describe('ReservationDetail', () => {
     expect(
       screen.getByText('Marcada «No asistió» por Ana Admin el 12 de junio de 2030 a las 9:20 a. m.')
     ).toBeVisible();
+  });
+
+  it('says «Pasó su tolerancia» once it has passed, next to «No asistió», and not before (CA-37)', () => {
+    nowAt('2030-06-12T09:15:00-05:00');
+    const { unmount } = renderDetail(reservation());
+    expect(screen.queryByText('Pasó su tolerancia')).not.toBeInTheDocument();
+    unmount();
+
+    nowAt('2030-06-12T09:16:00-05:00');
+    renderDetail(reservation());
+    expect(screen.getByText('Pasó su tolerancia')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'No asistió' })).toBeVisible();
+  });
+
+  it('lists every «+5 min» it was given, by whom, when and until when, with the total (CA-38)', () => {
+    renderWithProviders(
+      <ReservationDetail
+        reservation={reservation()}
+        today="2030-06-12"
+        isAdmin={false}
+        generalTolerance={15}
+        extensions={[
+          {
+            id: 'e1',
+            reservation_id: 'r1',
+            minutes: 5,
+            tolerance_after: 20,
+            grace_until: '2030-06-12T09:20:00-05:00',
+            created_at: '2030-06-12T09:12:00-05:00',
+            created_by_name: 'Oscar Operador',
+          },
+          {
+            id: 'e2',
+            reservation_id: 'r1',
+            minutes: 5,
+            tolerance_after: 25,
+            grace_until: '2030-06-12T09:25:00-05:00',
+            created_at: '2030-06-12T09:18:00-05:00',
+            created_by_name: 'Ana Admin',
+          },
+        ]}
+      />
+    );
+
+    const given = screen.getByRole('region', { name: 'Más tiempo para llegar' });
+    expect(given).toHaveTextContent('Se le dio más tiempo 2 veces: 10 min en total');
+    expect(
+      within(given).getByText(
+        '+5 min, dados por Oscar Operador el 12 de junio a las 9:12 a. m.: conservó su turno hasta las 9:20 a. m.'
+      )
+    ).toBeVisible();
+    expect(within(given).getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('shows no such section when it was given no extra time (CA-38)', () => {
+    renderDetail(reservation());
+
+    expect(
+      screen.queryByRole('region', { name: 'Más tiempo para llegar' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('goes back to «Órdenes» when it was opened from the queue, else to its day', () => {
+    const { unmount } = renderWithProviders(
+      <ReservationDetail
+        reservation={reservation()}
+        today="2030-06-12"
+        isAdmin={false}
+        generalTolerance={15}
+        backTo="orders"
+      />
+    );
+    expect(screen.getByRole('link', { name: 'Volver a órdenes' })).toHaveAttribute(
+      'href',
+      '/orders'
+    );
+    unmount();
+
+    renderDetail(reservation());
+    expect(screen.getByRole('link', { name: 'Volver a la agenda' })).toHaveAttribute(
+      'href',
+      '/agenda?date=2030-06-12'
+    );
   });
 });

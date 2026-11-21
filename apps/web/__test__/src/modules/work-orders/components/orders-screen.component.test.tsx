@@ -11,9 +11,13 @@
  * - Spec 012, CA-14 / CA-15 / CA-18: «En cola» goes by turn; an order from a reservation says
  *   «Reserva 9:00 a. m.», and a reservation whose customer is on its way sits in its place, without
  *   a turn, linking to the reservation.
+ * - Spec 012, CA-33 / CA-34: it says until when it keeps its turn and how many minutes are left (the
+ *   last 5 stand out), and «+5 min» gives it more time, up to 60.
+ * - Spec 012, CA-38: it says how much time it was already given.
  */
 import { fireEvent, screen, within } from '@testing-library/react';
 
+import { extendReservationTolerance } from '@web/modules/reservations/actions/reservations.actions';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrdersScreen from '@web/modules/work-orders/components/organisms/orders-screen.component';
@@ -25,6 +29,9 @@ const refresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh }),
   usePathname: () => '/orders',
+}));
+vi.mock('@web/modules/reservations/actions/reservations.actions', () => ({
+  extendReservationTolerance: vi.fn(),
 }));
 vi.mock('@web/modules/work-orders/actions/work-orders.actions', () => ({
   startWorkOrder: vi.fn(),
@@ -224,7 +231,8 @@ describe('OrdersScreen with reservations (spec 012)', () => {
     expect(
       // Its name is what it shows (WCAG 2.5.3): «Reserva por llegar», the time and who.
       screen.getByRole('link', { name: /^Reserva por llegar.*Carla Cliente/ })
-    ).toHaveAttribute('href', '/agenda/r-carla');
+      // «Volver» from the reservation comes back to «Órdenes».
+    ).toHaveAttribute('href', '/agenda/r-carla?from=orders');
     expect(queue[1]).toHaveTextContent('Carla Cliente reservó a las 9:00 a. m.; aún no llega.');
   });
 
@@ -275,5 +283,81 @@ describe('OrdersScreen with reservations (spec 012)', () => {
     expect(queue[0]).not.toHaveTextContent('llegó');
     expect(queue[1]).toHaveTextContent('Reserva 6:00 p. m. · llegó antes');
     expect(queue[2]).toHaveTextContent('Reserva 4:00 p. m. · llegó tarde');
+  });
+
+  describe('a reservation on its way (spec 012, CA-33, CA-34)', () => {
+    const arriving = (overrides: Partial<ReservationSummary> = {}) =>
+      ({
+        id: 'r-carla',
+        customer_name: 'Carla Cliente',
+        slot_start: '2030-06-12T14:00:00Z',
+        grace_until: '2030-06-12T14:15:00Z',
+        effective_tolerance_minutes: 15,
+        ...overrides,
+      }) as ReservationSummary;
+    const renderAt = (instant: string, reservation: ReservationSummary) => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(instant));
+      renderWithProviders(
+        <OrdersScreen open={[]} arriving={[reservation]} closed={{ rows: [], total: 0 }} page={1} />
+      );
+    };
+
+    it('says until when it keeps its turn and how many minutes are left (CA-33)', () => {
+      // 9:05 a. m.: its 15 minutes end at 9:15 a. m. → 10 left.
+      renderAt('2030-06-12T14:05:00Z', arriving());
+
+      const left = screen.getByText('Conserva su turno hasta las 9:15 a. m. · quedan 10 min');
+      expect(left).toBeVisible();
+      expect(left).not.toHaveClass('font-semibold');
+    });
+
+    it('makes the last 5 minutes stand out (CA-33)', () => {
+      // 9:11:30 a. m.: 3.5 minutes left, shown as 4.
+      renderAt('2030-06-12T14:11:30Z', arriving());
+
+      expect(screen.getByText('Conserva su turno hasta las 9:15 a. m. · quedan 4 min')).toHaveClass(
+        'font-semibold'
+      );
+    });
+
+    it('gives 5 more minutes and says until when (CA-34)', async () => {
+      vi.mocked(extendReservationTolerance).mockResolvedValue({ ok: true, minutes: 20 });
+      renderAt('2030-06-12T14:05:00Z', arriving());
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Dar 5 minutos más a Carla Cliente: +5 min' })
+      );
+
+      await vi.waitFor(() =>
+        expect(extendReservationTolerance).toHaveBeenCalledWith({ id: 'r-carla' })
+      );
+      // 9:00 a. m. + 20 minutes.
+      expect(
+        await screen.findByText('Carla Cliente conserva su turno hasta las 9:20 a. m.')
+      ).toBeVisible();
+      expect(refresh).toHaveBeenCalled();
+    });
+
+    it('says how much time it was already given (CA-38)', () => {
+      renderAt('2030-06-12T14:05:00Z', arriving({ extensions: 3, extended_minutes: 15 }));
+
+      expect(screen.getByText('Ya se le dio +15 min (3 veces)')).toBeVisible();
+    });
+
+    it('says nothing of it when it was given no extra time (CA-38)', () => {
+      renderAt('2030-06-12T14:05:00Z', arriving({ extensions: 0, extended_minutes: 0 }));
+
+      expect(screen.queryByText(/Ya se le dio/)).not.toBeInTheDocument();
+    });
+
+    it('offers no more time once it has 60 minutes (RN-11)', () => {
+      renderAt(
+        '2030-06-12T14:05:00Z',
+        arriving({ effective_tolerance_minutes: 60, grace_until: '2030-06-12T15:00:00Z' })
+      );
+
+      expect(screen.queryByRole('button', { name: /\+5 min/ })).not.toBeInTheDocument();
+    });
   });
 });

@@ -31,6 +31,8 @@ describe('fromReservationError', () => {
     ['reservation_not_pending', 'notPending'],
     ['reservation_no_show_too_early', 'noShowTooEarly'],
     ['reservation_tolerance_out_of_range', 'toleranceOutOfRange'],
+    ['reservation_tolerance_max', 'toleranceMax'],
+    ['reservation_tolerance_passed', 'tolerancePassed'],
     ['agenda_settings_out_of_range', 'settingsOutOfRange'],
     ['agenda_week_invalid', 'weekInvalid'],
     ['agenda_day_invalid:2030-06-11', 'dayInvalid'],

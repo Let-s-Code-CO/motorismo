@@ -169,9 +169,11 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Agenda (spec 012, solo en local): esta semana y la siguiente habilitadas de 9:00 a. m. a 6:00 p. m.
   (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado») y
   Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada. Hoy, en la
-  franja de la hora en que se hizo el reset: Gabriel (su Yamaha `GGM-45F`, registrada por el seed)
+  franja de la hora en que se hizo el reset (antes de abrir, la primera; después de cerrar, la
+  última, la de las 5:00 p. m., y Camila ya pasó su tolerancia): Gabriel (su Yamaha `GGM-45F`, registrada por el seed)
   llegó con su reserva y su orden #6 espera en la cola con «Reserva …»; Camila está «por llegar»
-  (60 min de tolerancia propia) hasta que acaba esa hora.
+  unos 25 minutos tras el reset (con «+5 min» disponible); Lina llegó tarde y Sofía antes (van por
+  llegada), Mateo sin reserva y Valentina «No asistió».
 - Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
   «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
   (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real
@@ -276,6 +278,13 @@ e2e/                         # Playwright
   vehículo ya tenía su orden abierta, `/orders/{id}?reservation=…` la enlaza al guardar.
   `CustomerPicker` tiene `purpose="reservation"` (vehículo opcional, «Registrar cliente») y
   `customerLocked`.
+- **Al día sin recargar (HU-06):** `core/components/realtime-refresh` (en el layout con sesión, solo
+  personal) escucha por Realtime los cambios de órdenes, reservas y agenda (publicadas en
+  `supabase_realtime`; Realtime respeta RLS) y hace `router.refresh()` agrupando ráfagas; también al
+  volver a la pestaña. Lo que depende de la hora usa `useNow` (cuenta regresiva de la «Reserva por
+  llegar», franjas que empiezan, «Pasó su tolerancia»). «+5 min» (`extend_reservation_tolerance`)
+  lo usa cualquier miembro del personal, hasta 60, y queda registrado (`reservation_extensions`: el
+  detalle lo lista, la cola y la agenda lo resumen). El sandbox local arranca con Realtime.
 - **El reloj en pgTAP:** todo lo que mira la hora llama a `private.agenda_now()`; la prueba la
   sustituye por una hora fija (`test.now`) dentro de su transacción. Las E2E escriben las reservas
   que dependen de la hora con la clave secreta, relativas a ahora.

@@ -2,10 +2,13 @@
  * SlotPicker — the slots of the chosen day in «Nueva reserva» (spec 012, HU-01).
  *
  * Guards:
- * - CA-03: every slot of the day, in order, with its free seats («1 de 2 libres»); full ones and
- *   ones that have started are shown but cannot be chosen; a closed day says «Cerrado» and a week
- *   not enabled says «Semana sin habilitar», with no slots.
+ * - CA-03: the slots of the day that have not ended, in order, with their free seats («1 de 2
+ *   libres»); full ones and the one in progress («En curso») are shown but cannot be chosen; the
+ *   ones that ended are not offered at all (nobody books the past), and when none is left it says
+ *   so; a closed day says «Cerrado» and a week not enabled says «Semana sin habilitar», with no
+ *   slots.
  * - CA-20: a reservation being changed counts its own seat as free in its own slot.
+ * - CA-36: a slot that starts while the form is open can no longer be chosen.
  */
 import { fireEvent, screen } from '@testing-library/react';
 
@@ -52,11 +55,11 @@ describe('SlotPicker', () => {
     expect(onChange).toHaveBeenCalledWith('2030-06-12T09:00:00-05:00');
   });
 
-  it('shows a full slot and one that has started, but neither can be chosen (CA-03)', () => {
+  it('shows a full slot and the one in progress, but neither can be chosen (CA-03)', () => {
     renderPicker({ slots: [slot(9, { started: true }), slot(10, { taken: 2 }), slot(11)] });
 
     expect(screen.getByRole('radio', { name: /^9:00 a\. m\./ })).toBeDisabled();
-    expect(screen.getByText('Ya empezó')).toBeVisible();
+    expect(screen.getByText('En curso')).toBeVisible();
     expect(screen.getByRole('radio', { name: /10:00 a\. m\. – 11/ })).toBeDisabled();
     expect(screen.getByText('Llena')).toBeVisible();
     expect(screen.getByRole('radio', { name: /^11:00 a\. m\./ })).toBeEnabled();
@@ -82,5 +85,39 @@ describe('SlotPicker', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Semana sin habilitar');
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+  });
+
+  it('disables a slot that has started since it loaded (CA-36)', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2030-06-12T09:05:00-05:00'));
+    renderPicker({ slots: [slot(9), slot(10)] });
+
+    expect(screen.getByRole('radio', { name: /^9:00 a\. m\./ })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: /^10:00 a\. m\./ })).toBeEnabled();
+    vi.useRealTimers();
+  });
+
+  it('does not offer the slots that have ended (CA-03)', () => {
+    // 10:30 a. m.: 9:00 ended, 10:00 is in progress, 11:00 is still ahead.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2030-06-12T10:30:00-05:00'));
+    renderPicker({ slots: [slot(9, { started: true }), slot(10, { started: true }), slot(11)] });
+
+    expect(
+      screen.getAllByRole('radio').map((radio) => radio.closest('label')?.textContent)
+    ).toEqual(['10:00 a. m. – 11:00 a. m.En curso', '11:00 a. m. – 12:00 p. m.2 de 2 libres']);
+    vi.useRealTimers();
+  });
+
+  it('says so when every slot of the day has ended (CA-03)', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2030-06-12T18:05:00-05:00'));
+    renderPicker({ slots: [slot(9, { started: true }), slot(10, { started: true })] });
+
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Ya pasaron todas las franjas de este día'
+    );
+    vi.useRealTimers();
   });
 });

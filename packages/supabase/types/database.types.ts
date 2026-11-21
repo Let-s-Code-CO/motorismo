@@ -285,6 +285,62 @@ export type Database = {
           },
         ]
       }
+      reservation_extensions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          minutes: number
+          reservation_id: string
+          tolerance_after: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          minutes: number
+          reservation_id: string
+          tolerance_after: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          minutes?: number
+          reservation_id?: string
+          tolerance_after?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_extensions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_extensions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_extensions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_extensions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "work_order_summaries"
+            referencedColumns: ["reservation_id"]
+          },
+        ]
+      }
       reservation_services: {
         Row: {
           position: number
@@ -911,6 +967,40 @@ export type Database = {
       }
     }
     Views: {
+      reservation_extension_summaries: {
+        Row: {
+          created_at: string | null
+          created_by_name: string | null
+          grace_until: string | null
+          id: string | null
+          minutes: number | null
+          reservation_id: string | null
+          tolerance_after: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_extensions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_extensions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_extensions_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "work_order_summaries"
+            referencedColumns: ["reservation_id"]
+          },
+        ]
+      }
       reservation_summaries: {
         Row: {
           attended_at: string | null
@@ -926,6 +1016,8 @@ export type Database = {
           customer_phone: string | null
           day: string | null
           effective_tolerance_minutes: number | null
+          extended_minutes: number | null
+          extensions: number | null
           grace_until: string | null
           id: string | null
           line_name: string | null
@@ -1089,6 +1181,7 @@ export type Database = {
         }[]
       }
       email_in_use: { Args: { p_email: string }; Returns: boolean }
+      extend_reservation_tolerance: { Args: { p_id: string }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       mark_reservation_no_show: { Args: { p_id: string }; Returns: undefined }

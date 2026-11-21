@@ -12,6 +12,11 @@
  * - CA-31: a reservation that no longer fits the hours is listed apart; flagged ones show
  *   «Fuera del horario» and «Sobrecupo».
  * - «Horario» is offered only to an admin (HU-05).
+ * - CA-36 / CA-37 (amendment HU-06): the screen keeps time: a slot that starts says «En curso»
+ *   and stops offering «Reservar», and a pending reservation past its tolerance says «Pasó su
+ *   tolerancia», without reloading.
+ * - CA-09: a slot that ended with no reservation at all is not drawn (only noise); a line says how
+ *   many were left out. One that ended with reservations stays, «Ya pasó», as the day's record.
  */
 import { fireEvent, screen, within } from '@testing-library/react';
 
@@ -74,7 +79,7 @@ describe('AgendaScreen', () => {
       day({
         slots: [slot(9, { taken: 2 }), slot(10, { taken: 1 })],
         reservations: [
-          reservation(),
+          reservation({ extended_minutes: 10 }),
           reservation({
             id: 'r2',
             customer_name: 'Valentina Vásquez',
@@ -105,9 +110,12 @@ describe('AgendaScreen', () => {
     expect(camila).toHaveTextContent('Suzuki GSX-R600 · UIH-03D');
     expect(camila).toHaveTextContent('Lavado detallado');
     expect(camila).toHaveTextContent('Pendiente');
+    expect(camila).toHaveTextContent('+10 min de espera');
 
     const valentina = within(slots[0]!).getByRole('link', { name: /Valentina Vásquez/ });
     expect(valentina).toHaveTextContent('Sin vehículo');
+    // CA-38: no extra time given, nothing said; Camila was given 10 minutes.
+    expect(valentina).not.toHaveTextContent('de espera');
     expect(valentina).toHaveTextContent('Sin servicios');
   });
 
@@ -239,5 +247,81 @@ describe('AgendaScreen', () => {
     fireEvent.change(screen.getByLabelText('Ir a la fecha'), { target: { value: '2030-07-04' } });
 
     expect(push).toHaveBeenCalledWith('/agenda?date=2030-07-04');
+  });
+
+  describe('keeping time without reloading (amendment HU-06)', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('stops offering «Reservar» in a slot that has started since it loaded (CA-36)', () => {
+      // Loaded before 9:00 a. m. (not started); now it is 9:10 a. m.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2030-06-12T09:10:00-05:00'));
+      renderAgenda(day({ slots: [slot(9), slot(10)] }));
+
+      const nine = screen.getByRole('listitem', { name: '9:00 a. m. – 10:00 a. m.' });
+      expect(within(nine).getByText('En curso')).toBeVisible();
+      expect(within(nine).queryByRole('link', { name: /Reservar/ })).not.toBeInTheDocument();
+      // Its seats are still drawn, «Libre», but cannot be booked.
+      expect(within(nine).getAllByText('Libre')).toHaveLength(2);
+      expect(screen.getAllByRole('link', { name: /Reservar/ })).toHaveLength(2);
+    });
+
+    it('hides the slots that ended with no reservation, and says how many (CA-09)', () => {
+      // 11:30 a. m.: 8:00 and 9:00 ended empty, 10:00 ended with a no-show, 11:00 is in progress.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2030-06-12T11:30:00-05:00'));
+      renderAgenda(
+        day({
+          slots: [8, 9, 10, 11, 12].map((hour) => slot(hour, { started: hour <= 11 })),
+          reservations: [reservation({ status: 'no_show', slot_start: at(10), slot_end: at(11) })],
+        })
+      );
+
+      const slots = within(screen.getByRole('list', { name: 'Franjas del día' })).getAllByRole(
+        'listitem',
+        { name: /m\. – / }
+      );
+      expect(slots.map((item) => item.getAttribute('aria-label'))).toEqual([
+        '10:00 a. m. – 11:00 a. m.',
+        '11:00 a. m. – 12:00 p. m.',
+        '12:00 p. m. – 1:00 p. m.',
+      ]);
+      expect(within(slots[0]!).getByText('Ya pasó')).toBeVisible();
+      expect(within(slots[1]!).getByText('En curso')).toBeVisible();
+      expect(within(slots[2]!).getByText('2 de 2 libres')).toBeVisible();
+      expect(screen.getByText('Se ocultan 2 franjas que ya pasaron sin reservas')).toBeVisible();
+    });
+
+    it('says nothing is hidden while no empty slot has ended (CA-09)', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2030-06-12T08:30:00-05:00'));
+      renderAgenda(day({ slots: [slot(8, { started: true }), slot(9)] }));
+
+      expect(screen.getAllByRole('listitem', { name: /a\. m\. – / })).toHaveLength(2);
+      expect(screen.queryByText(/Se ocult/)).not.toBeInTheDocument();
+    });
+
+    it('says «Pasó su tolerancia» on a pending reservation past it, and not before (CA-37)', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2030-06-12T09:16:00-05:00'));
+      renderAgenda(
+        day({
+          slots: [slot(9, { taken: 2 })],
+          reservations: [
+            reservation({ grace_until: '2030-06-12T09:15:00-05:00' }),
+            reservation({
+              id: 'r2',
+              customer_name: 'Valentina',
+              grace_until: '2030-06-12T09:30:00-05:00',
+            }),
+          ],
+        })
+      );
+
+      const late = screen.getByRole('link', { name: /Camila Cliente/ });
+      const onTime = screen.getByRole('link', { name: /Valentina/ });
+      expect(late).toHaveTextContent('Pasó su tolerancia');
+      expect(onTime).not.toHaveTextContent('Pasó su tolerancia');
+    });
   });
 });

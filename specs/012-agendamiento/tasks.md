@@ -295,10 +295,45 @@ Convenciones:
 
 ---
 
+## Bloque D — Enmienda: al día sin recargar (HU-06)
+
+- [x] T060 `sb/tests/12_reservations_live.test.sql` (rojo): `extend_reservation_tolerance` suma 5
+      (15 → 20, 55 → 60), rechaza pasar de 60, una no pendiente, pasada su tolerancia y a un cliente
+      (CA-34, RN-11); las tablas están en la publicación `supabase_realtime` (CA-35).
+- [x] T061 Migración `<ts>_reservations_live.sql` → T060 en verde; `pnpm db:types`.
+- [x] T062 [P] Pruebas (rojo): cuenta regresiva y resaltado en la fila por llegar (CA-33); «+5 min»
+      llama a la acción (CA-34); franjas que empiezan sin «Reservar» con el reloj (CA-36); «Pasó su
+      tolerancia» en la agenda y el detalle (CA-37); `realtime-refresh` refresca al recibir un
+      cambio y al volver a la pestaña, agrupando ráfagas (CA-35).
+- [x] T063 Implementación → T062 en verde.
+- [x] T064 E2E: con «Órdenes» abierta, una reserva escrita en la base aparece sin recargar como
+      «Reserva por llegar» (CA-35); «+5 min» alarga la espera (CA-34). Vista fallar quitando
+      `RealtimeRefresh` del layout. El sandbox local ya no excluye Realtime (`sandbox:start`).
+
+- [x] T065 (petición del usuario) Registro de «+5 min»: tabla, vista y suma en
+      `reservation_summaries` (pgTAP 12, vista fallar quitando el registro); detalle «Más tiempo
+      para llegar», cola «Ya se le dio…» y agenda «+N min de espera» (CA-38).
+- [x] T066 (petición del usuario) «Volver» a «Órdenes» si la reserva se abrió desde la cola (CA-39);
+      E2E del flujo completo.
+- [x] T067 (petición del usuario) Horas pasadas: la agenda oculta las franjas terminadas sin
+      reservas y dice cuántas, «Ya pasó» y «En curso» (CA-09); el formulario no ofrece las
+      terminadas y avisa si no queda ninguna (CA-03). Pruebas de `agenda-screen` y `slot-picker`
+      vistas fallar (mutaciones: nota siempre visible, solo las pendientes conservan la franja,
+      ninguna franja termina, ofrecer las terminadas, sin aviso, «Llena» en vez de «En curso»).
+- [x] T068 (error encontrado por el usuario) Guardar «Puestos por franja» fallaba desde la app:
+      `save_agenda_settings` actualizaba sin `where` y las conexiones de la API lo rechazan
+      (`safeupdate`); pgTAP corre como superusuario y no lo veía. Prueba de sandbox que guarda 3
+      puestos por la API (vista fallar con «UPDATE requires a WHERE clause»). En «Horario», cada
+      aviso de guardado sale junto a su botón (prueba vista fallar pintando el de la configuración
+      en la tarjeta de la semana). El seed pone los ejemplos de hoy dentro del horario (después de
+      cerrar, en la última franja).
+
 ## Cierre
 
 - [x] T090 `pnpm lint` · `pnpm ts:check` · `pnpm test` · `pnpm --filter web test:sandbox` ·
-      `pnpm build` · `pnpm test:e2e` en verde.
+      `pnpm build` · `pnpm test:e2e` en verde. Al cerrar la enmienda, la E2E completa también
+      contra el build de producción (165/165), construido sin cachés (`--force` y sin `.next`):
+      Turbopack había servido un `globals.css` viejo.
 - [x] T091 `pnpm db:reset` + `pnpm db:test` + `pnpm --filter @motorismo/supabase types:check` en
       verde.
 - [x] T092 Mutación aplicada a cada prueba nueva, fallo observado y revertida (`git diff` + grep
@@ -314,13 +349,13 @@ Convenciones:
 |---|---|
 | CA-01 | T014, T031 |
 | CA-02 | T004, T014 |
-| CA-03 | T003, T004, T013 |
+| CA-03 | T003, T004, T013, T067 |
 | CA-04 | T004, T014 |
 | CA-05 | T004, T014, T031 |
 | CA-06 | T014, T030 |
 | CA-07 | T004, T014 |
 | CA-08 | T002, T004 |
-| CA-09 | T015, T031 |
+| CA-09 | T015, T031, T067 |
 | CA-10 | T010, T015, T031 |
 | CA-11 | T027 |
 | CA-12 | T041, T043, T048 |
@@ -340,7 +375,14 @@ Convenciones:
 | CA-26 | T016, T031 |
 | CA-27 | T004, T016, T031 |
 | CA-28 | T004, T016 |
-| CA-29 | T004, T011, T016 |
+| CA-29 | T004, T011, T016, T068 |
 | CA-30 | T004, T011, T016 |
 | CA-31 | T004, T050 |
 | CA-32 | T004, T031 |
+| CA-33 | T062 |
+| CA-34 | T060, T062, T064 |
+| CA-35 | T060, T062, T064 |
+| CA-36 | T062 |
+| CA-37 | T062 |
+| CA-38 | T065 |
+| CA-39 | T066 |

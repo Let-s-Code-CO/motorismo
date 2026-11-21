@@ -46,7 +46,8 @@ solo lo que el lavadero puede atender.
   para la reserva, sin salir de ella.
 - **CA-03** — Dada una fecha, cuando el personal la elige, entonces ve sus franjas dentro del
   horario de atención (p. ej. «8:00 a. m. – 9:00 a. m.»), cada una con sus puestos libres («1 de 2
-  libres»). Las franjas llenas y las que ya empezaron se muestran, pero no se pueden elegir. Un día
+  libres»). Las franjas llenas y la que está en curso («En curso») se muestran, pero no se pueden
+  elegir; las que ya terminaron no se ofrecen, y si no queda ninguna lo dice. Un día
   cerrado dice «Cerrado», y un día de una semana que el administrador aún no ha habilitado dice
   «Semana sin habilitar»; en ninguno de los dos se puede reservar.
 - **CA-04** — Dada una reserva, cuando el personal añade servicios, entonces solo se le ofrecen los
@@ -70,7 +71,10 @@ lavadero y saber a quién esperamos.
 
 - **CA-09** — Dado un miembro del personal, cuando abre «Agenda», entonces ve el día de hoy con
   sus franjas en orden. Cada franja dice cuántos puestos le quedan libres y lista sus reservas con
-  cliente, celular, vehículo (placa o tipo, si lo tiene), servicios y estado.
+  cliente, celular, vehículo (placa o tipo, si lo tiene), servicios y estado. La franja en curso
+  dice «En curso» y las que ya terminaron, «Ya pasó»; una franja que terminó sin ninguna reserva no
+  se muestra, y una línea dice cuántas se ocultaron («Se ocultan 7 franjas que ya pasaron sin
+  reservas»).
 - **CA-10** — Dada la agenda, cuando el personal va al día siguiente, al anterior o a una fecha
   elegida, entonces ve la agenda de ese día; la fecha mostrada sobrevive a recargar la página.
 - **CA-11** — Dada una reserva de la agenda, cuando el personal la abre, entonces ve su detalle:
@@ -136,7 +140,8 @@ para liberar el puesto y que la agenda diga la verdad.
   (CA-16), su «Reserva por llegar» (CA-18) y cuándo se puede marcar «No asistió» (CA-22) usan esa
   tolerancia; las demás reservas siguen la general. Puede volver a la general cuando quiera.
 - **CA-25** — Dado un operador, cuando ve una reserva, entonces ve su tolerancia, pero no puede
-  cambiarla por ninguna vía.
+  fijarla en un valor cualquiera por ninguna vía; solo puede sumarle 5 minutos mientras el cliente
+  está por llegar (CA-34). *(Enmienda 2026-11-21.)*
 
 ### HU-05 (P1) — Habilitar la semana y configurar la agenda
 
@@ -167,6 +172,36 @@ capacidad.
   agenda («Fuera del horario», «Sobrecupo») para que el personal la mueva o la cancele.
 - **CA-32** — Dado un operador, cuando intenta habilitar o deshabilitar una semana, cambiar el
   horario de un día o la configuración, por cualquier vía, entonces no puede.
+
+### HU-06 (P2) — Al día sin recargar *(enmienda 2026-11-21)*
+
+Como miembro del personal, quiero que la cola y la agenda se actualicen solas y que se vea cuánto le
+queda a quien está por llegar, para no decidir con datos viejos.
+
+**Criterios de aceptación**
+
+- **CA-33** — Dada una «Reserva por llegar» en la cola, cuando se muestra, entonces dice hasta qué hora
+  conserva su turno y cuántos minutos le quedan («Conserva su turno hasta las 6:00 p. m. · quedan
+  20 min»); la cuenta baja sola cada minuto, se resalta en los últimos 5 minutos y, al llegar a 0, la
+  fila desaparece sin recargar.
+- **CA-34** — Dada una «Reserva por llegar», cuando un miembro del personal pulsa «+5 min», entonces su
+  tolerancia crece 5 minutos (se puede pulsar varias veces), sin pasar de 60; pasada su tolerancia ya
+  no se ofrece (y se rechaza por cualquier vía).
+- **CA-35** — Dada «Órdenes», «Agenda», el detalle de una reserva o el inicio abiertos, cuando otra
+  persona abre, empieza, cierra o anula una orden, o reserva, cambia, cancela o atiende una reserva,
+  entonces la pantalla se actualiza sola en pocos segundos, sin recargar y sin perder lo que se está
+  escribiendo.
+- **CA-36** — Dada la agenda abierta, cuando una franja empieza, entonces deja de ofrecer «Reservar»
+  sin recargar.
+- **CA-37** — Dada una reserva pendiente cuya tolerancia ya pasó, cuando se muestra en la agenda o en
+  su detalle, entonces se señala «Pasó su tolerancia», junto a «No asistió»; nunca se marca sola
+  (RN-12).
+- **CA-38** — Dada una reserva a la que se le dio más tiempo, cuando se ve su detalle, entonces se
+  lista cada «+5 min» con quién lo dio, cuándo y hasta qué hora conservó el turno, con el total
+  («Se le dio más tiempo 3 veces: 15 min en total»); la cola («Ya se le dio +15 min (3 veces)») y la
+  agenda («+15 min de espera») también lo dicen. Nadie borra ese registro.
+- **CA-39** — Dada una reserva abierta desde «Órdenes», cuando se pulsa «Volver», entonces regresa a
+  «Órdenes»; abierta desde la agenda, regresa a su día.
 
 ## Requisitos funcionales
 
@@ -216,8 +251,12 @@ capacidad.
   de Colombia.
 - **RN-10** — Habilitar una semana propone los siete días de 9:00 a. m. a 6:00 p. m.: el lavadero
   trabaja todos los días, y el administrador cierra o ajusta los que no.
-- **RN-11** — La tolerancia de una reserva es la suya, si el administrador se la puso, o si no la
-  general vigente. Va de 0 a 60 minutos y solo se cambia mientras la reserva está pendiente.
+- **RN-11** — La tolerancia de una reserva es la suya, si se la pusieron, o si no la general vigente.
+  Va de 0 a 60 minutos y solo se cambia mientras la reserva está pendiente: el administrador la fija
+  en cualquier valor; el personal puede sumarle 5 minutos mientras el cliente está por llegar
+  (CA-34). *(Enmienda 2026-11-21.)*
+- **RN-12** — Una reserva nunca pasa sola a «No asistió»: pasada su tolerancia se señala (CA-37) y
+  alguien la marca. *(Enmienda 2026-11-21.)*
 
 ## Datos (vista conceptual)
 
@@ -308,3 +347,7 @@ Ninguna. Resueltas con el usuario el 2026-11-21:
 | 2026-11-21 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-21 | Implementada. Ajustes pedidos por el usuario: «Agenda» como tablero de puestos (un recuadro por puesto, ocupado o libre con «Reservar»; las canceladas y «No asistió» aparte; resumen del día) y ejemplos locales de una orden que llegó con reserva y de una reserva por llegar. |
 | 2026-11-21 | Verificada: los 32 criterios con prueba vista fallar (pgTAP, Vitest, sandbox y E2E). Se cerraron tres huecos de la verificación: el campo de fecha de la agenda (CA-10), el rastro completo del detalle (CA-11) y la cancelada visible en la agenda (CA-21, prueba del tablero). En la cola, la etiqueta de reserva distingue si dio el turno (sólida) o si llegó tarde o antes y entra por llegada (con contorno). |
+| 2026-11-21 | Enmienda aprobada por el usuario (HU-06): cuenta regresiva y «+5 min» en la «Reserva por llegar» (CA-33, CA-34), pantallas al día en tiempo real (CA-35), franjas que empiezan sin recargar (CA-36) y «Pasó su tolerancia» sin marcarla sola (CA-37, RN-12); CA-25 y RN-11 dejan al operador sumar 5 minutos. Estado `en-progreso`. |
+| 2026-11-21 | Peticiones del usuario durante la enmienda: el registro de cada «+5 min» a la vista (CA-38) y «Volver» al sitio de donde se abrió la reserva (CA-39). Los recuadros «Libre» de las franjas empezadas siguen con su diseño. |
+| 2026-11-21 | Petición del usuario: las horas pasadas ya no estorban. CA-09: la agenda oculta las franjas que terminaron sin reservas (y dice cuántas), marca «Ya pasó» las que terminaron con reservas y «En curso» la actual; CA-03: el formulario no ofrece franjas terminadas. |
+| 2026-11-21 | Enmienda HU-06 verificada (CA-33 a CA-39). Correcciones a raíz de la revisión del usuario: guardar la configuración de la agenda fallaba desde la app (actualización sin condición, rechazada por la API; prueba de sandbox), los avisos de «Horario» salen debajo de su botón y el seed deja los ejemplos de hoy dentro del horario. E2E completa en verde contra el build de producción (165/165). Estado `verificada`. |

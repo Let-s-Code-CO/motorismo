@@ -3,6 +3,7 @@ import { type ReactNode, Suspense } from 'react';
 import { requireAccount } from '@web/modules/auth/api/auth.server';
 import AppHeader from '@web/modules/auth/components/organisms/app-header.component';
 import NavigationProgress from '@web/modules/core/components/navigation-progress.component';
+import RealtimeRefresh from '@web/modules/core/components/realtime-refresh.component';
 import SiteFooter from '@web/modules/core/components/site-footer.component';
 import InstallBanner from '@web/modules/pwa/components/install-banner.component';
 
@@ -20,6 +21,8 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
+      {/* Spec 012, CA-35: the staff screens stay up to date without reloading. */}
+      {account.kind === 'staff' && <RealtimeRefresh />}
       <AppHeader account={account} />
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-10 sm:px-6">
         {children}

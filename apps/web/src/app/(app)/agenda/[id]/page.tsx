@@ -6,6 +6,7 @@ import {
   getAgendaDay,
   getAgendaSettings,
   getReservation,
+  listReservationExtensions,
 } from '@web/modules/reservations/api/reservations.server';
 import EditReservationScreen from '@web/modules/reservations/components/organisms/edit-reservation-screen.component';
 import ReservationDetail from '@web/modules/reservations/components/organisms/reservation-detail.component';
@@ -13,12 +14,12 @@ import { parseAgendaDate, todayIn } from '@web/modules/reservations/utils/agenda
 
 type ReservationPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ edit?: string; date?: string; saved?: string }>;
+  searchParams: Promise<{ edit?: string; date?: string; saved?: string; from?: string }>;
 };
 
 /**
  * A reservation (spec 012, CA-11), staff only; with `?edit=1`, changing it while pending (CA-20),
- * on the day of `?date=` (its own by default).
+ * on the day of `?date=` (its own by default). With `?from=orders`, «Volver» goes back to «Órdenes».
  */
 const ReservationPage = async ({ params, searchParams }: ReservationPageProps) => {
   const staff = await getStaffForPage();
@@ -26,7 +27,11 @@ const ReservationPage = async ({ params, searchParams }: ReservationPageProps) =
 
   const { id } = await params;
   const query = await searchParams;
-  const [reservation, settings] = await Promise.all([getReservation(id), getAgendaSettings()]);
+  const [reservation, settings, extensions] = await Promise.all([
+    getReservation(id),
+    getAgendaSettings(),
+    listReservationExtensions(id),
+  ]);
   if (!reservation) notFound();
   const today = todayIn(new Date());
 
@@ -42,6 +47,9 @@ const ReservationPage = async ({ params, searchParams }: ReservationPageProps) =
       isAdmin={staff.role === 'admin'}
       generalTolerance={settings.tolerance_minutes}
       saved={query.saved === '1'}
+      extensions={extensions}
+      // Opened from «Órdenes» (a reservation on its way): «Volver» goes back there.
+      backTo={query.from === 'orders' ? 'orders' : 'agenda'}
     />
   );
 };

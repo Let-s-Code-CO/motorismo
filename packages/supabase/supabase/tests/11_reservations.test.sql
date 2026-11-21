@@ -98,6 +98,7 @@ returns int language sql stable as $$
 $$;
 
 -- Independent of the seeds: no reservations, agenda or orders to start with.
+delete from public.reservation_extensions;
 delete from public.reservation_services;
 delete from public.reservations;
 delete from public.agenda_days;
