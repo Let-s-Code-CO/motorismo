@@ -58,4 +58,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [008](008-orden-de-trabajo/spec.md) | Orden de trabajo | verificada, con enmienda (falta despliegue) |
 | [009](009-experiencia-movil/spec.md) | Experiencia móvil | verificada; falta despliegue |
 | [010](010-modo-oscuro/spec.md) | Modo oscuro | verificada; falta despliegue |
-| [011](011-transiciones-carga/spec.md) | Transiciones y estados de carga | implementada |
+| [011](011-transiciones-carga/spec.md) | Transiciones y estados de carga | verificada |

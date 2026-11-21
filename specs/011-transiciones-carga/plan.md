@@ -76,7 +76,8 @@ Sin cambios.
 ### Barra de progreso (HU-02)
 
 - `core/components/navigation-progress.component.tsx` (`'use client'`), en el layout con sesión
-  bajo el encabezado y en el del acceso. Se dibuja así: `fixed top-16 h-0.5 bg-foreground/70`, con
+  y en el del acceso, en el borde superior de la pantalla (como en la mayoría de las apps; el acceso
+  no tiene encabezado). Se dibuja así: `fixed inset-x-0 top-0 h-0.5 bg-foreground/70`, con
   `aria-hidden`; la carga la anuncia el esqueleto.
 - **Arranca:** con un clic (en captura) sobre un `<a>` interno a otra dirección (sin
   Ctrl/⌘/Shift/clic central ni `target="_blank"`), y con `popstate` (atrás o adelante).
@@ -144,13 +145,13 @@ Sin cambios.
 
 | Criterio | Tipo | Archivo de prueba |
 |---|---|---|
-| CA-01 | E2E con la red ralentizada (CDP `Network.emulateNetworkConditions`, unos 1,5 s de latencia): al abrir «Órdenes», un detalle, «Clientes» y una ficha, se ve el estado «Cargando…» con su forma y luego el contenido | `e2e/loading.spec.ts` |
+| CA-01 | E2E con la red ralentizada (CDP `Network.emulateNetworkConditions`, unos 1,5 s de latencia): al abrir «Órdenes», un detalle, «Clientes» y una ficha, se ve el estado «Cargando…» con su forma y luego el contenido; cobertura: toda `page.tsx` de `(app)` tiene su `loading.tsx` con la variante de la tabla | `e2e/loading.spec.ts`, `__test__/src/app/loading-coverage.test.ts` |
 | CA-02 | componente: el esqueleto tiene un retardo de 300 ms (`animation-delay`), también con «reducir movimiento»; E2E: con red normal, el estilo calculado del contenedor tiene `animation-delay: 0.3s` | `page-skeleton.component.test.tsx`, `e2e/loading.spec.ts` |
 | CA-03 | componente: un solo `status` «Cargando…» y las formas ocultas al lector; axe con el esqueleto a la vista (claro y oscuro) | `page-skeleton.component.test.tsx`, `e2e/a11y.spec.ts` |
 | CA-04 | E2E oscuro y lento: las formas usan el color del tema; con «reducir movimiento», `animation-name: none` en las formas | `e2e/loading.spec.ts` |
 | CA-05 | E2E iPhone lento: sin desplazamiento lateral con el esqueleto ni con el contenido | `e2e/ui.spec.ts` |
-| CA-06 | componente: un clic en un enlace interno arranca la barra y el cambio de ruta la termina; E2E lento: la barra se ve y luego desaparece | `navigation-progress.component.test.tsx`, `e2e/loading.spec.ts` |
-| CA-07 | componente: Ctrl o clic central, `_blank`, enlaces externos y la misma dirección no la arrancan; la barra tiene un retardo de 120 ms | `navigation-progress.component.test.tsx` |
+| CA-06 | componente: un clic en un enlace interno arranca la barra y el cambio de ruta la termina; E2E lento: la barra se ve en el borde superior y luego desaparece | `navigation-progress.component.test.tsx`, `e2e/loading.spec.ts` |
+| CA-07 | componente: Ctrl o clic central, `_blank`, enlaces externos y la misma dirección no la arrancan; E2E: la barra tiene `animation-delay: 0.12s` | `navigation-progress.component.test.tsx`, `e2e/loading.spec.ts` |
 | CA-08 | E2E con «reducir movimiento»: la barra sin animación | `e2e/loading.spec.ts` |
 | CA-09 | E2E: al navegar, el contenedor de la página tiene `animation-name: page-in` y el encabezado no está dentro | `e2e/loading.spec.ts` |
 | CA-10 | E2E con «reducir movimiento»: `animation-name: none` | `e2e/loading.spec.ts` |

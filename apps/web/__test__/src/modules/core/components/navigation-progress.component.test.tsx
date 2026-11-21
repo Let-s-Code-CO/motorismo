@@ -1,14 +1,15 @@
 /* eslint-disable @next/next/no-html-link-for-pages -- the bar reacts to any <a>, which is what
    next/link renders; plain links keep these tests about the bar, not about the router. */
 /**
- * NavigationProgress — the thin bar under the header while the next screen loads (spec 011, HU-02).
+ * NavigationProgress — the thin bar at the top edge of the screen while the next screen loads (spec 011, HU-02).
  *
  * Guards:
  * - CA-06: tapping a link to another page of the app starts it; going back or forward too; it
  *   finishes once the new page is shown (the route changed) and then goes away.
  * - CA-07: nothing that does not navigate inside this tab starts it: the same address, another
  *   site, a new tab (`target="_blank"`, Ctrl/⌘/Shift + click, middle click), a download. Its
- *   ~120 ms appearance delay (no flash on instant navigations) is checked in a browser.
+ *   ~120 ms appearance delay (no flash on instant navigations) is checked in a browser
+ *   (`e2e/loading.spec.ts`).
  */
 import { usePathname, useSearchParams } from 'next/navigation';
 

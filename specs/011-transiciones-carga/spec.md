@@ -1,7 +1,7 @@
 ---
 id: "011"
 titulo: "Transiciones y estados de carga"
-estado: implementada
+estado: verificada
 creada: 2026-11-20
 actualizada: 2026-11-20
 ---
@@ -57,8 +57,8 @@ Como usuario, quiero ver al instante que mi toque hizo algo, para no repetirlo.
 **Criterios de aceptación**
 
 - **CA-06** — Dado un enlace o una sección del menú, cuando el usuario la toca y la pantalla
-  siguiente tarda, entonces una barra fina bajo el encabezado avanza mientras carga, y se completa
-  y desaparece cuando la pantalla nueva está a la vista.
+  siguiente tarda, entonces una barra fina en el borde superior de la pantalla avanza mientras
+  carga, y se completa y desaparece cuando la pantalla nueva está a la vista.
 - **CA-07** — Dada una navegación que termina enseguida, cuando se toca, entonces la barra no llega
   a verse (o apenas un instante), sin parpadeos.
 - **CA-08** — Dado «reducir movimiento» activado, cuando se navega, entonces la señal sigue
@@ -163,3 +163,4 @@ Ninguna.
 | 2026-11-20 | Plan aprobado: estado `planificada`. |
 | 2026-11-20 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-20 | Implementada. La barra termina en cuanto la pantalla nueva aparece (su esqueleto o su contenido); la pestaña tiene su título también mientras carga. |
+| 2026-11-20 | Verificada. CA-06: la barra va en el borde superior de la pantalla (no bajo el encabezado), como en la mayoría de las apps y también en el acceso, que no tiene encabezado. Pruebas añadidas: que cada pantalla con sesión tenga su esqueleto (CA-01), y la posición y el retardo de 120 ms de la barra en el navegador (CA-06, CA-07). |

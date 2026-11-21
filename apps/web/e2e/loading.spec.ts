@@ -64,8 +64,14 @@ test.describe('on a desktop', () => {
       ['Órdenes', 'Órdenes'],
     ] as const) {
       await nav(page).getByRole('link', { name: link, exact: true }).click();
-      // The tap is acknowledged at once by the bar.
-      await expect(page.locator('[data-navigation-progress]')).toBeAttached();
+      // The tap is acknowledged at once by the bar, at the top edge of the screen…
+      const bar = page.locator('[data-navigation-progress]');
+      await expect(bar).toBeAttached();
+      expect(await bar.evaluate((element) => element.getBoundingClientRect().top)).toBe(0);
+      // …which only shows after 120 ms, so an instant navigation never flashes it (CA-07).
+      expect(await bar.evaluate((element) => getComputedStyle(element).animationDelay)).toBe(
+        '0.12s'
+      );
 
       const skeleton = page.getByRole('status').filter({ hasText: 'Cargando…' });
       await expect(skeleton).toBeVisible();

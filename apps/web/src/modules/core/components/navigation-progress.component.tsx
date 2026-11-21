@@ -17,11 +17,11 @@ const navigatesInApp = (event: MouseEvent) => {
 };
 
 /**
- * A thin bar under the header while the next screen loads (spec 011, HU-02), so a tap is never in
- * doubt on a slow network. It starts on a tap on a link to another page of the app, or on going
- * back or forward (CA-06); it shows after ~120 ms, so an instant navigation shows nothing (CA-07);
- * it finishes once the route changes, fills up and fades out. Still, full width, with «reducir
- * movimiento» (CA-08, CSS). Decorative: the loading screen says «Cargando…».
+ * A thin bar at the top edge of the screen while the next screen loads (spec 011, HU-02), so a
+ * tap is never in doubt on a slow network. It starts on a tap on a link to another page of the
+ * app, or on going back or forward (CA-06); it shows after ~120 ms, so an instant navigation shows
+ * nothing (CA-07); it finishes once the route changes, fills up and fades out. Still, full width,
+ * with «reducir movimiento» (CA-08, CSS). Decorative: the loading screen says «Cargando…».
  *
  * Programmatic navigations (after saving a form) do not start it: their button shows its own
  * loading state. Rendered inside a Suspense boundary (`useSearchParams`).

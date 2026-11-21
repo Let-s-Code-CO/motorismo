@@ -72,6 +72,9 @@ Sin cambios.
 - [x] T033 `e2e/a11y.spec.ts`: axe con un esqueleto a la vista, en claro y en oscuro (CA-03).
       `e2e/ui.spec.ts`: en un iPhone con red lenta, sin desplazamiento lateral con el esqueleto ni con
       el contenido (CA-05). `e2e/auth-login.spec.ts` al día (el destino final no cambia).
+- [x] T034 (de `/verificar`) `__test__/src/app/loading-coverage.test.ts`: toda `page.tsx` de `(app)`
+      tiene su `loading.tsx` con la variante del plan (CA-01). `e2e/loading.spec.ts`: la barra va en
+      el borde superior y aparece a los 120 ms (`animation-delay: 0.12s`) (CA-06, CA-07).
 
 ## Fase 5 — Definición de terminado
 
@@ -89,13 +92,13 @@ Sin cambios.
 
 | Criterio | Tareas de prueba |
 |---|---|
-| CA-01 | T030 |
+| CA-01 | T030, T034 |
 | CA-02 | T010, T031 |
 | CA-03 | T010, T033 |
 | CA-04 | T031, T032 |
 | CA-05 | T033 |
-| CA-06 | T011, T030 |
-| CA-07 | T011 |
+| CA-06 | T011, T030, T034 |
+| CA-07 | T011, T034 |
 | CA-08 | T032 |
 | CA-09 | T031 |
 | CA-10 | T032 |
