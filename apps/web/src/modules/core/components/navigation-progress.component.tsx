@@ -19,7 +19,7 @@ const navigatesInApp = (event: MouseEvent) => {
 /**
  * A thin bar at the top edge of the screen while the next screen loads (spec 011, HU-02), so a
  * tap is never in doubt on a slow network. It starts on a tap on a link to another page of the
- * app, or on going back or forward (CA-06); it shows after ~120 ms, so an instant navigation shows
+ * app, or on going back or forward to a page not shown yet (CA-06); it shows after ~120 ms, so an instant navigation shows
  * nothing (CA-07); it finishes once the route changes, fills up and fades out. Still, full width,
  * with «reducir movimiento» (CA-08, CSS). Decorative: the loading screen says «Cargando…».
  *
@@ -42,11 +42,17 @@ const NavigationProgress = () => {
     const onClick = (event: MouseEvent) => {
       if (navigatesInApp(event)) start();
     };
+    // A page the router already has is shown within the browser's `popstate`, before this
+    // listener: if what is shown is already the new address, there is nothing to wait for.
+    const onPopState = () => {
+      const address = `${window.location.pathname}?${new URLSearchParams(window.location.search)}`;
+      if (shown.current !== address) start();
+    };
     document.addEventListener('click', onClick, true);
-    window.addEventListener('popstate', start);
+    window.addEventListener('popstate', onPopState);
     return () => {
       document.removeEventListener('click', onClick, true);
-      window.removeEventListener('popstate', start);
+      window.removeEventListener('popstate', onPopState);
     };
   }, []);
 

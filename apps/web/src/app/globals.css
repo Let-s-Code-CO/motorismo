@@ -124,8 +124,18 @@
   }
 }
 
+/* With «reducir movimiento» the bar only fades out when it is done: it never grows. */
+@keyframes progress-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 /* Spec 011, «reducir movimiento»: a skeleton still waits its 300 ms but appears without a fade,
-   and the navigation bar stays still (full width) instead of creeping. */
+   and the navigation bar stays still (full width) instead of creeping, also when it is done. */
 @media (prefers-reduced-motion: reduce) {
   .animate-skeleton-in {
     animation: skeleton-in 1ms linear 300ms both;
@@ -133,5 +143,9 @@
   .animate-progress {
     width: 100%;
     animation: skeleton-in 1ms linear 120ms both;
+  }
+  .animate-progress-done {
+    width: 100%;
+    animation: progress-fade 300ms ease-out both;
   }
 }

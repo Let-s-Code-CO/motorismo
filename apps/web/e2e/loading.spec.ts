@@ -5,7 +5,8 @@
  * - CA-01: a screen that loads data shows its shape while the data arrive, then the content.
  * - CA-02: the skeleton only shows after 300 ms (its computed delay).
  * - CA-04: the skeleton takes the theme's colours; with «reducir movimiento» it does not pulse.
- * - CA-06: a tap on a link shows the thin bar, which goes away once the new screen is there.
+ * - CA-06: a tap on a link shows the thin bar, which goes away once the new screen is there; going
+ *   back to a screen already seen leaves no bar behind.
  * - CA-08: with «reducir movimiento» the bar does not creep: it stays still, full width.
  * - CA-09 / CA-10: a screen's content enters with `page-in`; the header is not part of it; with
  *   «reducir movimiento» nothing moves.
@@ -68,10 +69,19 @@ test.describe('on a desktop', () => {
       const bar = page.locator('[data-navigation-progress]');
       await expect(bar).toBeAttached();
       expect(await bar.evaluate((element) => element.getBoundingClientRect().top)).toBe(0);
-      // …which only shows after 120 ms, so an instant navigation never flashes it (CA-07).
-      expect(await bar.evaluate((element) => getComputedStyle(element).animationDelay)).toBe(
-        '0.12s'
-      );
+      // …which only shows after 120 ms, so an instant navigation never flashes it (CA-07). Read
+      // from the loading style itself: in production the screen may already be prefetched and
+      // the bar be finishing by now.
+      expect(
+        await page.evaluate(() => {
+          const probe = document.createElement('div');
+          probe.className = 'animate-progress';
+          document.body.append(probe);
+          const delay = getComputedStyle(probe).animationDelay;
+          probe.remove();
+          return delay;
+        })
+      ).toBe('0.12s');
 
       const skeleton = page.getByRole('status').filter({ hasText: 'Cargando…' });
       await expect(skeleton).toBeVisible();
@@ -105,6 +115,20 @@ test.describe('on a desktop', () => {
         .first()
         .evaluate((h) => !!h.closest('[data-page]'))
     ).toBe(false);
+  });
+
+  test('going back to a screen already seen leaves no bar behind (CA-06)', async ({ page }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.waitForLoadState('networkidle');
+    await nav(page).getByRole('link', { name: 'Clientes', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Clientes', level: 1 })).toBeVisible();
+    await expect(page.locator('[data-navigation-progress]')).toHaveCount(0);
+
+    // The app already has home: going back shows it at once, and the bar must not stay waiting.
+    await page.goBack();
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('[data-navigation-progress]')).toHaveCount(0, { timeout: 3_000 });
   });
 
   test('going back finds the list where it was (CA-11)', async ({ page }) => {
@@ -186,7 +210,7 @@ test.describe('with «reducir movimiento»', () => {
     await nav(page).getByRole('link', { name: 'Clientes', exact: true }).click();
     const bar = page.locator('[data-navigation-progress]');
     await expect(bar).toBeAttached();
-    // Still and full width, instead of creeping towards 80 %.
+    // Still and full width, instead of creeping towards 80 % (or growing to 100 % when done).
     const width = await bar.evaluate((element) => element.getBoundingClientRect().width);
     expect(width).toBe(1280);
 
@@ -197,6 +221,8 @@ test.describe('with «reducir movimiento»', () => {
       timeout: 30_000,
     });
     expect(await animationOf(page, '[data-page]')).toBe('none');
+    // When done it only fades out, and then it is gone.
+    await expect(bar).toHaveCount(0);
     await network.restore();
   });
 
