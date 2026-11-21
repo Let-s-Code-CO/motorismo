@@ -8,9 +8,13 @@
  *   start is not known yet); «Cerradas».
  * - CA-33: an order in the queue is started from its row with «Empezar».
  * - CA-19: the closed ones, newest first, by pages («Página 1 de 3»); voided ones marked.
+ * - Spec 012, CA-14 / CA-15 / CA-18: «En cola» goes by turn; an order from a reservation says
+ *   «Reserva 9:00 a. m.», and a reservation whose customer is on its way sits in its place, without
+ *   a turn, linking to the reservation.
  */
 import { fireEvent, screen, within } from '@testing-library/react';
 
+import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrdersScreen from '@web/modules/work-orders/components/organisms/orders-screen.component';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
@@ -166,5 +170,60 @@ describe('OrdersScreen', () => {
       '/orders?page=2'
     );
     expect(screen.queryByRole('link', { name: 'Anteriores' })).not.toBeInTheDocument();
+  });
+});
+
+describe('OrdersScreen with reservations (spec 012)', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('orders the queue by turn, marks the reserved one and shows the one on its way without a turn (CA-14, CA-15, CA-18)', () => {
+    // «Now» is 9:05 a. m. in Bogotá.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2030-06-12T14:05:00Z'));
+    renderWithProviders(
+      <OrdersScreen
+        open={[
+          order({
+            id: 'walk-in',
+            number: 3,
+            customer_name: 'Lucía Llegada',
+            opened_at: '2030-06-12T14:00:30Z',
+            turn_at: '2030-06-12T14:00:30Z',
+          }),
+          order({
+            id: 'reserved',
+            number: 2,
+            customer_name: 'Camilo Cliente',
+            opened_at: '2030-06-12T14:05:00Z',
+            turn_at: '2030-06-12T14:00:00Z',
+            reservation_id: 'r9',
+            reserved_start: '2030-06-12T14:00:00Z',
+          }),
+        ]}
+        arriving={[
+          {
+            id: 'r-carla',
+            customer_name: 'Carla Cliente',
+            slot_start: '2030-06-12T14:00:00Z',
+            grace_until: '2030-06-12T14:15:00Z',
+          } as ReservationSummary,
+        ]}
+        closed={{ rows: [], total: 0 }}
+        page={1}
+      />
+    );
+
+    const queue = sectionList('Órdenes en cola');
+    expect(queue.map((item) => item.textContent)).toEqual([
+      expect.stringMatching(/^1\.ºOrden #2 · Camilo Cliente/),
+      expect.stringMatching(/^Reserva por llegar/),
+      expect.stringMatching(/^2\.ºOrden #3 · Lucía Llegada/),
+    ]);
+    expect(queue[0]).toHaveTextContent('Reserva 9:00 a. m.');
+    expect(queue[2]).not.toHaveTextContent('Reserva 9:00 a. m.');
+    expect(
+      screen.getByRole('link', { name: 'Reserva por llegar de Carla Cliente' })
+    ).toHaveAttribute('href', '/agenda/r-carla');
+    expect(queue[1]).toHaveTextContent('Carla Cliente reservó a las 9:00 a. m.; aún no llega.');
   });
 });

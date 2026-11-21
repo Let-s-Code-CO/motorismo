@@ -3,6 +3,7 @@ import core from '@web/modules/core/messages/es.json';
 import customers from '@web/modules/customers/messages/es.json';
 import employees from '@web/modules/employees/messages/es.json';
 import pwa from '@web/modules/pwa/messages/es.json';
+import reservations from '@web/modules/reservations/messages/es.json';
 import services from '@web/modules/services/messages/es.json';
 import theme from '@web/modules/theme/messages/es.json';
 import users from '@web/modules/users/messages/es.json';
@@ -28,5 +29,6 @@ export const messages = {
   ...services,
   ...employees,
   ...orders,
+  ...reservations,
   ...theme,
 };

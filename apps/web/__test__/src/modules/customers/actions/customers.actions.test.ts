@@ -43,11 +43,13 @@ type Outcome = { data?: unknown; error?: { code?: string; hint?: string; message
 
 /** The staff member's own session: customers insert/select/update. */
 const fakeSession = ({
-  insert = { error: null },
+  insert = { data: { id: 'customer-new' }, error: null },
   current = { user_id: null, disabled_at: null },
   updates = [{ data: { id: ID }, error: null }],
 }: { insert?: Outcome; current?: Record<string, unknown> | null; updates?: Outcome[] } = {}) => {
-  const insertFn = vi.fn().mockResolvedValue({ error: null, ...insert });
+  const insertFn = vi.fn(() => ({
+    select: () => ({ single: () => Promise.resolve({ data: null, error: null, ...insert }) }),
+  }));
   const update = vi.fn();
   updates.forEach((outcome) =>
     update.mockReturnValueOnce({
@@ -104,10 +106,11 @@ describe('createCustomer', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
-  it('inserts only the contact data with the staff session and refreshes the list (CA-24)', async () => {
+  it('inserts only the contact data with the staff session, refreshes the list and returns the new id (CA-24; spec 012, CA-02)', async () => {
     const { from, insert } = fakeSession();
 
-    await expect(createCustomer(input)).resolves.toEqual({ ok: true });
+    // The id lets a reservation choose the customer it has just registered (spec 012, CA-02).
+    await expect(createCustomer(input)).resolves.toEqual({ ok: true, id: 'customer-new' });
     expect(from).toHaveBeenCalledWith('customers');
     // Origin, registrar and consent date are set by the database (customers_guard).
     expect(insert).toHaveBeenCalledWith({ full_name: 'Marta', email: null, phone: '3120001111' });

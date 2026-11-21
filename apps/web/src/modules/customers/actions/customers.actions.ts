@@ -58,7 +58,9 @@ const fieldErrorsOf = (error: z.ZodError) => z.flattenError(error).fieldErrors;
  * is sent, with the staff member's OWN session: the database sets the counter origin, who
  * registered the customer and the consent date, and refuses an email already in use (CA-26).
  */
-export const createCustomer = async (input: unknown): Promise<ActionResult<CustomersErrorKey>> => {
+export const createCustomer = async (
+  input: unknown
+): Promise<{ ok: true; id: string } | Exclude<ActionResult<CustomersErrorKey>, { ok: true }>> => {
   const staff = await getActiveStaff();
   if (!staff) return { ok: false, error: 'forbidden' };
 
@@ -69,11 +71,16 @@ export const createCustomer = async (input: unknown): Promise<ActionResult<Custo
   const { full_name, email, phone } = parsed.data;
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from('customers').insert({ full_name, email, phone });
+  const { data, error } = await supabase
+    .from('customers')
+    .insert({ full_name, email, phone })
+    .select('id')
+    .single();
   if (error) return { ok: false, error: fromCustomerGuardError(error) };
 
   revalidatePath(CUSTOMERS_PATH, 'layout');
-  return { ok: true };
+  // Spec 012, CA-02: a reservation chooses the customer it has just registered.
+  return { ok: true, id: data.id };
 };
 
 const customerIdSchema = z.object({ id: z.uuid() });

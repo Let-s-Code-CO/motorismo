@@ -11,13 +11,17 @@ import { countOpenOrders } from '@web/modules/work-orders/utils/open-orders-coun
 /** In progress and queued, for the staff home, with the person's session (spec 009, CA-07). */
 export const openOrdersCount = async () => countOpenOrders(await createSupabaseServerClient());
 
-/** «En el lavadero»: the open orders, oldest first (spec 008, CA-18). */
+/**
+ * The open orders by turn (spec 008, CA-18; spec 012, RN-04): their arrival, or the time they
+ * reserved; the queue's tie-break (reservation first) is in queue.utils.
+ */
 export const listOpenOrders = async (): Promise<WorkOrderSummary[]> => {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('work_order_summaries')
     .select('*')
     .eq('status', 'open')
+    .order('turn_at')
     .order('opened_at');
   if (error) throw new Error(`Could not list the open orders: ${error.message}`);
   return data;

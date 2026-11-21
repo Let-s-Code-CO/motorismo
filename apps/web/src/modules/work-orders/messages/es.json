@@ -33,12 +33,19 @@
       "start": "Empezar",
       "startLabel": "Empezar la orden #{number}",
       "started": "Orden #{number} en proceso.",
-      "startedAgo": "Empezó {ago}"
+      "startedAgo": "Empezó {ago}",
+      "reserved": "Reserva {time}",
+      "arriving": "Reserva por llegar",
+      "arrivingText": "{name} reservó a las {time}; aún no llega.",
+      "arrivingLabel": "Reserva por llegar de {name}"
     },
     "picker": {
       "customerSearch": "Buscar cliente",
       "customerSearchPlaceholder": "Nombre, celular o placa",
       "noResults": "No se encontró ningún cliente activo.",
+      "noVehicleChoice": "Sin vehículo (aún no sabe cuál traerá)",
+      "registerCustomer": "Registrar cliente",
+      "registerCustomerTitle": "Registrar cliente sin cuenta",
       "changeCustomer": "Cambiar de cliente",
       "vehicle": "Vehículo",
       "noVehicles": "Este cliente no tiene vehículos activos.",
@@ -46,7 +53,8 @@
       "registerVehicleTitle": "Registrar vehículo",
       "busy": "Ya tiene una orden abierta",
       "noPlate": "Sin placa",
-      "openOrderHint": "Ya tiene una orden abierta:"
+      "openOrderHint": "Ya tiene una orden abierta:",
+      "busyWithReservation": "Llevar la reserva a la orden #{number}"
     },
     "editor": {
       "services": "Servicios",
@@ -70,7 +78,10 @@
       "cancel": "Cancelar",
       "opened": "Orden abierta.",
       "updated": "Orden actualizada.",
-      "add": "Añadir"
+      "add": "Añadir",
+      "fromReservation": "Llegó con la reserva de las {time}",
+      "skipped": "No se copiaron de la reserva (ya no se ofrecen para este vehículo): {names}.",
+      "linkReservation": "Al guardar, esta orden queda enlazada a la reserva de las {time}"
     },
     "summary": {
       "subtotal": "Subtotal",
@@ -124,7 +135,8 @@
       "correct": "Corregir",
       "startedBy": "Empezada el {date} a las {time} por {name}",
       "start": "Empezar",
-      "started": "Orden en proceso."
+      "started": "Orden en proceso.",
+      "reservation": "Viene de la reserva de las {time}"
     },
     "history": {
       "title": "Historial",
@@ -191,7 +203,12 @@
       "adminOnly": "Solo un administrador puede hacer esto con una orden cerrada.",
       "notFound": "No se encontró la orden.",
       "generic": "No se pudo guardar. Inténtalo de nuevo.",
-      "alreadyStarted": "Esta orden ya está en proceso."
+      "alreadyStarted": "Esta orden ya está en proceso.",
+      "reservationNotPending": "Esa reserva ya no está pendiente.",
+      "reservationNotToday": "Esa reserva no es de hoy.",
+      "reservationMismatch": "La reserva es de otro cliente.",
+      "reservationOrderStarted": "Esta orden ya empezó: no se le puede enlazar la reserva.",
+      "reservationOrderHasReservation": "Esta orden ya tiene una reserva."
     }
   }
 }

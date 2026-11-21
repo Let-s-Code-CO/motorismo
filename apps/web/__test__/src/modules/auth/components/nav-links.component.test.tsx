@@ -34,13 +34,14 @@ describe('NavLinks', () => {
     expect(screen.getByRole('link', { name: 'Clientes' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows Inicio, Órdenes, Clientes, Servicios, Empleados and Usuarios to an admin (specs 007 and 008)', () => {
+  it('shows Inicio, Órdenes, Agenda, Clientes, Servicios, Empleados and Usuarios to an admin (specs 007, 008 and 012)', () => {
     vi.mocked(usePathname).mockReturnValue('/');
     renderWithProviders(<NavLinks audience="admin" />);
 
     expect(linkNames()).toEqual([
       'Inicio',
       'Órdenes',
+      'Agenda',
       'Clientes',
       'Servicios',
       'Empleados',
@@ -52,7 +53,14 @@ describe('NavLinks', () => {
     vi.mocked(usePathname).mockReturnValue('/');
     renderWithProviders(<NavLinks audience="operator" />);
 
-    expect(linkNames()).toEqual(['Inicio', 'Órdenes', 'Clientes', 'Servicios', 'Empleados']);
+    expect(linkNames()).toEqual([
+      'Inicio',
+      'Órdenes',
+      'Agenda',
+      'Clientes',
+      'Servicios',
+      'Empleados',
+    ]);
   });
 
   it('shows only "Mi perfil" to a customer (spec 004, CA-08)', () => {

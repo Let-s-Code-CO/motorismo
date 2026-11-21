@@ -3,7 +3,8 @@
  *
  * Guards:
  * - CA-24: a customer is registered with a name and at least an email or a phone, once staff
- *   confirm the customer's consent; the screen is notified.
+ *   confirm the customer's consent; the screen gets the new customer (spec 012, CA-02: a
+ *   reservation chooses it).
  * - CA-25: invalid input, missing contact or missing consent are reported next to each field and
  *   nothing is sent.
  * - CA-26: the "email already in use" refusal from the database is shown.
@@ -48,8 +49,8 @@ describe('CustomerForm (new customer)', () => {
     expect(createCustomer).not.toHaveBeenCalled();
   });
 
-  it('registers the customer with the normalised data and notifies the screen (CA-24)', async () => {
-    vi.mocked(createCustomer).mockResolvedValue({ ok: true });
+  it('registers the customer with the normalised data and hands the new customer to the screen (CA-24; spec 012, CA-02)', async () => {
+    vi.mocked(createCustomer).mockResolvedValue({ ok: true, id: 'customer-new' });
     const onSaved = vi.fn();
     renderWithProviders(<CustomerForm mode="create" onSaved={onSaved} />);
 
@@ -58,7 +59,15 @@ describe('CustomerForm (new customer)', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /El cliente autorizó/ }));
     submit();
 
-    await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+    // A reservation chooses the customer it has just registered (spec 012, CA-02).
+    await vi.waitFor(() =>
+      expect(onSaved).toHaveBeenCalledWith({
+        id: 'customer-new',
+        full_name: 'Marta Mostrador',
+        email: null,
+        phone: '3120001111',
+      })
+    );
     expect(createCustomer).toHaveBeenCalledWith({
       full_name: 'Marta Mostrador',
       email: null,

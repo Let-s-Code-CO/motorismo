@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   ClipboardList,
   Contact,
   HardHat,
@@ -23,11 +24,12 @@ export type NavLink = {
  * Every section of the app and who may open it: the one list behind the desktop menu, the phone's
  * panel and the staff home (spec 009, RN-01), so what each role sees can never differ between them.
  * Admin options only for admins (spec 002, CA-07); «Servicios» and «Empleados» (spec 007, CA-19);
- * «Órdenes» (spec 008); a customer only has «Mi perfil» (spec 004, CA-08).
+ * «Órdenes» (spec 008); «Agenda» (spec 012); a customer only has «Mi perfil» (spec 004, CA-08).
  */
 export const NAV_LINKS: NavLink[] = [
   { href: '/', key: 'home', icon: House, audiences: ['admin', 'operator'] },
   { href: '/orders', key: 'orders', icon: ClipboardList, audiences: ['admin', 'operator'] },
+  { href: '/agenda', key: 'agenda', icon: CalendarClock, audiences: ['admin', 'operator'] },
   { href: '/customers', key: 'customers', icon: Contact, audiences: ['admin', 'operator'] },
   { href: '/services', key: 'services', icon: Tags, audiences: ['admin', 'operator'] },
   { href: '/employees', key: 'employees', icon: HardHat, audiences: ['admin', 'operator'] },

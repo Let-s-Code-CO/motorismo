@@ -7,15 +7,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Alert, Button } from '@heroui/react';
-import { Play, Plus } from 'lucide-react';
+import { CalendarClock, Play, Plus } from 'lucide-react';
 
+import useClock from '@web/modules/core/hooks/clock.hook';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
+import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-status-chip.component';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
 import { CLOSED_PAGE_SIZE } from '@web/modules/work-orders/constants/work-orders.constants';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
+import { queueOf } from '@web/modules/work-orders/utils/queue.utils';
 import { vehicleLabel } from '@web/modules/work-orders/utils/vehicle-label.utils';
 
 type OrdersScreenProps = {
@@ -24,6 +27,8 @@ type OrdersScreenProps = {
   /** One page of the closed and voided orders, newest first (CA-19). */
   closed: { rows: WorkOrderSummary[]; total: number };
   page: number;
+  /** Reservations whose time has come, customer not arrived yet (spec 012, CA-18). */
+  arriving?: ReservationSummary[];
 };
 
 type Notice = { tone: 'success' | 'danger'; text: string };
@@ -54,7 +59,7 @@ const SectionTitle = ({ dot, children }: { dot: string; children: ReactNode }) =
  * ready from its start (CA-18, CA-34); what waits its turn, by arrival, to start with one tap
  * (CA-33); and what was handed over, by pages, voided ones marked (CA-19).
  */
-const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
+const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) => {
   const t = useTranslations('orders');
   const format = useFormatter();
   const router = useRouter();
@@ -65,6 +70,9 @@ const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
   const pages = Math.max(1, Math.ceil(closed.total / CLOSED_PAGE_SIZE));
   const inProgress = open.filter((order) => order.started_at);
   const queue = open.filter((order) => !order.started_at);
+  // Spec 012, RN-04: by turn, a reservation first on the same turn, with those on their way.
+  const entries = queueOf(queue, arriving, now);
+  const clock = useClock();
 
   const vehicleOf = (order: WorkOrderSummary) =>
     vehicleLabel(
@@ -163,11 +171,40 @@ const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
 
       <div className="flex flex-col gap-3">
         <SectionTitle dot="bg-default-400">{t('list.queueTitle')}</SectionTitle>
-        {queue.length === 0 ? (
+        {entries.length === 0 ? (
           <p className={EMPTY}>{t('list.queueEmpty')}</p>
         ) : (
           <ul aria-label={t('list.queueLabel')} className={LIST}>
-            {queue.map((order, index) => {
+            {entries.map((entry) => {
+              if (entry.kind === 'arriving') {
+                const { reservation } = entry;
+                const name = reservation.customer_name ?? '';
+                return (
+                  // CA-18: a reservation on its way, in its place, without a turn.
+                  <li
+                    key={`r-${reservation.id}`}
+                    className="relative flex items-start gap-3 border-l-4 border-dashed border-l-default-300 bg-default-50/60 p-4"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full border border-dashed border-default-300 text-default-500">
+                      <CalendarClock aria-hidden className="size-4" />
+                    </span>
+                    <Link
+                      href={`/agenda/${reservation.id}`}
+                      aria-label={t('list.arrivingLabel', { name })}
+                      className="flex min-w-0 flex-1 flex-col gap-0.5 outline-none after:absolute after:inset-0 after:content-['']"
+                    >
+                      <span className="font-medium">{t('list.arriving')}</span>
+                      <span className="text-xs text-default-500">
+                        {t('list.arrivingText', {
+                          name,
+                          time: clock(new Date(reservation.slot_start ?? now)),
+                        })}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              }
+              const { order, turn } = entry;
               const times = (
                 <>
                   <span>{t('list.arrivedAgo', { ago: ago(order.opened_at) })}</span>
@@ -184,7 +221,7 @@ const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
                   className="relative flex items-start gap-3 border-l-4 border-l-default-300 p-4 hover:bg-default-50 has-[a:focus-visible]:bg-default-50"
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-default-100 text-xs font-semibold text-default-700 tabular-nums">
-                    {t('list.turn', { turn: index + 1 })}
+                    {t('list.turn', { turn })}
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                     <Link
@@ -199,6 +236,12 @@ const OrdersScreen = ({ open, closed, page }: OrdersScreenProps) => {
                         <span className="text-xs text-default-500">
                           {(order.services ?? []).join(' · ')}
                         </span>
+                        {order.reserved_start && (
+                          <span className="flex items-center gap-1 text-xs font-medium">
+                            <CalendarClock aria-hidden className="size-3.5" />
+                            {t('list.reserved', { time: clock(new Date(order.reserved_start)) })}
+                          </span>
+                        )}
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-0.5 text-sm">
                         <span className="font-medium tabular-nums">

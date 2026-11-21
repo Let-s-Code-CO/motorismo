@@ -21,6 +21,11 @@ export type WorkOrdersErrorKey =
   | 'alreadyStarted'
   | 'adminOnly'
   | 'notFound'
+  | 'reservationNotPending'
+  | 'reservationNotToday'
+  | 'reservationMismatch'
+  | 'reservationOrderStarted'
+  | 'reservationOrderHasReservation'
   | 'generic';
 
 const BY_HINT: Record<string, WorkOrdersErrorKey> = {
@@ -46,6 +51,13 @@ const BY_HINT: Record<string, WorkOrdersErrorKey> = {
   work_order_admin_only: 'adminOnly',
   work_order_not_found: 'notFound',
   work_order_line_not_found: 'notFound',
+  // Spec 012: the reservation the customer arrived with (CA-19).
+  reservation_not_found: 'notFound',
+  reservation_not_pending: 'reservationNotPending',
+  reservation_not_today: 'reservationNotToday',
+  reservation_customer_mismatch: 'reservationMismatch',
+  reservation_order_started: 'reservationOrderStarted',
+  reservation_order_has_reservation: 'reservationOrderHasReservation',
 };
 
 /** Database refusals (hints set by the work order functions, spec 008) → message keys. */

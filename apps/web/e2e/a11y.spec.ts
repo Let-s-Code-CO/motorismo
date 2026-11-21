@@ -354,6 +354,53 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   expect(await audit(page)).toEqual([]);
 });
 
+test('the agenda, a new reservation with errors, a reservation with its dialogs and «Horario» have no serious accessibility issues (spec 012)', async ({
+  page,
+}) => {
+  const { data: reservation } = await adminClient()
+    .from('reservations')
+    .select('id, slot_start')
+    .eq('status', 'pending')
+    .order('slot_start')
+    .limit(1)
+    .single();
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
+    new Date(reservation!.slot_start)
+  );
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+
+  await page.goto(`/agenda?date=${day}`);
+  await expect(page.getByRole('list', { name: 'Franjas del día' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  // Sent without a customer or a slot: the errors are in sight.
+  await page.goto(`/agenda/new?date=${day}`);
+  await page.getByRole('button', { name: 'Guardar reserva' }).click();
+  await expect(page.getByText('Elige el cliente.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.goto(`/agenda/${reservation!.id}`);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: 'Cancelar reserva' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Cambiar tolerancia' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.goto('/agenda/schedule');
+  await expect(page.getByRole('heading', { name: 'Horario', level: 1 })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+});
+
 test('a screen still loading, with its skeleton, has no serious accessibility issues (spec 011, CA-03)', async ({
   page,
 }) => {

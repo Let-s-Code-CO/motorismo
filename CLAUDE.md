@@ -166,6 +166,9 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   todos los entornos), no por seed.
 - Órdenes (spec 008, solo en local): Valentina #1 cerrada; Camila #2 cerrada (dos medios de pago y
   descuento), #3 anulada y #4 abierta («Limpieza de cadena» sin tiempo estimado).
+- Agenda (spec 012, solo en local): esta semana y la siguiente habilitadas de 9:00 a. m. a 6:00 p. m.
+  (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado») y
+  Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada.
 - Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
   «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
   (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real
@@ -248,6 +251,31 @@ e2e/                         # Playwright
 - Cada línea copia el nombre, el valor y el tiempo del servicio al añadirse: cambiar el catálogo no
   altera ninguna orden. Las utilidades del editor (`order-totals`, `order-estimate`, `shares`) son
   puras y probadas; el editor solo las muestra.
+
+## Agenda y reservas (spec 012)
+
+- **Solo reserva el personal** (el cliente, cuando se trabajen sus pantallas). Toda la lógica vive en
+  Postgres: `save_reservation`, `cancel_reservation`, `mark_reservation_no_show`,
+  `set_reservation_tolerance` (solo admin), `save_agenda_week` y `save_agenda_settings` (solo
+  admin), todas `security definer`; las tablas solo se leen (staff) y nadie las escribe ni borra
+  directamente. Franjas y puestos libres salen de `agenda_slots(día)`; cada reserva, de la vista
+  `reservation_summaries` (tolerancia efectiva, `grace_until`, «Fuera del horario», «Sobrecupo»).
+- **Semanas:** el admin habilita cada semana (lunes a domingo) desde «Agenda» → «Horario»; se propone
+  de 9:00 a. m. a 6:00 p. m. todos los días y se cierra o ajusta cada día. Sin semana habilitada no
+  se reserva. Una sola configuración: duración de franja, puestos y tolerancia general.
+- **Cupo:** `save_reservation` bloquea la fila del día (`for update`) antes de contar: dos reservas a
+  la vez nunca superan los puestos (`__test__/sandbox/reservations.sandbox.test.ts`).
+- **Hora de turno (RN-04):** la cola de «Órdenes» va por `turn_at` (la llegada, o la hora reservada
+  si llegó dentro de su tolerancia; ante empate, primero la reserva) y muestra las «Reserva por
+  llegar» (`work-orders/utils/queue.utils.ts`). `save_work_order(…, p_reservation_id)` fija el turno
+  y marca la reserva atendida en la misma transacción.
+- **«Llegó»** abre `/orders/new?reservation=…` (cliente fijo, vehículo y servicios ya puestos); si el
+  vehículo ya tenía su orden abierta, `/orders/{id}?reservation=…` la enlaza al guardar.
+  `CustomerPicker` tiene `purpose="reservation"` (vehículo opcional, «Registrar cliente») y
+  `customerLocked`.
+- **El reloj en pgTAP:** todo lo que mira la hora llama a `private.agenda_now()`; la prueba la
+  sustituye por una hora fija (`test.now`) dentro de su transacción. Las E2E escriben las reservas
+  que dependen de la hora con la clave secreta, relativas a ahora.
 
 ## Autenticación y permisos (specs 002 y 004)
 

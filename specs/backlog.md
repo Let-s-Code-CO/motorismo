@@ -14,11 +14,11 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 2. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
-3. **Agendamiento (reservas)** — guardar un puesto para una fecha y hora, con o sin servicios; al
-   llegar el cliente, la reserva pasa a ser una orden en cola (spec 008). Candidata a spec 012.
-4. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
+3. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
    retira y se registra de nuevo).
-5. **Confirmación por WhatsApp** (deseable).
+4. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
+5. **Reservas desde la app del cliente** — reservar, ver y cancelar sus reservas, cuando se
+   trabajen las pantallas del cliente (la spec 012 solo deja reservar al personal).
 
 ### Administración
 
@@ -59,3 +59,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [009](009-experiencia-movil/spec.md) | Experiencia móvil | verificada; falta despliegue |
 | [010](010-modo-oscuro/spec.md) | Modo oscuro | verificada; falta despliegue |
 | [011](011-transiciones-carga/spec.md) | Transiciones y estados de carga | verificada |
+| [012](012-agendamiento/spec.md) | Agendamiento de reservas | en-progreso |

@@ -8,6 +8,7 @@
  * the staff home as two columns of tiles with the open orders on «Órdenes» and no «Muy pronto»
  * (CA-06 to CA-08); the sign-in pages with the brand band on top, «Entrar» in sight and no motion
  * when the device asks for less (CA-10 to CA-12); the desktop as before (CA-05, CA-09, CA-13).
+ * Spec 012: the agenda, a new reservation, a reservation and «Horario» fit a phone too.
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -67,6 +68,35 @@ test.describe('on a 360 px phone', () => {
     await page.goto(`/orders/${open!.id}`);
     await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toBeVisible();
     expect(await horizontalOverflow(page)).toBe(0);
+  });
+
+  test('the agenda, a new reservation with its slots, a reservation and «Horario» have no horizontal scroll (spec 012)', async ({
+    page,
+  }) => {
+    const { data: reservation } = await adminClient()
+      .from('reservations')
+      .select('id, slot_start')
+      .eq('status', 'pending')
+      .order('slot_start')
+      .limit(1)
+      .single();
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
+      new Date(reservation!.slot_start)
+    );
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+
+    for (const path of [
+      `/agenda?date=${day}`,
+      `/agenda/new?date=${day}`,
+      `/agenda/${reservation!.id}`,
+      `/agenda/${reservation!.id}?edit=1`,
+      '/agenda/schedule',
+    ]) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
+    }
   });
 
   test('with every staff section, the menu fits: «Menú» opens the side panel; a long service fits too (spec 007, CA-19; spec 009, CA-02)', async ({
@@ -153,7 +183,9 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
   });
 
-  test('every staff screen of specs 007 and 008 has no horizontal scroll', async ({ page }) => {
+  test('every staff screen of specs 007, 008 and 012 has no horizontal scroll', async ({
+    page,
+  }) => {
     const { data: open } = await adminClient()
       .from('work_orders')
       .select('id, customer_id')
@@ -172,6 +204,10 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       `/customers/${open!.customer_id}`,
       '/services',
       '/employees',
+      // Spec 012.
+      '/agenda',
+      '/agenda/new',
+      '/agenda/schedule',
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();

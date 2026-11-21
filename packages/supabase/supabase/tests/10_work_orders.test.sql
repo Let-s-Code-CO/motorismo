@@ -78,6 +78,9 @@ returns jsonb language sql stable as $$
 $$;
 
 -- Independent of the seeds: no orders to start with (undone by the final rollback).
+-- Reservations (spec 012) point at services and orders: they go first.
+delete from public.reservation_services;
+delete from public.reservations;
 delete from public.work_order_payments;
 delete from public.work_order_line_employees;
 delete from public.work_order_lines;

@@ -27,6 +27,11 @@ const EXPECTED: Record<string, PageSkeletonVariant> = {
   employees: 'list',
   'admin/users': 'list',
   profile: 'profile',
+  // Spec 012: the agenda, a new reservation, a reservation and «Horario».
+  agenda: 'list',
+  'agenda/new': 'form',
+  'agenda/[id]': 'detail',
+  'agenda/schedule': 'form',
 };
 
 const pages = (dir: string): string[] =>
@@ -41,7 +46,7 @@ const routes = pages(APP)
   .sort();
 
 describe('every screen of the signed-in app has its loading skeleton (spec 011, CA-01)', () => {
-  it('finds exactly the screens the plan lists (10 today), so a new one gets its shape decided', () => {
+  it('finds exactly the screens the plans list (14 today), so a new one gets its shape decided', () => {
     expect(routes).toEqual(Object.keys(EXPECTED).sort());
   });
 

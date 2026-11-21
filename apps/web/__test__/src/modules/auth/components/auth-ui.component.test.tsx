@@ -119,7 +119,7 @@ describe('AppHeader', () => {
       within(panel)
         .getAllByRole('link')
         .map((link) => link.textContent)
-    ).toEqual(['Inicio', 'Órdenes', 'Clientes', 'Servicios', 'Empleados', 'Usuarios']);
+    ).toEqual(['Inicio', 'Órdenes', 'Agenda', 'Clientes', 'Servicios', 'Empleados', 'Usuarios']);
     // The current section is marked (spec 003, CA-06).
     expect(within(panel).getByRole('link', { name: 'Servicios' })).toHaveAttribute(
       'aria-current',

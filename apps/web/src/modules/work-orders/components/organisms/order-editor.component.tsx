@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
@@ -11,9 +11,12 @@ import { Alert, Button, Input, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
 
+import useClock from '@web/modules/core/hooks/clock.hook';
 import { formatAmount, formatPesos } from '@web/modules/core/utils/money.utils';
 import { singleOption } from '@web/modules/core/utils/selection.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
+import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
+import { linesFromReservation } from '@web/modules/reservations/utils/reservation-lines.utils';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import { saveWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
@@ -56,6 +59,11 @@ type OrderEditorProps = {
    * instead of being saved here.
    */
   onCorrect?: (values: WorkOrderValues) => void;
+  /**
+   * The reservation the customer arrived with (spec 012, CA-12, CA-13): a new order starts with its
+   * services as the catalog has them now (RN-07); saving turns it into this order.
+   */
+  reservation?: Pick<ReservationSummary, 'id' | 'service_ids' | 'services' | 'slot_start'>;
 };
 
 const asText = (value: number | null | undefined) => (value == null ? '' : formatAmount(value));
@@ -87,8 +95,12 @@ const OrderEditor = ({
   onSaved,
   onCancel,
   onCorrect,
+  reservation,
 }: OrderEditorProps) => {
   const t = useTranslations('orders');
+  const clock = useClock();
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const reservationApplied = useRef(false);
   const [serverError, setServerError] = useState<WorkOrdersErrorKey>();
   const services = useQuery(activeServicesQueryOptions());
   const employees = useQuery(activeEmployeesQueryOptions());
@@ -144,6 +156,19 @@ const OrderEditor = ({
       estimated_minutes: service.estimated_minutes == null ? '' : String(service.estimated_minutes),
       employees: defaultEmployees(),
     });
+  // Spec 012, CA-12: a new order from a reservation starts with its services, once, as soon as the
+  // catalog and the employees are known (RN-10: the only employee is already on each line).
+  useEffect(() => {
+    if (!reservation || order || reservationApplied.current || !services.data || !employees.data)
+      return;
+    reservationApplied.current = true;
+    const fromReservation = linesFromReservation(reservation, services.data, vehicle.vehicle_type);
+    fromReservation.services.forEach(addService);
+    setSkipped(fromReservation.skipped);
+    // addService only reads the vehicle and the employees, both known here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservation, order, services.data, employees.data]);
+
   const addOther = () =>
     append({
       id: null,
@@ -169,7 +194,11 @@ const OrderEditor = ({
       return;
     }
     const result = await callAction(() =>
-      saveWorkOrder({ id: order?.summary.id ?? null, ...values })
+      saveWorkOrder({
+        id: order?.summary.id ?? null,
+        reservation_id: reservation?.id ?? null,
+        ...values,
+      })
     );
     if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
     if (result.ok) onSaved(result.id);
@@ -184,6 +213,18 @@ const OrderEditor = ({
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
+      {reservation?.slot_start && (
+        <Alert
+          color="primary"
+          variant="faded"
+          title={t(order ? 'editor.linkReservation' : 'editor.fromReservation', {
+            time: clock(new Date(reservation.slot_start)),
+          })}
+          description={
+            skipped.length ? t('editor.skipped', { names: skipped.join(', ') }) : undefined
+          }
+        />
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold tracking-tight">{t('editor.services')}</h2>
