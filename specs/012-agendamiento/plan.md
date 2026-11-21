@@ -439,6 +439,19 @@ Ninguna.
 - **Prueba de concurrencia:** `__test__/sandbox/reservations.sandbox.test.ts`, junto a las demás de
   sandbox: 8 reservas simultáneas sobre una franja de 2 puestos → exactamente 2.
 - **Pruebas 09 y 10 de pgTAP:** vacían antes las reservas, que apuntan a servicios y órdenes.
+- **«Agenda» como tablero de puestos** (pedido del usuario): cada franja es una fila con su hora y
+  sus puestos libres, y un recuadro por puesto (la reserva, o «Reservar»); 2 por fila en el
+  teléfono y hasta 4 en escritorio. Las canceladas y «No asistió» van aparte («No ocupan puesto»).
+  Arriba, un resumen («2 reservas · 16 puestos libres»).
+- **La reserva en la cola** (pedido del usuario), sin colores nuevos: etiqueta sólida «Reserva
+  9:00 a. m.» y borde oscuro mientras la reserva da el turno (por llegar, punteado; o llegó a
+  tiempo, continuo); con contorno y «· llegó tarde» o «· llegó antes» cuando entra por llegada
+  (`reservationStanding` en `queue.utils`).
+- **Ejemplos locales** (seed 06): en la franja de la hora del reset, una orden que llegó a tiempo,
+  una reserva por llegar, una que llegó tarde, una que llegó antes, una sin reserva y una «No
+  asistió».
+- **Auditoría de accesibilidad:** `audit()` espera a que termine el fundido de entrada de la página
+  (spec 011) antes de medir el contraste.
 
 ## Despliegue
 

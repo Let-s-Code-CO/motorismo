@@ -18,7 +18,7 @@ import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-sta
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
 import { CLOSED_PAGE_SIZE } from '@web/modules/work-orders/constants/work-orders.constants';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
-import { queueOf } from '@web/modules/work-orders/utils/queue.utils';
+import { queueOf, reservationStanding } from '@web/modules/work-orders/utils/queue.utils';
 import { vehicleLabel } from '@web/modules/work-orders/utils/vehicle-label.utils';
 
 type OrdersScreenProps = {
@@ -45,6 +45,34 @@ const EMPTY =
   'rounded-medium border border-dashed border-default-300 p-4 text-center text-sm text-default-500';
 const ROW_LINK =
   'flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3 p-4 outline-none hover:bg-default-50 focus-visible:bg-default-50';
+
+/**
+ * Spec 012: what came from a reservation, in the monochrome system (no new colour). Solid while the
+ * reservation gives it its turn (on its way, or arrived on time); only outlined when it came late or
+ * early and goes by its arrival, like anyone (RN-04).
+ */
+const ReservedTag = ({
+  children,
+  outlined = false,
+}: {
+  children: ReactNode;
+  outlined?: boolean;
+}) => (
+  <span
+    className={`inline-flex w-max items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+      outlined ? 'border border-default-400 text-default-700' : 'bg-foreground text-background'
+    }`}
+  >
+    <CalendarClock aria-hidden className="size-3.5" />
+    {children}
+  </span>
+);
+
+const RESERVED_TEXT = {
+  kept: 'list.reserved',
+  late: 'list.reservedLate',
+  early: 'list.reservedEarly',
+} as const;
 
 /** A section title with its state colour (CLAUDE.md: state colours only), said in words too. */
 const SectionTitle = ({ dot, children }: { dot: string; children: ReactNode }) => (
@@ -183,17 +211,24 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                   // CA-18: a reservation on its way, in its place, without a turn.
                   <li
                     key={`r-${reservation.id}`}
-                    className="relative flex items-start gap-3 border-l-4 border-dashed border-l-default-300 bg-default-50/60 p-4"
+                    // A reservation is dark-edged: dashed while the customer is on the way.
+                    className="relative flex items-start gap-3 border-l-4 border-dashed border-l-foreground bg-default-50/60 p-4 hover:bg-default-100/60"
                   >
-                    <span className="grid size-8 shrink-0 place-items-center rounded-full border border-dashed border-default-300 text-default-500">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full border border-dashed border-foreground/40 text-foreground">
                       <CalendarClock aria-hidden className="size-4" />
                     </span>
                     <Link
                       href={`/agenda/${reservation.id}`}
-                      aria-label={t('list.arrivingLabel', { name })}
                       className="flex min-w-0 flex-1 flex-col gap-0.5 outline-none after:absolute after:inset-0 after:content-['']"
                     >
-                      <span className="font-medium">{t('list.arriving')}</span>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{t('list.arriving')}</span>
+                        <ReservedTag>
+                          {t('list.reserved', {
+                            time: clock(new Date(reservation.slot_start ?? now)),
+                          })}
+                        </ReservedTag>
+                      </span>
                       <span className="text-xs text-default-500">
                         {t('list.arrivingText', {
                           name,
@@ -205,6 +240,7 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                 );
               }
               const { order, turn } = entry;
+              const standing = reservationStanding(order);
               const times = (
                 <>
                   <span>{t('list.arrivedAgo', { ago: ago(order.opened_at) })}</span>
@@ -218,7 +254,10 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                 // their own line under the order.
                 <li
                   key={order.id}
-                  className="relative flex items-start gap-3 border-l-4 border-l-default-300 p-4 hover:bg-default-50 has-[a:focus-visible]:bg-default-50"
+                  // The dark edge, now solid, only while the reservation gives it its turn (arrived on time).
+                  className={`relative flex items-start gap-3 border-l-4 p-4 hover:bg-default-50 has-[a:focus-visible]:bg-default-50 ${
+                    standing === 'kept' ? 'border-l-foreground' : 'border-l-default-300'
+                  }`}
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-default-100 text-xs font-semibold text-default-700 tabular-nums">
                     {t('list.turn', { turn })}
@@ -236,10 +275,13 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                         <span className="text-xs text-default-500">
                           {(order.services ?? []).join(' · ')}
                         </span>
-                        {order.reserved_start && (
-                          <span className="flex items-center gap-1 text-xs font-medium">
-                            <CalendarClock aria-hidden className="size-3.5" />
-                            {t('list.reserved', { time: clock(new Date(order.reserved_start)) })}
+                        {standing && order.reserved_start && (
+                          <span className="pt-1">
+                            <ReservedTag outlined={standing !== 'kept'}>
+                              {t(RESERVED_TEXT[standing], {
+                                time: clock(new Date(order.reserved_start)),
+                              })}
+                            </ReservedTag>
                           </span>
                         )}
                       </span>

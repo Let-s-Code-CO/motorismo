@@ -18,6 +18,15 @@ import { type Locator, type Page, expect, test } from '@playwright/test';
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 
 const audit = async (page: Page) => {
+  // Every screen enters with a short fade (spec 011, `page-in`): mid-fade, colours are blended and
+  // axe would measure a contrast nobody sees. Wait for it to end first.
+  await page.evaluate(() =>
+    Promise.all(
+      [...document.querySelectorAll('[data-page]')].flatMap((node) =>
+        node.getAnimations().map((animation) => animation.finished)
+      )
+    )
+  );
   const { violations } = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
@@ -360,9 +369,8 @@ test('the agenda, a new reservation with errors, a reservation with its dialogs 
   const { data: reservation } = await adminClient()
     .from('reservations')
     .select('id, slot_start')
-    .eq('status', 'pending')
-    .order('slot_start')
-    .limit(1)
+    // The seeded reservation of Camila tomorrow (seeds/06): other tests create and delete theirs.
+    .eq('notes', 'Pidió turno por WhatsApp')
     .single();
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
     new Date(reservation!.slot_start)
@@ -372,16 +380,20 @@ test('the agenda, a new reservation with errors, a reservation with its dialogs 
 
   await page.goto(`/agenda?date=${day}`);
   await expect(page.getByRole('list', { name: 'Franjas del día' })).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
   expect(await audit(page)).toEqual([]);
 
+  // Each screen enters with a short fade (spec 011): audited once it has settled.
   // Sent without a customer or a slot: the errors are in sight.
   await page.goto(`/agenda/new?date=${day}`);
   await page.getByRole('button', { name: 'Guardar reserva' }).click();
   await expect(page.getByText('Elige el cliente.')).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
   expect(await audit(page)).toEqual([]);
 
   await page.goto(`/agenda/${reservation!.id}`);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
   expect(await audit(page)).toEqual([]);
 
   await page.getByRole('button', { name: 'Cancelar reserva' }).click();
@@ -398,6 +410,7 @@ test('the agenda, a new reservation with errors, a reservation with its dialogs 
 
   await page.goto('/agenda/schedule');
   await expect(page.getByRole('heading', { name: 'Horario', level: 1 })).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
   expect(await audit(page)).toEqual([]);
 });
 

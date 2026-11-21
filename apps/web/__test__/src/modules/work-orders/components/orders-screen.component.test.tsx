@@ -222,8 +222,58 @@ describe('OrdersScreen with reservations (spec 012)', () => {
     expect(queue[0]).toHaveTextContent('Reserva 9:00 a. m.');
     expect(queue[2]).not.toHaveTextContent('Reserva 9:00 a. m.');
     expect(
-      screen.getByRole('link', { name: 'Reserva por llegar de Carla Cliente' })
+      // Its name is what it shows (WCAG 2.5.3): «Reserva por llegar», the time and who.
+      screen.getByRole('link', { name: /^Reserva por llegar.*Carla Cliente/ })
     ).toHaveAttribute('href', '/agenda/r-carla');
     expect(queue[1]).toHaveTextContent('Carla Cliente reservó a las 9:00 a. m.; aún no llega.');
+  });
+
+  it('says when a reservation came late or early and goes by its arrival (RN-04, CA-16, CA-17)', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2030-06-12T22:20:00Z'));
+    renderWithProviders(
+      <OrdersScreen
+        open={[
+          // Reserved 5:00 p. m., arrived on time: keeps 5:00 p. m.
+          order({
+            id: 'on-time',
+            number: 6,
+            customer_name: 'Gabriel',
+            opened_at: '2030-06-12T22:01:00Z',
+            turn_at: '2030-06-12T22:00:00Z',
+            reservation_id: 'r6',
+            reserved_start: '2030-06-12T22:00:00Z',
+          }),
+          // Reserved 6:00 p. m., arrived at 5:12 p. m.: early, by arrival.
+          order({
+            id: 'early',
+            number: 9,
+            customer_name: 'Sofía',
+            opened_at: '2030-06-12T22:12:00Z',
+            turn_at: '2030-06-12T22:12:00Z',
+            reservation_id: 'r9',
+            reserved_start: '2030-06-12T23:00:00Z',
+          }),
+          // Reserved 4:00 p. m., arrived at 5:14 p. m.: late, by arrival.
+          order({
+            id: 'late',
+            number: 8,
+            customer_name: 'Lina',
+            opened_at: '2030-06-12T22:14:00Z',
+            turn_at: '2030-06-12T22:14:00Z',
+            reservation_id: 'r8',
+            reserved_start: '2030-06-12T21:00:00Z',
+          }),
+        ]}
+        closed={{ rows: [], total: 0 }}
+        page={1}
+      />
+    );
+
+    const queue = sectionList('Órdenes en cola');
+    expect(queue[0]).toHaveTextContent('Reserva 5:00 p. m.');
+    expect(queue[0]).not.toHaveTextContent('llegó');
+    expect(queue[1]).toHaveTextContent('Reserva 6:00 p. m. · llegó antes');
+    expect(queue[2]).toHaveTextContent('Reserva 4:00 p. m. · llegó tarde');
   });
 });

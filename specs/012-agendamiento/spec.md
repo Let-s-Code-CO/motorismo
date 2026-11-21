@@ -1,7 +1,7 @@
 ---
 id: "012"
 titulo: "Agendamiento de reservas"
-estado: en-progreso
+estado: verificada
 creada: 2026-11-21
 actualizada: 2026-11-21
 ---
@@ -306,3 +306,5 @@ Ninguna. Resueltas con el usuario el 2026-11-21:
 | 2026-11-21 | Aprobada por el usuario. |
 | 2026-11-21 | Plan aprobado: estado `planificada`. |
 | 2026-11-21 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
+| 2026-11-21 | Implementada. Ajustes pedidos por el usuario: «Agenda» como tablero de puestos (un recuadro por puesto, ocupado o libre con «Reservar»; las canceladas y «No asistió» aparte; resumen del día) y ejemplos locales de una orden que llegó con reserva y de una reserva por llegar. |
+| 2026-11-21 | Verificada: los 32 criterios con prueba vista fallar (pgTAP, Vitest, sandbox y E2E). Se cerraron tres huecos de la verificación: el campo de fecha de la agenda (CA-10), el rastro completo del detalle (CA-11) y la cancelada visible en la agenda (CA-21, prueba del tablero). En la cola, la etiqueta de reserva distingue si dio el turno (sólida) o si llegó tarde o antes y entra por llegada (con contorno). |

@@ -73,8 +73,10 @@ pnpm db:stop
 - `seeds/05_work_orders.sql`: órdenes de ejemplo (spec 008), creadas con las mismas funciones que la
   app, como el primer admin. Las pruebas pgTAP de catálogos y órdenes vacían primero las órdenes.
 - `seeds/06_reservations.sql`: agenda de ejemplo (spec 012), con fechas relativas a hoy: esta semana
-  y la siguiente habilitadas y reservas para mañana. Las pruebas pgTAP de catálogos, órdenes y
-  reservas vacían primero las reservas (apuntan a servicios y órdenes).
+  y la siguiente habilitadas, reservas para mañana y, en la franja de la hora del reset, una orden
+  que llegó con reserva (Gabriel, con una moto que registra el seed) y una reserva por llegar. Las
+  pruebas pgTAP de catálogos, órdenes y reservas vacían primero las reservas (apuntan a servicios y
+  órdenes).
 - **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
   municipios DANE de `municipalities_data`) van en
   una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo

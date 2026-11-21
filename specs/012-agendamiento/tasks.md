@@ -297,15 +297,15 @@ Convenciones:
 
 ## Cierre
 
-- [ ] T090 `pnpm lint` · `pnpm ts:check` · `pnpm test` · `pnpm --filter web test:sandbox` ·
+- [x] T090 `pnpm lint` · `pnpm ts:check` · `pnpm test` · `pnpm --filter web test:sandbox` ·
       `pnpm build` · `pnpm test:e2e` en verde.
-- [ ] T091 `pnpm db:reset` + `pnpm db:test` + `pnpm --filter @motorismo/supabase types:check` en
+- [x] T091 `pnpm db:reset` + `pnpm db:test` + `pnpm --filter @motorismo/supabase types:check` en
       verde.
-- [ ] T092 Mutación aplicada a cada prueba nueva, fallo observado y revertida (`git diff` + grep
+- [x] T092 Mutación aplicada a cada prueba nueva, fallo observado y revertida (`git diff` + grep
       limpio). Se anota cada mutación.
 - [ ] T093 (pendiente del usuario, a mano) Revisión en teléfono (440 px táctil y 360 px) y en
       escritorio, en claro y en oscuro: agenda, reservar, horario, llegada y cola.
-- [ ] T094 `CLAUDE.md` (agenda y reservas, hora de turno, seeds 06 y usuarios locales),
+- [x] T094 `CLAUDE.md` (agenda y reservas, hora de turno, seeds 06 y usuarios locales),
       `packages/supabase/CLAUDE.md` (seed 06), spec, plan, tareas y backlog al día.
 
 ## Cobertura de criterios

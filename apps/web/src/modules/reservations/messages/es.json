@@ -14,14 +14,17 @@
       "closedText": "Este día no se atiende.",
       "unenabled": "Semana sin habilitar",
       "unenabledText": "El administrador aún no habilita esta semana: no se puede reservar.",
-      "empty": "No hay reservas este día.",
       "slotsLabel": "Franjas del día",
       "slot": "{start} – {end}",
       "seats": "{free} de {seats} libres",
       "full": "Llena",
       "started": "Ya empezó",
       "book": "Reservar",
-      "outOfHoursTitle": "Fuera del horario"
+      "outOfHoursTitle": "Fuera del horario",
+      "summary": "{reservations, plural, =0 {Sin reservas} one {# reserva} other {# reservas}} · {free, plural, =0 {sin puestos libres} one {# puesto libre} other {# puestos libres}}",
+      "free": "Libre",
+      "seatsLabel": "Puestos de {range}",
+      "inactive": "No ocupan puesto:"
     },
     "status": {
       "pending": "Pendiente",

@@ -164,9 +164,8 @@ test.describe('the agenda (spec 012)', () => {
     await page.goto(`/agenda?date=${dayFromWeek(monday, 6)}`);
     await expect(page.getByText('Este día no se atiende.')).toBeVisible();
     await page.goto(`/agenda?date=${dayFromWeek(monday, 5)}`);
-    await expect(
-      page.getByRole('list', { name: 'Franjas del día' }).getByRole('listitem')
-    ).toHaveCount(4);
+    // Saturday until 13:00: 4 slots, each with its seats.
+    await expect(page.getByRole('list', { name: /^Puestos de / })).toHaveCount(4);
 
     // Staff book Camila, whose only active vehicle comes chosen, on Monday at 10:00.
     await page.goto(`/agenda/new?date=${monday}`);
@@ -228,7 +227,9 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     await page.goto('/orders');
     const queue = page.getByRole('list', { name: 'Órdenes en cola' });
     await expect(
-      queue.getByRole('link', { name: `Reserva por llegar de ${SEED_CUSTOMERS.walkIn.name}` })
+      queue.getByRole('link', {
+        name: new RegExp(`^Reserva por llegar.*${SEED_CUSTOMERS.walkIn.name}`),
+      })
     ).toHaveAttribute('href', `/agenda/${id}`);
 
     // Leaving «Nueva orden» without saving keeps it pending (CA-13).
@@ -252,7 +253,12 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     await page.goto('/orders');
     const entry = queue.getByRole('listitem').filter({ hasText: SEED_CUSTOMERS.walkIn.name });
     await expect(entry).toContainText(/Reserva \d{1,2}:\d{2} [ap]\. m\./);
-    await expect(queue.getByText('Reserva por llegar')).toHaveCount(0);
+    // Valentina is no longer on her way (the seeds keep another reservation on its way).
+    await expect(
+      queue.getByRole('link', {
+        name: new RegExp(`^Reserva por llegar.*${SEED_CUSTOMERS.walkIn.name}`),
+      })
+    ).toHaveCount(0);
 
     await page.goto(`/agenda/${id}`);
     await expect(page.getByText('Atendida', { exact: true })).toBeVisible();

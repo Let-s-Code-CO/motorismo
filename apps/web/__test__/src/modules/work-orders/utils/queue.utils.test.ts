@@ -13,10 +13,12 @@
  * - RN-04: the same turn → the reservation first, then by arrival.
  * - CA-18: a reservation on its way sits in its place without a turn number, and disappears once its
  *   tolerance has passed.
+ * - CA-14 / CA-16 / CA-17: whether an order kept its reserved time as its turn, or goes by its
+ *   arrival because it came late or early (so the queue can say it).
  */
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
-import { queueOf } from '@web/modules/work-orders/utils/queue.utils';
+import { queueOf, reservationStanding } from '@web/modules/work-orders/utils/queue.utils';
 
 const at = (time: string) => `2030-06-12T${time}-05:00`;
 
@@ -110,5 +112,26 @@ describe('queueOf', () => {
 
   it('is empty without orders or reservations', () => {
     expect(queueOf([], [], NOW)).toEqual([]);
+  });
+});
+
+describe('reservationStanding', () => {
+  const reserved = (turn: string) =>
+    order('o', { reservation_id: 'r', reserved_start: at('09:00:00'), turn_at: at(turn) });
+
+  it('kept its reserved time: the turn is the reserved time (CA-16)', () => {
+    expect(reservationStanding(reserved('09:00:00'))).toBe('kept');
+  });
+
+  it('came late, past its tolerance: the turn is its arrival, after the reserved time (CA-16)', () => {
+    expect(reservationStanding(reserved('09:40:00'))).toBe('late');
+  });
+
+  it('came early: the turn is its arrival, before the reserved time (CA-17)', () => {
+    expect(reservationStanding(reserved('08:45:00'))).toBe('early');
+  });
+
+  it('is nothing for an order without a reservation', () => {
+    expect(reservationStanding(order('o'))).toBeNull();
   });
 });

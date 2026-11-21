@@ -1,16 +1,19 @@
 /**
- * AgendaScreen — «Agenda»: one day of reservations, by slot (spec 012, HU-02).
+ * AgendaScreen — «Agenda»: one day as a board of seats, by slot (spec 012, HU-02).
  *
  * Guards:
- * - CA-09: the slots in order, each with its free seats («Llena» when there are none) and its
- *   reservations: customer, phone, vehicle (plate or «Sin vehículo»), services and state.
- * - CA-10: the previous and the next day, and «Hoy», are links that carry the day in the URL.
+ * - CA-09: the slots in order, each with how many seats are free («Llena» when there are none) and
+ *   one box per seat: a reservation (customer, phone, vehicle — plate or «Sin vehículo» —, services
+ *   and state) or a free seat to book; as many boxes as seats (2, 5…). Cancelled ones and no-shows
+ *   take no seat: they are listed apart. Above, how many reservations and free seats the day has.
+ * - CA-10: the previous and the next day, and «Hoy», are links that carry the day in the URL; a
+ *   date chosen in the calendar field goes there too (an invalid one is ignored).
  * - CA-03: a closed day and a week not enabled say so.
  * - CA-31: a reservation that no longer fits the hours is listed apart; flagged ones show
  *   «Fuera del horario» and «Sobrecupo».
  * - «Horario» is offered only to an admin (HU-05).
  */
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 
 import AgendaScreen from '@web/modules/reservations/components/organisms/agenda-screen.component';
 import type {
@@ -21,7 +24,8 @@ import type {
 
 import { renderWithProviders } from '@tests/test-utils/render';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const push = vi.fn();
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 
 const at = (hour: number) => `2030-06-12T${String(hour).padStart(2, '0')}:00:00-05:00`;
 
@@ -107,22 +111,69 @@ describe('AgendaScreen', () => {
     expect(valentina).toHaveTextContent('Sin servicios');
   });
 
-  it('offers «Reservar» only in a slot with a free seat that has not started', () => {
+  it('offers «Reservar» in each free seat of a slot that has not started (CA-09)', () => {
     renderAgenda(day({ slots: [slot(9, { started: true }), slot(10, { taken: 2 }), slot(11)] }));
 
+    // 11:00 has its 2 seats free: one «Reservar» per seat; 9:00 started and 10:00 is full.
     const links = screen.getAllByRole('link', { name: /Reservar/ });
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAccessibleName('11:00 a. m. – 12:00 p. m.: Reservar');
-    expect(links[0]).toHaveAttribute(
-      'href',
-      `/agenda/new?date=2030-06-12&start=${encodeURIComponent(at(11))}`
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAccessibleName('11:00 a. m. – 12:00 p. m.: Reservar');
+      expect(link).toHaveAttribute(
+        'href',
+        `/agenda/new?date=2030-06-12&start=${encodeURIComponent(at(11))}`
+      );
+    }
+  });
+
+  it('draws one box per seat, also with more than two seats', () => {
+    renderAgenda(day({ slots: [slot(9, { seats: 5, taken: 1 })], reservations: [reservation()] }));
+
+    // 5 seats: 1 taken by Camila + 4 free.
+    const seats = screen.getByRole('list', { name: 'Puestos de 9:00 a. m. – 10:00 a. m.' });
+    expect(within(seats).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(seats).getAllByRole('link', { name: /Reservar/ })).toHaveLength(4);
+    expect(screen.getByText('4 de 5 libres')).toBeVisible();
+  });
+
+  it('lists cancelled reservations and no-shows apart, taking no seat (RN-02)', () => {
+    renderAgenda(
+      day({
+        slots: [slot(9)],
+        reservations: [
+          reservation({ id: 'r2', status: 'cancelled', customer_name: 'Andrés Ñáñez' }),
+          reservation({ id: 'r3', status: 'no_show', customer_name: 'Lucía Llegada' }),
+        ],
+      })
     );
+
+    const seats = screen.getByRole('list', { name: 'Puestos de 9:00 a. m. – 10:00 a. m.' });
+    expect(within(seats).getAllByRole('link', { name: /Reservar/ })).toHaveLength(2);
+    expect(screen.getByText('No ocupan puesto:')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Andrés Ñáñez · Cancelada' })).toHaveAttribute(
+      'href',
+      '/agenda/r2'
+    );
+    expect(screen.getByRole('link', { name: 'Lucía Llegada · No asistió' })).toBeVisible();
+  });
+
+  it('sums up the day: its reservations and the seats still free (CA-09)', () => {
+    renderAgenda(
+      day({
+        slots: [slot(9, { started: true }), slot(10, { taken: 1 }), slot(11)],
+        reservations: [reservation({ slot_start: at(10) })],
+      })
+    );
+
+    // Free seats only count where they can still be booked: 10:00 (2 − 1 = 1) + 11:00 (2) = 3.
+    expect(screen.getByText('1 reserva · 3 puestos libres')).toBeVisible();
   });
 
   it('says when the day has no reservations', () => {
     renderAgenda(day());
 
-    expect(screen.getByText('No hay reservas este día.')).toBeVisible();
+    // 9:00 and 10:00, 2 seats each: 4 free.
+    expect(screen.getByText('Sin reservas · 4 puestos libres')).toBeVisible();
   });
 
   // HeroUI buttons rendered as links keep the button role; what matters is where they lead.
@@ -180,5 +231,13 @@ describe('AgendaScreen', () => {
 
     renderAgenda(day(), false);
     expect(screen.queryByRole('button', { name: 'Horario' })).not.toBeInTheDocument();
+  });
+
+  it('goes to a date chosen in the calendar field, through the URL (CA-10)', () => {
+    renderAgenda(day());
+
+    fireEvent.change(screen.getByLabelText('Ir a la fecha'), { target: { value: '2030-07-04' } });
+
+    expect(push).toHaveBeenCalledWith('/agenda?date=2030-07-04');
   });
 });

@@ -41,3 +41,15 @@ export const queueOf = (
   let turn = 0;
   return keyed.map(({ entry }) => (entry.kind === 'order' ? { ...entry, turn: ++turn } : entry));
 };
+
+/**
+ * How an order stands with its reservation (spec 012, RN-04): it `kept` the reserved time as its
+ * turn (arrived within the tolerance), or goes by its arrival because it came `late` or `early`.
+ * Null without a reservation.
+ */
+export const reservationStanding = (order: WorkOrderSummary): 'kept' | 'late' | 'early' | null => {
+  if (!order.reserved_start) return null;
+  const turn = time(order.turn_at ?? order.opened_at);
+  const reserved = time(order.reserved_start);
+  return turn === reserved ? 'kept' : turn > reserved ? 'late' : 'early';
+};

@@ -59,4 +59,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [009](009-experiencia-movil/spec.md) | Experiencia móvil | verificada; falta despliegue |
 | [010](010-modo-oscuro/spec.md) | Modo oscuro | verificada; falta despliegue |
 | [011](011-transiciones-carga/spec.md) | Transiciones y estados de carga | verificada |
-| [012](012-agendamiento/spec.md) | Agendamiento de reservas | en-progreso |
+| [012](012-agendamiento/spec.md) | Agendamiento de reservas | verificada |

@@ -37,7 +37,8 @@
       "reserved": "Reserva {time}",
       "arriving": "Reserva por llegar",
       "arrivingText": "{name} reservó a las {time}; aún no llega.",
-      "arrivingLabel": "Reserva por llegar de {name}"
+      "reservedLate": "Reserva {time} · llegó tarde",
+      "reservedEarly": "Reserva {time} · llegó antes"
     },
     "picker": {
       "customerSearch": "Buscar cliente",

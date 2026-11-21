@@ -168,7 +168,10 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   descuento), #3 anulada y #4 abierta («Limpieza de cadena» sin tiempo estimado).
 - Agenda (spec 012, solo en local): esta semana y la siguiente habilitadas de 9:00 a. m. a 6:00 p. m.
   (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado») y
-  Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada.
+  Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada. Hoy, en la
+  franja de la hora en que se hizo el reset: Gabriel (su Yamaha `GGM-45F`, registrada por el seed)
+  llegó con su reserva y su orden #6 espera en la cola con «Reserva …»; Camila está «por llegar»
+  (60 min de tolerancia propia) hasta que acaba esa hora.
 - Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
   «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
   (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real

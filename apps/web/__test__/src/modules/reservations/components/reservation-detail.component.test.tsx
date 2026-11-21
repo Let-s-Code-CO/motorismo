@@ -183,4 +183,52 @@ describe('ReservationDetail', () => {
     expect(screen.getByText('Fuera del horario')).toBeVisible();
     expect(screen.getByText('Sobrecupo')).toBeVisible();
   });
+
+  it('says who changed, cancelled or attended it, when, and why it was cancelled (CA-11)', () => {
+    renderDetail(
+      reservation({
+        status: 'cancelled',
+        updated_at: '2030-06-11T09:00:00-05:00',
+        updated_by_name: 'Oscar Operador',
+        cancelled_at: '2030-06-11T10:30:00-05:00',
+        cancelled_by_name: 'Ana Admin',
+        cancel_reason: 'Se le dañó la moto',
+      })
+    );
+
+    expect(
+      screen.getByText('Cambiada por Oscar Operador el 11 de junio de 2030 a las 9:00 a. m.')
+    ).toBeVisible();
+    expect(
+      screen.getByText('Cancelada por Ana Admin el 11 de junio de 2030 a las 10:30 a. m.')
+    ).toBeVisible();
+    expect(screen.getByText('Motivo: Se le dañó la moto')).toBeVisible();
+  });
+
+  it('says who attended it and who marked it a no-show, and when (CA-11)', () => {
+    const { unmount } = renderDetail(
+      reservation({
+        status: 'attended',
+        attended_at: '2030-06-12T09:05:00-05:00',
+        attended_by_name: 'Oscar Operador',
+        work_order_id: 'o7',
+        work_order_number: 7,
+      })
+    );
+    expect(
+      screen.getByText('Atendida por Oscar Operador el 12 de junio de 2030 a las 9:05 a. m.')
+    ).toBeVisible();
+    unmount();
+
+    renderDetail(
+      reservation({
+        status: 'no_show',
+        no_show_at: '2030-06-12T09:20:00-05:00',
+        no_show_by_name: 'Ana Admin',
+      })
+    );
+    expect(
+      screen.getByText('Marcada «No asistió» por Ana Admin el 12 de junio de 2030 a las 9:20 a. m.')
+    ).toBeVisible();
+  });
 });

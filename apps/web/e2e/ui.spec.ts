@@ -76,9 +76,8 @@ test.describe('on a 360 px phone', () => {
     const { data: reservation } = await adminClient()
       .from('reservations')
       .select('id, slot_start')
-      .eq('status', 'pending')
-      .order('slot_start')
-      .limit(1)
+      // The seeded reservation of Camila tomorrow (seeds/06): other tests create and delete theirs.
+      .eq('notes', 'Pidió turno por WhatsApp')
       .single();
     const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
       new Date(reservation!.slot_start)
@@ -284,26 +283,27 @@ test.describe('on an iPhone (390 × 844) — the phone experience (spec 009)', (
     await expect(tiles.getByText('Gestionar usuarios')).toBeHidden();
   });
 
-  test('the home leads with «Órdenes» and what is open, then tiles in two columns, centred, without «Muy pronto» (CA-06 to CA-08)', async ({
+  test('the home leads with «Órdenes» and what is open, then tiles in two columns, centred, without «Muy pronto» (CA-06 to CA-08; spec 012 adds «Agenda»)', async ({
     page,
   }) => {
     await signIn(page, SEED.operator.email);
     await expect(page).toHaveURL('/');
 
     const tiles = page.getByRole('list', { name: 'Secciones' }).getByRole('link');
-    await expect(tiles).toHaveCount(4);
-    const [orders, customers, services, employees] = (await Promise.all(
-      [0, 1, 2, 3].map(async (index) => (await tiles.nth(index).boundingBox())!)
-    )) as [Box, Box, Box, Box];
-    // «Órdenes» leads, full width; then two per row: Clientes and Servicios side by side, and the
-    // lone last one (Empleados, for an operator) takes the whole row.
-    expect(Math.abs(customers.y - services.y)).toBeLessThanOrEqual(1);
-    expect(services.x).toBeGreaterThan(customers.x + customers.width - 1);
-    expect(customers.y).toBeGreaterThan(orders.y + orders.height - 1);
-    expect(
-      Math.abs(orders.width - (services.x + services.width - customers.x))
-    ).toBeLessThanOrEqual(1);
-    expect(Math.abs(employees.width - orders.width)).toBeLessThanOrEqual(1);
+    await expect(tiles).toHaveCount(5);
+    const [orders, agenda, customers, services, employees] = (await Promise.all(
+      [0, 1, 2, 3, 4].map(async (index) => (await tiles.nth(index).boundingBox())!)
+    )) as [Box, Box, Box, Box, Box];
+    // «Órdenes» leads, full width; then two per row: Agenda and Clientes, Servicios and Empleados
+    // (spec 012 added «Agenda»: no lone last tile for an operator any more).
+    expect(Math.abs(agenda.y - customers.y)).toBeLessThanOrEqual(1);
+    expect(customers.x).toBeGreaterThan(agenda.x + agenda.width - 1);
+    expect(agenda.y).toBeGreaterThan(orders.y + orders.height - 1);
+    expect(Math.abs(orders.width - (customers.x + customers.width - agenda.x))).toBeLessThanOrEqual(
+      1
+    );
+    expect(Math.abs(services.y - employees.y)).toBeLessThanOrEqual(1);
+    expect(services.y).toBeGreaterThan(agenda.y + agenda.height - 1);
     // Centred in the screen, not stuck to the top: about as much room above as below.
     const main = (await page.getByRole('main').boundingBox())!;
     const greeting = (await page.getByRole('heading', { name: /Hola/ }).boundingBox())!;
