@@ -327,6 +327,9 @@ Convenciones:
       aviso de guardado sale junto a su botón (prueba vista fallar pintando el de la configuración
       en la tarjeta de la semana). El seed pone los ejemplos de hoy dentro del horario (después de
       cerrar, en la última franja).
+- [x] T069 (petición del usuario) El refresco en tiempo real solo en inicio, «Órdenes» y «Agenda»
+      con sus detalles (CA-35): pruebas de `realtime-refresh` por ruta, vistas fallar refrescando
+      en todas las pantallas.
 
 ## Cierre
 

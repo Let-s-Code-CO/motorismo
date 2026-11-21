@@ -280,7 +280,8 @@ e2e/                         # Playwright
   `customerLocked`.
 - **Al día sin recargar (HU-06):** `core/components/realtime-refresh` (en el layout con sesión, solo
   personal) escucha por Realtime los cambios de órdenes, reservas y agenda (publicadas en
-  `supabase_realtime`; Realtime respeta RLS) y hace `router.refresh()` agrupando ráfagas; también al
+  `supabase_realtime`; Realtime respeta RLS) y hace `router.refresh()` agrupando ráfagas, solo en
+  inicio, «Órdenes» y «Agenda» (en otras pantallas costaría peticiones sin mostrar nada nuevo); también al
   volver a la pestaña. Lo que depende de la hora usa `useNow` (cuenta regresiva de la «Reserva por
   llegar», franjas que empiezan, «Pasó su tolerancia»). «+5 min» (`extend_reservation_tolerance`)
   lo usa cualquier miembro del personal, hasta 60, y queda registrado (`reservation_extensions`: el

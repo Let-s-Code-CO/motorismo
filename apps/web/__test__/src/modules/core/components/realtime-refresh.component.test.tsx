@@ -8,6 +8,9 @@
  *   touches several rows) refreshes once, half a second after the last one.
  * - Coming back to the tab refreshes too (changes may have happened while it was hidden).
  * - It stops listening when it goes away.
+ * - Only the screens that show orders or reservations refresh (CA-35: home, «Órdenes» and an order,
+ *   «Agenda» and a reservation): every refresh asks the server again for the page and its links,
+ *   which on «Clientes» or «Servicios» would cost requests and show nothing new.
  * The refresh keeps what is on the client (what is being typed, open dialogs): it is Next's
  * `router.refresh()`.
  */
@@ -17,7 +20,8 @@ import RealtimeRefresh from '@web/modules/core/components/realtime-refresh.compo
 import { createSupabaseBrowserClient } from '@web/modules/core/lib/supabase-browser.lib';
 
 const refresh = vi.fn();
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }));
+let pathname = '/orders';
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }), usePathname: () => pathname }));
 vi.mock('@web/modules/core/lib/supabase-browser.lib', () => ({
   createSupabaseBrowserClient: vi.fn(),
 }));
@@ -47,6 +51,7 @@ describe('RealtimeRefresh', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    pathname = '/orders';
   });
 
   it('listens to orders, reservations and the agenda (CA-35)', () => {
@@ -97,4 +102,36 @@ describe('RealtimeRefresh', () => {
 
     expect(realtime.removeChannel).toHaveBeenCalledWith(realtime.channel);
   });
+
+  it.each(['/', '/orders', '/orders/abc', '/agenda', '/agenda/abc'])(
+    'refreshes %s, which shows orders or reservations (CA-35)',
+    (path) => {
+      pathname = path;
+      const realtime = fakeRealtime();
+      render(<RealtimeRefresh />);
+
+      realtime.change();
+      act(() => vi.advanceTimersByTime(500));
+
+      expect(refresh).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it.each(['/customers', '/services', '/employees', '/users', '/customers/abc'])(
+    'leaves %s alone, which shows neither: no requests for nothing (CA-35)',
+    (path) => {
+      pathname = path;
+      const realtime = fakeRealtime();
+      render(<RealtimeRefresh />);
+
+      realtime.change();
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      act(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(refresh).not.toHaveBeenCalled();
+    }
+  );
 });

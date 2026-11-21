@@ -484,6 +484,9 @@ Ninguna.
   ocultó; las que terminaron con reservas dicen «Ya pasó» y la actual «En curso». `slot-picker` no
   ofrece las terminadas y avisa si no queda ninguna. Sin cambios en la base: `agenda_slots` ya
   rechaza reservar una franja empezada.
+- **Solo donde se ve (CA-35):** `RealtimeRefresh` sigue escuchando en todo el layout con sesión,
+  pero solo refresca en `/`, `/orders…` y `/agenda…`. Un refresco vuelve a pedir la página y sus
+  enlaces precargados, y en otras pantallas no mostraría nada nuevo.
 - **Sandbox:** `sandbox:start` ya no excluye Realtime.
 
 ## Despliegue
