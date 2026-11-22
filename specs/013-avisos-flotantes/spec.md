@@ -1,7 +1,7 @@
 ---
 id: "013"
 titulo: "Avisos flotantes de confirmación"
-estado: planificada
+estado: implementada
 creada: 2026-11-21
 actualizada: 2026-11-21
 ---
@@ -162,3 +162,5 @@ Ninguna.
 | 2026-11-21 | Creación, a partir del aviso de «Horario» que quedó fuera de la vista (spec 012). Decisiones del usuario: abajo a la derecha en escritorio; errores mixtos (flotantes solo los de acciones sueltas, sin cerrarse solos; los de formularios y diálogos se quedan dentro); confirmaciones de 5 segundos. |
 | 2026-11-21 | Aprobada por el usuario. |
 | 2026-11-21 | Plan aprobado: estado `planificada`. |
+| 2026-11-21 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`), en una rama que sale de la 012 (migra pantallas que solo existen ahí). |
+| 2026-11-21 | Implementada. Además del inventario: «Usuarios» también pasa a avisos flotantes, y los avisos suben por encima de los banners de abajo de la spec 006 (instalar, versión nueva) en lugar de taparlos (CA-02). |

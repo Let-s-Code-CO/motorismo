@@ -3,7 +3,8 @@
  *
  * Guards:
  * - CA-12: shows name, email, phone and the sign-up date.
- * - CA-13: valid changes are sent and confirmed with «Tus datos se guardaron.».
+ * - CA-13: valid changes are sent and confirmed with «Tus datos se guardaron.», as a floating
+ *   notice (spec 013, CA-01); a refusal stays inside the form (spec 013, CA-08).
  * - CA-14: an empty name or an invalid phone is reported next to the field and nothing is sent;
  *   the email is shown but cannot be changed.
  */
@@ -12,7 +13,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { updateMyProfile } from '@web/modules/customers/actions/customers.actions';
 import MyProfileForm from '@web/modules/customers/components/organisms/my-profile-form.component';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('@web/modules/customers/actions/customers.actions', () => ({ updateMyProfile: vi.fn() }));
 
@@ -52,7 +53,7 @@ describe('MyProfileForm', () => {
     fireEvent.change(screen.getByLabelText(/Celular/), { target: { value: '311 222 3344' } });
     save();
 
-    expect(await screen.findByText('Tus datos se guardaron.')).toBeVisible();
+    expect(await inToasts().findByText('Tus datos se guardaron.')).toBeVisible();
     expect(updateMyProfile).toHaveBeenCalledWith({
       full_name: 'Camila Rojas',
       phone: '3112223344',
@@ -73,12 +74,13 @@ describe('MyProfileForm', () => {
     expect(updateMyProfile).not.toHaveBeenCalled();
   });
 
-  it('shows the error returned by the server', async () => {
+  it('shows the error returned by the server inside the form, not as a floating notice (spec 013, CA-08)', async () => {
     vi.mocked(updateMyProfile).mockResolvedValue({ ok: false, error: 'generic' });
     renderWithProviders(<MyProfileForm customer={customer} />);
 
     save();
 
     expect(await screen.findByText('Algo salió mal. Inténtalo de nuevo.')).toBeVisible();
+    expect(inToasts().queryByText('Algo salió mal. Inténtalo de nuevo.')).not.toBeInTheDocument();
   });
 });

@@ -1,12 +1,11 @@
 'use client';
 
-import { type ReactNode, useId, useState } from 'react';
+import { type ReactNode, useId } from 'react';
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 import {
-  Alert,
   Button,
   Modal,
   ModalBody,
@@ -17,6 +16,7 @@ import {
 } from '@heroui/react';
 import { Pencil } from 'lucide-react';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import CustomerForm from '@web/modules/customers/components/organisms/customer-form.component';
 
@@ -39,15 +39,14 @@ const Field = ({ label, children }: { label: string; children: ReactNode }) => (
 
 /**
  * "Datos de contacto" of a customer record (spec 004, CA-18): email and phone, and — from an icon
- * button in the card's header — the edit form in a dialog (CA-27). A saved change is announced in
- * the card, next to the data it changed.
+ * button in the card's header — the edit form in a dialog (CA-27). A saved change is announced
+ * with a floating notice (spec 013).
  */
 const CustomerContactCard = ({ customer }: CustomerContactCardProps) => {
   const t = useTranslations('customers');
   const router = useRouter();
   const titleId = useId();
   const { isOpen, onOpen, onClose, onOpenChange } = useDisclosure();
-  const [saved, setSaved] = useState(false);
 
   return (
     <section
@@ -66,25 +65,12 @@ const CustomerContactCard = ({ customer }: CustomerContactCardProps) => {
             variant="light"
             aria-label={t('detail.edit')}
             className="-my-1 -mr-1.5 text-default-500 transition-colors hover:text-foreground"
-            onPress={() => {
-              setSaved(false);
-              onOpen();
-            }}
+            onPress={onOpen}
           >
             <Pencil aria-hidden className="size-4" />
           </Button>
         </Tooltip>
       </div>
-
-      {saved && (
-        <Alert
-          color="success"
-          variant="faded"
-          title={t('updated')}
-          className="mb-4"
-          onClose={() => setSaved(false)}
-        />
-      )}
 
       <dl className="flex flex-col gap-4">
         <Field label={t('detail.email')}>{customer.email ?? t('detail.none')}</Field>
@@ -110,7 +96,7 @@ const CustomerContactCard = ({ customer }: CustomerContactCardProps) => {
               onCancel={onClose}
               onSaved={() => {
                 onClose();
-                setSaved(true);
+                notify({ tone: 'success', text: t('updated') });
                 router.refresh();
               }}
             />

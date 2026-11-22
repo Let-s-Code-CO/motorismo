@@ -18,7 +18,7 @@ import { markNoShow } from '@web/modules/reservations/actions/reservations.actio
 import ReservationDetail from '@web/modules/reservations/components/organisms/reservation-detail.component';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 const refresh = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }));
@@ -135,8 +135,21 @@ describe('ReservationDetail', () => {
     fireEvent.click(screen.getByRole('button', { name: 'No asistió' }));
 
     await vi.waitFor(() => expect(markNoShow).toHaveBeenCalledWith({ id: 'r1' }));
-    expect(await screen.findByText('Reserva marcada como «No asistió».')).toBeVisible();
+    expect(await inToasts().findByText('Reserva marcada como «No asistió».')).toBeVisible();
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it('says why «No asistió» was refused, as an error that stays (spec 013, CA-07)', async () => {
+    vi.mocked(markNoShow).mockResolvedValue({ ok: false, error: 'noShowTooEarly' });
+    nowAt('2030-06-12T09:16:00-05:00');
+    renderDetail(reservation());
+
+    fireEvent.click(screen.getByRole('button', { name: 'No asistió' }));
+
+    const error = await inToasts().findByText(
+      'El cliente aún puede llegar: espera a que pase su tolerancia.'
+    );
+    expect(error.closest('[data-toast]')).toHaveAttribute('data-toast', 'danger');
   });
 
   it.each([

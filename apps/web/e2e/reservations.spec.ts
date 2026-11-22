@@ -196,9 +196,17 @@ test.describe('the agenda (spec 012)', () => {
     await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
     await page.getByRole('button', { name: 'Guardar reserva' }).click();
 
-    await expect(page).toHaveURL(/\/agenda\/[0-9a-f-]{36}\?saved=1$/);
+    await expect(page).toHaveURL(/\/agenda\/[0-9a-f-]{36}$/);
     created.push(page.url().split('/agenda/')[1]!.split('?')[0]!);
-    await expect(page.getByText('Reserva guardada.')).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Avisos' }).getByText('Reserva guardada.')
+    ).toBeVisible();
+    // Spec 013, CA-05: the notice is not in the address: a reload does not repeat it.
+    await page.reload();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Avisos' })).not.toContainText(
+      'Reserva guardada.'
+    );
 
     await page.goto(`/agenda?date=${monday}`);
     const ten = slot(page, '10:00 a. m. – 11:00 a. m.');
@@ -278,7 +286,10 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     await page.getByRole('button', { name: 'Llegó' }).click();
     await expect(page.getByRole('group', { name: 'Lavado sencillo' })).toBeVisible();
     await page.getByRole('button', { name: 'Abrir orden' }).click();
-    await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}\?saved=opened$/);
+    await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
+    await expect(
+      page.getByRole('region', { name: 'Avisos' }).getByText('Orden abierta.')
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /^Viene de la reserva de las/ })).toHaveAttribute(
       'href',
       `/agenda/${id}`
@@ -317,7 +328,9 @@ test.describe('changing, cancelling and no-shows (spec 012, HU-04)', () => {
     await page.getByRole('button', { name: 'Cambiar' }).click();
     await page.getByRole('radio', { name: /^4:00 p\. m\./ }).check({ force: true });
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(page.getByText('Reserva guardada.')).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Avisos' }).getByText('Reserva guardada.')
+    ).toBeVisible();
     await expect(page.getByText(/4:00 p\. m\. – 5:00 p\. m\./)).toBeVisible();
 
     await page.getByRole('button', { name: 'Cancelar reserva' }).click();

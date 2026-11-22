@@ -48,6 +48,7 @@
   --animate-progress: progress 8s cubic-bezier(0.1, 0.7, 0.3, 1) 120ms both;
   /* …and fills up and fades out once the new screen is shown. */
   --animate-progress-done: progress-done 300ms ease-out both;
+  --animate-toast-in: toast-in 200ms ease-out both;
 
   @keyframes page-in {
     from {
@@ -75,6 +76,18 @@
     }
     to {
       width: 80%;
+    }
+  }
+
+  /* Spec 013: a floating notice comes up a little as it appears (only with `motion-safe:`). */
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 

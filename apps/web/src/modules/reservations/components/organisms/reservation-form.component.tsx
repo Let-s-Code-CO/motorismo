@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Checkbox, CheckboxGroup, Input, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { saveReservation } from '@web/modules/reservations/actions/reservations.actions';
 import SlotPicker from '@web/modules/reservations/components/molecules/slot-picker.component';
@@ -130,7 +131,9 @@ const ReservationForm = ({ day, initialStart, reservation }: ReservationFormProp
     // No network (spec 006, CA-10): the app-wide notice speaks; the form stays as it was.
     if (!result) return;
     if (result.ok) {
-      router.push(`/agenda/${result.id}?saved=1`);
+      // Spec 013, CA-05: «Reserva guardada.» shows on the reservation, once.
+      notify({ tone: 'success', text: t('detail.saved'), after: `/agenda/${result.id}` });
+      router.push(`/agenda/${result.id}`);
       return;
     }
     setServerError(result.error);

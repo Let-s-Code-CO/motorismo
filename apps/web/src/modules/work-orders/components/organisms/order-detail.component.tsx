@@ -6,7 +6,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button } from '@heroui/react';
+import { Button } from '@heroui/react';
 import {
   ArrowLeft,
   Ban,
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 
 import useClock from '@web/modules/core/hooks/clock.hook';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
@@ -66,8 +67,6 @@ const HistoryLine = ({
 type OrderDetailProps = {
   order: WorkOrderDetail;
   isAdmin: boolean;
-  /** What was just done, to announce it (after opening an order). */
-  saved?: 'opened';
   /**
    * Spec 012: the customer arrived for a reservation and this vehicle already had this order open:
    * it opens editing, and saving links the reservation to it.
@@ -82,7 +81,7 @@ type OrderDetailProps = {
  * closed, only an admin corrects or voids it (CA-22, CA-23, RN-05); voided, nothing more. A voided
  * or corrected order says by whom, when and why.
  */
-const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) => {
+const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
   const t = useTranslations('orders');
   const tVehicles = useTranslations('vehicles');
   const format = useFormatter();
@@ -95,20 +94,21 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
   const [voiding, setVoiding] = useState(false);
   const [correcting, setCorrecting] = useState(false);
   const [correction, setCorrection] = useState<WorkOrderValues | null>(null);
-  const [notice, setNotice] = useState<string | undefined>(
-    saved === 'opened' ? t('editor.opened') : undefined
-  );
   const isOpen = summary.status === 'open';
   const stage = orderStage(summary);
   const VehicleIcon = VEHICLE_ICONS[summary.vehicle_type ?? ''] ?? Motorbike;
   const [starting, setStarting] = useState(false);
   const start = async () => {
-    setNotice(undefined);
     setStarting(true);
     const result = await callAction(() => startWorkOrder({ id: summary.id ?? '' }));
     setStarting(false);
     if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-    setNotice(result.ok ? t('detail.started') : t(`errors.${result.error}`));
+    // Spec 013: a floating notice; a refusal is an error that stays until closed (CA-07).
+    notify(
+      result.ok
+        ? { tone: 'success', text: t('detail.started') }
+        : { tone: 'danger', text: t(`errors.${result.error}`) }
+    );
     router.refresh();
   };
   const isClosed = summary.status === 'closed';
@@ -155,7 +155,6 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
             variant="bordered"
             startContent={<FilePen aria-hidden className="size-4" />}
             onPress={() => {
-              setNotice(undefined);
               setCorrecting(true);
             }}
           >
@@ -178,7 +177,6 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
               variant="bordered"
               startContent={<Pencil aria-hidden className="size-4" />}
               onPress={() => {
-                setNotice(undefined);
                 setEditing(true);
               }}
             >
@@ -189,7 +187,6 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
               className="font-medium"
               startContent={<Wallet aria-hidden className="size-4" />}
               onPress={() => {
-                setNotice(undefined);
                 setClosing(true);
               }}
             >
@@ -198,8 +195,6 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
           </div>
         )}
       </div>
-
-      {notice && <Alert color="success" variant="faded" title={notice} />}
 
       {/*
        * The order's card, in three bands: what came in and whose it is (the vehicle with its plate,
@@ -323,7 +318,7 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
           onCancel={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);
-            setNotice(t('editor.updated'));
+            notify({ tone: 'success', text: t('editor.updated') });
             router.refresh();
           }}
         />
@@ -408,7 +403,6 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
             className="bg-danger-600 font-medium data-[hover=true]:bg-danger-700 dark:bg-danger-300 dark:data-[hover=true]:bg-danger-200"
             startContent={<Ban aria-hidden className="size-4" />}
             onPress={() => {
-              setNotice(undefined);
               setVoiding(true);
             }}
           >
@@ -425,7 +419,7 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
           onCancel={() => setVoiding(false)}
           onVoided={() => {
             setVoiding(false);
-            setNotice(t('void.voided'));
+            notify({ tone: 'success', text: t('void.voided') });
             router.refresh();
           }}
         />
@@ -441,7 +435,7 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
           onClosed={() => {
             setCorrection(null);
             setCorrecting(false);
-            setNotice(t('correct.corrected'));
+            notify({ tone: 'success', text: t('correct.corrected') });
             router.refresh();
           }}
         />
@@ -455,7 +449,7 @@ const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) =
           onCancel={() => setClosing(false)}
           onClosed={() => {
             setClosing(false);
-            setNotice(t('close.closed'));
+            notify({ tone: 'success', text: t('close.closed') });
             router.refresh();
           }}
         />

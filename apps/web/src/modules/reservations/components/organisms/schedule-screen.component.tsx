@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { Alert, Button, Input, Switch } from '@heroui/react';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import {
   saveAgendaSettings,
@@ -29,7 +30,6 @@ import { addDays, weekDays } from '@web/modules/reservations/utils/agenda-date.u
 
 type ScheduleScreenProps = { week: AgendaWeek; settings: AgendaSettings };
 
-type Notice = { tone: 'success' | 'danger'; text: string };
 type SettingsFields = { slot_minutes: string; seats: string; tolerance_minutes: string };
 
 const CARD = 'rounded-large border border-divider bg-content1 shadow-small';
@@ -49,9 +49,10 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
   const [schedule, setSchedule] = useState<AgendaWeekDay[]>(week.days);
   const [enabled, setEnabled] = useState(week.enabled || !week.saved);
   const [dayErrors, setDayErrors] = useState<Record<number, string>>({});
-  // Each save speaks next to its own button: the settings are at the bottom of the page (CA-29).
-  const [weekNotice, setWeekNotice] = useState<Notice>();
-  const [settingsNotice, setSettingsNotice] = useState<Notice>();
+  // A refusal stays below its own button, inside its form (spec 013, CA-08); a save that went well
+  // says so in a floating notice (spec 013, CA-01).
+  const [weekError, setWeekError] = useState<string>();
+  const [settingsError, setSettingsError] = useState<string>();
   const weekTitleId = useId();
   const settingsTitleId = useId();
   const [fields, setFields] = useState<SettingsFields>({
@@ -84,13 +85,14 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
       const result = await callAction(() => saveAgendaWeek(input));
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       if (result.ok) {
-        setWeekNotice({ tone: 'success', text: t('scheduleScreen.saved') });
+        setWeekError(undefined);
+        notify({ tone: 'success', text: t('scheduleScreen.saved') });
         router.refresh();
         return;
       }
       const index = result.day ? days.indexOf(result.day) : -1;
       if (index >= 0) setDayErrors({ [index]: t('validation.dayInvalid') });
-      setWeekNotice({ tone: 'danger', text: t(`errors.${result.error}`) });
+      setWeekError(t(`errors.${result.error}`));
     });
   };
 
@@ -108,12 +110,13 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
     startSettings(async () => {
       const result = await callAction(() => saveAgendaSettings(parsed.data));
       if (!result) return;
-      setSettingsNotice(
-        result.ok
-          ? { tone: 'success', text: t('scheduleScreen.settingsSaved') }
-          : { tone: 'danger', text: t(`errors.${result.error}`) }
-      );
-      if (result.ok) router.refresh();
+      if (!result.ok) {
+        setSettingsError(t(`errors.${result.error}`));
+        return;
+      }
+      setSettingsError(undefined);
+      notify({ tone: 'success', text: t('scheduleScreen.settingsSaved') });
+      router.refresh();
     });
   };
 
@@ -213,7 +216,7 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
           >
             {t('scheduleScreen.save')}
           </Button>
-          {weekNotice && <Alert color={weekNotice.tone} variant="faded" title={weekNotice.text} />}
+          {weekError && <Alert color="danger" variant="faded" title={weekError} />}
         </div>
       </section>
 
@@ -234,9 +237,7 @@ const ScheduleScreen = ({ week, settings }: ScheduleScreenProps) => {
         >
           {t('scheduleScreen.saveSettings')}
         </Button>
-        {settingsNotice && (
-          <Alert color={settingsNotice.tone} variant="faded" title={settingsNotice.text} />
-        )}
+        {settingsError && <Alert color="danger" variant="faded" title={settingsError} />}
       </section>
     </section>
   );

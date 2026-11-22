@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { Alert, Button } from '@heroui/react';
 import { MonitorSmartphone } from 'lucide-react';
 
+import useBottomBanner from '@web/modules/core/hooks/bottom-banner.hook';
 import IosInstallSteps from '@web/modules/pwa/components/ios-install-steps.component';
 import useConnection from '@web/modules/pwa/hooks/connection.hook';
 import useHasNewVersion from '@web/modules/pwa/hooks/has-new-version.hook';
@@ -22,6 +23,8 @@ import { isInstallSnoozed, snoozeInstall } from '@web/modules/pwa/utils/install-
  */
 const InstallBanner = () => {
   const t = useTranslations('pwa.install');
+  // Spec 013: the floating notices rise above this banner instead of covering it.
+  const makeRoom = useBottomBanner();
   const option = useInstallPrompt();
   const online = useConnection() === 'online';
   const hasNewVersion = useHasNewVersion();
@@ -39,7 +42,10 @@ const InstallBanner = () => {
        * takes its own room below the footer, so it never covers the last thing on a page (such as
        * «Anular orden», spec 008). It is the last child of the signed-in layout for that.
        */}
-      <div className="sticky bottom-4 z-40 mx-4 mb-4 rounded-medium shadow-large sm:mx-auto sm:w-full sm:max-w-xl">
+      <div
+        ref={makeRoom}
+        className="sticky bottom-4 z-40 mx-4 mb-4 rounded-medium shadow-large sm:mx-auto sm:w-full sm:max-w-xl"
+      >
         <Alert
           color="default"
           variant="faded"

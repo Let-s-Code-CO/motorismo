@@ -13,6 +13,7 @@
 import { type Page, expect, test } from '@playwright/test';
 
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
+import { SETTINGS_SAVED, saveAgendaSettings, toast } from './support/toasts';
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -222,6 +223,28 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
     await expect(page.getByRole('dialog', { name: 'Menú principal' })).toHaveCount(0);
     await page.getByRole('button', { name: /tu cuenta$/i }).click();
     await expect(page.getByRole('menu', { name: 'Tu cuenta' })).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+    await page.keyboard.press('Escape');
+
+    // Spec 013, CA-02: a floating notice, at the bottom and full width (440 − 2 × 16 = 408).
+    await saveAgendaSettings(page);
+    const notice = toast(page, SETTINGS_SAVED);
+    await expect(notice).toBeInViewport();
+    expect(Math.round((await notice.boundingBox())!.width)).toBe(408);
+    // Above the install banner of this iPhone (spec 006), not over it.
+    const banner = page
+      .getByText('Instala Motorismo en este dispositivo')
+      .locator('xpath=ancestor::*[contains(@class, "sticky")][1]');
+    await expect(banner).toBeVisible();
+    await expect
+      .poll(async () => {
+        const [top, bottom] = await Promise.all([
+          banner.boundingBox().then((box) => box!.y),
+          notice.boundingBox().then((box) => box!.y + box!.height),
+        ]);
+        return bottom < top;
+      })
+      .toBe(true);
     expect(await horizontalOverflow(page)).toBe(0);
   });
 });

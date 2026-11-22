@@ -15,7 +15,7 @@ import { setEmployeeDisabled } from '@web/modules/employees/actions/employees.ac
 import type { EmployeeRow } from '@web/modules/employees/api/employees.server';
 import EmployeesScreen from '@web/modules/employees/components/organisms/employees-screen.component';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('@web/modules/employees/actions/employees.actions', () => ({
@@ -107,7 +107,7 @@ describe('EmployeesScreen', () => {
     await screen.findByRole('dialog', { name: /¿Desactivar a «Elkin Estrada»?/ });
     fireEvent.click(screen.getByRole('button', { name: 'Desactivar' }));
 
-    expect(await screen.findByText('Empleado desactivado.')).toBeVisible();
+    expect(await inToasts().findByText('Empleado desactivado.')).toBeVisible();
     expect(setEmployeeDisabled).toHaveBeenCalledWith({
       id: '30000000-0000-4000-8000-000000000001',
       disabled: true,
@@ -126,7 +126,7 @@ describe('EmployeesScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Acciones de Diego Desactivado' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Reactivar' }));
 
-    expect(await screen.findByText('Empleado reactivado.')).toBeVisible();
+    expect(await inToasts().findByText('Empleado reactivado.')).toBeVisible();
     expect(setEmployeeDisabled).toHaveBeenCalledWith({ id: diego.id, disabled: false });
   });
 });

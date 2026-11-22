@@ -119,6 +119,10 @@
     "loading": {
       "label": "Cargando…",
       "entering": "Entrando…"
+    },
+    "toast": {
+      "region": "Avisos",
+      "close": "Cerrar"
     }
   }
 }

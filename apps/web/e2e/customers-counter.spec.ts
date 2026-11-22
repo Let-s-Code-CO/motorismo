@@ -113,9 +113,7 @@ test('edits a counter customer, and the email of an account is read-only (CA-27)
 
   await expect(dialog).toBeHidden();
   await expect(
-    page
-      .getByRole('region', { name: 'Datos de contacto' })
-      .getByText('Datos del cliente guardados.')
+    page.getByRole('region', { name: 'Avisos' }).getByText('Datos del cliente guardados.')
   ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'E2E Mostrador Editado' })).toBeVisible();
   await expect(page.getByText('301 555 0000')).toBeVisible();

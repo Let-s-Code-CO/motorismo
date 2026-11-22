@@ -35,7 +35,9 @@ test('an invited person creates their password and enters; the link works only o
   await dialog.getByRole('radio', { name: 'Operador' }).check({ force: true });
   await dialog.getByRole('button', { name: 'Enviar invitación' }).click();
 
-  await expect(page.getByRole('status')).toHaveText(`Invitación enviada a ${email}.`);
+  await expect(
+    page.getByRole('region', { name: 'Avisos' }).getByText(`Invitación enviada a ${email}.`)
+  ).toBeVisible();
   const row = page.getByRole('row', { name: new RegExp(name) });
   await expect(row.getByText('Invitado', { exact: true })).toBeVisible();
 

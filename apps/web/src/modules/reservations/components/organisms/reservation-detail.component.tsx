@@ -6,10 +6,11 @@ import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button, Chip } from '@heroui/react';
+import { Button, Chip } from '@heroui/react';
 import { ArrowLeft, DoorOpen, Pencil, Timer, UserX } from 'lucide-react';
 
 import useClock from '@web/modules/core/hooks/clock.hook';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { markNoShow } from '@web/modules/reservations/actions/reservations.actions';
@@ -30,15 +31,11 @@ type ReservationDetailProps = {
   today: string;
   isAdmin: boolean;
   generalTolerance: number;
-  /** The notice of what was just done (`?saved=1` after booking or changing it). */
-  saved?: boolean;
   /** Each «+5 min» it was given, oldest first (CA-38). */
   extensions?: ReservationExtension[];
   /** Where «Volver» goes: the agenda, or «Órdenes» when it was opened from the queue. */
   backTo?: 'agenda' | 'orders';
 };
-
-type Notice = { tone: 'success' | 'danger'; text: string };
 
 /**
  * A reservation (spec 012, CA-11): who, which vehicle, the services, the slot, its tolerance (general
@@ -52,7 +49,6 @@ const ReservationDetail = ({
   today,
   isAdmin,
   generalTolerance,
-  saved,
   extensions = [],
   backTo = 'agenda',
 }: ReservationDetailProps) => {
@@ -63,9 +59,6 @@ const ReservationDetail = ({
   const vehicleOf = useReservationVehicle();
   const router = useRouter();
   const now = useNow({ updateInterval: 30_000 });
-  const [notice, setNotice] = useState<Notice | undefined>(
-    saved ? { tone: 'success', text: t('detail.saved') } : undefined
-  );
   const [dialog, setDialog] = useState<'cancel' | 'tolerance'>();
   const [isPending, startTransition] = useTransition();
 
@@ -80,11 +73,12 @@ const ReservationDetail = ({
     });
   const done = (text: string) => {
     setDialog(undefined);
-    setNotice({ tone: 'success', text });
+    notify({ tone: 'success', text });
     router.refresh();
   };
+  // Spec 013: a refusal of a standalone action is an error that stays until closed (CA-07).
   const failed = (error: ReservationsErrorKey) =>
-    setNotice({ tone: 'danger', text: t(`errors.${error}`) });
+    notify({ tone: 'danger', text: t(`errors.${error}`) });
 
   const noShow = () =>
     startTransition(async () => {
@@ -141,8 +135,6 @@ const ReservationDetail = ({
           </Chip>
         )}
       </div>
-
-      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
 
       <dl className="grid gap-4 rounded-large border border-divider bg-content1 p-5 shadow-small sm:grid-cols-2">
         <div>

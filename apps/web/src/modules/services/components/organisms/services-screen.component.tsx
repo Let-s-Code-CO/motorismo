@@ -5,10 +5,11 @@ import { useId, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
+import { Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
 import { ChevronDown, Plus } from 'lucide-react';
 
 import ConfirmDialog from '@web/modules/core/components/confirm-dialog.component';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { setServiceDisabled } from '@web/modules/services/actions/services.actions';
 import type { ServiceRow } from '@web/modules/services/api/services.server';
@@ -23,7 +24,6 @@ type ServicesScreenProps = {
 };
 
 type Editing = { mode: 'new' } | { mode: 'edit'; service: ServiceRow } | null;
-type Notice = { tone: 'success' | 'danger'; text: string };
 
 /**
  * «Servicios» (spec 007, HU-01, HU-03, HU-04): the active services, and apart the disabled ones
@@ -37,7 +37,6 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
   const [editing, setEditing] = useState<Editing>(null);
   const [disabling, setDisabling] = useState<ServiceRow | null>(null);
   const [showDisabled, setShowDisabled] = useState(false);
-  const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
 
   const active = services.filter((service) => service.disabled_at === null);
@@ -50,7 +49,8 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
       );
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       setDisabling(null);
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? { tone: 'success', text: disable ? t('disabledNotice') : t('reactivated') }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
@@ -61,11 +61,9 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
   const adminActions = isAdmin
     ? {
         onEdit: (service: ServiceRow) => {
-          setNotice(undefined);
           setEditing({ mode: 'edit', service });
         },
         onDisable: (service: ServiceRow) => {
-          setNotice(undefined);
           setDisabling(service);
         },
       }
@@ -84,7 +82,6 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
             className="font-medium"
             startContent={<Plus aria-hidden className="size-4" />}
             onPress={() => {
-              setNotice(undefined);
               setEditing({ mode: 'new' });
             }}
           >
@@ -92,8 +89,6 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
           </Button>
         )}
       </div>
-
-      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
 
       <ServicesTable
         services={active}
@@ -130,7 +125,6 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
                 label={t('table.disabledLabel')}
                 isBusy={isPending}
                 onReactivate={(service) => {
-                  setNotice(undefined);
                   toggle(service, false);
                 }}
               />
@@ -158,7 +152,7 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
                   onSaved={() => {
                     const wasEditing = editing?.mode === 'edit';
                     onClose();
-                    setNotice({ tone: 'success', text: wasEditing ? t('updated') : t('created') });
+                    notify({ tone: 'success', text: wasEditing ? t('updated') : t('created') });
                     router.refresh();
                   }}
                 />

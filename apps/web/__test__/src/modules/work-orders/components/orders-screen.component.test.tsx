@@ -23,7 +23,7 @@ import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.act
 import OrdersScreen from '@web/modules/work-orders/components/organisms/orders-screen.component';
 import type { WorkOrderSummary } from '@web/modules/work-orders/types/work-orders.types';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 const refresh = vi.fn();
 vi.mock('next/navigation', () => ({
@@ -133,9 +133,24 @@ describe('OrdersScreen', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Empezar la orden #5' }));
 
-    expect(await screen.findByText('Orden #5 en proceso.')).toBeVisible();
+    expect(await inToasts().findByText('Orden #5 en proceso.')).toBeVisible();
     expect(startWorkOrder).toHaveBeenCalledWith({ id: 'o5' });
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it('says why an order could not start, in a floating notice that stays (spec 013, CA-07)', async () => {
+    vi.mocked(startWorkOrder).mockResolvedValue({ ok: false, error: 'alreadyStarted' });
+    renderWithProviders(
+      <OrdersScreen
+        open={[order({ id: 'o5', number: 5 })]}
+        closed={{ rows: [], total: 0 }}
+        page={1}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Empezar la orden #5' }));
+
+    expect(await inToasts().findByText('Esta orden ya está en proceso.')).toBeVisible();
   });
 
   it('says so when nothing is in progress or waiting', () => {
@@ -334,7 +349,7 @@ describe('OrdersScreen with reservations (spec 012)', () => {
       );
       // 9:00 a. m. + 20 minutes.
       expect(
-        await screen.findByText('Carla Cliente conserva su turno hasta las 9:20 a. m.')
+        await inToasts().findByText('Carla Cliente conserva su turno hasta las 9:20 a. m.')
       ).toBeVisible();
       expect(refresh).toHaveBeenCalled();
     });

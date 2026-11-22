@@ -5,9 +5,10 @@ import { useId, useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
+import { Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
 import { Archive, ChevronDown, Pencil, Plus } from 'lucide-react';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import type { VehicleView } from '@web/modules/vehicles/api/vehicles.server';
 import VehicleSummary, {
   vehicleName,
@@ -51,11 +52,10 @@ const VehiclesSection = ({
   const [editing, setEditing] = useState<Editing>(null);
   const [retiring, setRetiring] = useState<{ id: string; name: string } | null>(null);
   const [showRetired, setShowRetired] = useState(false);
-  const [notice, setNotice] = useState<string>();
   const isOwn = audience === 'customer';
 
   const done = (message: string) => {
-    setNotice(message);
+    notify({ tone: 'success', text: message });
     router.refresh();
   };
 
@@ -79,7 +79,6 @@ const VehiclesSection = ({
             className="font-medium"
             startContent={<Plus aria-hidden className="size-4" />}
             onPress={() => {
-              setNotice(undefined);
               setEditing({ mode: 'add' });
             }}
           >
@@ -87,8 +86,6 @@ const VehiclesSection = ({
           </Button>
         )}
       </div>
-
-      {notice && <Alert color="success" variant="faded" title={notice} />}
       {readOnly && <p className="text-sm text-default-500">{t('section.readOnly')}</p>}
 
       {vehicles.length === 0 ? (
@@ -115,7 +112,6 @@ const VehiclesSection = ({
                       aria-label={t('section.editLabel', { vehicle: name })}
                       startContent={<Pencil aria-hidden className="size-3.5" />}
                       onPress={() => {
-                        setNotice(undefined);
                         setEditing({ mode: 'edit', vehicle });
                       }}
                     >
@@ -131,7 +127,6 @@ const VehiclesSection = ({
                       aria-label={t('section.retireLabel', { vehicle: name })}
                       startContent={<Archive aria-hidden className="size-3.5" />}
                       onPress={() => {
-                        setNotice(undefined);
                         setRetiring({ id: vehicle.id, name });
                       }}
                     >

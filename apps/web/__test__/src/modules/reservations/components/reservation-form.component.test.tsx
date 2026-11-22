@@ -3,7 +3,8 @@
  *
  * Guards:
  * - CA-01 / CA-05: with a customer and a slot (vehicle optional), saving books the seat and opens
- *   the reservation, announced (`?saved=1`).
+ *   the reservation, where «Reserva guardada.» shows once it is reached (spec 013, CA-05): not in
+ *   the address, so reloading does not repeat it.
  * - CA-04: the services offered are the active ones; with a vehicle, only those with a price for
  *   its type.
  * - The customer and the slot are required; nothing is sent without them.
@@ -17,8 +18,9 @@ import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 
+import { arrive } from '@web/modules/core/lib/toast.lib';
 import { saveReservation } from '@web/modules/reservations/actions/reservations.actions';
 import ReservationForm from '@web/modules/reservations/components/organisms/reservation-form.component';
 import type {
@@ -28,7 +30,7 @@ import type {
 } from '@web/modules/reservations/types/reservations.types';
 import { fetchActiveServices } from '@web/modules/work-orders/api/work-orders.client';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 const router = { push: vi.fn(), replace: vi.fn(), refresh: vi.fn() };
 vi.mock('next/navigation', () => ({
@@ -142,7 +144,10 @@ describe('ReservationForm', () => {
     });
     submit();
 
-    await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith('/agenda/r-new?saved=1'));
+    await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith('/agenda/r-new'));
+    expect(screen.queryByText('Reserva guardada.')).not.toBeInTheDocument();
+    act(() => arrive('/agenda/r-new'));
+    expect(inToasts().getByText('Reserva guardada.')).toBeVisible();
     expect(saveReservation).toHaveBeenCalledWith({
       customer_id: CUSTOMER,
       vehicle_id: null,

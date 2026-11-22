@@ -9,6 +9,7 @@ import { Alert, Button, Input } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Phone, User } from 'lucide-react';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import { updateMyProfile } from '@web/modules/customers/actions/customers.actions';
 import {
@@ -23,8 +24,6 @@ type MyProfileFormProps = {
   customer: { full_name: string; email: string | null; phone: string | null; created_at: string };
 };
 
-type Notice = { tone: 'success'; text: string } | { tone: 'danger'; error: CustomersErrorKey };
-
 /**
  * "Mi perfil" (spec 004, HU-03): the customer sees their data (CA-12) and changes their name and
  * phone (CA-13); the email is shown read-only (CA-14, RN-10).
@@ -32,7 +31,8 @@ type Notice = { tone: 'success'; text: string } | { tone: 'danger'; error: Custo
 const MyProfileForm = ({ customer }: MyProfileFormProps) => {
   const t = useTranslations('customers');
   const format = useFormatter();
-  const [notice, setNotice] = useState<Notice>();
+  // A refusal stays inside the form, next to what to correct (spec 013, CA-08).
+  const [serverError, setServerError] = useState<CustomersErrorKey>();
   const {
     register,
     handleSubmit,
@@ -46,14 +46,11 @@ const MyProfileForm = ({ customer }: MyProfileFormProps) => {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    setNotice(undefined);
+    setServerError(undefined);
     const result = await callAction(() => updateMyProfile(values));
     if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-    setNotice(
-      result.ok
-        ? { tone: 'success', text: t('profile.saved') }
-        : { tone: 'danger', error: result.error }
-    );
+    if (result.ok) notify({ tone: 'success', text: t('profile.saved') });
+    else setServerError(result.error);
   });
 
   const fieldError = (message?: string) => message && t(`validation.${message}`);
@@ -65,13 +62,7 @@ const MyProfileForm = ({ customer }: MyProfileFormProps) => {
           date: format.dateTime(new Date(customer.created_at), { dateStyle: 'long' }),
         })}
       </p>
-      {notice && (
-        <Alert
-          color={notice.tone}
-          variant="faded"
-          title={notice.tone === 'success' ? notice.text : t(`errors.${notice.error}`)}
-        />
-      )}
+      {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
       <Input
         {...register('full_name')}
         label={t('profile.fullName')}

@@ -6,6 +6,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Geist } from 'next/font/google';
 import { cookies } from 'next/headers';
 
+import ToastRegion from '@web/modules/core/components/toast-region.component';
 import AppProvider from '@web/modules/core/providers/app.provider';
 import { THEME_COLORS, THEME_COOKIE } from '@web/modules/theme/constants/theme.constants';
 import { ThemeProvider } from '@web/modules/theme/providers/theme.provider';
@@ -72,7 +73,10 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <NextIntlClientProvider>
           <ThemeProvider initialChoice={choice}>
-            <AppProvider>{children}</AppProvider>
+            <AppProvider>
+              {children}
+              <ToastRegion />
+            </AppProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

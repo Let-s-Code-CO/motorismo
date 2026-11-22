@@ -21,7 +21,7 @@ import { retireVehicle } from '@web/modules/vehicles/actions/vehicles.actions';
 import VehiclesSection from '@web/modules/vehicles/components/organisms/vehicles-section.component';
 
 import { buildVehicle } from '@tests/test-utils/builders';
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('@web/modules/vehicles/actions/vehicles.actions', () => ({
@@ -139,7 +139,7 @@ describe('VehiclesSection — correcting and retiring (HU-05)', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Retirar' }));
 
     await waitFor(() => expect(retireVehicle).toHaveBeenCalledWith({ id: vehicle.id }));
-    expect(await screen.findByText('Vehículo retirado.')).toBeInTheDocument();
+    expect(await inToasts().findByText('Vehículo retirado.')).toBeInTheDocument();
   });
 
   it('shows staff the retired vehicles apart, with the date and without actions (CA-22, RF-06)', () => {
