@@ -89,12 +89,25 @@ const ReservationDetail = ({
     });
 
   const trail = [
+    // Spec 014 (CA-16, CA-19): what the customer did from the app.
     r.created_at &&
-      t('detail.created', { name: r.created_by_name ?? '' }) + ' ' + when(r.created_at),
+      (r.booked_by_customer
+        ? t('detail.createdByCustomer')
+        : t('detail.created', { name: r.created_by_name ?? '' })) +
+        ' ' +
+        when(r.created_at),
     r.updated_at &&
-      t('detail.updated', { name: r.updated_by_name ?? '' }) + ' ' + when(r.updated_at),
+      (r.updated_by_customer
+        ? t('detail.updatedByCustomer')
+        : t('detail.updated', { name: r.updated_by_name ?? '' })) +
+        ' ' +
+        when(r.updated_at),
     r.cancelled_at &&
-      t('detail.cancelled', { name: r.cancelled_by_name ?? '' }) + ' ' + when(r.cancelled_at),
+      (r.cancelled_by_customer
+        ? t('detail.cancelledByCustomer')
+        : t('detail.cancelled', { name: r.cancelled_by_name ?? '' })) +
+        ' ' +
+        when(r.cancelled_at),
     r.no_show_at &&
       t('detail.noShow', { name: r.no_show_by_name ?? '' }) + ' ' + when(r.no_show_at),
     r.attended_at &&

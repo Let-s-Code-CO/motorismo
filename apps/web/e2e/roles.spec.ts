@@ -67,7 +67,7 @@ test('a customer opening «Servicios» or «Empleados» is told they have no per
   page,
 }) => {
   await signIn(page, SEED_CUSTOMERS.customer.email);
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
 
   for (const path of ['/services', '/employees']) {
     await page.goto(path);

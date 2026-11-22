@@ -32,6 +32,12 @@ const EXPECTED: Record<string, PageSkeletonVariant> = {
   'agenda/new': 'form',
   'agenda/[id]': 'detail',
   'agenda/schedule': 'form',
+  // Spec 014: the customer's area, one column like «Mi perfil».
+  my: 'profile',
+  'my/history': 'list',
+  'my/reservations': 'list',
+  'my/reservations/new': 'form',
+  'my/reservations/[id]': 'form',
 };
 
 const pages = (dir: string): string[] =>

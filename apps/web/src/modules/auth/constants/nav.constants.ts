@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Contact,
   HardHat,
+  History,
   House,
   type LucideIcon,
   Tags,
@@ -24,7 +25,8 @@ export type NavLink = {
  * Every section of the app and who may open it: the one list behind the desktop menu, the phone's
  * panel and the staff home (spec 009, RN-01), so what each role sees can never differ between them.
  * Admin options only for admins (spec 002, CA-07); «Servicios» and «Empleados» (spec 007, CA-19);
- * «Órdenes» (spec 008); «Agenda» (spec 012); a customer only has «Mi perfil» (spec 004, CA-08).
+ * «Órdenes» (spec 008); «Agenda» (spec 012); a customer has their «Inicio», «Mis reservas»,
+ * «Historial» and «Mi perfil» (spec 004, CA-08; spec 014).
  */
 export const NAV_LINKS: NavLink[] = [
   { href: '/', key: 'home', icon: House, audiences: ['admin', 'operator'] },
@@ -34,8 +36,15 @@ export const NAV_LINKS: NavLink[] = [
   { href: '/services', key: 'services', icon: Tags, audiences: ['admin', 'operator'] },
   { href: '/employees', key: 'employees', icon: HardHat, audiences: ['admin', 'operator'] },
   { href: '/admin/users', key: 'users', icon: Users, audiences: ['admin'] },
+  // Spec 014: the customer's own area.
+  { href: '/my', key: 'myHome', icon: House, audiences: ['customer'] },
+  { href: '/my/reservations', key: 'myReservations', icon: CalendarClock, audiences: ['customer'] },
+  { href: '/my/history', key: 'myHistory', icon: History, audiences: ['customer'] },
   { href: '/profile', key: 'profile', icon: UserRound, audiences: ['customer'] },
 ];
+
+/** The homes: only their own page, never their sub-pages' sections (`/my/history` is not «Inicio»). */
+const HOMES = ['/', '/my'];
 
 /** The sections this audience may open, in menu order. */
 export const navLinksFor = (audience: Audience) =>
@@ -43,4 +52,4 @@ export const navLinksFor = (audience: Audience) =>
 
 /** Whether `href` is the section of `pathname` (sub-pages belong to their section). */
 export const isCurrentSection = (href: string, pathname: string | null) =>
-  href === '/' ? pathname === '/' : !!pathname?.startsWith(href);
+  HOMES.includes(href) ? pathname === href : !!pathname?.startsWith(href);

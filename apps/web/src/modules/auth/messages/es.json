@@ -70,6 +70,9 @@
       "services": "Servicios",
       "employees": "Empleados",
       "users": "Usuarios",
+      "myHome": "Inicio",
+      "myReservations": "Mis reservas",
+      "myHistory": "Historial",
       "profile": "Mi perfil",
       "menu": "Menú",
       "brandLabel": "Motorismo Detailing, ir al inicio",
@@ -109,7 +112,7 @@
       "backHome": "Volver al inicio",
       "text": "Esta sección es solo para administradores.",
       "textCustomer": "Esta sección es solo para el personal del negocio.",
-      "toProfile": "Ir a mi perfil"
+      "toMyHome": "Ir a mi inicio"
     },
     "forgotPassword": {
       "title": "Recupera tu contraseña",

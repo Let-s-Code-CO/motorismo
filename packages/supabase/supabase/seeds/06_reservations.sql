@@ -3,7 +3,8 @@
 -- Dates are relative to today (Bogotá), so every `db:reset` has an agenda:
 --
 --   this week and the next   enabled, every day from 9:00 a. m. to 6:00 p. m.
---   tomorrow 10:00 a. m.     Camila, UIH-03D, «Lavado detallado»        pending
+--   tomorrow 10:00 a. m.     Camila, UIH-03D, «Lavado detallado»        pending, booked by Camila herself
+--                            from the app (spec 014): «Mis reservas» shows it
 --   tomorrow 10:00 a. m.     Valentina, no vehicle, no services          pending (the slot is full)
 --   tomorrow 11:00 a. m.     Andrés, his bicycle                         cancelled («Cambió de planes»)
 --   today, this slot         Gabriel, his Yamaha (registered here), «Lavado sencillo», 60 min of own
@@ -56,12 +57,19 @@ select public.save_agenda_week(
 select public.save_agenda_week(
   date_trunc('week', (now() at time zone 'America/Bogota')::date)::date + 7, pg_temp.week_days(), true);
 
+-- Spec 014: Camila books it herself, from the app.
+select set_config('request.jwt.claims',
+  json_build_object('sub', (select id from auth.users where email = 'cliente@motorismo.test'),
+                    'role', 'authenticated')::text, true);
 insert into seed_agenda select 'camila', public.save_reservation(
   (select customer_id from public.vehicles where plate = 'UIH03D'),
   (select id from public.vehicles where plate = 'UIH03D'),
   pg_temp.tomorrow_at('10:00'),
   array[(select id from public.services where name = 'Lavado detallado')],
-  'Pidió turno por WhatsApp');
+  'Llego en la moto');
+select set_config('request.jwt.claims',
+  json_build_object('sub', (select id from auth.users where email = 'sebastian.pulido@motorismo.test'),
+                    'role', 'authenticated')::text, true);
 
 insert into seed_agenda select 'valentina', public.save_reservation(
   (select customer_id from public.vehicles where plate = 'KDM482'), null, pg_temp.tomorrow_at('10:00'), '{}', null);

@@ -9,7 +9,7 @@
  * - An invited user who opened their invitation link must create a password before anything else;
  *   an invited session that did NOT come from an email link (e.g. a password sign-in) is signed
  *   out (spec 004, plan risk 2: only the link proves the invitation is theirs).
- * - Spec 004: customers land on their profile (CA-12); staff pages are not hidden by the proxy but
+ * - Spec 004: customers land on their own home (CA-12; spec 014 makes it «Inicio», `/my`); staff pages are not hidden by the proxy but
  *   answered by the page with "no permission" (CA-09); a disabled customer is signed out (CA-29);
  *   /auth/sign-up is for visitors and /privacy is public for everyone (RF-03).
  * - Spec assumption: a session unused for more than 7 days is closed.
@@ -189,20 +189,20 @@ describe('decideAccess', () => {
   describe('with a customer session (spec 004)', () => {
     const customer = { account: { kind: 'customer' as const, status: 'active' as const } };
 
-    it('sends the home page to their profile (CA-12)', () => {
+    it('sends the home page to their own home, «Inicio» (CA-12; spec 014, RF-01)', () => {
       expect(decideAccess(build({ ...customer, pathname: '/' }))).toEqual({
         type: 'redirect',
-        to: '/profile',
+        to: '/my',
         signOut: false,
       });
     });
 
     it.each(['/auth/login', '/auth/forgot-password', '/auth/sign-up'])(
-      'sends %s to their profile',
+      'sends %s to their own home (spec 014)',
       (pathname) => {
         expect(decideAccess(build({ ...customer, pathname }))).toEqual({
           type: 'redirect',
-          to: '/profile',
+          to: '/my',
           signOut: false,
         });
       }
@@ -296,15 +296,19 @@ describe('destinationAfterSignIn (spec 004, RF-02)', () => {
     ['staff', null, '/'],
     ['customer', '/profile', '/profile'],
     ['customer', '/privacy', '/privacy'],
-    ['customer', null, '/profile'],
+    // Spec 014: their area.
+    ['customer', '/my', '/my'],
+    ['customer', '/my/history', '/my/history'],
+    ['customer', '/my/reservations/new', '/my/reservations/new'],
+    ['customer', null, '/my'],
   ] as const)('a %s asking for %s goes to %s', (kind, next, expected) => {
     expect(destinationAfterSignIn(kind, next)).toBe(expected);
   });
 
-  it.each(['/customers', '/admin/users', '/', '/profiles-of-others'])(
-    'a customer who asked for %s (not theirs) goes to their profile instead',
+  it.each(['/customers', '/admin/users', '/', '/profiles-of-others', '/myself'])(
+    'a customer who asked for %s (not theirs) goes to their own home instead',
     (next) => {
-      expect(destinationAfterSignIn('customer', next)).toBe('/profile');
+      expect(destinationAfterSignIn('customer', next)).toBe('/my');
     }
   );
 

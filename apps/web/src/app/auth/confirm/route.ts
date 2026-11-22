@@ -12,7 +12,7 @@ const LINK_TYPES = ['invite', 'recovery', 'email'] as const;
 const DESTINATION: Record<(typeof LINK_TYPES)[number], string> = {
   invite: '/auth/set-password',
   recovery: '/auth/set-password',
-  email: '/profile', // spec 004, CA-03
+  email: '/my', // spec 004, CA-03: the customer's own home (spec 014)
 };
 
 /**

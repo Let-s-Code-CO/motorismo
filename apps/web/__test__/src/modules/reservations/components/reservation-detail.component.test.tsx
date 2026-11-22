@@ -218,6 +218,34 @@ describe('ReservationDetail', () => {
     expect(screen.getByText('Motivo: Se le dañó la moto')).toBeVisible();
   });
 
+  it('says when the customer booked, changed or cancelled it from the app, and why (spec 014, CA-16, CA-19)', () => {
+    renderDetail(
+      reservation({
+        status: 'cancelled',
+        created_by_name: null,
+        booked_by_customer: true,
+        updated_at: '2030-06-11T09:00:00-05:00',
+        updated_by_name: null,
+        updated_by_customer: true,
+        cancelled_at: '2030-06-11T10:30:00-05:00',
+        cancelled_by_name: null,
+        cancelled_by_customer: true,
+        cancel_reason: 'Me salió un viaje',
+      })
+    );
+
+    expect(
+      screen.getByText('Reservó el cliente desde la app el 10 de junio de 2030 a las 3:30 p. m.')
+    ).toBeVisible();
+    expect(
+      screen.getByText('Cambió el cliente desde la app el 11 de junio de 2030 a las 9:00 a. m.')
+    ).toBeVisible();
+    expect(
+      screen.getByText('Cancelada por el cliente el 11 de junio de 2030 a las 10:30 a. m.')
+    ).toBeVisible();
+    expect(screen.getByText('Motivo: Me salió un viaje')).toBeVisible();
+  });
+
   it('says who attended it and who marked it a no-show, and when (CA-11)', () => {
     const { unmount } = renderDetail(
       reservation({

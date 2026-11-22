@@ -91,7 +91,8 @@ test('sign-up and data policy have no serious accessibility issues (spec 004)', 
 
 test('"Mi perfil" has no serious accessibility issues (spec 004)', async ({ page }) => {
   await signIn(page, SEED_CUSTOMERS.customer.email);
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
+  await page.goto('/profile');
   await expect(page.getByRole('heading', { name: 'Mi perfil' })).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });
@@ -372,7 +373,7 @@ test('the agenda, a new reservation with errors, a reservation with its dialogs 
     .from('reservations')
     .select('id, slot_start')
     // The seeded reservation of Camila tomorrow (seeds/06): other tests create and delete theirs.
-    .eq('notes', 'Pidió turno por WhatsApp')
+    .eq('notes', 'Llego en la moto')
     .single();
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
     new Date(reservation!.slot_start)
@@ -456,4 +457,31 @@ test('a confirmation and an error, floating, have no serious accessibility issue
 
   expect(await audit(page)).toEqual([]);
   await cleanup();
+});
+
+test('the customer area, its booking form and the dialog to cancel have no serious accessibility issues (spec 014)', async ({
+  page,
+}) => {
+  await signIn(page, SEED_CUSTOMERS.customer.email);
+  await expect(page).toHaveURL('/my');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  for (const [path, heading] of [
+    ['/my/history', 'Historial'],
+    ['/my/reservations/new', 'Reservar'],
+    ['/my/reservations', 'Mis reservas'],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
+    expect(await audit(page), path).toEqual([]);
+  }
+
+  // Camila's reservation of tomorrow, booked by herself (seeds).
+  await page
+    .getByRole('button', { name: /^Cancelar reserva del/ })
+    .first()
+    .click();
+  await untilSettled(page.getByRole('dialog', { name: '¿Cancelar tu reserva?' }));
+  expect(await audit(page)).toEqual([]);
 });

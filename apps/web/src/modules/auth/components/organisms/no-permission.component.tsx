@@ -23,10 +23,10 @@ const NoPermission = ({ audience }: NoPermissionProps) => {
         <p className="text-sm text-default-500">{isCustomer ? t('textCustomer') : t('text')}</p>
       </div>
       <Link
-        href={isCustomer ? '/profile' : '/'}
+        href={isCustomer ? '/my' : '/'}
         className="inline-flex h-10 items-center rounded-medium bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
       >
-        {isCustomer ? t('toProfile') : t('backHome')}
+        {isCustomer ? t('toMyHome') : t('backHome')}
       </Link>
     </section>
   );

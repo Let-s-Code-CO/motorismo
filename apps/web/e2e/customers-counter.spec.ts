@@ -148,7 +148,8 @@ test('a counter customer who signs up with the same email keeps one record (CA-2
     options: { data: { full_name: 'Otro Nombre', phone: '3207770000', data_consent: true } },
   });
   await page.goto(await confirmLinkFromEmail(later));
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
+  await page.goto('/profile');
   // The record keeps its data; the phone it lacked comes from the sign-up.
   await expect(page.getByLabel('Nombre completo')).toHaveValue('E2E Mostrador Luego Registrado');
   await expect(page.getByLabel('Celular (opcional)')).toHaveValue('320 777 0000');

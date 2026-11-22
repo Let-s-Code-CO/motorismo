@@ -11,7 +11,7 @@ import { openOrdersCount } from '@web/modules/work-orders/api/work-orders.server
 const HomePage = async () => {
   const user = await getStaffForPage();
   // The proxy already sends customers to their profile (spec 004, CA-12); this is the second check.
-  if (!user) redirect('/profile');
+  if (!user) redirect('/my');
   const openOrders = await openOrdersCount();
 
   return <StaffHome name={user.full_name} role={user.role} openOrders={openOrders} />;

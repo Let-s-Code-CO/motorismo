@@ -392,11 +392,13 @@ export type Database = {
         Row: {
           attended_at: string | null
           attended_by: string | null
+          booked_by_customer: boolean
           cancel_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
+          cancelled_by_customer: boolean
           created_at: string
-          created_by: string
+          created_by: string | null
           customer_id: string
           id: string
           no_show_at: string | null
@@ -409,17 +411,20 @@ export type Database = {
           tolerance_minutes: number | null
           updated_at: string | null
           updated_by: string | null
+          updated_by_customer: boolean
           vehicle_id: string | null
           work_order_id: string | null
         }
         Insert: {
           attended_at?: string | null
           attended_by?: string | null
+          booked_by_customer?: boolean
           cancel_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          cancelled_by_customer?: boolean
           created_at?: string
-          created_by: string
+          created_by?: string | null
           customer_id: string
           id?: string
           no_show_at?: string | null
@@ -432,17 +437,20 @@ export type Database = {
           tolerance_minutes?: number | null
           updated_at?: string | null
           updated_by?: string | null
+          updated_by_customer?: boolean
           vehicle_id?: string | null
           work_order_id?: string | null
         }
         Update: {
           attended_at?: string | null
           attended_by?: string | null
+          booked_by_customer?: boolean
           cancel_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
+          cancelled_by_customer?: boolean
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           customer_id?: string
           id?: string
           no_show_at?: string | null
@@ -455,6 +463,7 @@ export type Database = {
           tolerance_minutes?: number | null
           updated_at?: string | null
           updated_by?: string | null
+          updated_by_customer?: boolean
           vehicle_id?: string | null
           work_order_id?: string | null
         }
@@ -1005,9 +1014,11 @@ export type Database = {
         Row: {
           attended_at: string | null
           attended_by_name: string | null
+          booked_by_customer: boolean | null
           brand_name: string | null
           cancel_reason: string | null
           cancelled_at: string | null
+          cancelled_by_customer: boolean | null
           cancelled_by_name: string | null
           created_at: string | null
           created_by_name: string | null
@@ -1036,6 +1047,7 @@ export type Database = {
           status: Database["public"]["Enums"]["reservation_status"] | null
           tolerance_minutes: number | null
           updated_at: string | null
+          updated_by_customer: boolean | null
           updated_by_name: string | null
           vehicle_id: string | null
           vehicle_type: Database["public"]["Enums"]["vehicle_type"] | null
@@ -1138,6 +1150,17 @@ export type Database = {
           taken: number
         }[]
       }
+      bookable_day: { Args: { p_day: string }; Returns: Json }
+      bookable_services: {
+        Args: never
+        Returns: {
+          bicycle: boolean
+          car: boolean
+          id: string
+          motorcycle: boolean
+          name: string
+        }[]
+      }
       cancel_reservation: {
         Args: { p_id: string; p_reason?: string }
         Returns: undefined
@@ -1185,6 +1208,60 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       mark_reservation_no_show: { Args: { p_id: string }; Returns: undefined }
+      my_order_history: {
+        Args: { p_before?: string; p_limit?: number }
+        Returns: {
+          brand_name: string
+          closed_at: string
+          discount: number
+          id: string
+          line_name: string
+          lines: Json
+          number: number
+          payments: Json
+          plate: string
+          subtotal: number
+          total: number
+          vehicle_type: string
+        }[]
+      }
+      my_reservations: {
+        Args: { p_since: string }
+        Returns: {
+          booked_by_customer: boolean
+          brand_name: string
+          cancel_reason: string
+          cancelled_by_customer: boolean
+          grace_until: string
+          id: string
+          line_name: string
+          notes: string
+          number: number
+          plate: string
+          service_ids: string[]
+          services: string[]
+          slot_end: string
+          slot_start: string
+          status: string
+          vehicle_id: string
+          vehicle_type: string
+        }[]
+      }
+      my_shop_orders: {
+        Args: never
+        Returns: {
+          ahead: number
+          brand_name: string
+          id: string
+          line_name: string
+          lines: Json
+          number: number
+          opened_at: string
+          plate: string
+          started_at: string
+          vehicle_type: string
+        }[]
+      }
       save_agenda_settings: {
         Args: {
           p_seats: number

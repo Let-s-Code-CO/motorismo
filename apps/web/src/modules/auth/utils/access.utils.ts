@@ -5,7 +5,9 @@ export const SESSION_INACTIVITY_LIMIT_MS = 7 * 24 * 60 * 60 * 1000;
 
 const LOGIN_PATH = '/auth/login';
 const SET_PASSWORD_PATH = '/auth/set-password';
-const CUSTOMER_HOME = '/profile';
+// Spec 014: the customer's own home, «Inicio»; their area lives under /my.
+const CUSTOMER_HOME = '/my';
+const CUSTOMER_AREA = '/my';
 /** Pages for visitors only: someone already signed in goes to their home page. */
 const ENTRY_PATHS = [LOGIN_PATH, '/auth/forgot-password', '/auth/sign-up'];
 /** Routes that handle email/OAuth links: reachable by anyone, they manage the session themselves. */
@@ -97,13 +99,15 @@ export const decideAccess = ({
   return allow(true);
 };
 
-/** Pages a customer may open (spec 004): their profile and the public data policy. */
-const CUSTOMER_PAGES = [CUSTOMER_HOME, ...PUBLIC_PATHS];
+/** Pages a customer may open: their area (spec 014), their profile and the data policy (spec 004). */
+const CUSTOMER_PAGES = ['/profile', ...PUBLIC_PATHS];
+const isCustomerPage = (path: string) =>
+  path === CUSTOMER_AREA || path.startsWith(`${CUSTOMER_AREA}/`) || CUSTOMER_PAGES.includes(path);
 
 /**
  * Where to go right after signing in (spec 004, RF-02): the requested page if the account may see
  * it, otherwise its home. Staff: the page or "/". Customers: the page only if it is theirs,
- * otherwise "Mi perfil". `next` must already be sanitized.
+ * otherwise their «Inicio» (spec 014). `next` must already be sanitized.
  */
 export const destinationAfterSignIn = (
   kind: string | null | undefined,
@@ -111,7 +115,7 @@ export const destinationAfterSignIn = (
 ): string => {
   if (kind !== 'customer') return next ?? '/';
   const path = next?.split('?')[0];
-  return next && path && CUSTOMER_PAGES.includes(path) ? next : CUSTOMER_HOME;
+  return next && path && isCustomerPage(path) ? next : CUSTOMER_HOME;
 };
 
 const INTERNAL_ORIGIN = 'http://internal.invalid';

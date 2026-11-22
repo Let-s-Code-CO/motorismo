@@ -78,7 +78,7 @@ test.describe('on a 360 px phone', () => {
       .from('reservations')
       .select('id, slot_start')
       // The seeded reservation of Camila tomorrow (seeds/06): other tests create and delete theirs.
-      .eq('notes', 'Pidió turno por WhatsApp')
+      .eq('notes', 'Llego en la moto')
       .single();
     const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
       new Date(reservation!.slot_start)
@@ -148,7 +148,7 @@ test.describe('on a 360 px phone', () => {
     expect(await horizontalOverflow(page)).toBe(0);
 
     await signIn(page, SEED_CUSTOMERS.customer.email);
-    await expect(page).toHaveURL('/profile');
+    await expect(page).toHaveURL('/my');
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
@@ -246,6 +246,22 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       })
       .toBe(true);
     expect(await horizontalOverflow(page)).toBe(0);
+  });
+  test('the customer area has no horizontal scroll (spec 014)', async ({ page }) => {
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    await expect(page).toHaveURL('/my');
+
+    for (const path of [
+      '/my',
+      '/my/history',
+      '/my/reservations',
+      '/my/reservations/new',
+      '/profile',
+    ]) {
+      await page.goto(path);
+      await expect(page.getByRole('main')).toBeVisible();
+      await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
+    }
   });
 });
 
