@@ -83,10 +83,10 @@ describe('MobileNav', () => {
     ]);
   });
 
-  it('shows a customer only «Mi perfil» (CA-02, RN-01)', async () => {
+  it('shows a customer their own sections (CA-02, RN-01; spec 014)', async () => {
     const panel = await openMenu('customer', '/profile');
 
-    expect(sectionNames(panel)).toEqual(['Mi perfil']);
+    expect(sectionNames(panel)).toEqual(['Inicio', 'Mis reservas', 'Historial', 'Mi perfil']);
   });
 
   it('marks the section the user is in, also on its sub-pages (CA-02)', async () => {

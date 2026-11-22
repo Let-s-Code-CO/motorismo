@@ -45,7 +45,8 @@ test('a customer adds, corrects and retires their vehicles; staff see it (CA-23,
 }) => {
   const plate = uniquePlate('motorcycle');
   await signIn(page, email);
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
+  await page.goto('/profile');
 
   const mine = page.getByRole('region', { name: 'Mis vehículos' });
   await expect(mine.getByText('Aún no tienes vehículos.')).toBeVisible();

@@ -7,7 +7,7 @@
  * - CA-06 / RN-02: when several people book the same slot at once, the slot never gets more
  *   reservations than seats; the others are told it is full. save_reservation locks the day before
  *   counting, so concurrent bookings line up.
- * - RN-06: a customer cannot book.
+ * - RN-06: a customer cannot book for another customer (spec 014 lets them book their own).
  * - CA-29: an admin changes the seats per slot (and the slot length and the tolerance) through the
  *   API. The API's connections refuse an UPDATE without WHERE (Supabase's safeupdate), which pgTAP,
  *   run as the superuser, never sees: only this test does.
@@ -69,18 +69,22 @@ describe('reservations through the API (spec 012)', () => {
     expect(count).toBe(2);
   });
 
-  it('a customer cannot book (RN-06)', async () => {
+  it('a customer cannot book for another customer (RN-06; spec 014 lets them book their own)', async () => {
     const { client } = await signedInAs(SEED.customer);
-    const { data: me } = await client.from('customers').select('id').single();
+    const { data: other } = await adminClient()
+      .from('customers')
+      .select('id')
+      .eq('email', 'cliente.google@motorismo.test')
+      .single();
 
     const { error } = await client.rpc('save_reservation', {
-      p_customer_id: me!.id,
+      p_customer_id: other!.id,
       p_vehicle_id: null as unknown as string,
       p_slot_start: tomorrowAtFour(),
       p_service_ids: [],
     });
 
-    expect(error?.hint).toBe('reservation_staff_only');
+    expect(error?.hint).toBe('reservation_customer_only');
   });
 });
 

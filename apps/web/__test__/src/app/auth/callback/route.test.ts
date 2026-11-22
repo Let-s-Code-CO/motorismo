@@ -56,13 +56,13 @@ describe('GET /auth/callback', () => {
     expect(locationOf(response)).toBe('/');
   });
 
-  it('sends a customer who asked for a staff page to their profile (spec 004, RF-02)', async () => {
+  it('sends a customer who asked for a staff page to their own home (spec 004, RF-02; spec 014)', async () => {
     exchangeCodeForSession.mockResolvedValue({ error: null });
     rpc.mockResolvedValueOnce({ data: [{ kind: 'customer', role: null, status: 'active' }] });
 
     const response = await GET(request('?code=xyz&next=%2Fcustomers'));
 
-    expect(locationOf(response)).toBe('/profile');
+    expect(locationOf(response)).toBe('/my');
   });
 
   it('passes an error reported by Google on to the login', async () => {

@@ -280,13 +280,13 @@ describe('signIn', () => {
 
   // Spec 011, CA-12: on success it answers where to go instead of redirecting, so the form can
   // show the brand while that page loads; the destination is still decided here, on the server.
-  it('sends a customer who asked for a staff page to their profile (spec 004, RF-02)', async () => {
+  it('sends a customer who asked for a staff page to their own home (spec 004, RF-02; spec 014)', async () => {
     signInWithPassword.mockResolvedValue({ error: null });
     rpc.mockResolvedValue({ data: [{ kind: 'customer', role: null, status: 'active' }] });
 
     await expect(signIn(credentials, '/customers')).resolves.toEqual({
       ok: true,
-      destination: '/profile',
+      destination: '/my',
     });
     expect(rpc).toHaveBeenCalledWith('current_account');
     expect(redirect).not.toHaveBeenCalled();

@@ -60,13 +60,13 @@ describe('GET /auth/confirm', () => {
     }
   );
 
-  it('confirms a sign-up and leads to "Mi perfil" with the activity clock started (spec 004, CA-03)', async () => {
+  it('confirms a sign-up and leads to their own home with the activity clock started (spec 004, CA-03; spec 014)', async () => {
     verifyOtp.mockResolvedValue({ error: null });
 
     const response = await GET(request('?token_hash=abc&type=email'));
 
     expect(verifyOtp).toHaveBeenCalledWith({ type: 'email', token_hash: 'abc' });
-    expect(locationOf(response)).toBe('/profile');
+    expect(locationOf(response)).toBe('/my');
     expect(response.headers.get('set-cookie')).toContain('mt_last_seen=');
   });
 

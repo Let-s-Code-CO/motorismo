@@ -538,11 +538,12 @@ select pg_temp.act_as('00000000-0000-0000-0000-0000000012c1');
 select is_empty($$ select 1 from public.reservations $$, 'RN-06: a customer reads no reservation (not even their own)');
 select is_empty($$ select 1 from public.agenda_days $$, 'RN-06: a customer does not read the agenda');
 select is_empty($$ select 1 from public.agenda_slots('2030-06-12') $$, 'RN-06: a customer sees no slots');
-select is(pg_temp.error_hint($$ select public.save_reservation(pg_temp.id_of('camilo'), pg_temp.id_of('camilo_moto'),
+-- Spec 014 lets a customer book and cancel their own reservations (13_customer_area); never another's.
+select is(pg_temp.error_hint($$ select public.save_reservation(pg_temp.id_of('pablo'), pg_temp.id_of('pablo_moto'),
        pg_temp.ts('12', '16:00'), '{}', null) $$),
-  'reservation_staff_only', 'RN-06: a customer cannot book');
+  'reservation_customer_only', 'RN-06 (spec 014): a customer cannot book for another customer');
 select is(pg_temp.error_hint($$ select public.cancel_reservation(pg_temp.id_of('r_pablo13')) $$),
-  'reservation_staff_only', 'RN-06: a customer cannot cancel');
+  'reservation_customer_only', 'RN-06 (spec 014): a customer cannot cancel another customer''s reservation');
 
 reset role;
 select * from finish();

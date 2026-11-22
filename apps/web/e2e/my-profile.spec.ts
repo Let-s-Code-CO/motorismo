@@ -26,7 +26,8 @@ test('the customer updates name and phone, and staff see the change (CA-12, CA-1
 }) => {
   const customer = await browser.newPage();
   await signIn(customer, email);
-  await expect(customer).toHaveURL('/profile');
+  await expect(customer).toHaveURL('/my');
+  await customer.goto('/profile');
 
   await expect(customer.getByLabel('Nombre completo')).toHaveValue('Paula Perfil');
   await expect(customer.getByLabel('Correo')).toHaveValue(email);

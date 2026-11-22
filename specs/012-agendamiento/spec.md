@@ -262,6 +262,8 @@ o desde la lista de clientes, para no tener que buscarlo otra vez en «Nueva res
   no asistió, nadie la cambia. Las reglas valen por cualquier vía.
 - **RN-06** — Reservan, cambian, cancelan y registran la llegada el operador y el administrador;
   solo el administrador configura la agenda y da a una reserva su propia tolerancia. Un cliente no ve ni toca la agenda.
+  *(Spec 014: el cliente con cuenta reserva, cambia y cancela **sus** reservas desde la app, con estas mismas
+  reglas; sigue sin ver la agenda ni las reservas de otros.)*
 - **RN-07** — Los servicios de una reserva son una intención. Al convertirse en orden, cada servicio
   toma el valor y el tiempo estimado del catálogo en ese momento para el tipo del vehículo (RN-01 de
   la spec 008). Si alguno ya no está activo o no tiene valor para ese tipo, no se copia y se avisa.
@@ -374,3 +376,4 @@ Ninguna. Resueltas con el usuario el 2026-11-21:
 | 2026-11-21 | Enmienda aprobada por el usuario (HU-07): «Agendar» desde la ficha del cliente, desde cada uno de sus vehículos y desde el menú de su fila en «Clientes» (CA-40 a CA-43); solo desde el vehículo dejaría sin forma de agendar a quien reserva sin vehículo. Estado `en-progreso`. |
 | 2026-11-21 | Enmienda HU-07 implementada: «Agendar» en la ficha, en cada vehículo (con la placa en su nombre accesible, para distinguir dos motos iguales) y en el menú de la fila; la dirección de «Nueva reserva» ignora un cliente desactivado o inexistente. Solo el personal, como toda reserva. |
 | 2026-11-21 | Enmienda HU-07 verificada (CA-40 a CA-43): cada criterio con prueba de componente y E2E, vistas fallar; los roles no cambian (solo el personal reserva). Estado `verificada`. |
+| 2026-11-21 | Cambiado por la spec 014: el cliente con cuenta reserva, cambia y cancela sus reservas desde la app (RN-06); el rastro lo dice («Reservó el cliente desde la app», «Cancelada por el cliente»). |

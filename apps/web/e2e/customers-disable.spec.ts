@@ -42,7 +42,7 @@ test('the admin disables a signed-in customer, who is signed out; reactivated, t
 }) => {
   const customer = await browser.newPage();
   await signIn(customer, email);
-  await expect(customer).toHaveURL('/profile');
+  await expect(customer).toHaveURL('/my');
 
   const admin = await browser.newPage();
   await signIn(admin, SEED.admin.email);
@@ -67,7 +67,7 @@ test('the admin disables a signed-in customer, who is signed out; reactivated, t
   await expect(admin.getByText('Cliente reactivado.')).toBeVisible();
 
   await signIn(customer, email);
-  await expect(customer).toHaveURL('/profile');
+  await expect(customer).toHaveURL('/my');
 });
 
 test('an operator disables and reactivates a customer from the row menu of «Clientes» (RN-09, CA-32)', async ({

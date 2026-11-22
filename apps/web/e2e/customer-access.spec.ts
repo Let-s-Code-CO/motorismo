@@ -1,10 +1,10 @@
 /**
  * What a signed-in customer can and cannot reach (spec 004, HU-02 and CA-12).
  *
- * Guards CA-12 (they land on "Mi perfil"), CA-08 (their menu only offers "Mi perfil"), CA-09
- * (staff pages answer "no permission" with a link to their profile), CA-11 (customers and staff
+ * Guards CA-12 (they land on their «Inicio», spec 014), CA-08 (their menu offers only their own
+ * sections), CA-09 (staff pages answer "no permission" with a link to their «Inicio»), CA-11 (customers and staff
  * never mix: no customer in user management, no staff member in Clientes), RF-02 (a customer who
- * had asked for a staff page lands on their profile after signing in) and RF-06 (customers recover
+ * had asked for a staff page lands on their «Inicio» after signing in) and RF-06 (customers recover
  * their password like staff).
  */
 import { expect, test } from '@playwright/test';
@@ -19,25 +19,30 @@ import {
   uniqueEmail,
 } from './support/sandbox';
 
-test('a customer lands on "Mi perfil" and only sees that option (CA-12, CA-08)', async ({
+test('a customer lands on their «Inicio» and only sees their sections (CA-12, CA-08; spec 014)', async ({
   page,
 }) => {
   await signIn(page, SEED_CUSTOMERS.customer.email);
 
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
   const menu = page.getByRole('navigation', { name: 'Navegación principal' });
-  await expect(menu.getByRole('link')).toHaveText(['Mi perfil']);
+  await expect(menu.getByRole('link')).toHaveText([
+    'Inicio',
+    'Mis reservas',
+    'Historial',
+    'Mi perfil',
+  ]);
   await expect(page.getByText('Cliente', { exact: true }).first()).toBeVisible();
 
   await page.goto('/');
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
 });
 
-test('staff pages answer "no permission" with a way back to the profile (CA-09)', async ({
+test('staff pages answer "no permission" with a way back to their «Inicio» (CA-09; spec 014)', async ({
   page,
 }) => {
   await signIn(page, SEED_CUSTOMERS.customer.email);
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
 
   for (const path of ['/customers', '/admin/users']) {
     await page.goto(path);
@@ -45,8 +50,8 @@ test('staff pages answer "no permission" with a way back to the profile (CA-09)'
       page.getByRole('heading', { name: 'No tienes permiso para ver esta página.' })
     ).toBeVisible();
   }
-  await page.getByRole('link', { name: 'Ir a mi perfil' }).click();
-  await expect(page).toHaveURL('/profile');
+  await page.getByRole('link', { name: 'Ir a mi inicio' }).click();
+  await expect(page).toHaveURL('/my');
 });
 
 test('customers and staff never mix in the lists (CA-11)', async ({ page }) => {
@@ -61,7 +66,7 @@ test('customers and staff never mix in the lists (CA-11)', async ({ page }) => {
   await expect(page.getByText('No hay clientes que coincidan con tu búsqueda.')).toBeVisible();
 });
 
-test('a customer who had asked for a staff page lands on their profile after signing in (RF-02)', async ({
+test('a customer who had asked for a staff page lands on their «Inicio» after signing in (RF-02; spec 014)', async ({
   page,
 }) => {
   await page.goto('/customers');
@@ -71,10 +76,12 @@ test('a customer who had asked for a staff page lands on their profile after sig
   await page.getByLabel('Contraseña', { exact: true }).fill(SEED.password);
   await page.getByRole('button', { name: 'Entrar' }).click();
 
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
 });
 
-test('a customer recovers their password and lands on their profile (RF-06)', async ({ page }) => {
+test('a customer recovers their password and lands on their «Inicio» (RF-06; spec 014)', async ({
+  page,
+}) => {
   const email = uniqueEmail('customerreset');
   await createCustomerAccount({ email, fullName: 'Rosa Recupera' });
   try {
@@ -92,12 +99,12 @@ test('a customer recovers their password and lands on their profile (RF-06)', as
     await page.getByLabel('Nueva contraseña').fill('nueva-clave-cliente');
     await page.getByLabel('Repite la contraseña').fill('nueva-clave-cliente');
     await page.getByRole('button', { name: 'Guardar contraseña' }).click();
-    await expect(page).toHaveURL('/profile');
+    await expect(page).toHaveURL('/my');
 
     await page.getByRole('button', { name: 'Cerrar sesión' }).click();
     await expect(page).toHaveURL('/auth/login');
     await signIn(page, email, 'nueva-clave-cliente');
-    await expect(page).toHaveURL('/profile');
+    await expect(page).toHaveURL('/my');
   } finally {
     await deleteUsersByEmail([email]);
   }

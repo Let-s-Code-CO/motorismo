@@ -41,7 +41,8 @@ test('signs up, confirms the email and lands on "Mi perfil" (CA-01, CA-02, CA-03
   await expect(page.getByText('Te enviamos un correo para confirmar tu cuenta.')).toBeVisible();
 
   await page.goto(await confirmLinkFromEmail(email));
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
+  await page.goto('/profile');
   await expect(page.getByRole('heading', { name: 'Mi perfil' })).toBeVisible();
   await expect(page.getByLabel('Nombre completo')).toHaveValue('Camila Nueva');
   await expect(page.getByLabel('Celular (opcional)')).toHaveValue('300 123 4567');
@@ -80,7 +81,7 @@ test('a used confirmation link is not valid and offers a new email (CA-05)', asy
   });
   const link = await confirmLinkFromEmail(email);
   await page.goto(link);
-  await expect(page).toHaveURL('/profile');
+  await expect(page).toHaveURL('/my');
 
   await page.goto(link);
 

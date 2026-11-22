@@ -171,7 +171,7 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Personal: administradores `sebastian.pulido@motorismo.test` y `carlos.diaz@motorismo.test`,
   `operador@motorismo.test` y `desactivado@motorismo.test`.
 - Clientes: **`cliente@motorismo.test`** (cuenta de prueba para usar la app como cliente: entra a
-  «Mi perfil»), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
+  su «Inicio», `/my`), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
   Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
 - Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada),
   Valentina la camioneta `KDM-482` (placa de Bogotá, D.C.) y Andrés una bicicleta. El catálogo de
@@ -180,7 +180,7 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Órdenes (spec 008, solo en local): Valentina #1 cerrada; Camila #2 cerrada (dos medios de pago y
   descuento), #3 anulada y #4 abierta («Limpieza de cadena» sin tiempo estimado).
 - Agenda (spec 012, solo en local): esta semana y la siguiente habilitadas de 9:00 a. m. a 6:00 p. m.
-  (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado») y
+  (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado»; la reservó ella desde la app, spec 014) y
   Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada. Hoy, en la
   franja de la hora en que se hizo el reset (antes de abrir, la primera; después de cerrar, la
   última, la de las 5:00 p. m., y Camila ya pasó su tolerancia): Gabriel (su Yamaha `GGM-45F`, registrada por el seed)
@@ -302,6 +302,26 @@ e2e/                         # Playwright
 - **El reloj en pgTAP:** todo lo que mira la hora llama a `private.agenda_now()`; la prueba la
   sustituye por una hora fija (`test.now`) dentro de su transacción. Las E2E escriben las reservas
   que dependen de la hora con la clave secreta, relativas a ahora.
+
+## Área del cliente (spec 014)
+
+- **Rutas:** el cliente con cuenta entra a `/my` («Inicio»): su vehículo en el lavadero y su próxima
+  reserva. También tiene `/my/history` (historial con todo el detalle, de 10 en 10 con `?before=`),
+  `/my/reservations` (reservar, cambiar, cancelar) y «Mi perfil». `access.utils` (`CUSTOMER_HOME`)
+  y `NAV_LINKS` lo reflejan.
+- **Lecturas:** todo lo que lee el cliente sale de funciones `security definer` que devuelven solo
+  sus filas y campos permitidos: `my_shop_orders` («Van N antes» con la regla del turno),
+  `my_order_history`, `my_reservations`, `bookable_day` y `bookable_services`. Las tablas y vistas
+  del personal siguen cerradas para él (sin nombres de empleados ni del personal).
+- **Reservas:** el cliente usa `save_reservation` y `cancel_reservation`, que tienen una rama para
+  él: solo lo suyo, una reserva pendiente por vehículo y una «Sin vehículo» (RN-03); nunca la
+  tolerancia. Las reservas registran `booked_by_customer`, `updated_by_customer` y
+  `cancelled_by_customer`, y el rastro del personal lo dice.
+- **Al día:** `PollRefresh` (`core`) refresca cada 15 s mientras la pestaña está visible en `/my` y
+  `/my/reservations`. No usa Realtime: el cliente no puede leer las filas y la cola depende de
+  órdenes de otros.
+- **Tipos:** el generador marca no nulas todas las columnas que devuelve una función;
+  `customer-area.types.ts` dice cuáles pueden ser nulas (`WithNulls`).
 
 ## Autenticación y permisos (specs 002 y 004)
 

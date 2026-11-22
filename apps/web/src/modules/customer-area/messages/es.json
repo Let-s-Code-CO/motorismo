@@ -1,0 +1,119 @@
+{
+  "customerArea": {
+    "home": {
+      "title": "Hola, {name}",
+      "description": "Lo tuyo en Motorismo, de un vistazo.",
+      "inShop": "En el lavadero",
+      "noneInShop": "No tienes vehículos en el lavadero ahora.",
+      "nextReservation": "Tu próxima reserva",
+      "noReservation": "No tienes reservas pendientes.",
+      "book": "Reservar",
+      "history": "Ver historial",
+      "reservations": "Mis reservas"
+    },
+    "shop": {
+      "queued": "En cola",
+      "inProgress": "En proceso",
+      "ahead": "{count, plural, =0 {Eres el siguiente} one {Va 1 antes} other {Van # antes}}",
+      "since": "En el lavadero desde las {time}",
+      "startedAt": "Empezó a las {time}",
+      "readyAt": "Lista hacia las {time}",
+      "noEstimate": "Sin hora estimada",
+      "services": "Servicios"
+    },
+    "vehicle": {
+      "noPlate": "Sin placa",
+      "none": "Sin vehículo"
+    },
+    "history": {
+      "title": "Historial",
+      "description": "Los servicios que se les hicieron a tus vehículos.",
+      "empty": "Aún no tienes servicios.",
+      "order": "Orden #{number}",
+      "subtotal": "Subtotal",
+      "discount": "Descuento",
+      "total": "Total",
+      "paid": "Pagado",
+      "older": "Ver anteriores",
+      "newest": "Ver los más recientes",
+      "methods": {
+        "cash": "Efectivo",
+        "transfer": "Transferencia",
+        "card": "Tarjeta",
+        "other": "Otro"
+      }
+    },
+    "reservations": {
+      "title": "Mis reservas",
+      "description": "Reserva tu turno, y cámbialo o cancélalo mientras esté pendiente.",
+      "new": "Reservar",
+      "pending": "Próximas",
+      "past": "Anteriores",
+      "empty": "No tienes reservas.",
+      "arriveBy": "Puedes llegar hasta las {time} para conservar tu turno",
+      "slot": "{day}, {start} – {end}",
+      "change": "Cambiar",
+      "cancel": "Cancelar reserva",
+      "changeLabel": "Cambiar la reserva del {slot}",
+      "cancelLabel": "Cancelar reserva del {slot}",
+      "cancelledByYou": "La cancelaste tú",
+      "cancelledByStaff": "La canceló el lavadero",
+      "saved": "Reserva guardada.",
+      "cancelled": "Reserva cancelada.",
+      "status": {
+        "pending": "Pendiente",
+        "attended": "Atendida",
+        "no_show": "No asistió",
+        "cancelled": "Cancelada"
+      },
+      "graceOver": "Ya pasó la hora para conservar tu turno; si llegas, entras por orden de llegada"
+    },
+    "form": {
+      "titleNew": "Reservar",
+      "titleEdit": "Cambiar reserva",
+      "description": "Elige tu vehículo, el día y la hora.",
+      "vehicle": "Vehículo",
+      "noVehicle": "Sin vehículo",
+      "noVehiclesHint": "¿No está tu vehículo? Agrégalo en «Mi perfil».",
+      "day": "Día",
+      "slot": "Hora",
+      "services": "Servicios (opcional)",
+      "servicesHint": "Lo que quieres hacerte; el valor se confirma al llegar.",
+      "notes": "Observaciones (opcional)",
+      "save": "Reservar",
+      "saveChanges": "Guardar cambios",
+      "cancel": "Volver"
+    },
+    "cancelDialog": {
+      "title": "¿Cancelar tu reserva?",
+      "text": "Liberas tu puesto del {slot}.",
+      "reason": "Motivo (opcional)",
+      "confirm": "Cancelar reserva",
+      "keep": "No, mantenerla"
+    },
+    "validation": {
+      "slotRequired": "Elige una hora.",
+      "notesTooLong": "Máximo 500 caracteres.",
+      "reasonTooLong": "Máximo 200 caracteres.",
+      "vehicleRequired": "Elige tu vehículo o «Sin vehículo»."
+    },
+    "errors": {
+      "forbidden": "Inicia sesión con tu cuenta para reservar.",
+      "invalidInput": "Revisa los datos de la reserva.",
+      "customerLimit": "Ya tienes una reserva pendiente para ese vehículo (o sin vehículo): cámbiala si quieres otra hora.",
+      "customerOnly": "Esa reserva no es tuya.",
+      "notFound": "No se encontró la reserva.",
+      "notPending": "Esta reserva ya no está pendiente.",
+      "vehicleInvalid": "Ese vehículo no es tuyo.",
+      "vehicleRetired": "Ese vehículo está retirado.",
+      "vehicleTaken": "Ese vehículo ya tiene una reserva a esa hora.",
+      "serviceUnavailable": "Uno de los servicios ya no se ofrece para ese vehículo.",
+      "weekDisabled": "Esa semana aún no está habilitada.",
+      "dayClosed": "Ese día no se atiende.",
+      "slotInvalid": "Esa no es una hora del día.",
+      "slotStarted": "Esa hora ya empezó: elige otra.",
+      "slotFull": "Esa hora se llenó mientras elegías: elige otra.",
+      "generic": "No se pudo guardar. Inténtalo de nuevo."
+    }
+  }
+}

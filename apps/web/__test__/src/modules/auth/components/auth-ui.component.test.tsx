@@ -138,7 +138,7 @@ describe('AppHeader', () => {
       within(panel)
         .getAllByRole('link')
         .map((link) => link.textContent)
-    ).toEqual(['Mi perfil']);
+    ).toEqual(['Inicio', 'Mis reservas', 'Historial', 'Mi perfil']);
   });
 });
 
@@ -152,15 +152,12 @@ describe('NoPermission', () => {
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/');
   });
 
-  it('sends a customer back to their profile (spec 004, CA-09)', () => {
+  it('sends a customer back to their own home (spec 004, CA-09; spec 014)', () => {
     renderWithProviders(<NoPermission audience="customer" />);
 
     expect(
       screen.getByRole('heading', { name: 'No tienes permiso para ver esta página.' })
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Ir a mi perfil' })).toHaveAttribute(
-      'href',
-      '/profile'
-    );
+    expect(screen.getByRole('link', { name: 'Ir a mi inicio' })).toHaveAttribute('href', '/my');
   });
 });

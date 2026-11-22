@@ -3,8 +3,8 @@
  * CA-19).
  *
  * Guards: the section the user is in is marked as current (aria-current="page"); staff see Inicio,
- * Órdenes (spec 008), Clientes, Servicios and Empleados, and only admins also see Usuarios; a customer only sees
- * "Mi perfil".
+ * Órdenes (spec 008), Clientes, Servicios and Empleados, and only admins also see Usuarios; a customer
+ * sees their own Inicio, Mis reservas, Historial and Mi perfil (spec 014).
  */
 import { usePathname } from 'next/navigation';
 
@@ -63,11 +63,20 @@ describe('NavLinks', () => {
     ]);
   });
 
-  it('shows only "Mi perfil" to a customer (spec 004, CA-08)', () => {
+  it('shows a customer «Inicio», «Mis reservas», «Historial» and «Mi perfil» (spec 004, CA-08; spec 014)', () => {
     vi.mocked(usePathname).mockReturnValue('/profile');
     renderWithProviders(<NavLinks audience="customer" />);
 
-    expect(linkNames()).toEqual(['Mi perfil']);
+    expect(linkNames()).toEqual(['Inicio', 'Mis reservas', 'Historial', 'Mi perfil']);
+    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/my');
     expect(screen.getByRole('link', { name: 'Mi perfil' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('marks only «Historial» on the customer’s history: «Inicio» is not a prefix of their sections (spec 014)', () => {
+    vi.mocked(usePathname).mockReturnValue('/my/history');
+    renderWithProviders(<NavLinks audience="customer" />);
+
+    expect(screen.getByRole('link', { name: 'Historial' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Inicio' })).not.toHaveAttribute('aria-current');
   });
 });
