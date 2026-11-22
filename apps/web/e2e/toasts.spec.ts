@@ -7,6 +7,7 @@
  *   sideways scroll.
  * - CA-03: it closes by itself after 5 s.
  * - CA-07: the refusal of a standalone action stays until it is closed.
+ * - CA-11: «Cerrar» is reached and pressed with the keyboard.
  * - CA-12: with «reducir movimiento» it appears without moving.
  * The notice for the screen an action leads to (CA-05) is checked where it happens: booking a
  * reservation (`reservations.spec.ts`), including that a reload does not repeat it.
@@ -56,7 +57,9 @@ test.describe('on a desktop', () => {
     expect(Date.now() - saved).toBeGreaterThan(4_000);
   });
 
-  test('the refusal of a standalone action stays until it is closed (CA-07)', async ({ page }) => {
+  test('the refusal of a standalone action stays until it is closed, with the keyboard too (CA-07, CA-11)', async ({
+    page,
+  }) => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
     const cleanup = await refuseNoShow(page);
@@ -64,7 +67,15 @@ test.describe('on a desktop', () => {
     const refusal = toast(page, NO_SHOW_REFUSED);
     await page.waitForTimeout(6_000);
     await expect(refusal).toBeVisible();
-    await refusal.getByRole('button', { name: 'Cerrar' }).click();
+    // CA-11: reachable with the keyboard. The notices come after the page: from the button just
+    // pressed, Tab reaches «Cerrar» (a few stops later, never more than 30).
+    const close = refusal.getByRole('button', { name: 'Cerrar' });
+    for (let stops = 0; stops < 30; stops += 1) {
+      if (await close.evaluate((element) => element === document.activeElement)) break;
+      await page.keyboard.press('Tab');
+    }
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Enter');
     await expect(refusal).toHaveCount(0);
     await cleanup();
   });

@@ -121,6 +121,8 @@ aviso) → rojo → migra la pantalla → verde.
 - [x] T092 Mutación aplicada a cada prueba nueva, fallo observado y revertida (`git diff` + grep).
 - [x] T093 Revisión en el teléfono: capturas a 360 px y en iPhone de 440 px táctil, en claro y
   oscuro.
+- [x] T095 (verificación) La prueba de CA-11 recorre la página con Tab hasta «Cerrar» y lo pulsa
+  con Enter; vista fallar con `tabIndex={-1}` en el botón.
 - [x] T094 `CLAUDE.md`: estándar de avisos (resultado → `notify`; errores de formulario dentro);
   spec, plan y backlog actualizados.
 
