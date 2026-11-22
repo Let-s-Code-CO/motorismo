@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 
 import { useQuery } from '@tanstack/react-query';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import CustomerHistory from '@web/modules/work-orders/components/organisms/customer-history.component';
 import CustomerPicker from '@web/modules/work-orders/components/organisms/customer-picker.component';
@@ -78,7 +79,11 @@ const NewOrderScreen = ({ reservation }: NewOrderScreenProps = {}) => {
           customer={customer}
           vehicle={vehicle}
           reservation={reservation}
-          onSaved={(id) => router.push(`/orders/${id}?saved=opened`)}
+          onSaved={(id) => {
+            // Spec 013, CA-05: «Orden abierta.» shows on the order, once (not again on reload).
+            notify({ tone: 'success', text: t('editor.opened'), after: `/orders/${id}` });
+            router.push(`/orders/${id}`);
+          }}
         />
       )}
     </section>

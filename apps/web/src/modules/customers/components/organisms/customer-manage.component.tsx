@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { UserCheck, UserX } from 'lucide-react';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { setCustomerDisabled } from '@web/modules/customers/actions/customers.actions';
-import type { CustomersErrorKey } from '@web/modules/customers/utils/customers-errors.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type CustomerManageProps = {
@@ -18,8 +18,6 @@ type CustomerManageProps = {
     disabled_at: string | null;
   };
 };
-
-type Notice = { tone: 'success'; text: string } | { tone: 'danger'; error: CustomersErrorKey };
 
 const CARD = 'rounded-large border border-divider bg-content1 p-5 shadow-small';
 
@@ -30,7 +28,6 @@ const CARD = 'rounded-large border border-divider bg-content1 p-5 shadow-small';
 const CustomerManage = ({ customer }: CustomerManageProps) => {
   const t = useTranslations('customers');
   const router = useRouter();
-  const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
   const isDisabled = customer.disabled_at !== null;
 
@@ -40,24 +37,17 @@ const CustomerManage = ({ customer }: CustomerManageProps) => {
         setCustomerDisabled({ id: customer.id, disabled: !isDisabled })
       );
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? { tone: 'success', text: isDisabled ? t('reactivated') : t('disabledNotice') }
-          : { tone: 'danger', error: result.error }
+          : { tone: 'danger', text: t(`errors.${result.error}`) }
       );
       router.refresh();
     });
 
   return (
     <div className="flex flex-col gap-4">
-      {notice && (
-        <Alert
-          color={notice.tone}
-          variant="faded"
-          title={notice.tone === 'success' ? notice.text : t(`errors.${notice.error}`)}
-        />
-      )}
-
       <section className={`${CARD} flex flex-wrap items-center justify-between gap-4`}>
         <div className="flex flex-col gap-1">
           <h2 className="text-sm font-semibold">{t('detail.accessTitle')}</h2>

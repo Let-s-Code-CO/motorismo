@@ -5,10 +5,11 @@ import { useId, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
+import { Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
 import { ChevronDown, UserPlus } from 'lucide-react';
 
 import ConfirmDialog from '@web/modules/core/components/confirm-dialog.component';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { setEmployeeDisabled } from '@web/modules/employees/actions/employees.actions';
 import type { EmployeeRow } from '@web/modules/employees/api/employees.server';
 import EmployeeForm from '@web/modules/employees/components/organisms/employee-form.component';
@@ -23,7 +24,6 @@ type EmployeesScreenProps = {
 };
 
 type Editing = { mode: 'new' } | { mode: 'edit'; employee: EmployeeRow } | null;
-type Notice = { tone: 'success' | 'danger'; text: string };
 
 /**
  * «Empleados» (spec 007, HU-02 to HU-04): the active employees, and apart the disabled ones with
@@ -37,7 +37,6 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
   const [editing, setEditing] = useState<Editing>(null);
   const [disabling, setDisabling] = useState<EmployeeRow | null>(null);
   const [showDisabled, setShowDisabled] = useState(false);
-  const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
 
   const active = employees.filter((employee) => employee.disabled_at === null);
@@ -50,7 +49,8 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
       );
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
       setDisabling(null);
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? { tone: 'success', text: disable ? t('disabledNotice') : t('reactivated') }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
@@ -61,11 +61,9 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
   const adminActions = isAdmin
     ? {
         onEdit: (employee: EmployeeRow) => {
-          setNotice(undefined);
           setEditing({ mode: 'edit', employee });
         },
         onDisable: (employee: EmployeeRow) => {
-          setNotice(undefined);
           setDisabling(employee);
         },
       }
@@ -84,7 +82,6 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
             className="font-medium"
             startContent={<UserPlus aria-hidden className="size-4" />}
             onPress={() => {
-              setNotice(undefined);
               setEditing({ mode: 'new' });
             }}
           >
@@ -92,8 +89,6 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
           </Button>
         )}
       </div>
-
-      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
 
       <EmployeesTable
         employees={active}
@@ -132,7 +127,6 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
                 label={t('table.disabledLabel')}
                 isBusy={isPending}
                 onReactivate={(employee) => {
-                  setNotice(undefined);
                   toggle(employee, false);
                 }}
               />
@@ -160,7 +154,7 @@ const EmployeesScreen = ({ employees, isAdmin }: EmployeesScreenProps) => {
                   onSaved={() => {
                     const wasEditing = editing?.mode === 'edit';
                     onClose();
-                    setNotice({ tone: 'success', text: wasEditing ? t('updated') : t('created') });
+                    notify({ tone: 'success', text: wasEditing ? t('updated') : t('created') });
                     router.refresh();
                   }}
                 />

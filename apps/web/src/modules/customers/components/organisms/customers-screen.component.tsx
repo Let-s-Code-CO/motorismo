@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 
 import {
-  Alert,
   Button,
   Input,
   Modal,
@@ -21,6 +20,7 @@ import { Search, UserPlus } from 'lucide-react';
 import type { CustomerStatus } from '@web/modules/auth/types/auth.types';
 import FilterBar from '@web/modules/core/components/filter-bar.component';
 import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { setCustomerDisabled } from '@web/modules/customers/actions/customers.actions';
 import type { CustomerListRow } from '@web/modules/customers/api/customers.server';
 import CustomerForm from '@web/modules/customers/components/organisms/customer-form.component';
@@ -71,7 +71,6 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(filters.q);
-  const [notice, setNotice] = useState<{ tone: 'success' | 'danger'; text: string }>();
   const [isToggling, startToggle] = useTransition();
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const lastSent = useRef(filters.q);
@@ -84,7 +83,8 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
         setCustomerDisabled({ id: customer.id, disabled: disable })
       );
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? { tone: 'success', text: disable ? t('disabledNotice') : t('reactivated') }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
@@ -156,10 +156,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
           color="primary"
           className="font-medium"
           startContent={<UserPlus aria-hidden className="size-4" />}
-          onPress={() => {
-            setNotice(undefined);
-            onOpen();
-          }}
+          onPress={onOpen}
         >
           {t('newButton')}
         </Button>
@@ -171,8 +168,6 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
         selected={filters.status}
         onSelect={(status) => navigate({ ...filters, status, page: 1 })}
       />
-
-      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
 
       <div className="flex flex-col gap-3">
         <Input
@@ -230,7 +225,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
               onCancel={onClose}
               onSaved={() => {
                 onClose();
-                setNotice({ tone: 'success', text: t('created') });
+                notify({ tone: 'success', text: t('created') });
                 router.refresh();
               }}
             />

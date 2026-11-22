@@ -14,7 +14,7 @@ import { parseAgendaDate, todayIn } from '@web/modules/reservations/utils/agenda
 
 type ReservationPageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ edit?: string; date?: string; saved?: string; from?: string }>;
+  searchParams: Promise<{ edit?: string; date?: string; from?: string }>;
 };
 
 /**
@@ -46,7 +46,6 @@ const ReservationPage = async ({ params, searchParams }: ReservationPageProps) =
       today={today}
       isAdmin={staff.role === 'admin'}
       generalTolerance={settings.tolerance_minutes}
-      saved={query.saved === '1'}
       extensions={extensions}
       // Opened from «Órdenes» (a reservation on its way): «Volver» goes back there.
       backTo={query.from === 'orders' ? 'orders' : 'agenda'}

@@ -13,7 +13,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { updateCustomer } from '@web/modules/customers/actions/customers.actions';
 import CustomerContactCard from '@web/modules/customers/components/organisms/customer-contact-card.component';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 const refresh = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh }) }));
@@ -64,7 +64,7 @@ describe('CustomerContactCard', () => {
     expect(within(dialog).getByRole('button', { name: 'Guardar cambios' })).toBeInTheDocument();
   });
 
-  it('closes the dialog, refreshes the record and announces the change in the card once saved (CA-27)', async () => {
+  it('closes the dialog, refreshes the record and announces the change in a floating notice once saved (CA-27; spec 013, CA-01)', async () => {
     vi.mocked(updateCustomer).mockResolvedValue({ ok: true });
     renderWithProviders(<CustomerContactCard customer={buildContact()} />);
     // Taken before opening: while the dialog is open it hides the page from assistive technologies.
@@ -77,7 +77,8 @@ describe('CustomerContactCard', () => {
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await within(contact).findByText('Datos del cliente guardados.')).toBeInTheDocument();
+    expect(await inToasts().findByText('Datos del cliente guardados.')).toBeInTheDocument();
+    expect(within(contact).queryByText('Datos del cliente guardados.')).not.toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(updateCustomer).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'c-1', full_name: 'Marta M.' })

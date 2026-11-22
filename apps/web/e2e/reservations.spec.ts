@@ -196,9 +196,17 @@ test.describe('the agenda (spec 012)', () => {
     await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
     await page.getByRole('button', { name: 'Guardar reserva' }).click();
 
-    await expect(page).toHaveURL(/\/agenda\/[0-9a-f-]{36}\?saved=1$/);
+    await expect(page).toHaveURL(/\/agenda\/[0-9a-f-]{36}$/);
     created.push(page.url().split('/agenda/')[1]!.split('?')[0]!);
-    await expect(page.getByText('Reserva guardada.')).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Avisos' }).getByText('Reserva guardada.')
+    ).toBeVisible();
+    // Spec 013, CA-05: the notice is not in the address: a reload does not repeat it.
+    await page.reload();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Avisos' })).not.toContainText(
+      'Reserva guardada.'
+    );
 
     await page.goto(`/agenda?date=${monday}`);
     const ten = slot(page, '10:00 a. m. – 11:00 a. m.');
@@ -226,6 +234,91 @@ test.describe('the agenda (spec 012)', () => {
 
     await page.goto('/agenda/schedule');
     await expect(page.getByText('No tienes permiso para ver esta página.')).toBeVisible();
+  });
+});
+
+test.describe('agendar desde el cliente (spec 012, amendment HU-07)', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  /** A customer of their own with two motorcycles: none is chosen by itself (RN-10). */
+  const customerWithTwoMotorcycles = async () => {
+    // Two tests run at once: the time alone may repeat, so a random suffix too.
+    const name = `E2E Agendar ${Date.now()} ${Math.random().toString(36).slice(2, 6)}`;
+    const customerId = await createWalkInCustomer(name);
+    customers.push(customerId);
+    const operator = publicClient();
+    await operator.auth.signInWithPassword({ email: SEED.operator.email, password: SEED.password });
+    const plates = [uniquePlate('motorcycle'), uniquePlate('motorcycle')];
+    for (const plate of plates) {
+      await operator.rpc('save_vehicle', {
+        p_customer_id: customerId,
+        p_vehicle_type: 'motorcycle',
+        p_brand_name: 'Suzuki',
+        p_line_name: 'GSX-R600',
+        p_color: 'black',
+        p_plate: plate,
+      });
+    }
+    return { name, customerId, plates };
+  };
+  const shown = (plate: string) => new RegExp(`${plate.slice(0, 3)}-${plate.slice(3)}`);
+
+  test('from the record, «Agendar» opens «Nueva reserva» with the customer; from a vehicle, with it too (CA-40, CA-41)', async ({
+    page,
+  }) => {
+    const { name, customerId, plates } = await customerWithTwoMotorcycles();
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+
+    await page.goto(`/customers/${customerId}`);
+    await page.getByRole('button', { name: 'Agendar', exact: true }).click();
+    await expect(page).toHaveURL(`/agenda/new?customer=${customerId}`);
+    await expect(page.getByRole('button', { name: 'Cambiar de cliente' })).toBeVisible();
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+    // Two motorcycles: none chosen by itself.
+    await expect(page.getByRole('radio', { name: shown(plates[0]!) })).not.toBeChecked();
+    await expect(page.getByRole('radio', { name: shown(plates[1]!) })).not.toBeChecked();
+
+    await page.goto(`/customers/${customerId}`);
+    await page
+      .getByRole('button', { name: new RegExp(`^Agendar .*${shown(plates[1]!).source}`) })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/agenda/new\\?customer=${customerId}&vehicle=`));
+    await expect(page.getByRole('radio', { name: shown(plates[1]!) })).toBeChecked();
+    await expect(page.getByRole('radio', { name: shown(plates[0]!) })).not.toBeChecked();
+  });
+
+  test('the row menu of «Clientes» offers «Agendar» (CA-42)', async ({ page }) => {
+    const { name, customerId } = await customerWithTwoMotorcycles();
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+
+    await page.goto(`/customers?q=${encodeURIComponent(name)}`);
+    await page
+      .getByRole('row', { name: new RegExp(name) })
+      .getByRole('button', { name: `Acciones de ${name}` })
+      .click();
+    await page.getByRole('menuitem', { name: 'Agendar' }).click();
+
+    await expect(page).toHaveURL(`/agenda/new?customer=${customerId}`);
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+  });
+
+  test('an address with a disabled customer starts with nobody chosen (CA-43)', async ({
+    page,
+  }) => {
+    const { data: disabled } = await adminClient()
+      .from('customers')
+      .select('id')
+      .eq('email', 'cliente.desactivado@motorismo.test')
+      .single();
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+
+    await page.goto(`/agenda/new?customer=${disabled!.id}`);
+
+    await expect(page.getByLabel('Buscar cliente')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cambiar de cliente' })).toHaveCount(0);
   });
 });
 
@@ -278,7 +371,10 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     await page.getByRole('button', { name: 'Llegó' }).click();
     await expect(page.getByRole('group', { name: 'Lavado sencillo' })).toBeVisible();
     await page.getByRole('button', { name: 'Abrir orden' }).click();
-    await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}\?saved=opened$/);
+    await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
+    await expect(
+      page.getByRole('region', { name: 'Avisos' }).getByText('Orden abierta.')
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: /^Viene de la reserva de las/ })).toHaveAttribute(
       'href',
       `/agenda/${id}`
@@ -317,7 +413,9 @@ test.describe('changing, cancelling and no-shows (spec 012, HU-04)', () => {
     await page.getByRole('button', { name: 'Cambiar' }).click();
     await page.getByRole('radio', { name: /^4:00 p\. m\./ }).check({ force: true });
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
-    await expect(page.getByText('Reserva guardada.')).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Avisos' }).getByText('Reserva guardada.')
+    ).toBeVisible();
     await expect(page.getByText(/4:00 p\. m\. – 5:00 p\. m\./)).toBeVisible();
 
     await page.getByRole('button', { name: 'Cancelar reserva' }).click();

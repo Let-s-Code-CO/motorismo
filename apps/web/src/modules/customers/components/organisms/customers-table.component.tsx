@@ -2,6 +2,7 @@
 
 import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import {
   Button,
@@ -16,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@heroui/react';
-import { ChevronRight, Ellipsis, UserCheck, UserX } from 'lucide-react';
+import { CalendarPlus, ChevronRight, Ellipsis, UserCheck, UserX } from 'lucide-react';
 
 import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
@@ -57,6 +58,7 @@ const CustomersTable = ({
 }: CustomersTableProps) => {
   const t = useTranslations('customers');
   const format = useFormatter();
+  const router = useRouter();
 
   const actionsMenu = (customer: CustomerListRow, toggle: (c: CustomerListRow) => void) => {
     const isDisabled = customer.status === 'disabled';
@@ -70,26 +72,36 @@ const CustomersTable = ({
             </Button>
           </DropdownTrigger>
           <DropdownMenu aria-label={label}>
-            {isDisabled ? (
-              <DropdownItem
-                key="reactivate"
-                startContent={<UserCheck aria-hidden className={ICON} />}
-                onPress={() => toggle(customer)}
-              >
-                {t('detail.reactivate')}
-              </DropdownItem>
-            ) : (
-              <DropdownItem
-                key="disable"
-                color="danger"
-                // Destructive: red like «Desactivar» in «Usuarios»; danger-600 keeps AA contrast.
-                className="text-danger-600"
-                startContent={<UserX aria-hidden className={ICON} />}
-                onPress={() => toggle(customer)}
-              >
-                {t('detail.disable')}
-              </DropdownItem>
-            )}
+            {isDisabled
+              ? [
+                  <DropdownItem
+                    key="reactivate"
+                    startContent={<UserCheck aria-hidden className={ICON} />}
+                    onPress={() => toggle(customer)}
+                  >
+                    {t('detail.reactivate')}
+                  </DropdownItem>,
+                ]
+              : [
+                  // Spec 012, CA-42: «Nueva reserva» for this customer.
+                  <DropdownItem
+                    key="book"
+                    startContent={<CalendarPlus aria-hidden className={ICON} />}
+                    onPress={() => router.push(`/agenda/new?customer=${customer.id}`)}
+                  >
+                    {t('detail.book')}
+                  </DropdownItem>,
+                  <DropdownItem
+                    key="disable"
+                    color="danger"
+                    // Destructive: red like «Desactivar» in «Usuarios»; danger-600 keeps AA contrast.
+                    className="text-danger-600"
+                    startContent={<UserX aria-hidden className={ICON} />}
+                    onPress={() => toggle(customer)}
+                  >
+                    {t('detail.disable')}
+                  </DropdownItem>,
+                ]}
           </DropdownMenu>
         </Dropdown>
       </div>

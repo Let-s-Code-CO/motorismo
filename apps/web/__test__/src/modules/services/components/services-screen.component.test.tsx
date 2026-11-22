@@ -3,17 +3,19 @@
  *
  * Guards:
  * - CA-06: with no services, an admin is invited to register the first one.
- * - CA-12: disabling asks first, then announces the result.
+ * - CA-12: disabling asks first, then announces the result, as a floating notice (spec 013,
+ *   CA-01); a refusal too, until closed (spec 013, CA-07); with no network, nothing of its own
+ *   (spec 013, CA-09).
  * - CA-13: the disabled services are apart, in «Desactivados», where they can be reactivated.
  * - CA-15: an operator sees the services without any way to register, correct or disable them.
  */
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 
 import { setServiceDisabled } from '@web/modules/services/actions/services.actions';
 import type { ServiceRow } from '@web/modules/services/api/services.server';
 import ServicesScreen from '@web/modules/services/components/organisms/services-screen.component';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('@web/modules/services/actions/services.actions', () => ({
@@ -62,11 +64,37 @@ describe('ServicesScreen', () => {
     await screen.findByRole('dialog', { name: /¿Desactivar «Lavado sencillo»?/ });
     fireEvent.click(screen.getByRole('button', { name: 'Desactivar' }));
 
-    expect(await screen.findByText('Servicio desactivado.')).toBeVisible();
+    expect(await inToasts().findByText('Servicio desactivado.')).toBeVisible();
     expect(setServiceDisabled).toHaveBeenCalledWith({
       id: '20000000-0000-4000-8000-000000000001',
       disabled: true,
     });
+  });
+
+  const disableLavado = async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Acciones de Lavado sencillo' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Desactivar' }));
+    await screen.findByRole('dialog', { name: /¿Desactivar «Lavado sencillo»?/ });
+    fireEvent.click(screen.getByRole('button', { name: 'Desactivar' }));
+  };
+
+  it('says a refusal in a floating notice that stays (spec 013, CA-07)', async () => {
+    vi.mocked(setServiceDisabled).mockResolvedValue({ ok: false, error: 'generic' });
+    renderWithProviders(<ServicesScreen services={[service()]} isAdmin />);
+
+    await disableLavado();
+
+    expect(await inToasts().findByText('No se pudo guardar. Inténtalo de nuevo.')).toBeVisible();
+  });
+
+  it('says nothing of its own with no network (spec 013, CA-09)', async () => {
+    vi.mocked(setServiceDisabled).mockRejectedValue(new TypeError('Failed to fetch'));
+    renderWithProviders(<ServicesScreen services={[service()]} isAdmin />);
+
+    await disableLavado();
+
+    await waitFor(() => expect(setServiceDisabled).toHaveBeenCalled());
+    expect(screen.getByRole('region', { name: 'Avisos' })).toHaveTextContent('');
   });
 
   it('keeps the disabled services apart, in «Desactivados», where they are reactivated (CA-13)', async () => {
@@ -78,7 +106,7 @@ describe('ServicesScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Acciones de Polichado' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Reactivar' }));
 
-    expect(await screen.findByText('Servicio reactivado.')).toBeVisible();
+    expect(await inToasts().findByText('Servicio reactivado.')).toBeVisible();
     expect(setServiceDisabled).toHaveBeenCalledWith({ id: polichado.id, disabled: false });
   });
 

@@ -16,13 +16,15 @@ import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page, expect, test } from '@playwright/test';
 
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
+import { refuseNoShow, saveAgendaSettings } from './support/toasts';
 
 const audit = async (page: Page) => {
-  // Every screen enters with a short fade (spec 011, `page-in`): mid-fade, colours are blended and
-  // axe would measure a contrast nobody sees. Wait for it to end first.
+  // Every screen enters with a short fade (spec 011, `page-in`), and so does a floating notice
+  // (spec 013): mid-fade, colours are blended and axe would measure a contrast nobody sees. Wait
+  // for them to end first.
   await page.evaluate(() =>
     Promise.all(
-      [...document.querySelectorAll('[data-page]')].flatMap((node) =>
+      [...document.querySelectorAll('[data-page], [data-toast]')].flatMap((node) =>
         node.getAnimations().map((animation) => animation.finished)
       )
     )
@@ -440,4 +442,18 @@ test('a screen still loading, with its skeleton, has no serious accessibility is
   await page.waitForTimeout(500);
 
   expect(await audit(page)).toEqual([]);
+});
+
+test('a confirmation and an error, floating, have no serious accessibility issues (spec 013, CA-11)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+  const cleanup = await refuseNoShow(page);
+  // The error stays; the confirmation arrives after it, on another screen.
+  await saveAgendaSettings(page);
+
+  expect(await audit(page)).toEqual([]);
+  await cleanup();
 });

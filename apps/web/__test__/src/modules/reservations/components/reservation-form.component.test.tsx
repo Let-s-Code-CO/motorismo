@@ -3,7 +3,8 @@
  *
  * Guards:
  * - CA-01 / CA-05: with a customer and a slot (vehicle optional), saving books the seat and opens
- *   the reservation, announced (`?saved=1`).
+ *   the reservation, where «Reserva guardada.» shows once it is reached (spec 013, CA-05): not in
+ *   the address, so reloading does not repeat it.
  * - CA-04: the services offered are the active ones; with a vehicle, only those with a price for
  *   its type.
  * - The customer and the slot are required; nothing is sent without them.
@@ -17,8 +18,9 @@ import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 
+import { arrive } from '@web/modules/core/lib/toast.lib';
 import { saveReservation } from '@web/modules/reservations/actions/reservations.actions';
 import ReservationForm from '@web/modules/reservations/components/organisms/reservation-form.component';
 import type {
@@ -28,7 +30,7 @@ import type {
 } from '@web/modules/reservations/types/reservations.types';
 import { fetchActiveServices } from '@web/modules/work-orders/api/work-orders.client';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 const router = { push: vi.fn(), replace: vi.fn(), refresh: vi.fn() };
 vi.mock('next/navigation', () => ({
@@ -44,12 +46,16 @@ vi.mock('@web/modules/work-orders/api/work-orders.client', () => ({
 }));
 vi.mock('@web/modules/work-orders/components/organisms/customer-picker.component', () => ({
   default: (props: {
+    customer: { full_name: string } | null;
     customerLocked?: boolean;
+    initialVehicleId?: string | null;
     onCustomerChange: (customer: object) => void;
     onVehicleChange: (vehicle: object) => void;
   }) => (
     <div>
       {props.customerLocked && <p>Cliente fijo</p>}
+      {props.customer && <p>Cliente elegido: {props.customer.full_name}</p>}
+      {props.initialVehicleId && <p>Vehículo inicial: {props.initialVehicleId}</p>}
       <button
         type="button"
         onClick={() =>
@@ -111,7 +117,13 @@ const service = (id: string, name: string, price_car: number | null) => ({
 });
 
 const renderForm = (
-  props: { day?: AgendaDay; reservation?: ReservationSummary; initialStart?: string } = {}
+  props: {
+    day?: AgendaDay;
+    reservation?: ReservationSummary;
+    initialStart?: string;
+    initialCustomer?: { id: string; full_name: string; phone: string | null; email: string | null };
+    initialVehicleId?: string;
+  } = {}
 ) => {
   const wrap = (node: ReactNode) => (
     <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
@@ -122,6 +134,34 @@ const renderForm = (
 const submit = () => fireEvent.click(screen.getByRole('button', { name: /Guardar/ }));
 
 describe('ReservationForm', () => {
+  describe('agendar desde el cliente (amendment HU-07)', () => {
+    it('starts with the customer it was opened for, and books them (CA-40)', async () => {
+      vi.mocked(saveReservation).mockResolvedValue({ ok: true, id: 'r-new' });
+      renderForm({
+        initialCustomer: { id: CUSTOMER, full_name: 'Valentina', phone: null, email: null },
+      });
+
+      expect(screen.getByText('Cliente elegido: Valentina')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('radio', { name: /^9:00 a\. m\./ }));
+      submit();
+
+      await vi.waitFor(() =>
+        expect(saveReservation).toHaveBeenCalledWith(
+          expect.objectContaining({ customer_id: CUSTOMER, slot_start: NINE })
+        )
+      );
+    });
+
+    it('hands the vehicle it was opened for to the picker, which chooses it (CA-41)', () => {
+      renderForm({
+        initialCustomer: { id: CUSTOMER, full_name: 'Valentina', phone: null, email: null },
+        initialVehicleId: CAR,
+      });
+
+      expect(screen.getByText(`Vehículo inicial: ${CAR}`)).toBeInTheDocument();
+    });
+  });
+
   beforeEach(() => {
     vi.mocked(fetchActiveServices).mockResolvedValue([
       service(WASH, 'Lavado detallado', 40000),
@@ -142,7 +182,10 @@ describe('ReservationForm', () => {
     });
     submit();
 
-    await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith('/agenda/r-new?saved=1'));
+    await vi.waitFor(() => expect(router.push).toHaveBeenCalledWith('/agenda/r-new'));
+    expect(screen.queryByText('Reserva guardada.')).not.toBeInTheDocument();
+    act(() => arrive('/agenda/r-new'));
+    expect(inToasts().getByText('Reserva guardada.')).toBeVisible();
     expect(saveReservation).toHaveBeenCalledWith({
       customer_id: CUSTOMER,
       vehicle_id: null,

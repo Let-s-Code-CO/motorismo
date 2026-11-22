@@ -203,6 +203,25 @@ queda a quien está por llegar, para no decidir con datos viejos.
 - **CA-39** — Dada una reserva abierta desde «Órdenes», cuando se pulsa «Volver», entonces regresa a
   «Órdenes»; abierta desde la agenda, regresa a su día.
 
+### HU-07 (P2) — Agendar desde el cliente *(enmienda 2026-11-21)*
+
+Como miembro del personal, quiero agendar a un cliente desde su ficha, desde uno de sus vehículos
+o desde la lista de clientes, para no tener que buscarlo otra vez en «Nueva reserva».
+
+**Criterios de aceptación**
+
+- **CA-40** — Dada la ficha de un cliente activo, cuando el personal pulsa «Agendar», entonces se
+  abre «Nueva reserva» con ese cliente ya elegido. Si tiene un solo vehículo activo, viene elegido
+  (RN-10); si no, se elige como siempre, o «Sin vehículo».
+- **CA-41** — Dado un vehículo activo en la ficha de un cliente activo, cuando el personal pulsa su
+  «Agendar», entonces se abre «Nueva reserva» con el cliente y ese vehículo ya elegidos.
+- **CA-42** — Dada la lista de «Clientes», cuando el personal abre el menú de la fila de un cliente
+  activo, entonces ofrece «Agendar», que hace lo mismo que en su ficha (CA-40).
+- **CA-43** — Dado un cliente desactivado, entonces ni su ficha, ni sus vehículos, ni su fila
+  ofrecen «Agendar». Si la dirección de «Nueva reserva» trae un cliente desactivado o que no existe,
+  o un vehículo que no es suyo o está retirado, el formulario empieza sin ese cliente o sin ese
+  vehículo, como si no viniera.
+
 ## Requisitos funcionales
 
 - **RF-01** — Una reserva pertenece a un cliente y, opcionalmente, a uno de sus vehículos. Tiene una
@@ -352,3 +371,6 @@ Ninguna. Resueltas con el usuario el 2026-11-21:
 | 2026-11-21 | Petición del usuario: las horas pasadas ya no estorban. CA-09: la agenda oculta las franjas que terminaron sin reservas (y dice cuántas), marca «Ya pasó» las que terminaron con reservas y «En curso» la actual; CA-03: el formulario no ofrece franjas terminadas. |
 | 2026-11-21 | Enmienda HU-06 verificada (CA-33 a CA-39). Correcciones a raíz de la revisión del usuario: guardar la configuración de la agenda fallaba desde la app (actualización sin condición, rechazada por la API; prueba de sandbox), los avisos de «Horario» salen debajo de su botón y el seed deja los ejemplos de hoy dentro del horario. E2E completa en verde contra el build de producción (165/165). Estado `verificada`. |
 | 2026-11-21 | Ajuste pedido por el usuario (CA-35): el refresco en tiempo real solo actúa en las pantallas que muestran órdenes o reservas (inicio, «Órdenes», «Agenda» y sus detalles). En «Clientes», un cambio provocaba 14 peticiones al servidor sin mostrar nada nuevo. |
+| 2026-11-21 | Enmienda aprobada por el usuario (HU-07): «Agendar» desde la ficha del cliente, desde cada uno de sus vehículos y desde el menú de su fila en «Clientes» (CA-40 a CA-43); solo desde el vehículo dejaría sin forma de agendar a quien reserva sin vehículo. Estado `en-progreso`. |
+| 2026-11-21 | Enmienda HU-07 implementada: «Agendar» en la ficha, en cada vehículo (con la placa en su nombre accesible, para distinguir dos motos iguales) y en el menú de la fila; la dirección de «Nueva reserva» ignora un cliente desactivado o inexistente. Solo el personal, como toda reserva. |
+| 2026-11-21 | Enmienda HU-07 verificada (CA-40 a CA-43): cada criterio con prueba de componente y E2E, vistas fallar; los roles no cambian (solo el personal reserva). Estado `verificada`. |

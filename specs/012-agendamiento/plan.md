@@ -489,6 +489,31 @@ Ninguna.
   enlaces precargados, y en otras pantallas no mostraría nada nuevo.
 - **Sandbox:** `sandbox:start` ya no excluye Realtime.
 
+## Enmienda HU-07 — Agendar desde el cliente (CA-40 a CA-43)
+
+Sin cambios en la base: `save_reservation` ya rechaza un cliente desactivado o un vehículo ajeno o
+retirado.
+
+- **Entrada:** `/agenda/new?customer=…&vehicle=…`.
+  - `agenda/new/page.tsx` valida los UUID y busca el cliente con `getCustomer`. Si no existe o está
+    desactivado, se ignora junto con el vehículo (CA-43).
+  - `NewReservationScreen` → `ReservationForm` reciben `initialCustomer` (`PickerCustomer`) e
+    `initialVehicleId`.
+  - El formulario empieza con ese cliente elegido y pasa el vehículo a `CustomerPicker`
+    (`initialVehicleId`), que lo elige solo si está entre los activos del cliente. Si no, se aplica
+    la regla de siempre (RN-10).
+  - Cambiar de día conserva los parámetros, como hoy.
+- **Ficha del cliente (CA-40):** `customer-detail` muestra «Agendar» junto al nombre si el cliente
+  está activo (enlace con ícono `CalendarPlus`).
+- **Vehículos (CA-41):** `vehicles-section`, para el personal y fuera de solo lectura, añade
+  «Agendar» a cada vehículo activo (`aria-label` «Agendar {vehículo}», que contiene el texto
+  visible).
+- **Lista (CA-42):** `customers-table` añade «Agendar» al menú de la fila de un cliente activo
+  (`router.push`).
+- **Pruebas:** componente para el formulario (cliente y vehículo de entrada), la ficha, los
+  vehículos y la fila. La E2E entra por la ficha y por un vehículo, y por una dirección con un
+  cliente desactivado (CA-43).
+
 ## Despliegue
 
 Primero la migración, que llega con `db-deploy` al entrar en `develop`; después la app. Sin

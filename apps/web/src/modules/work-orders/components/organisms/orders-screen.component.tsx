@@ -1,15 +1,16 @@
 'use client';
 
-import { type ReactNode, useState, useTransition } from 'react';
+import { type ReactNode, useTransition } from 'react';
 
 import { useFormatter, useNow, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { CalendarClock, Play, Plus, Timer } from 'lucide-react';
 
 import useClock from '@web/modules/core/hooks/clock.hook';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { extendReservationTolerance } from '@web/modules/reservations/actions/reservations.actions';
@@ -31,8 +32,6 @@ type OrdersScreenProps = {
   /** Reservations whose time has come, customer not arrived yet (spec 012, CA-18). */
   arriving?: ReservationSummary[];
 };
-
-type Notice = { tone: 'success' | 'danger'; text: string };
 
 /** The lines of an order as the estimate needs them: the view gives the sum and the missing ones. */
 const estimateLines = (order: WorkOrderSummary) => [
@@ -97,7 +96,6 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
   // Every 30 s: «hace …», the countdown of a reservation on its way (spec 012, CA-33) and when it
   // leaves the queue.
   const now = useNow({ updateInterval: 30_000 });
-  const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
   const pages = Math.max(1, Math.ceil(closed.total / CLOSED_PAGE_SIZE));
   const inProgress = open.filter((order) => order.started_at);
@@ -118,7 +116,8 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
     startTransition(async () => {
       const result = await callAction(() => extendReservationTolerance({ id: reservation.id }));
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? {
               tone: 'success',
@@ -140,7 +139,8 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
     startTransition(async () => {
       const result = await callAction(() => startWorkOrder({ id: order.id }));
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? { tone: 'success', text: t('list.started', { number: order.number ?? 0 }) }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
@@ -175,8 +175,6 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
           {t('new')}
         </Button>
       </div>
-
-      {notice && <Alert color={notice.tone} variant="faded" title={notice.text} />}
 
       <div className="flex flex-col gap-3">
         <SectionTitle dot="bg-warning-400">{t('list.inProgressTitle')}</SectionTitle>
@@ -376,7 +374,6 @@ const OrdersScreen = ({ open, closed, page, arriving = [] }: OrdersScreenProps) 
                         startContent={<Play aria-hidden className="size-3.5" />}
                         isDisabled={isPending}
                         onPress={() => {
-                          setNotice(undefined);
                           start(order);
                         }}
                       >

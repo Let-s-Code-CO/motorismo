@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 
 import { Alert, Button } from '@heroui/react';
 
+import useBottomBanner from '@web/modules/core/hooks/bottom-banner.hook';
 import useConnection from '@web/modules/pwa/hooks/connection.hook';
 import useHasNewVersion from '@web/modules/pwa/hooks/has-new-version.hook';
 import { reloadPage } from '@web/modules/pwa/utils/reload.utils';
@@ -16,13 +17,15 @@ import { reloadPage } from '@web/modules/pwa/utils/reload.utils';
  */
 const UpdateBanner = () => {
   const t = useTranslations('pwa.update');
+  // Spec 013: the floating notices rise above this banner instead of covering it.
+  const makeRoom = useBottomBanner();
   const isNew = useHasNewVersion();
   const online = useConnection() === 'online';
 
   if (!isNew || !online) return null;
 
   return (
-    <div className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl shadow-large">
+    <div ref={makeRoom} className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl shadow-large">
       <Alert
         color="default"
         variant="faded"

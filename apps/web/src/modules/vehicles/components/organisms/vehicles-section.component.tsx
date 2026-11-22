@@ -3,11 +3,13 @@
 import { useId, useState } from 'react';
 
 import { useFormatter, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Alert, Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
-import { Archive, ChevronDown, Pencil, Plus } from 'lucide-react';
+import { Button, Modal, ModalBody, ModalContent, ModalHeader } from '@heroui/react';
+import { Archive, CalendarPlus, ChevronDown, Pencil, Plus } from 'lucide-react';
 
+import { notify } from '@web/modules/core/lib/toast.lib';
 import type { VehicleView } from '@web/modules/vehicles/api/vehicles.server';
 import VehicleSummary, {
   vehicleName,
@@ -15,6 +17,7 @@ import VehicleSummary, {
 import RetireVehicleModal from '@web/modules/vehicles/components/organisms/retire-vehicle-modal.component';
 import VehicleForm from '@web/modules/vehicles/components/organisms/vehicle-form.component';
 import type { VehiclesAudience } from '@web/modules/vehicles/types/vehicles.types';
+import { formatPlate } from '@web/modules/vehicles/utils/plate.utils';
 
 type VehiclesSectionProps = {
   customerId: string;
@@ -51,11 +54,10 @@ const VehiclesSection = ({
   const [editing, setEditing] = useState<Editing>(null);
   const [retiring, setRetiring] = useState<{ id: string; name: string } | null>(null);
   const [showRetired, setShowRetired] = useState(false);
-  const [notice, setNotice] = useState<string>();
   const isOwn = audience === 'customer';
 
   const done = (message: string) => {
-    setNotice(message);
+    notify({ tone: 'success', text: message });
     router.refresh();
   };
 
@@ -79,7 +81,6 @@ const VehiclesSection = ({
             className="font-medium"
             startContent={<Plus aria-hidden className="size-4" />}
             onPress={() => {
-              setNotice(undefined);
               setEditing({ mode: 'add' });
             }}
           >
@@ -87,8 +88,6 @@ const VehiclesSection = ({
           </Button>
         )}
       </div>
-
-      {notice && <Alert color="success" variant="faded" title={notice} />}
       {readOnly && <p className="text-sm text-default-500">{t('section.readOnly')}</p>}
 
       {vehicles.length === 0 ? (
@@ -109,13 +108,28 @@ const VehiclesSection = ({
                 </div>
                 {!readOnly && (
                   <div className="flex shrink-0 gap-1 self-end sm:self-auto">
+                    {/* Spec 012, CA-41: book this customer with this vehicle (staff only). */}
+                    {!isOwn && (
+                      <Button
+                        as={Link}
+                        href={`/agenda/new?customer=${customerId}&vehicle=${vehicle.id}`}
+                        size="sm"
+                        variant="light"
+                        // With the plate: two motorcycles of the same line must be told apart.
+                        aria-label={t('section.bookLabel', {
+                          vehicle: vehicle.plate ? `${name} · ${formatPlate(vehicle.plate)}` : name,
+                        })}
+                        startContent={<CalendarPlus aria-hidden className="size-3.5" />}
+                      >
+                        {t('section.book')}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="light"
                       aria-label={t('section.editLabel', { vehicle: name })}
                       startContent={<Pencil aria-hidden className="size-3.5" />}
                       onPress={() => {
-                        setNotice(undefined);
                         setEditing({ mode: 'edit', vehicle });
                       }}
                     >
@@ -131,7 +145,6 @@ const VehiclesSection = ({
                       aria-label={t('section.retireLabel', { vehicle: name })}
                       startContent={<Archive aria-hidden className="size-3.5" />}
                       onPress={() => {
-                        setNotice(undefined);
                         setRetiring({ id: vehicle.id, name });
                       }}
                     >

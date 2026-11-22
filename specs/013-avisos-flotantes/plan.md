@@ -66,8 +66,9 @@ Sin cambios.
   - Los avisos se apilan en columna: el más reciente, abajo.
 - **Accesibilidad (CA-10):**
   - Dos contenedores vivos, siempre montados aunque estén vacíos (así anuncian al recibir
-    contenido): uno con `role="status"` (educado) para las confirmaciones y otro con
-    `role="alert"` (inmediato) para los errores.
+    contenido): uno con `aria-live="polite"` para las confirmaciones y otro con
+    `aria-live="assertive"` para los errores, los dos con `aria-atomic="false"`. Sin los roles
+    `status` y `alert`: vacíos, se confundirían con el estado o la alerta propios de una pantalla.
   - El foco nunca se mueve.
 - **Cada aviso:**
   - ícono `lucide` decorativo (`CircleCheck` o `CircleAlert`) y texto;
@@ -80,6 +81,9 @@ Sin cambios.
   - El reloj se pausa mientras el ratón (`pointerenter`/`pointerleave`) o el foco
     (`focusin`/`focusout`) están sobre el aviso, y sigue con el tiempo que le quedaba.
   - Los errores no tienen reloj (CA-07).
+- **Banners de abajo (añadido al implementar):** los de la spec 006 (instalar, versión nueva) también
+  van abajo. Con `useBottomBanner`, cada uno publica su altura en `--bottom-banners`, y la región
+  sube por encima (`bottom-[calc(1rem+var(--bottom-banners,0px))]`).
 - **Movimiento:** entra con `motion-safe:animate-toast-in` (fundido y subida de 4 px, 200 ms). Con
   «reducir movimiento», solo aparece y desaparece (CA-12).
 
@@ -103,6 +107,8 @@ En `core/messages/es.json`:
   - «Empezar» en la lista;
   - en el detalle: actualizada, cerrada, anulada y corregida.
 - **Reservas:** el detalle (guardada, más tiempo, «No asistió», cancelada, tolerancia).
+- **Usuarios:** invitar, cambiar el rol, desactivar o reactivar y reenviar (añadida al migrar: no
+  estaba en el inventario).
 - **«Horario»:** semana y configuración. Esto deshace el aviso bajo el botón de la spec 012, que
   era la solución provisional.
 
@@ -152,7 +158,7 @@ no dentro de la página.
 | CA-07 | componente | Una acción suelta que falla (p. ej. desactivar en Servicios) pone el error en la región `alert`, y a los 60 s sigue ahí. |
 | CA-08 | componente | Las pruebas de formularios y diálogos siguen encontrando su error dentro (sin cambios), y la región queda vacía. |
 | CA-09 | componente | Con `callAction` → `null`, no aparece ningún aviso. |
-| CA-10 | componente | La confirmación está dentro de `role="status"` y el error dentro de `role="alert"`; el foco sigue en el botón que se pulsó. |
+| CA-10 | componente | La confirmación está en la zona `aria-live="polite"` y el error en la `assertive`; el foco sigue en el botón que se pulsó. |
 | CA-11 | componente + e2e | «Cerrar» se alcanza con Tab y tiene nombre accesible. `a11y.spec.ts` audita con un aviso de cada tono a la vista, en claro y oscuro (`chromium-dark`). |
 | CA-12 | e2e | Con `reducedMotion: 'reduce'`, la animación del aviso es `none`. |
 

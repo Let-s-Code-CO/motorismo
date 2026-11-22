@@ -17,16 +17,18 @@ import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 
+import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderDetail from '@web/modules/work-orders/components/organisms/order-detail.component';
 import type { WorkOrderDetail } from '@web/modules/work-orders/types/work-orders.types';
 
-import { renderWithProviders } from '@tests/test-utils/render';
+import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 vi.mock('@web/modules/work-orders/actions/work-orders.actions', () => ({
   saveWorkOrder: vi.fn(),
+  startWorkOrder: vi.fn(),
   closeWorkOrder: vi.fn(),
   voidWorkOrder: vi.fn(),
   correctWorkOrder: vi.fn(),
@@ -149,6 +151,25 @@ describe('OrderDetail', () => {
     expect(screen.getByRole('region', { name: 'Resumen de la orden' })).not.toHaveTextContent(
       'lista hacia'
     );
+  });
+
+  it('says the order started in a floating notice (CA-33; spec 013, CA-01)', async () => {
+    vi.mocked(startWorkOrder).mockResolvedValue({ ok: true });
+    renderDetail(detail({ status: 'open', closed_at: null, closed_by_name: null }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Empezar' }));
+
+    expect(await inToasts().findByText('Orden en proceso.')).toBeVisible();
+  });
+
+  it('says why it could not start as an error that stays, not as a confirmation (spec 013, CA-07)', async () => {
+    vi.mocked(startWorkOrder).mockResolvedValue({ ok: false, error: 'alreadyStarted' });
+    renderDetail(detail({ status: 'open', closed_at: null, closed_by_name: null }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Empezar' }));
+
+    const error = await inToasts().findByText('Esta orden ya está en proceso.');
+    expect(error.closest('[data-toast]')).toHaveAttribute('data-toast', 'danger');
   });
 
   it('shows who started an order in progress, and its ready time from the start (CA-33, CA-34)', () => {

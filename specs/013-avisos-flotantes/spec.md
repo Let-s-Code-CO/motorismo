@@ -1,7 +1,7 @@
 ---
 id: "013"
 titulo: "Avisos flotantes de confirmación"
-estado: planificada
+estado: verificada
 creada: 2026-11-21
 actualizada: 2026-11-21
 ---
@@ -44,10 +44,11 @@ donde la vea, sin importar dónde estaba el botón, para no dudar de si se guard
   o la configuración de la agenda, el perfil, un vehículo…), cuando la acción termina bien, entonces
   la confirmación aparece como un aviso flotante con su texto de siempre («Configuración guardada.»),
   a la vista aunque la página esté desplazada, y no como un aviso dentro de la página.
-- **CA-02** — Dado un aviso flotante en una pantalla de escritorio (ancho de tableta horizontal o
-  mayor), entonces aparece en la esquina inferior derecha, sin tapar el contenido de forma permanente.
-  En un teléfono, aparece abajo, a lo ancho de la pantalla con su margen, sin provocar desplazamiento
-  lateral.
+- **CA-02** — Dado un aviso flotante en una pantalla desde el ancho de una tableta (768 px, donde la
+  app ya cambia al encabezado de escritorio), entonces aparece en la esquina inferior derecha, sin
+  tapar el contenido de forma permanente. En un teléfono, aparece abajo, a lo ancho de la pantalla
+  con su margen, sin provocar desplazamiento lateral. Si hay un banner abajo (instalar la app, versión
+  nueva), el aviso queda encima de él.
 - **CA-03** — Dada una confirmación, cuando pasan 5 segundos, entonces se cierra sola. Mientras el
   ratón o el foco del teclado estén sobre ella, no se cierra; al salir, vuelve a contar.
 - **CA-04** — Dado cualquier aviso flotante, cuando la persona pulsa su botón «Cerrar», entonces
@@ -162,3 +163,6 @@ Ninguna.
 | 2026-11-21 | Creación, a partir del aviso de «Horario» que quedó fuera de la vista (spec 012). Decisiones del usuario: abajo a la derecha en escritorio; errores mixtos (flotantes solo los de acciones sueltas, sin cerrarse solos; los de formularios y diálogos se quedan dentro); confirmaciones de 5 segundos. |
 | 2026-11-21 | Aprobada por el usuario. |
 | 2026-11-21 | Plan aprobado: estado `planificada`. |
+| 2026-11-21 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`), en una rama que sale de la 012 (migra pantallas que solo existen ahí). |
+| 2026-11-21 | Implementada. Además del inventario: «Usuarios» también pasa a avisos flotantes, y los avisos suben por encima de los banners de abajo de la spec 006 (instalar, versión nueva) en lugar de taparlos (CA-02). |
+| 2026-11-21 | Verificada: los 12 criterios con prueba vista fallar (unitarias, componente y E2E contra el build de producción, 171/171). CA-02 dice ahora «desde el ancho de una tableta (768 px)», como hace el código (decisión del usuario), e incluye los banners de abajo. La prueba de CA-11 recorre la página con Tab hasta «Cerrar». Estado `verificada`. |

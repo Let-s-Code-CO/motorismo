@@ -75,6 +75,19 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Radios: con Geist, el texto de un radio queda ~0,5 px por encima del centro del círculo;
   `globals.css` lo corrige para todos. Las tarjetas de rol (`invite-user-form`) bajan el círculo
   (`wrapper: 'mt-[1.75px]'`) para centrarlo en el nombre del rol.
+- **Avisos de resultado (spec 013, estándar).**
+  - **Qué:** lo que una acción hizo (guardar, crear, desactivar, cerrar…) se dice con
+    `notify({ tone, text })` de `core/lib/toast.lib.ts`, nunca con un `Alert` dentro de la página.
+  - **Dónde:** `ToastRegion` (layout raíz) lo pinta abajo a la derecha desde `md` y abajo a lo ancho
+    en el teléfono. Una confirmación se va a los 5 s (en pausa con el ratón o el foco encima); un
+    error no se va solo.
+  - **Errores:** los de una acción suelta (desactivar, «Empezar», «+5 min») van a `notify` con
+    `tone: 'danger'`; los de un formulario o un diálogo se quedan dentro, debajo de su botón.
+  - **Al navegar:** si la acción lleva a otra pantalla, `notify({ …, after: ruta })`, nunca
+    `?saved=1`: recargar no lo repite.
+  - **Banners de abajo:** un banner fijo abajo usa `useBottomBanner` (`core/hooks`) para que los
+    avisos suban por encima.
+  - **Pruebas:** `renderWithProviders` monta la pila de avisos; se buscan con `inToasts()`.
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
   filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son

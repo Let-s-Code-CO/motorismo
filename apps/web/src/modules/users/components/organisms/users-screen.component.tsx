@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -13,6 +13,7 @@ import { Constants } from '@motorismo/supabase/types';
 import type { CurrentUser, UserRole, UserStatus } from '@web/modules/auth/types/auth.types';
 import FilterBar from '@web/modules/core/components/filter-bar.component';
 import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
+import { notify } from '@web/modules/core/lib/toast.lib';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
 import { filterByStatus, parseStatusParam } from '@web/modules/core/utils/status-filter.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
@@ -24,8 +25,6 @@ import {
 } from '@web/modules/users/actions/users.actions';
 import InviteUserForm from '@web/modules/users/components/organisms/invite-user-form.component';
 import UsersTable from '@web/modules/users/components/organisms/users-table.component';
-
-type Notice = { tone: 'success' | 'danger'; text: string };
 
 /** Summary cards = filters (project standard): order and status dot of each card. */
 const SUMMARY: { status: UserStatus; dot: string }[] = [
@@ -43,7 +42,6 @@ type UsersScreenProps = {
 const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
   const t = useTranslations('users');
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
-  const [notice, setNotice] = useState<Notice>();
   const [isPending, startTransition] = useTransition();
 
   // The status filter lives in the URL: it survives a reload and works with "back" (CA-09).
@@ -63,14 +61,15 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
 
   const handleInvited = (email: string) => {
     onClose();
-    setNotice({ tone: 'success', text: t('invited', { email }) });
+    notify({ tone: 'success', text: t('invited', { email }) });
   };
 
   const run = (action: () => Promise<ActionResult<UsersErrorKey>>, successKey: string) => {
     startTransition(async () => {
       const result = await callAction(action);
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
-      setNotice(
+      // Spec 013: a floating notice, where it is seen; a refusal stays until closed (CA-07).
+      notify(
         result.ok
           ? { tone: 'success', text: t(successKey) }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
@@ -115,19 +114,6 @@ const UsersScreen = ({ users, currentUserId }: UsersScreenProps) => {
         selected={status}
         onSelect={setStatus}
       />
-
-      {notice && (
-        <p
-          role="status"
-          className={`rounded-large border px-4 py-3 text-sm ${
-            notice.tone === 'success'
-              ? 'border-success-200 bg-success-50 text-success-800'
-              : 'border-danger-200 bg-danger-50 text-danger-700'
-          }`}
-        >
-          {notice.text}
-        </p>
-      )}
 
       <div className="flex flex-col gap-3">
         <FilterBar

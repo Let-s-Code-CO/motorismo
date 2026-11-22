@@ -3,6 +3,10 @@
 import type { ReactNode } from 'react';
 
 import { useFormatter, useTranslations } from 'next-intl';
+import Link from 'next/link';
+
+import { Button } from '@heroui/react';
+import { CalendarPlus } from 'lucide-react';
 
 import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component';
 import type { CustomerRecord } from '@web/modules/customers/api/customers.server';
@@ -34,7 +38,7 @@ const CustomerDetail = ({ customer, children }: CustomerDetailProps) => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <UserAvatar
           name={customer.full_name}
           src={customer.avatar_url}
@@ -47,6 +51,18 @@ const CustomerDetail = ({ customer, children }: CustomerDetailProps) => {
           </h1>
           <CustomerStatusChip status={customer.status} />
         </div>
+        {/* Spec 012, CA-40: book this customer without looking for them again; never if disabled. */}
+        {customer.disabled_at === null && (
+          <Button
+            as={Link}
+            href={`/agenda/new?customer=${customer.id}`}
+            variant="bordered"
+            className="ml-auto"
+            startContent={<CalendarPlus aria-hidden className="size-4" />}
+          >
+            {t('detail.book')}
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
