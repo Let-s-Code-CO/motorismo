@@ -27,6 +27,7 @@ import {
 import useClock from '@web/modules/core/hooks/clock.hook';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
+import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import PlateLabel from '@web/modules/vehicles/components/atoms/plate-label.component';
 import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderStatusChip from '@web/modules/work-orders/components/atoms/order-status-chip.component';
@@ -67,6 +68,11 @@ type OrderDetailProps = {
   isAdmin: boolean;
   /** What was just done, to announce it (after opening an order). */
   saved?: 'opened';
+  /**
+   * Spec 012: the customer arrived for a reservation and this vehicle already had this order open:
+   * it opens editing, and saving links the reservation to it.
+   */
+  reservation?: Pick<ReservationSummary, 'id' | 'service_ids' | 'services' | 'slot_start'>;
 };
 
 /**
@@ -76,13 +82,15 @@ type OrderDetailProps = {
  * closed, only an admin corrects or voids it (CA-22, CA-23, RN-05); voided, nothing more. A voided
  * or corrected order says by whom, when and why.
  */
-const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
+const OrderDetail = ({ order, isAdmin, saved, reservation }: OrderDetailProps) => {
   const t = useTranslations('orders');
   const tVehicles = useTranslations('vehicles');
   const format = useFormatter();
   const router = useRouter();
   const { summary } = order;
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(
+    !!reservation && order.summary.status === 'open' && !order.summary.started_at
+  );
   const [closing, setClosing] = useState(false);
   const [voiding, setVoiding] = useState(false);
   const [correcting, setCorrecting] = useState(false);
@@ -132,6 +140,15 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
             {t('number', { number: summary.number ?? 0 })}
           </h1>
           <OrderStatusChip stage={stage} />
+          {/* Spec 012, RF-04: the reservation it came from. */}
+          {summary.reservation_id && summary.reserved_start && (
+            <Link
+              href={`/agenda/${summary.reservation_id}`}
+              className="cursor-pointer text-sm font-medium underline underline-offset-4"
+            >
+              {t('detail.reservation', { time: clock(new Date(summary.reserved_start)) })}
+            </Link>
+          )}
         </div>
         {!busy && isClosed && isAdmin && (
           <Button
@@ -302,6 +319,7 @@ const OrderDetail = ({ order, isAdmin, saved }: OrderDetailProps) => {
             vehicle_type: summary.vehicle_type ?? 'motorcycle',
           }}
           order={order}
+          reservation={reservation}
           onCancel={() => setEditing(false)}
           onSaved={() => {
             setEditing(false);

@@ -119,9 +119,11 @@ cuándo estará listo cada uno, y lo ya entregado, para organizar el lavadero y 
 - **CA-18** — Dado un miembro del personal, cuando abre «Órdenes», entonces ve tres secciones, cada
   una con su color:
   - **«En proceso»**: las órdenes empezadas, con la hora estimada de entrega (HU-06);
-  - **«En cola»**: las abiertas sin empezar, por orden de llegada (la más antigua primero), con su
-    turno (1.º, 2.º…), hace cuánto llegaron y su tiempo estimado (sin hora de entrega: aún no se
-    sabe cuándo empezará);
+  - **«En cola»**: las abiertas sin empezar, por **hora de turno** (spec 012, RN-04: la llegada, o
+    la hora reservada si el cliente llegó con reserva dentro de su tolerancia; sin reservas, es el
+    orden de llegada), con su turno (1.º, 2.º…), hace cuánto llegaron y su tiempo estimado (sin hora
+    de entrega: aún no se sabe cuándo empezará). Las que vienen de una reserva lo dicen («Reserva
+    9:00 a. m.»), y las reservas por llegar se ven en su lugar, sin turno (spec 012, CA-18);
   - **«Cerradas»** (CA-19).
 
   Cada orden muestra número, cliente, placa (o tipo de vehículo), servicios y total.
@@ -333,3 +335,4 @@ Ninguna. Resueltas con el usuario el 2026-11-20:
 | 2026-11-20 | Enmienda implementada: «En cola» / «En proceso» con «Empezar», tres secciones en «Órdenes», ficha con «Ver más», páginas con total. Revisado en teléfono (iPhone 440 px y 360 px). |
 | 2026-11-20 | Ajustes visuales del detalle: vehículo con el ícono de su tipo y la placa como en la ficha del cliente; historial con íconos; «Anular orden» en su propia sección al final, como «Desactivar cliente». |
 | 2026-11-20 | Verificada: CA-29 alineado con RN-12/CA-34 (la entrega cuenta desde el inicio); se añadieron pruebas del contenido de cada fila de «Órdenes» (CA-18), del vehículo retirado que no se ofrece (CA-10) y la etiqueta CA-35 en pgTAP. |
+| 2026-11-21 | Enmienda de la spec 012: «En cola» se ordena por hora de turno (RN-04 de la 012) y muestra las reservas por llegar (CA-18). Sin reservas, el orden es el de llegada, como antes. |

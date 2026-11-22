@@ -59,6 +59,7 @@ describe('MobileNav', () => {
     expect(sectionNames(panel)).toEqual([
       'Inicio',
       'Órdenes',
+      'Agenda',
       'Clientes',
       'Servicios',
       'Empleados',
@@ -75,6 +76,7 @@ describe('MobileNav', () => {
     expect(sectionNames(panel)).toEqual([
       'Inicio',
       'Órdenes',
+      'Agenda',
       'Clientes',
       'Servicios',
       'Empleados',

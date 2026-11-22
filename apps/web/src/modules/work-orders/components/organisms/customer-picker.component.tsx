@@ -21,6 +21,7 @@ import { Plus, Search, UserRound } from 'lucide-react';
 
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import { singleOption } from '@web/modules/core/utils/selection.utils';
+import CustomerForm from '@web/modules/customers/components/organisms/customer-form.component';
 import VehicleForm from '@web/modules/vehicles/components/organisms/vehicle-form.component';
 import { orderKeys } from '@web/modules/work-orders/queries/work-orders.keys';
 import {
@@ -38,7 +39,21 @@ type CustomerPickerProps = {
   vehicleId: string | null;
   onCustomerChange: (customer: PickerCustomer | null) => void;
   onVehicleChange: (vehicle: PickerVehicle | null) => void;
+  /**
+   * `reservation` (spec 012): the vehicle is optional, one with an open order can be booked for
+   * another time, and a customer not registered yet is registered right there (CA-01, CA-02).
+   */
+  purpose?: 'order' | 'reservation';
+  /** Changing a reservation keeps its customer (spec 012, CA-20): no «Cambiar de cliente». */
+  customerLocked?: boolean;
+  /** The vehicle to choose once the customer's vehicles load (spec 012: the reservation's). */
+  initialVehicleId?: string | null;
+  /** Appended to the link of a vehicle's open order (spec 012: `?reservation=…` to link it). */
+  openOrderQuery?: string;
 };
+
+/** The radio value of «Sin vehículo». */
+const NO_VEHICLE = 'none';
 
 /**
  * Who brings which vehicle (spec 008, HU-01): find the customer by name, phone or plate (CA-01),
@@ -50,12 +65,20 @@ const CustomerPicker = ({
   vehicleId,
   onCustomerChange,
   onVehicleChange,
+  purpose = 'order',
+  customerLocked = false,
+  initialVehicleId = null,
+  openOrderQuery = '',
 }: CustomerPickerProps) => {
   const t = useTranslations('orders.picker');
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [registering, setRegistering] = useState(false);
-  const [pendingVehicle, setPendingVehicle] = useState<string | null>(null);
+  const [registeringCustomer, setRegisteringCustomer] = useState(false);
+  const forReservation = purpose === 'reservation';
+  // An order cannot reuse a vehicle that already has one open; a reservation is for another time.
+  const isBusy = (vehicle: PickerVehicle) => !forReservation && !!vehicle.openOrder;
+  const [pendingVehicle, setPendingVehicle] = useState<string | null>(initialVehicleId);
 
   const search = useQuery({
     ...customerSearchQueryOptions(q),
@@ -69,11 +92,13 @@ const CustomerPicker = ({
   // RN-10: the only free vehicle is chosen by itself; CA-02: so is one just registered.
   useEffect(() => {
     if (!vehicles.data || vehicleId) return;
-    const registered = pendingVehicle && vehicles.data.find(({ id }) => id === pendingVehicle);
-    const chosen = registered || singleOption(vehicles.data.filter(({ openOrder }) => !openOrder));
+    const free = vehicles.data.filter(({ openOrder }) => purpose === 'reservation' || !openOrder);
+    // A vehicle with an open order is never chosen for a new order, even if it was the pending one.
+    const registered = pendingVehicle && free.find(({ id }) => id === pendingVehicle);
+    const chosen = registered || singleOption(free);
     // Once chosen, vehicleId is set and this stops; another customer never has the pending id.
     if (chosen) onVehicleChange(chosen);
-  }, [vehicles.data, vehicleId, pendingVehicle, onVehicleChange]);
+  }, [vehicles.data, vehicleId, pendingVehicle, onVehicleChange, purpose]);
 
   if (!customer) {
     return (
@@ -91,6 +116,40 @@ const CustomerPicker = ({
         {search.data && search.data.length === 0 && (
           <p className="text-sm text-default-500">{t('noResults')}</p>
         )}
+        {forReservation && (
+          <Button
+            variant="bordered"
+            className="w-max"
+            startContent={<Plus aria-hidden className="size-4" />}
+            onPress={() => setRegisteringCustomer(true)}
+          >
+            {t('registerCustomer')}
+          </Button>
+        )}
+        <Modal
+          isOpen={registeringCustomer}
+          onOpenChange={(open) => !open && setRegisteringCustomer(false)}
+          size="xl"
+          scrollBehavior="outside"
+        >
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader>{t('registerCustomerTitle')}</ModalHeader>
+                <ModalBody className="pb-6">
+                  <CustomerForm
+                    mode="create"
+                    onCancel={onClose}
+                    onSaved={(saved) => {
+                      onClose();
+                      if (saved) onCustomerChange(saved);
+                    }}
+                  />
+                </ModalBody>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
         {!!search.data?.length && (
           <ul className="flex flex-col divide-y divide-divider rounded-medium border border-divider">
             {search.data.map((found) => (
@@ -125,16 +184,18 @@ const CustomerPicker = ({
           <UserRound aria-hidden className="size-4 text-default-400" />
           {customer.full_name}
         </span>
-        <Button
-          size="sm"
-          variant="light"
-          onPress={() => {
-            onVehicleChange(null);
-            onCustomerChange(null);
-          }}
-        >
-          {t('changeCustomer')}
-        </Button>
+        {!customerLocked && (
+          <Button
+            size="sm"
+            variant="light"
+            onPress={() => {
+              onVehicleChange(null);
+              onCustomerChange(null);
+            }}
+          >
+            {t('changeCustomer')}
+          </Button>
+        )}
       </div>
 
       {vehicles.data && vehicles.data.length === 0 && (
@@ -143,19 +204,20 @@ const CustomerPicker = ({
       {!!vehicles.data?.length && (
         <RadioGroup
           label={t('vehicle')}
-          value={vehicleId}
+          value={vehicleId ?? (forReservation ? NO_VEHICLE : null)}
           onValueChange={(id) => onVehicleChange(vehicles.data.find((v) => v.id === id) ?? null)}
         >
+          {forReservation && <Radio value={NO_VEHICLE}>{t('noVehicleChoice')}</Radio>}
           {vehicles.data.map((vehicle) => (
             <div key={vehicle.id} className="flex flex-wrap items-center gap-x-3">
-              <Radio value={vehicle.id} isDisabled={!!vehicle.openOrder}>
+              <Radio value={vehicle.id} isDisabled={isBusy(vehicle)}>
                 {vehicleLabel(vehicle, t('noPlate'))}
               </Radio>
-              {vehicle.openOrder && (
+              {isBusy(vehicle) && vehicle.openOrder && (
                 <span className="text-xs text-default-500">
                   {t('openOrderHint')}{' '}
                   <Link
-                    href={`/orders/${vehicle.openOrder.id}`}
+                    href={`/orders/${vehicle.openOrder.id}${openOrderQuery}`}
                     className="font-medium text-foreground underline underline-offset-4"
                   >
                     {`Orden #${vehicle.openOrder.number}`}

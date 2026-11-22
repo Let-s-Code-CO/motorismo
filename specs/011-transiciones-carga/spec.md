@@ -3,7 +3,7 @@ id: "011"
 titulo: "Transiciones y estados de carga"
 estado: verificada
 creada: 2026-11-20
-actualizada: 2026-11-20
+actualizada: 2026-11-21
 ---
 
 # 011 — Transiciones y estados de carga
@@ -164,3 +164,5 @@ Ninguna.
 | 2026-11-20 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-20 | Implementada. La barra termina en cuanto la pantalla nueva aparece (su esqueleto o su contenido); la pestaña tiene su título también mientras carga. |
 | 2026-11-20 | Verificada. CA-06: la barra va en el borde superior de la pantalla (no bajo el encabezado), como en la mayoría de las apps y también en el acceso, que no tiene encabezado. Pruebas añadidas: que cada pantalla con sesión tenga su esqueleto (CA-01), y la posición y el retardo de 120 ms de la barra en el navegador (CA-06, CA-07). |
+| 2026-11-21 | Corrección (CA-06), encontrada por el usuario: al ir atrás con el navegador a una pantalla ya vista, la app la muestra antes de que la barra se entere, y la barra se quedaba esperando para siempre. Ahora solo arranca si la pantalla aún no está a la vista (prueba unitaria y E2E vistas fallar con el comportamiento anterior). La E2E del retardo de 120 ms lo lee del estilo de la barra, sin depender de si la pantalla ya estaba precargada. |
+| 2026-11-21 | Corrección (CA-08): con «reducir movimiento», la barra ya terminada crecía del 80 % al 100 % mientras se desvanecía; ahora solo se desvanece, a lo ancho. Lo destapó la E2E contra el build de producción, donde la pantalla precargada termina la navegación al instante. |

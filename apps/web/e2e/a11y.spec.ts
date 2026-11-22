@@ -18,6 +18,15 @@ import { type Locator, type Page, expect, test } from '@playwright/test';
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 
 const audit = async (page: Page) => {
+  // Every screen enters with a short fade (spec 011, `page-in`): mid-fade, colours are blended and
+  // axe would measure a contrast nobody sees. Wait for it to end first.
+  await page.evaluate(() =>
+    Promise.all(
+      [...document.querySelectorAll('[data-page]')].flatMap((node) =>
+        node.getAnimations().map((animation) => animation.finished)
+      )
+    )
+  );
   const { violations } = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze();
@@ -351,6 +360,57 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   await untilDialogSettled(page);
   await page.getByRole('dialog').getByRole('button', { name: 'Anular orden' }).click();
   await expect(page.getByText('Escribe el motivo.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+});
+
+test('the agenda, a new reservation with errors, a reservation with its dialogs and «Horario» have no serious accessibility issues (spec 012)', async ({
+  page,
+}) => {
+  const { data: reservation } = await adminClient()
+    .from('reservations')
+    .select('id, slot_start')
+    // The seeded reservation of Camila tomorrow (seeds/06): other tests create and delete theirs.
+    .eq('notes', 'Pidió turno por WhatsApp')
+    .single();
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
+    new Date(reservation!.slot_start)
+  );
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+
+  await page.goto(`/agenda?date=${day}`);
+  await expect(page.getByRole('list', { name: 'Franjas del día' })).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
+  expect(await audit(page)).toEqual([]);
+
+  // Each screen enters with a short fade (spec 011): audited once it has settled.
+  // Sent without a customer or a slot: the errors are in sight.
+  await page.goto(`/agenda/new?date=${day}`);
+  await page.getByRole('button', { name: 'Guardar reserva' }).click();
+  await expect(page.getByText('Elige el cliente.')).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
+  expect(await audit(page)).toEqual([]);
+
+  await page.goto(`/agenda/${reservation!.id}`);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: 'Cancelar reserva' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Cambiar tolerancia' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Volver' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.goto('/agenda/schedule');
+  await expect(page.getByRole('heading', { name: 'Horario', level: 1 })).toBeVisible();
+  await untilSettled(page.locator('[data-page]'));
   expect(await audit(page)).toEqual([]);
 });
 

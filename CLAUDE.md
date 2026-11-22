@@ -166,6 +166,14 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   todos los entornos), no por seed.
 - Órdenes (spec 008, solo en local): Valentina #1 cerrada; Camila #2 cerrada (dos medios de pago y
   descuento), #3 anulada y #4 abierta («Limpieza de cadena» sin tiempo estimado).
+- Agenda (spec 012, solo en local): esta semana y la siguiente habilitadas de 9:00 a. m. a 6:00 p. m.
+  (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado») y
+  Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada. Hoy, en la
+  franja de la hora en que se hizo el reset (antes de abrir, la primera; después de cerrar, la
+  última, la de las 5:00 p. m., y Camila ya pasó su tolerancia): Gabriel (su Yamaha `GGM-45F`, registrada por el seed)
+  llegó con su reserva y su orden #6 espera en la cola con «Reserva …»; Camila está «por llegar»
+  unos 25 minutos tras el reset (con «+5 min» disponible); Lina llegó tarde y Sofía antes (van por
+  llegada), Mateo sin reserva y Valentina «No asistió».
 - Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
   «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
   (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real
@@ -248,6 +256,39 @@ e2e/                         # Playwright
 - Cada línea copia el nombre, el valor y el tiempo del servicio al añadirse: cambiar el catálogo no
   altera ninguna orden. Las utilidades del editor (`order-totals`, `order-estimate`, `shares`) son
   puras y probadas; el editor solo las muestra.
+
+## Agenda y reservas (spec 012)
+
+- **Solo reserva el personal** (el cliente, cuando se trabajen sus pantallas). Toda la lógica vive en
+  Postgres: `save_reservation`, `cancel_reservation`, `mark_reservation_no_show`,
+  `set_reservation_tolerance` (solo admin), `save_agenda_week` y `save_agenda_settings` (solo
+  admin), todas `security definer`; las tablas solo se leen (staff) y nadie las escribe ni borra
+  directamente. Franjas y puestos libres salen de `agenda_slots(día)`; cada reserva, de la vista
+  `reservation_summaries` (tolerancia efectiva, `grace_until`, «Fuera del horario», «Sobrecupo»).
+- **Semanas:** el admin habilita cada semana (lunes a domingo) desde «Agenda» → «Horario»; se propone
+  de 9:00 a. m. a 6:00 p. m. todos los días y se cierra o ajusta cada día. Sin semana habilitada no
+  se reserva. Una sola configuración: duración de franja, puestos y tolerancia general.
+- **Cupo:** `save_reservation` bloquea la fila del día (`for update`) antes de contar: dos reservas a
+  la vez nunca superan los puestos (`__test__/sandbox/reservations.sandbox.test.ts`).
+- **Hora de turno (RN-04):** la cola de «Órdenes» va por `turn_at` (la llegada, o la hora reservada
+  si llegó dentro de su tolerancia; ante empate, primero la reserva) y muestra las «Reserva por
+  llegar» (`work-orders/utils/queue.utils.ts`). `save_work_order(…, p_reservation_id)` fija el turno
+  y marca la reserva atendida en la misma transacción.
+- **«Llegó»** abre `/orders/new?reservation=…` (cliente fijo, vehículo y servicios ya puestos); si el
+  vehículo ya tenía su orden abierta, `/orders/{id}?reservation=…` la enlaza al guardar.
+  `CustomerPicker` tiene `purpose="reservation"` (vehículo opcional, «Registrar cliente») y
+  `customerLocked`.
+- **Al día sin recargar (HU-06):** `core/components/realtime-refresh` (en el layout con sesión, solo
+  personal) escucha por Realtime los cambios de órdenes, reservas y agenda (publicadas en
+  `supabase_realtime`; Realtime respeta RLS) y hace `router.refresh()` agrupando ráfagas, solo en
+  inicio, «Órdenes» y «Agenda» (en otras pantallas costaría peticiones sin mostrar nada nuevo); también al
+  volver a la pestaña. Lo que depende de la hora usa `useNow` (cuenta regresiva de la «Reserva por
+  llegar», franjas que empiezan, «Pasó su tolerancia»). «+5 min» (`extend_reservation_tolerance`)
+  lo usa cualquier miembro del personal, hasta 60, y queda registrado (`reservation_extensions`: el
+  detalle lo lista, la cola y la agenda lo resumen). El sandbox local arranca con Realtime.
+- **El reloj en pgTAP:** todo lo que mira la hora llama a `private.agenda_now()`; la prueba la
+  sustituye por una hora fija (`test.now`) dentro de su transacción. Las E2E escriben las reservas
+  que dependen de la hora con la clave secreta, relativas a ahora.
 
 ## Autenticación y permisos (specs 002 y 004)
 

@@ -5,7 +5,9 @@
  *
  * Guards:
  * - CA-06: tapping a link to another page of the app starts it; going back or forward too; it
- *   finishes once the new page is shown (the route changed) and then goes away.
+ *   finishes once the new page is shown (the route changed) and then goes away. Going back to a
+ *   page the app already has shows it before `popstate` arrives: then there is nothing to wait
+ *   for, and the bar must not start (it would wait forever for a change that already happened).
  * - CA-07: nothing that does not navigate inside this tab starts it: the same address, another
  *   site, a new tab (`target="_blank"`, Ctrl/⌘/Shift + click, middle click), a download. Its
  *   ~120 ms appearance delay (no flash on instant navigations) is checked in a browser
@@ -73,6 +75,20 @@ describe('NavigationProgress', () => {
     vi.mocked(usePathname).mockReturnValue('/orders');
     rerender(<NavigationProgress />);
     expect(bar()).toHaveAttribute('data-state', 'done');
+  });
+
+  it('does not start when going back to a page already shown, so it never stays (CA-06)', () => {
+    const { rerender } = renderAt('/orders/abc', null);
+
+    // A page the app already has: the router shows it within the browser's own `popstate`,
+    // before the bar hears about it.
+    window.history.replaceState(null, '', '/agenda?date=2026-11-21');
+    vi.mocked(usePathname).mockReturnValue('/agenda');
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('date=2026-11-21') as never);
+    rerender(<NavigationProgress />);
+    act(() => void window.dispatchEvent(new PopStateEvent('popstate')));
+
+    expect(bar()).toBeNull();
   });
 
   it.each([

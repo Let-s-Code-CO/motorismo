@@ -44,6 +44,9 @@ pnpm db:stop
   en silencio las imágenes del sandbox y el generador de tipos. Para el proyecto remoto se usa
   `SUPABASE_DB_URL` (ver `scripts/db-push.sh` y el workflow `db-deploy`).
 - Docker Desktop debe estar corriendo; la primera vez descarga varios GB de imágenes.
+- `sandbox:start` excluye los servicios que la app no usa, pero **no Realtime**: las pantallas del
+  personal se actualizan solas con él (spec 012, HU-06). Las tablas que escuchan se publican en
+  `supabase_realtime` desde una migración.
 
 ## Auth local (`config.toml`)
 
@@ -72,6 +75,12 @@ pnpm db:stop
   los carga el administrador. Las pruebas pgTAP de catálogos vacían esas tablas en su transacción.
 - `seeds/05_work_orders.sql`: órdenes de ejemplo (spec 008), creadas con las mismas funciones que la
   app, como el primer admin. Las pruebas pgTAP de catálogos y órdenes vacían primero las órdenes.
+- `seeds/06_reservations.sql`: agenda de ejemplo (spec 012), con fechas relativas a hoy: esta semana
+  y la siguiente habilitadas, reservas para mañana y, en la franja de la hora del reset (dentro del
+  horario: después de cerrar, la última), una orden que llegó con reserva (Gabriel, con una moto que
+  registra el seed) y una reserva por llegar. Las
+  pruebas pgTAP de catálogos, órdenes y reservas vacían primero las reservas (apuntan a servicios y
+  órdenes).
 - **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
   municipios DANE de `municipalities_data`) van en
   una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo

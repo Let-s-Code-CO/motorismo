@@ -262,4 +262,36 @@ describe('OrderDetail', () => {
     expect(screen.getByText('Sin placa')).toBeVisible();
     expect(screen.getByRole('img', { name: 'Bicicleta' })).toBeVisible();
   });
+
+  it('links to the reservation it came from (spec 012, RF-04)', () => {
+    // 9:00 a. m. in Bogotá.
+    renderDetail(detail({ reservation_id: 'r9', reserved_start: '2030-06-12T14:00:00Z' }));
+
+    expect(
+      screen.getByRole('link', { name: 'Viene de la reserva de las 9:00 a. m.' })
+    ).toHaveAttribute('href', '/agenda/r9');
+  });
+
+  it('opens editing to take the reservation of a customer whose vehicle already had it open (spec 012)', () => {
+    renderWithProviders(
+      (
+        <QueryClientProvider client={new QueryClient()}>
+          <OrderDetail
+            order={detail({ status: 'open', started_at: null })}
+            isAdmin={false}
+            reservation={{
+              id: 'r9',
+              service_ids: [],
+              services: [],
+              slot_start: '2030-06-12T14:00:00Z',
+            }}
+          />
+        </QueryClientProvider>
+      ) as ReactNode as never
+    );
+
+    expect(
+      screen.getByText('Al guardar, esta orden queda enlazada a la reserva de las 9:00 a. m.')
+    ).toBeVisible();
+  });
 });

@@ -23,7 +23,14 @@ import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 
 type Contact = { full_name: string; email: string | null; phone: string | null };
 
-type CustomerFormProps = { onSaved: () => void; onCancel?: () => void } & (
+/** The customer just registered, so a reservation can choose it (spec 012, CA-02). */
+export type SavedCustomer = Contact & { id: string };
+
+type CustomerFormProps = {
+  /** In create mode it receives the new customer; in edit mode, nothing. */
+  onSaved: (customer?: SavedCustomer) => void;
+  onCancel?: () => void;
+} & (
   | { mode: 'create' }
   | {
       mode: 'edit';
@@ -76,8 +83,13 @@ const CustomerForm = (props: CustomerFormProps) => {
     );
     // No network (spec 006, CA-10): the app-wide notice speaks; the form stays as it was.
     if (!result) return;
-    if (result.ok) props.onSaved();
-    else setServerError(result.error);
+    if (result.ok) {
+      props.onSaved(
+        'id' in result && typeof result.id === 'string'
+          ? { id: result.id, full_name: values.full_name, email: values.email, phone: values.phone }
+          : undefined
+      );
+    } else setServerError(result.error);
   });
 
   const fieldError = (message?: string) => message && t(`validation.${message}`);

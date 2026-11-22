@@ -58,6 +58,10 @@ grant execute on function pg_temp.error_hint(text) to authenticated;
 
 -- Independent of the seeds: start from empty catalogs (undone by the final rollback). The seed
 -- work orders (spec 008) point at services and employees, so they go first.
+-- Reservations (spec 012) point at services and orders: they go first.
+delete from public.reservation_extensions;
+delete from public.reservation_services;
+delete from public.reservations;
 delete from public.work_order_payments;
 delete from public.work_order_line_employees;
 delete from public.work_order_lines;

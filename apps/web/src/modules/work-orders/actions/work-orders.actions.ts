@@ -19,11 +19,12 @@ const ORDERS_PATH = '/orders';
 
 const fieldErrorsOf = (error: z.ZodError) => z.flattenError(error).fieldErrors;
 
-const idSchema = z.object({ id: z.uuid().nullish() });
+const idSchema = z.object({ id: z.uuid().nullish(), reservation_id: z.uuid().nullish() });
 
 /**
  * Staff open an order (no id, CA-07) or edit an open one (CA-08), with their OWN session:
- * save_work_order checks every rule again (RN-05). Returns the order's id, to open it.
+ * save_work_order checks every rule again (RN-05). With `reservation_id` (spec 012, CA-13), the
+ * reservation the customer arrived with becomes this order. Returns the order's id, to open it.
  */
 export const saveWorkOrder = async (
   input: unknown
@@ -50,10 +51,13 @@ export const saveWorkOrder = async (
     p_discount: discount,
     ...(notes ? { p_notes: notes } : {}),
     ...(id.data.id ? { p_id: id.data.id } : {}),
+    // Spec 012, CA-13: the reservation the customer arrived with becomes this order.
+    ...(id.data.reservation_id ? { p_reservation_id: id.data.reservation_id } : {}),
   });
   if (error) return { ok: false, error: fromWorkOrderError(error) };
 
   revalidatePath(ORDERS_PATH, 'layout');
+  if (id.data.reservation_id) revalidatePath('/agenda', 'layout');
   return { ok: true, id: data };
 };
 

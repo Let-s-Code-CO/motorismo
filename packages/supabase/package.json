@@ -7,7 +7,7 @@
     "./types": "./types/index.ts"
   },
   "scripts": {
-    "sandbox:start": "supabase start -x imgproxy,edge-runtime,logflare,vector,supavisor,realtime",
+    "sandbox:start": "supabase start -x imgproxy,edge-runtime,logflare,vector,supavisor",
     "sandbox:stop": "supabase stop",
     "sandbox:status": "supabase status",
     "sandbox:reset": "supabase db reset",

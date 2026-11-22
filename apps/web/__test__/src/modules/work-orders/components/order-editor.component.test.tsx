@@ -16,6 +16,9 @@
  * - CA-29 / CA-30: the estimate and the ready time are in sight; with lines not estimated it is a
  *   minimum («desde las …») and names them.
  * - CA-34 / RN-12: an order not started yet (a new one goes to the queue) shows only its duration.
+ * - Spec 012, CA-12 / CA-13 / RN-07: a new order from a reservation starts with its services, as the
+ *   catalog has them now, once; one not offered for the vehicle is named, not copied; saving sends
+ *   the reservation. Linking it to an order already open adds nothing to its lines.
  */
 import type { ReactNode } from 'react';
 
@@ -275,5 +278,62 @@ describe('OrderEditor', () => {
 
     expect(summary()).toHaveTextContent('≈ 1 h 30 min');
     expect(summary()).not.toHaveTextContent('lista hacia');
+  });
+});
+
+describe('OrderEditor from a reservation (spec 012)', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  const RESERVATION = {
+    id: '50000000-0000-4000-8000-000000000001',
+    service_ids: [SERVICES[1]!.id, SERVICES[2]!.id],
+    services: ['Lavado detallado', 'Solo carros'],
+    // 9:00 a. m. in Bogotá.
+    slot_start: '2030-06-12T14:00:00Z',
+  };
+
+  const renderFromReservation = (order?: Parameters<typeof OrderEditor>[0]['order']) => {
+    vi.mocked(fetchActiveServices).mockResolvedValue(SERVICES);
+    vi.mocked(fetchActiveEmployees).mockResolvedValue([ELKIN]);
+    renderWithProviders(
+      <QueryClientProvider client={new QueryClient()}>
+        <OrderEditor
+          customer={CUSTOMER}
+          vehicle={MOTO}
+          order={order}
+          reservation={RESERVATION}
+          onSaved={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+  };
+
+  it('starts with the services offered for the vehicle, names the others, and sends the reservation (CA-12, CA-13, RN-07)', async () => {
+    vi.mocked(saveWorkOrder).mockResolvedValue({ ok: true, id: 'order-1' });
+    renderFromReservation();
+
+    expect(await screen.findByRole('group', { name: 'Lavado detallado' })).toBeVisible();
+    // «Solo carros» has no price for a motorcycle: it is named, not copied.
+    expect(screen.queryByRole('group', { name: 'Solo carros' })).not.toBeInTheDocument();
+    expect(screen.getByText('Llegó con la reserva de las 9:00 a. m.')).toBeVisible();
+    expect(
+      screen.getByText(
+        'No se copiaron de la reserva (ya no se ofrecen para este vehículo): Solo carros.'
+      )
+    ).toBeVisible();
+    // RN-10: the only active employee is on the line.
+    expect(within(line('Lavado detallado')).getByText('Elkin Estrada')).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir orden' }));
+
+    await vi.waitFor(() =>
+      expect(saveWorkOrder).toHaveBeenCalledWith(
+        expect.objectContaining({ id: null, reservation_id: RESERVATION.id })
+      )
+    );
+    expect(vi.mocked(saveWorkOrder).mock.calls[0]![0]).toMatchObject({
+      // Only «Lavado detallado», at its current catalog price for a motorcycle (60.000).
+      lines: [expect.objectContaining({ service_id: SERVICES[1]!.id, price: 60000 })],
+    });
   });
 });

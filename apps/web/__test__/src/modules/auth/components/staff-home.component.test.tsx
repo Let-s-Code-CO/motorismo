@@ -38,6 +38,7 @@ describe('StaffHome', () => {
 
     expect(tiles().map((tile) => tile.getAttribute('href'))).toEqual([
       '/orders',
+      '/agenda',
       '/customers',
       '/services',
       '/employees',
@@ -53,6 +54,7 @@ describe('StaffHome', () => {
 
     expect(tiles().map((tile) => tile.getAttribute('href'))).toEqual([
       '/orders',
+      '/agenda',
       '/customers',
       '/services',
       '/employees',
