@@ -46,12 +46,16 @@ vi.mock('@web/modules/work-orders/api/work-orders.client', () => ({
 }));
 vi.mock('@web/modules/work-orders/components/organisms/customer-picker.component', () => ({
   default: (props: {
+    customer: { full_name: string } | null;
     customerLocked?: boolean;
+    initialVehicleId?: string | null;
     onCustomerChange: (customer: object) => void;
     onVehicleChange: (vehicle: object) => void;
   }) => (
     <div>
       {props.customerLocked && <p>Cliente fijo</p>}
+      {props.customer && <p>Cliente elegido: {props.customer.full_name}</p>}
+      {props.initialVehicleId && <p>Vehículo inicial: {props.initialVehicleId}</p>}
       <button
         type="button"
         onClick={() =>
@@ -113,7 +117,13 @@ const service = (id: string, name: string, price_car: number | null) => ({
 });
 
 const renderForm = (
-  props: { day?: AgendaDay; reservation?: ReservationSummary; initialStart?: string } = {}
+  props: {
+    day?: AgendaDay;
+    reservation?: ReservationSummary;
+    initialStart?: string;
+    initialCustomer?: { id: string; full_name: string; phone: string | null; email: string | null };
+    initialVehicleId?: string;
+  } = {}
 ) => {
   const wrap = (node: ReactNode) => (
     <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
@@ -124,6 +134,34 @@ const renderForm = (
 const submit = () => fireEvent.click(screen.getByRole('button', { name: /Guardar/ }));
 
 describe('ReservationForm', () => {
+  describe('agendar desde el cliente (amendment HU-07)', () => {
+    it('starts with the customer it was opened for, and books them (CA-40)', async () => {
+      vi.mocked(saveReservation).mockResolvedValue({ ok: true, id: 'r-new' });
+      renderForm({
+        initialCustomer: { id: CUSTOMER, full_name: 'Valentina', phone: null, email: null },
+      });
+
+      expect(screen.getByText('Cliente elegido: Valentina')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('radio', { name: /^9:00 a\. m\./ }));
+      submit();
+
+      await vi.waitFor(() =>
+        expect(saveReservation).toHaveBeenCalledWith(
+          expect.objectContaining({ customer_id: CUSTOMER, slot_start: NINE })
+        )
+      );
+    });
+
+    it('hands the vehicle it was opened for to the picker, which chooses it (CA-41)', () => {
+      renderForm({
+        initialCustomer: { id: CUSTOMER, full_name: 'Valentina', phone: null, email: null },
+        initialVehicleId: CAR,
+      });
+
+      expect(screen.getByText(`Vehículo inicial: ${CAR}`)).toBeInTheDocument();
+    });
+  });
+
   beforeEach(() => {
     vi.mocked(fetchActiveServices).mockResolvedValue([
       service(WASH, 'Lavado detallado', 40000),

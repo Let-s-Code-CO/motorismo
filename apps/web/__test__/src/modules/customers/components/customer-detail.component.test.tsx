@@ -14,6 +14,8 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 
 import { setCustomerDisabled } from '@web/modules/customers/actions/customers.actions';
+import type { CustomerRecord } from '@web/modules/customers/api/customers.server';
+import CustomerDetail from '@web/modules/customers/components/organisms/customer-detail.component';
 import CustomerManage from '@web/modules/customers/components/organisms/customer-manage.component';
 
 import { inToasts, renderWithProviders } from '@tests/test-utils/render';
@@ -89,5 +91,41 @@ describe('CustomerManage', () => {
     await waitFor(() => expect(setCustomerDisabled).toHaveBeenCalled());
     expect(screen.getByRole('region', { name: 'Avisos' })).toHaveTextContent('');
     expect(screen.queryByText(/No se pudo/)).not.toBeInTheDocument();
+  });
+});
+
+describe('CustomerDetail — «Agendar» (spec 012, amendment HU-07)', () => {
+  const record = (overrides: Partial<CustomerRecord> = {}) =>
+    ({
+      ...customer,
+      status: 'registered',
+      origin: 'self_signup',
+      avatar_url: null,
+      created_at: '2026-11-01T15:00:00Z',
+      consent_at: '2026-11-01T15:00:00Z',
+      registrar_name: null,
+      vehicle_plates: '',
+      ...overrides,
+    }) as CustomerRecord;
+
+  it('offers «Agendar» for an active customer: «Nueva reserva» with them (CA-40)', () => {
+    renderWithProviders(<CustomerDetail customer={record()}>{null}</CustomerDetail>);
+
+    expect(
+      // HeroUI buttons rendered as links keep the button role; what matters is where they lead.
+      screen.getByRole('button', { name: 'Agendar' })
+    ).toHaveAttribute('href', '/agenda/new?customer=c-1');
+  });
+
+  it('offers no «Agendar» for a disabled customer (CA-43)', () => {
+    renderWithProviders(
+      <CustomerDetail
+        customer={record({ disabled_at: '2026-11-19T10:00:00Z', status: 'disabled' })}
+      >
+        {null}
+      </CustomerDetail>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Agendar' })).not.toBeInTheDocument();
   });
 });

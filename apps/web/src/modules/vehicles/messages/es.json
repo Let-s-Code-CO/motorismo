@@ -46,7 +46,9 @@
       "retire": "Retirar",
       "retireLabel": "Retirar {vehicle}",
       "retiredTitle": "Vehículos retirados ({count})",
-      "retiredOn": "Retirado el {date}"
+      "retiredOn": "Retirado el {date}",
+      "book": "Agendar",
+      "bookLabel": "Agendar {vehicle}"
     },
     "summary": {
       "displacement": "{value} cc",

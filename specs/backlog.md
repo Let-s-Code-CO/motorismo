@@ -59,5 +59,5 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [009](009-experiencia-movil/spec.md) | Experiencia móvil | verificada; falta despliegue |
 | [010](010-modo-oscuro/spec.md) | Modo oscuro | verificada; falta despliegue |
 | [011](011-transiciones-carga/spec.md) | Transiciones y estados de carga | verificada |
-| [012](012-agendamiento/spec.md) | Agendamiento de reservas | verificada, con enmienda HU-06 (falta despliegue y revisión a mano en el teléfono) |
+| [012](012-agendamiento/spec.md) | Agendamiento de reservas | verificada, con enmiendas HU-06 y HU-07 (falta despliegue y revisión a mano en el teléfono) |
 | [013](013-avisos-flotantes/spec.md) | Avisos flotantes de confirmación | verificada (falta despliegue) |

@@ -69,7 +69,8 @@
       "disable": "Desactivar cliente",
       "reactivate": "Reactivar cliente",
       "accessTitle": "Acceso",
-      "accessText": "Un cliente desactivado no puede entrar a su cuenta. Su historial se conserva."
+      "accessText": "Un cliente desactivado no puede entrar a su cuenta. Su historial se conserva.",
+      "book": "Agendar"
     },
     "form": {
       "title": "Nuevo cliente",

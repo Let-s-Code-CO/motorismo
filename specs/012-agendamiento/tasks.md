@@ -331,6 +331,28 @@ Convenciones:
       con sus detalles (CA-35): pruebas de `realtime-refresh` por ruta, vistas fallar refrescando
       en todas las pantallas.
 
+## Enmienda HU-07 — Agendar desde el cliente
+
+- [x] T070 [P] Pruebas (rojo):
+  - `reservation-form` con `initialCustomer` (elegido) e `initialVehicleId` (ese vehículo elegido)
+    (CA-40, CA-41);
+  - `customer-detail`: «Agendar» → `/agenda/new?customer=…`, nada si está desactivado (CA-40,
+    CA-43);
+  - `vehicles-section`: «Agendar» por vehículo → `?customer=…&vehicle=…`, nada para el cliente ni
+    en solo lectura (CA-41, CA-43);
+  - `customers-table`: «Agendar» en el menú de un activo, no en el de un desactivado (CA-42,
+    CA-43).
+- [x] T071 Implementación: página, pantalla, formulario, ficha, vehículos y fila → T070 en verde.
+- [x] T072 E2E: desde la ficha y desde un vehículo; una dirección con un cliente desactivado empieza
+  sin cliente (CA-40, CA-41, CA-43).
+  - Mutaciones vistas fallar: «Agendar» para un desactivado (ficha y fila), «Agendar» para el
+    cliente en sus vehículos, sin el vehículo en el enlace, sin la placa en su nombre, el
+    formulario sin el cliente o sin pasar el vehículo.
+  - Hallado en la E2E: dos motos de la misma línea daban dos «Agendar Suzuki GSX-R600»
+    indistinguibles; el nombre accesible lleva la placa («Agendar Suzuki GSX-R600 · UIH-03D»).
+  - E2E completa contra producción: 172/174, y las dos que fallaron (contraste a mitad de la
+    transición de un enlace y el centrado del inicio, 0,17 px) pasan al repetirlas.
+
 ## Cierre
 
 - [x] T090 `pnpm lint` · `pnpm ts:check` · `pnpm test` · `pnpm --filter web test:sandbox` ·
@@ -389,3 +411,7 @@ Convenciones:
 | CA-37 | T062 |
 | CA-38 | T065 |
 | CA-39 | T066 |
+| CA-40 | T070, T072 |
+| CA-41 | T070, T072 |
+| CA-42 | T070, T072 |
+| CA-43 | T070, T072 |

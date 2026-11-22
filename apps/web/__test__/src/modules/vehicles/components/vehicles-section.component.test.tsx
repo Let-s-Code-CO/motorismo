@@ -57,6 +57,32 @@ const renderSection = (props: Props = {}) =>
   );
 
 describe('VehiclesSection — staff on a customer record', () => {
+  it('offers «Agendar» for each active vehicle: «Nueva reserva» with its customer and that vehicle (spec 012, CA-41)', () => {
+    const suzuki = buildVehicle({ id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d' });
+    renderSection({ vehicles: [suzuki] });
+
+    expect(
+      // HeroUI buttons rendered as links keep the button role; what matters is where they lead.
+      screen.getByRole('button', { name: /^Agendar / })
+    ).toHaveAttribute('href', `/agenda/new?customer=${CUSTOMER_ID}&vehicle=${suzuki.id}`);
+    // With the plate: two motorcycles of the same line are told apart.
+    expect(screen.getByRole('button', { name: /^Agendar / })).toHaveAccessibleName(
+      'Agendar Suzuki GSX-R600 · UIH-03D'
+    );
+  });
+
+  it('offers the customer no «Agendar» on their own vehicles: only staff book (spec 012, RN-06)', () => {
+    renderSection({ vehicles: [buildVehicle()], audience: 'customer' });
+
+    expect(screen.queryByRole('button', { name: /^Agendar/ })).not.toBeInTheDocument();
+  });
+
+  it('offers no «Agendar» on a disabled customer, whose record is read-only (spec 012, CA-43)', () => {
+    renderSection({ vehicles: [buildVehicle()], readOnly: true });
+
+    expect(screen.queryByRole('button', { name: /^Agendar/ })).not.toBeInTheDocument();
+  });
+
   it('says the customer has no vehicles yet and offers to add one (CA-01)', () => {
     renderSection();
 

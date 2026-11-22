@@ -43,6 +43,9 @@ type ReservationFormProps = {
   initialStart?: string | null;
   /** The reservation being changed (CA-20); without it, a new one. */
   reservation?: ReservationSummary;
+  /** Amendment HU-07: the customer it was opened for (CA-40), and their vehicle (CA-41). */
+  initialCustomer?: PickerCustomer | null;
+  initialVehicleId?: string | null;
 };
 
 /** The services a reservation can intend (CA-04): active, and offered for the vehicle's type. */
@@ -55,7 +58,13 @@ const servicesFor = (services: ServiceOption[], type: VehicleType | null) =>
  * they want (CA-04) and notes. Saving books the seat (CA-05); a slot that filled up meanwhile is
  * said, and the slots come back up to date (CA-06).
  */
-const ReservationForm = ({ day, initialStart, reservation }: ReservationFormProps) => {
+const ReservationForm = ({
+  day,
+  initialStart,
+  reservation,
+  initialCustomer = null,
+  initialVehicleId = null,
+}: ReservationFormProps) => {
   const t = useTranslations('reservations');
   const router = useRouter();
   const pathname = usePathname();
@@ -70,7 +79,7 @@ const ReservationForm = ({ day, initialStart, reservation }: ReservationFormProp
           phone: reservation.customer_phone,
           email: null,
         }
-      : null
+      : initialCustomer
   );
   const [vehicle, setVehicle] = useState<PickerVehicle | null>(null);
   const [vehicleTouched, setVehicleTouched] = useState(false);
@@ -85,7 +94,7 @@ const ReservationForm = ({ day, initialStart, reservation }: ReservationFormProp
   } = useForm<ReservationInput>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
-      customer_id: reservation?.customer_id ?? '',
+      customer_id: reservation?.customer_id ?? initialCustomer?.id ?? '',
       vehicle_id: reservation?.vehicle_id ?? null,
       slot_start:
         reservation?.slot_start ??
@@ -163,6 +172,7 @@ const ReservationForm = ({ day, initialStart, reservation }: ReservationFormProp
         <CustomerPicker
           purpose="reservation"
           customerLocked={isEdit}
+          initialVehicleId={isEdit ? null : initialVehicleId}
           customer={customer}
           vehicleId={shownVehicleId}
           onCustomerChange={chooseCustomer}
