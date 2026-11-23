@@ -1323,6 +1323,44 @@ export type Database = {
         }
         Returns: string
       }
+      service_report: {
+        Args: {
+          p_employee?: string
+          p_from: string
+          p_limit?: number
+          p_offset?: number
+          p_plate?: string
+          p_to: string
+        }
+        Returns: {
+          brand_name: string
+          closed_at: string
+          customer_name: string
+          employees: Json
+          line_id: string
+          line_name: string
+          order_id: string
+          order_number: number
+          plate: string
+          price: number
+          service_name: string
+          vehicle_type: string
+        }[]
+      }
+      service_report_totals: {
+        Args: {
+          p_employee?: string
+          p_from: string
+          p_plate?: string
+          p_to: string
+        }
+        Returns: {
+          discounts: number
+          services: number
+          subtotal: number
+          total: number
+        }[]
+      }
       set_reservation_tolerance: {
         Args: { p_id: string; p_minutes: number }
         Returns: undefined

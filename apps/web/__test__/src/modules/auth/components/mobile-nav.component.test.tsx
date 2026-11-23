@@ -4,7 +4,7 @@
  *
  * Guards:
  * - CA-02: «Menú» opens the panel with the brand and the role's sections, each with its icon (an
- *   admin sees «Usuarios», an operator does not, a customer only «Mi perfil»); the current one is
+ *   admin sees «Reportes» and «Usuarios», an operator does not, a customer only «Mi perfil»); the current one is
  *   marked; choosing one closes the panel.
  * - CA-03: Escape or «Cerrar menú» close it and the focus goes back to «Menú» (touching outside is
  *   covered end to end, e2e/a11y.spec.ts).
@@ -63,6 +63,7 @@ describe('MobileNav', () => {
       'Clientes',
       'Servicios',
       'Empleados',
+      'Reportes',
       'Usuarios',
     ]);
     for (const link of within(panel).getAllByRole('link')) {
@@ -70,7 +71,7 @@ describe('MobileNav', () => {
     }
   });
 
-  it('shows an operator the same sections without «Usuarios» (CA-02, RN-01)', async () => {
+  it('shows an operator the same sections without «Reportes» or «Usuarios» (CA-02, RN-01; spec 015, CA-09)', async () => {
     const panel = await openMenu('operator');
 
     expect(sectionNames(panel)).toEqual([

@@ -9,6 +9,7 @@
  * (CA-06 to CA-08); the sign-in pages with the brand band on top, «Entrar» in sight and no motion
  * when the device asks for less (CA-10 to CA-12); the desktop as before (CA-05, CA-09, CA-13).
  * Spec 012: the agenda, a new reservation, a reservation and «Horario» fit a phone too.
+ * Spec 015: the services report fits an iPhone, a card per service.
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -16,6 +17,12 @@ import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 import { SETTINGS_SAVED, saveAgendaSettings, toast } from './support/toasts';
 
 type Box = { x: number; y: number; width: number; height: number };
+
+/** A day of Colombia, `days` before today. */
+const bogotaDay = (days: number) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
+    new Date(Date.now() - days * 24 * 60 * 60_000)
+  );
 
 const horizontalOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -183,7 +190,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
   });
 
-  test('every staff screen of specs 007, 008 and 012 has no horizontal scroll', async ({
+  test('every staff screen of specs 007, 008, 012 and 015 has no horizontal scroll', async ({
     page,
   }) => {
     const { data: open } = await adminClient()
@@ -208,6 +215,8 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       '/agenda',
       '/agenda/new',
       '/agenda/schedule',
+      // Spec 015: the services report, on the seeds' closed orders (a card per service).
+      `/reports/services?from=${bogotaDay(15)}&to=${bogotaDay(0)}`,
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();

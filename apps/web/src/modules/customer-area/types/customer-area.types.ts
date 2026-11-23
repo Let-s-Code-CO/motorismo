@@ -1,5 +1,6 @@
 import type { Database } from '@motorismo/supabase/types';
 
+import type { WithNulls } from '@web/modules/core/types/with-nulls.types';
 import type {
   AgendaDayState,
   AgendaSlot,
@@ -7,12 +8,6 @@ import type {
 } from '@web/modules/reservations/types/reservations.types';
 
 type Functions = Database['public']['Functions'];
-
-/**
- * The generator marks every column a function returns as not null; these may be null (no line, no
- * plate, not started, not in the queue…), so they say so.
- */
-type WithNulls<T, K extends keyof T> = Omit<T, K> & { [P in K]: T[P] | null };
 
 /** One of the customer's vehicles in the shop (spec 014, HU-01), as `my_shop_orders` returns it. */
 export type ShopOrder = WithNulls<
