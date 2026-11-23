@@ -4,6 +4,7 @@ import customerArea from '@web/modules/customer-area/messages/es.json';
 import customers from '@web/modules/customers/messages/es.json';
 import employees from '@web/modules/employees/messages/es.json';
 import pwa from '@web/modules/pwa/messages/es.json';
+import reports from '@web/modules/reports/messages/es.json';
 import reservations from '@web/modules/reservations/messages/es.json';
 import services from '@web/modules/services/messages/es.json';
 import theme from '@web/modules/theme/messages/es.json';
@@ -32,5 +33,6 @@ export const messages = {
   ...orders,
   ...reservations,
   ...customerArea,
+  ...reports,
   ...theme,
 };

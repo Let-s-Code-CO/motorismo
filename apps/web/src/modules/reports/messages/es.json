@@ -1,0 +1,71 @@
+{
+  "reports": {
+    "services": {
+      "title": "Reporte de servicios",
+      "description": "Los servicios de las órdenes cerradas, con su valor y quiénes participaron.",
+      "export": "Exportar a Excel",
+      "tableLabel": "Servicios hechos",
+      "columns": {
+        "closedAt": "Fecha",
+        "order": "Orden",
+        "customer": "Cliente",
+        "vehicle": "Vehículo",
+        "service": "Servicio",
+        "price": "Valor",
+        "employees": "Empleados"
+      },
+      "orderNumber": "#{number}",
+      "openOrder": "Orden #{number}",
+      "noPlate": "Sin placa",
+      "noEmployees": "Sin empleados",
+      "totalsLabel": "Totales",
+      "totals": {
+        "services": "Servicios",
+        "subtotal": "Suma de valores",
+        "discounts": "Descuentos",
+        "total": "Total"
+      },
+      "discount": "− {amount}",
+      "noDiscountsWithEmployee": "Con un empleado elegido no se muestran descuentos ni total: el descuento es de la orden completa.",
+      "empty": "No hay servicios cerrados en este periodo.",
+      "emptyFiltered": "No hay servicios con estos filtros.",
+      "clearFilters": "Quitar filtros",
+      "pagination": {
+        "label": "Páginas del reporte",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "page": "Página {page} de {pages}"
+      }
+    },
+    "filters": {
+      "label": "Filtros del reporte",
+      "from": "Desde",
+      "to": "Hasta",
+      "employee": "Empleado",
+      "allEmployees": "Todos los empleados",
+      "disabledSection": "Desactivados",
+      "disabledEmployee": "{name} (desactivado)",
+      "plate": "Placa",
+      "platePlaceholder": "UIH-03D"
+    },
+    "export": {
+      "sheet": "Servicios",
+      "columns": {
+        "closedAt": "Fecha de cierre",
+        "order": "Orden",
+        "customer": "Cliente",
+        "vehicle": "Vehículo",
+        "plate": "Placa",
+        "service": "Servicio",
+        "price": "Valor",
+        "employees": "Empleados"
+      },
+      "totals": {
+        "services": "Servicios",
+        "subtotal": "Suma de valores",
+        "discounts": "Descuentos",
+        "total": "Total"
+      }
+    }
+  }
+}

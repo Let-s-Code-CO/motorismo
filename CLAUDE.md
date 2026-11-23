@@ -272,7 +272,7 @@ e2e/                         # Playwright
 
 ## Agenda y reservas (spec 012)
 
-- **Solo reserva el personal** (el cliente, cuando se trabajen sus pantallas). Toda la lógica vive en
+- **Reservan el personal y el cliente** (el cliente desde su área, spec 014). Toda la lógica vive en
   Postgres: `save_reservation`, `cancel_reservation`, `mark_reservation_no_show`,
   `set_reservation_tolerance` (solo admin), `save_agenda_week` y `save_agenda_settings` (solo
   admin), todas `security definer`; las tablas solo se leen (staff) y nadie las escribe ni borra
@@ -321,7 +321,28 @@ e2e/                         # Playwright
   `/my/reservations`. No usa Realtime: el cliente no puede leer las filas y la cola depende de
   órdenes de otros.
 - **Tipos:** el generador marca no nulas todas las columnas que devuelve una función;
-  `customer-area.types.ts` dice cuáles pueden ser nulas (`WithNulls`).
+  `customer-area.types.ts` dice cuáles pueden ser nulas (`WithNulls`, en `core/types`).
+
+## Reporte de servicios (spec 015)
+
+- **Solo el administrador.** «Reportes» (`/reports`, que lleva a `/reports/services`) sale en su menú y
+  en su inicio. La página responde `NoPermission` a los demás; la descarga, 403; y las funciones
+  `service_report` y `service_report_totals` (`security definer`) lo exigen en la base
+  (`report_admin_only`).
+- **Un solo conjunto filtrado:** filas, totales y Excel salen de `private.report_lines`: servicios de
+  órdenes cerradas, por día de cierre en Colombia, empleado y placa entera normalizada. Sin
+  `p_limit` devuelve todas las filas (el Excel); la pantalla va de 50 en 50. Con filtro de empleado,
+  descuentos y total son nulos (el descuento es de la orden).
+- **Filtros en la dirección:** `reportFiltersSchema(hoy)` los lee (lo inválido vuelve al mes en curso);
+  `reportHref` y `exportHref` los escriben, siempre con el periodo, para que un enlace copiado abra
+  los mismos días.
+- **Excel:** `services-workbook.lib` arma las celdas (fecha como fecha, valores como número con
+  formato de pesos) y el *route handler* las escribe con `write-excel-file/node`.
+- **Un `Select` que se pinta en el servidor** (no dentro de un modal) lleva un `id` fijo: si no, el
+  `<select>` oculto de React Aria cambia de id al hidratar. Los empleados desactivados van aparte, al
+  final, en un `SelectSection` «Desactivados».
+- Un enlace con aspecto de botón (descargar, «Quitar filtros») es un `<a>`/`Link` con
+  `button(…)` de `@heroui/theme`: `Button as={Link}` conserva el rol «button».
 
 ## Autenticación y permisos (specs 002 y 004)
 

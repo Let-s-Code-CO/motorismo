@@ -3,7 +3,7 @@
  * may open, and what is in the car wash at a glance on «Órdenes».
  *
  * Guards:
- * - CA-06 / RN-01: one tile per section of the role («Usuarios» only for an admin); the whole tile
+ * - CA-06 / RN-01: one tile per section of the role («Reportes» and «Usuarios» only for an admin, spec 015); the whole tile
  *   is the link, icon included. (Two columns and the hidden description on a phone are layout:
  *   e2e/ui.spec.ts.)
  * - CA-07: «Órdenes» says how many orders are in progress and how many queued, or «Sin órdenes
@@ -42,6 +42,7 @@ describe('StaffHome', () => {
       '/customers',
       '/services',
       '/employees',
+      '/reports',
       '/admin/users',
     ]);
     for (const tile of tiles()) {
@@ -49,7 +50,7 @@ describe('StaffHome', () => {
     }
   });
 
-  it('gives an operator the same tiles without «Usuarios» (CA-06, RN-01)', () => {
+  it('gives an operator the same tiles without «Reportes» or «Usuarios» (CA-06, RN-01; spec 015, CA-09)', () => {
     renderHome({ role: 'operator' });
 
     expect(tiles().map((tile) => tile.getAttribute('href'))).toEqual([

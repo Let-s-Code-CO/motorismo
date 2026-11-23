@@ -485,3 +485,31 @@ test('the customer area, its booking form and the dialog to cancel have no serio
   await untilSettled(page.getByRole('dialog', { name: '¿Cancelar tu reserva?' }));
   expect(await audit(page)).toEqual([]);
 });
+
+test('the services report, filtered, with its list of employees open, has no serious accessibility issues (spec 015)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+  const day = (days: number) =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
+      new Date(Date.now() - days * 24 * 60 * 60_000)
+    );
+
+  // The seeds' closed orders, by Camila's plate: rows, totals with the discount.
+  await page.goto(`/reports/services?from=${day(15)}&to=${day(0)}&plate=UIH03D`);
+  await expect(page.getByRole('table', { name: 'Servicios hechos' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  // The list of employees, with the disabled ones apart.
+  await page.getByRole('button', { name: /Empleado/ }).click();
+  await untilSettled(page.getByRole('listbox'));
+  expect(await audit(page)).toEqual([]);
+  await page.keyboard.press('Escape');
+
+  // Empty, with «Quitar filtros».
+  await page.goto(`/reports/services?from=${day(15)}&to=${day(0)}&plate=ZZZ99Z`);
+  await expect(page.getByRole('link', { name: 'Quitar filtros' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+});
