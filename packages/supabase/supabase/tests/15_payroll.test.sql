@@ -17,7 +17,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(42);
+select plan(44);
 
 -- Clock and helpers ---------------------------------------------------------------------------------------
 create or replace function private.agenda_now()
@@ -304,6 +304,20 @@ set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
 select is((select changed_since_close from public.payroll_month('2030-11-01')), true,
   'CA-17: a change in the detail alone is a change too');
+
+-- An order of November voided after closing (regenerated first, so nothing else is pending).
+select public.regenerate_payroll('2030-11-01');
+select is((select changed_since_close from public.payroll_month('2030-11-01')), false,
+  'CA-17: regenerated, nothing is pending');
+reset role;
+update public.work_orders
+   set status = 'voided', voided_at = '2030-12-06 10:00-05', voided_by = '00000000-0000-0000-0000-0000000016a1',
+       void_reason = 'Duplicada'
+ where id = pg_temp.id_of('o_olga');
+set local role authenticated;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
+select is((select changed_since_close from public.payroll_month('2030-11-01')), true,
+  'CA-17: an order of the month voided after closing is a change');
 
 -- Who may (CA-20, RN-08) ----------------------------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016b1');

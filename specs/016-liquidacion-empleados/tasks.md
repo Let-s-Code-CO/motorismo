@@ -131,6 +131,7 @@ Convenciones:
 - [x] T093 Revisión en el teléfono: capturas a 360 px y en iPhone de 440 px táctil, en claro y
   oscuro.
 - [x] T094 `CLAUDE.md` (sección de la liquidación), spec, plan, tareas y backlog al día.
+- [x] T095 Verificación: CA-01 con «la lista de empleados»; pgTAP de una orden anulada después del cierre (CA-17).
 
 ## Cobertura de criterios
 
@@ -174,6 +175,7 @@ que no quedó ninguna, y la base local tiene las funciones originales.
 | Cerrar el mes en curso | pgTAP 20 |
 | Mes cerrado recalculado | pgTAP 24 |
 | «Hubo cambios» nunca, o solo por líneas | pgTAP 26 y 32 |
+| «Hubo cambios» sin ver lo que sale del cálculo (anuladas) | pgTAP 34 |
 | Sin `previous_total` | pgTAP 30 |
 | Sin la guarda del administrador | pgTAP 33–35, 37, 38 |
 | Reactivar no abre periodo | pgTAP 9, 12, 18, 22, 30 |

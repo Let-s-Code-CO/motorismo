@@ -1,7 +1,7 @@
 ---
 id: "016"
 titulo: "Liquidación de empleados"
-estado: implementada
+estado: verificada
 creada: 2026-11-23
 actualizada: 2026-11-23
 ---
@@ -45,7 +45,7 @@ liquidación lo sume.
 
 - **CA-01** — Dado el formulario de un empleado, cuando el administrador lo crea o lo corrige,
   entonces puede escribir su salario base mensual en pesos (un número entero, 0 o más; «0» para
-  quien solo gana comisión). La ficha del empleado lo muestra junto a su comisión.
+  quien solo gana comisión). La lista de empleados lo muestra junto a su comisión.
 - **CA-02** — Dado un salario base que no es un número entero de 0 o más, cuando el administrador
   guarda, entonces se le dice qué corregir y no se guarda.
 - **CA-03** — Dados los empleados que ya existían antes de esta funcionalidad, entonces su salario
@@ -215,3 +215,4 @@ Ninguna.
 | 2026-11-23 | Plan aprobado: estado `planificada`. |
 | 2026-11-23 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-23 | Implementada: estado `implementada`. `save_employee` recibe el salario base al final y opcional (nulo conserva el que había); la navegación del mes se apila en el teléfono. |
+| 2026-11-23 | Verificación: CA-01 dice «la lista de empleados» (no hay ficha propia, spec 007); pgTAP prueba también una orden anulada después del cierre (CA-17). Estado `verificada`. |

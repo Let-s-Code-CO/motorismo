@@ -57,4 +57,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [013](013-avisos-flotantes/spec.md) | Avisos flotantes de confirmación | verificada (falta despliegue) |
 | [014](014-experiencia-cliente/spec.md) | Experiencia del cliente con cuenta | verificada (falta despliegue) |
 | [015](015-reporte-servicios/spec.md) | Reporte de servicios | verificada |
-| [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | implementada |
+| [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | verificada |
