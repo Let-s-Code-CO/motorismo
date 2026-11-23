@@ -93,6 +93,8 @@ Convenciones:
 - [x] T093 Revisión en el teléfono: capturas a 360 px y en iPhone de 440 px táctil, en claro y
   oscuro.
 - [x] T094 `CLAUDE.md` (sección del reporte), spec, plan, tareas y backlog al día.
+- [x] T095 Verificación: `reports.server.test.ts` (filtros, página y Excel hacia las funciones) y E2E
+  del filtro por empleado y de «atrás» (CA-03, CA-05, CA-11).
 
 ## Cobertura de criterios
 
@@ -141,3 +143,5 @@ que no quedó ninguna, y la base local tiene la función original.
 | El operador ve «Reportes» | `nav-links`, `mobile-nav`, `staff-home` (3) |
 | Esqueleto `form` en vez de `list` | `loading-coverage` (1) |
 | `Select` sin `id` fijo | E2E «no hydration error» (error de hidratación en consola) |
+| Servidor: salto de página × 50 sin restar 1; empleado sin pasar; totales sin la placa; Excel paginado; error tragado; solo empleados activos | `reports.server` (2, 1, 1, 1, 1, 1) |
+| Servidor: empleado sin pasar | E2E «filters by an employee» |

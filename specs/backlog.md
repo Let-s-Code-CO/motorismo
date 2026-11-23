@@ -57,4 +57,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [012](012-agendamiento/spec.md) | Agendamiento de reservas | verificada, con enmiendas HU-06 y HU-07 (falta despliegue y revisión a mano en el teléfono) |
 | [013](013-avisos-flotantes/spec.md) | Avisos flotantes de confirmación | verificada (falta despliegue) |
 | [014](014-experiencia-cliente/spec.md) | Experiencia del cliente con cuenta | verificada (falta despliegue) |
-| [015](015-reporte-servicios/spec.md) | Reporte de servicios | implementada |
+| [015](015-reporte-servicios/spec.md) | Reporte de servicios | verificada |

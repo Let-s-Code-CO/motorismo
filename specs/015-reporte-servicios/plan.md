@@ -190,6 +190,19 @@ Cada prueba nueva se ve fallar con una mutación, que se anota en `tasks.md`.
   - escribir el XML de Excel a mano: hace falta comprimirlo igual y es frágil;
   - CSV: el usuario eligió Excel.
 
+## Detalles de la implementación
+
+- «Exportar a Excel» solo aparece si hay servicios (no hay nada que llevarse).
+- Si se elige un «Desde» posterior a «Hasta» (o al revés), la otra fecha se mueve con ella: el
+  periodo nunca queda al revés.
+- La placa del filtro guarda como mucho 10 caracteres.
+- `/reports` lleva a `/reports/services` (la liquidación llegará a la misma sección).
+- Índice `work_orders (status, closed_at)` para el rango.
+- El `Select` de empleados lleva un `id` fijo (se pinta en el servidor; sin él, la hidratación
+  falla) y los desactivados aparte, al final.
+- `reports.server.test.ts` prueba cómo llegan los filtros a las funciones (empleado, placa,
+  `p_offset`, sin límite para el Excel).
+
 ## Riesgos y decisiones
 
 | Decisión | Alternativas descartadas | Motivo |

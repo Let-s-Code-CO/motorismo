@@ -5,8 +5,10 @@
  *
  * - CA-01: the admin opens «Reportes» from the menu and lands on the report.
  * - CA-04 / CA-05: filtering by Camila's plate, typed in lower case with a dash, leaves only her
- *   services; the filter is in the address and survives a reload.
+ *   services; the filter is in the address and survives a reload and «atrás».
  * - CA-10: a service opens its order.
+ * - CA-03 / CA-06: filtering by Paula leaves only the services she took part in, without the
+ *   discounts or the total.
  * - CA-12: «Exportar a Excel» downloads «servicios-…-a-….xlsx», not empty.
  * - The filters are drawn on the server: the page hydrates without errors.
  * - CA-09 / CA-14: an operator has no «Reportes», is told they have no permission, and the download
@@ -29,7 +31,7 @@ const PERIOD = `from=${bogotaDay(15)}&to=${bogotaDay()}`;
 test.describe('the admin', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test('opens «Reportes», filters by a plate that survives a reload, and opens an order (CA-01, CA-04, CA-05, CA-10)', async ({
+  test('opens «Reportes», filters by a plate that survives a reload and «atrás», and opens an order (CA-01, CA-04, CA-05, CA-10)', async ({
     page,
   }) => {
     await signIn(page, SEED.admin.email);
@@ -65,6 +67,40 @@ test.describe('the admin', () => {
       .getByRole('link', { name: /^Orden #\d+$/ })
       .click();
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
+
+    // «Atrás» comes back to the same report, filter included (CA-05).
+    await page.goBack();
+    await expect(page).toHaveURL(/plate=UIH03D/);
+    await expect(page.getByRole('textbox', { name: 'Placa' })).toHaveValue('UIH-03D');
+    await expect(table.getByRole('row', { name: /Valentina/ })).toHaveCount(0);
+  });
+
+  test('filters by an employee: only the services they took part in, without discounts or total (CA-03, CA-06)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/reports/services?${PERIOD}`);
+    const table = page.getByRole('table', { name: 'Servicios hechos' });
+    await expect(table.getByRole('row', { name: /Valentina/ }).first()).toBeVisible();
+
+    await page.getByRole('button', { name: /Empleado/ }).click();
+    await page.getByRole('option', { name: 'Paula Pineda' }).click();
+
+    await expect(page).toHaveURL(/employee=[0-9a-f-]{36}/);
+    // Valentina's #1 was Elkin's alone; Camila's #2 had Paula on both services.
+    await expect(table.getByRole('row', { name: /Valentina/ })).toHaveCount(0);
+    await expect(
+      table.getByRole('row', { name: /Lavado sencillo.*Paula Pineda 100 %/ }).first()
+    ).toBeVisible();
+    await expect(
+      table.getByRole('row', { name: /Micropulido.*Paula Pineda 20 %/ }).first()
+    ).toBeVisible();
+    const totals = page.getByLabel('Totales');
+    await expect(totals.getByText('Suma de valores')).toBeVisible();
+    await expect(totals.getByText('Descuentos')).toHaveCount(0);
+    await expect(totals.getByText('Total', { exact: true })).toHaveCount(0);
+    await expect(page.getByText(/Con un empleado elegido no se muestran descuentos/)).toBeVisible();
   });
 
   test('renders on the server and the browser alike: no hydration error (its filters are drawn on the server)', async ({

@@ -1,7 +1,7 @@
 ---
 id: "015"
 titulo: "Reporte de servicios"
-estado: implementada
+estado: verificada
 creada: 2026-11-23
 actualizada: 2026-11-23
 ---
@@ -95,7 +95,8 @@ Como administrador, quiero llevarme el reporte a Excel, para hacer mis cuentas y
 - **RN-03** — El descuento es de la orden completa: se muestra aparte y solo sin filtro de empleado.
   Cómo cuenta en la liquidación de un empleado se decide en esa spec.
 - **RN-04** — Solo el administrador ve y exporta el reporte, comprobado en el servidor.
-- **RN-05** — Las horas y fechas como en el resto de la app; los valores en pesos colombianos.
+- **RN-05** — Las horas y fechas como en el resto de la app; los valores en pesos colombianos. En el
+  reporte la fecha va en números («30/11/2026»): cabe en la tabla y coincide con el Excel.
 
 ## Datos (vista conceptual)
 
@@ -148,3 +149,4 @@ Ninguna.
 | 2026-11-23 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-23 | Pedido del usuario durante la implementación: en la lista de empleados, los desactivados van aparte, al final (CA-03). |
 | 2026-11-23 | Implementada: estado `implementada`. |
+| 2026-11-23 | Verificación: se añaden pruebas del paso de filtros a la base (empleado, página, Excel), el filtro por empleado y «atrás» en E2E; RN-05 precisa la fecha en números. Estado `verificada`. |
