@@ -10,6 +10,7 @@ import { ChevronRight, FileSpreadsheet } from 'lucide-react';
 
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import ReportFilters from '@web/modules/reports/components/molecules/report-filters.component';
+import ReportsTabs from '@web/modules/reports/components/molecules/reports-tabs.component';
 import { REPORT_PAGE_SIZE } from '@web/modules/reports/constants/reports.constants';
 import type {
   ReportFilters as Filters,
@@ -82,6 +83,8 @@ const ServicesReportScreen = ({
 
   return (
     <section className="flex flex-col gap-6">
+      {/* Spec 016, RF-02: the other report of «Reportes», the payroll. */}
+      <ReportsTabs current="services" />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>

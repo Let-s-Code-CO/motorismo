@@ -66,6 +66,8 @@ delete from public.work_order_payments;
 delete from public.work_order_line_employees;
 delete from public.work_order_lines;
 delete from public.work_orders;
+-- The active periods of the payroll (spec 016) point at employees.
+delete from public.employee_active_periods;
 delete from public.employee_details;
 delete from public.employees;
 delete from public.services;

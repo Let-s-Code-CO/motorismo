@@ -513,3 +513,36 @@ test('the services report, filtered, with its list of employees open, has no ser
   await expect(page.getByRole('link', { name: 'Quitar filtros' })).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });
+
+test('the payroll of a month, an employee in detail and the dialog to close it have no serious accessibility issues (spec 016)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const { data: elkin } = await adminClient()
+    .from('employees')
+    .select('id')
+    .eq('full_name', 'Elkin Estrada')
+    .single();
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+  const [year, month] = today.split('-').map(Number) as [number, number];
+  const lastMonth = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+
+  await page.goto(`/reports/payroll?month=${lastMonth}`);
+  await expect(page.getByRole('table', { name: 'Liquidación por empleado' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  // Closing or, if another test closed it, regenerating: the dialog asks first (then cancelled).
+  await page
+    .getByRole('button', { name: /^(Cerrar liquidación|Regenerar)$/ })
+    .first()
+    .click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+
+  await page.goto(`/reports/payroll/${elkin!.id}?month=${lastMonth}`);
+  await expect(page.getByRole('heading', { name: 'Elkin Estrada', level: 1 })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+});

@@ -10,6 +10,7 @@
  * when the device asks for less (CA-10 to CA-12); the desktop as before (CA-05, CA-09, CA-13).
  * Spec 012: the agenda, a new reservation, a reservation and «Horario» fit a phone too.
  * Spec 015: the services report fits an iPhone, a card per service.
+ * Spec 016: the payroll and an employee's detail fit an iPhone, a card per employee.
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -190,7 +191,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
   });
 
-  test('every staff screen of specs 007, 008, 012 and 015 has no horizontal scroll', async ({
+  test('every staff screen of specs 007, 008, 012, 015 and 016 has no horizontal scroll', async ({
     page,
   }) => {
     const { data: open } = await adminClient()
@@ -199,6 +200,12 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       .eq('status', 'open')
       .order('number')
       .limit(1)
+      .single();
+    // Spec 016: an employee of the payroll, for its detail.
+    const { data: elkin } = await adminClient()
+      .from('employees')
+      .select('id')
+      .eq('full_name', 'Elkin Estrada')
       .single();
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
@@ -217,6 +224,9 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       '/agenda/schedule',
       // Spec 015: the services report, on the seeds' closed orders (a card per service).
       `/reports/services?from=${bogotaDay(15)}&to=${bogotaDay(0)}`,
+      // Spec 016: the payroll of the month and an employee's detail.
+      '/reports/payroll',
+      `/reports/payroll/${elkin!.id}`,
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();

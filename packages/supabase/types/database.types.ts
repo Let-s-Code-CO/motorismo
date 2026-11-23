@@ -167,8 +167,38 @@ export type Database = {
           },
         ]
       }
+      employee_active_periods: {
+        Row: {
+          employee_id: string
+          ended_at: string | null
+          id: string
+          started_at: string
+        }
+        Insert: {
+          employee_id: string
+          ended_at?: string | null
+          id?: string
+          started_at: string
+        }
+        Update: {
+          employee_id?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_active_periods_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_details: {
         Row: {
+          base_salary: number
           commission_pct: number
           document_number: string
           document_type: Database["public"]["Enums"]["document_type"]
@@ -176,6 +206,7 @@ export type Database = {
           phone: string | null
         }
         Insert: {
+          base_salary?: number
           commission_pct: number
           document_number: string
           document_type: Database["public"]["Enums"]["document_type"]
@@ -183,6 +214,7 @@ export type Database = {
           phone?: string | null
         }
         Update: {
+          base_salary?: number
           commission_pct?: number
           document_number?: string
           document_type?: Database["public"]["Enums"]["document_type"]
@@ -237,6 +269,161 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      payroll_items: {
+        Row: {
+          closed_at: string
+          commission: number
+          id: string
+          line_id: string
+          line_position: number
+          order_id: string
+          order_number: number
+          payroll_line_id: string
+          price: number
+          service_name: string
+          share_pct: number
+        }
+        Insert: {
+          closed_at: string
+          commission: number
+          id?: string
+          line_id: string
+          line_position: number
+          order_id: string
+          order_number: number
+          payroll_line_id: string
+          price: number
+          service_name: string
+          share_pct: number
+        }
+        Update: {
+          closed_at?: string
+          commission?: number
+          id?: string
+          line_id?: string
+          line_position?: number
+          order_id?: string
+          order_number?: number
+          payroll_line_id?: string
+          price?: number
+          service_name?: string
+          share_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_items_payroll_line_id_fkey"
+            columns: ["payroll_line_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_lines: {
+        Row: {
+          active_days: number
+          base_pay: number
+          base_salary: number
+          commission_pct: number
+          commissions: number
+          employee_id: string
+          employee_name: string
+          id: string
+          month_days: number
+          payroll_id: string
+          total: number
+        }
+        Insert: {
+          active_days: number
+          base_pay: number
+          base_salary: number
+          commission_pct: number
+          commissions: number
+          employee_id: string
+          employee_name: string
+          id?: string
+          month_days: number
+          payroll_id: string
+          total: number
+        }
+        Update: {
+          active_days?: number
+          base_pay?: number
+          base_salary?: number
+          commission_pct?: number
+          commissions?: number
+          employee_id?: string
+          employee_name?: string
+          id?: string
+          month_days?: number
+          payroll_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_lines_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_lines_payroll_id_fkey"
+            columns: ["payroll_id"]
+            isOneToOne: false
+            referencedRelation: "payrolls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payrolls: {
+        Row: {
+          closed_at: string
+          closed_by: string
+          id: string
+          month: string
+          previous_total: number | null
+          regenerated_at: string | null
+          regenerated_by: string | null
+          total: number
+        }
+        Insert: {
+          closed_at: string
+          closed_by: string
+          id?: string
+          month: string
+          previous_total?: number | null
+          regenerated_at?: string | null
+          regenerated_by?: string | null
+          total?: number
+        }
+        Update: {
+          closed_at?: string
+          closed_by?: string
+          id?: string
+          month?: string
+          previous_total?: number | null
+          regenerated_at?: string | null
+          regenerated_by?: string | null
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payrolls_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payrolls_regenerated_by_fkey"
+            columns: ["regenerated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1165,6 +1352,7 @@ export type Database = {
         Args: { p_id: string; p_reason?: string }
         Returns: undefined
       }
+      close_payroll: { Args: { p_month: string }; Returns: string }
       close_work_order: {
         Args: { p_id: string; p_payments?: Json }
         Returns: undefined
@@ -1262,6 +1450,48 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      payroll_items: {
+        Args: { p_employee: string; p_month: string }
+        Returns: {
+          closed_at: string
+          commission: number
+          order_id: string
+          order_number: number
+          price: number
+          service_name: string
+          share_pct: number
+        }[]
+      }
+      payroll_lines: {
+        Args: { p_month: string }
+        Returns: {
+          active_days: number
+          base_pay: number
+          base_salary: number
+          commission_pct: number
+          commissions: number
+          employee_id: string
+          employee_name: string
+          month_days: number
+          total: number
+        }[]
+      }
+      payroll_month: {
+        Args: { p_month: string }
+        Returns: {
+          can_close: boolean
+          changed_since_close: boolean
+          closed_at: string
+          closed_by_name: string
+          month: string
+          previous_total: number
+          regenerated_at: string
+          regenerated_by_name: string
+          status: string
+          total: number
+        }[]
+      }
+      regenerate_payroll: { Args: { p_month: string }; Returns: string }
       save_agenda_settings: {
         Args: {
           p_seats: number
@@ -1276,6 +1506,7 @@ export type Database = {
       }
       save_employee: {
         Args: {
+          p_base_salary?: number
           p_commission_pct: number
           p_document_number: string
           p_document_type: Database["public"]["Enums"]["document_type"]

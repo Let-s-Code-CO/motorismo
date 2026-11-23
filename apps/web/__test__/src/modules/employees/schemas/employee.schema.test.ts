@@ -8,6 +8,8 @@
  * - CA-09 / RN-04: the document is kept without dots, spaces or hyphens: «1.020.304.050» is
  *   1020304050. A cédula (CC), a cédula de extranjería (CE) and a PPT have digits only (3 to 15);
  *   a passport may have letters (5 to 20), kept in upper case.
+ * - Spec 016, CA-01 / CA-02: the monthly base salary is required, in whole pesos as staff type them
+ *   («1.300.000», «1300000», «$ 1.300.000»), 0 or more («0» for whom earns only commission).
  * - The Server Action parses the form's output again: numbers are accepted as they are.
  */
 import { employeeSchema } from '@web/modules/employees/schemas/employee.schema';
@@ -18,6 +20,7 @@ const input = (overrides: Record<string, unknown> = {}) => ({
   document_number: '1.020.304.050',
   phone: '300 111 2233',
   commission_pct: '35',
+  base_salary: '1.300.000',
   ...overrides,
 });
 
@@ -29,13 +32,14 @@ const issuesOf = (value: unknown) => {
 };
 
 describe('employeeSchema', () => {
-  it('normalises the document, the phone and the commission (CA-07, CA-09)', () => {
+  it('normalises the document, the phone, the commission and the base salary (CA-07, CA-09; spec 016, CA-01)', () => {
     expect(employeeSchema.parse(input())).toEqual({
       full_name: 'Elkin Estrada',
       document_type: 'cc',
       document_number: '1020304050',
       phone: '3001112233',
       commission_pct: 35,
+      base_salary: 1300000,
     });
   });
 
@@ -60,12 +64,14 @@ describe('employeeSchema', () => {
         document_number: ' . ',
         phone: '',
         commission_pct: '',
+        base_salary: ' ',
       })
     ).toEqual({
       full_name: 'fullNameRequired',
       document_type: 'documentTypeRequired',
       document_number: 'documentRequired',
       commission_pct: 'commissionRequired',
+      base_salary: 'baseSalaryRequired',
     });
   });
 
@@ -96,6 +102,24 @@ describe('employeeSchema', () => {
   it('accepts the limits of the commission: 0 and 100 (RN-06)', () => {
     expect(issuesOf(input({ commission_pct: '0' }))).toEqual({});
     expect(issuesOf(input({ commission_pct: '100' }))).toEqual({});
+  });
+
+  it.each(['-1', '1.300.000,50', '1,3 millones', 'mucho'])(
+    'refuses «%s» as a base salary: whole pesos, 0 or more (spec 016, CA-02)',
+    (salary) => {
+      expect(issuesOf(input({ base_salary: salary }))).toEqual({
+        base_salary: 'baseSalaryInvalid',
+      });
+    }
+  );
+
+  it('accepts 0 as a base salary, for whom earns only commission (spec 016, CA-01)', () => {
+    expect(employeeSchema.parse(input({ base_salary: '0' })).base_salary).toBe(0);
+  });
+
+  it('reads «$ 1.300.000» and «1300000» as the same salary (spec 016, CA-01)', () => {
+    expect(employeeSchema.parse(input({ base_salary: '$ 1.300.000' })).base_salary).toBe(1300000);
+    expect(employeeSchema.parse(input({ base_salary: '1300000' })).base_salary).toBe(1300000);
   });
 
   it('refuses a name longer than 120 characters (CA-08)', () => {

@@ -85,4 +85,13 @@ describe('StaffHome', () => {
       'Consulta, busca y registra a los clientes del negocio.'
     );
   });
+
+  it('says «Reportes» holds the services and the payroll, and «Muy pronto» what comes next (spec 016)', () => {
+    renderHome();
+
+    expect(screen.getByRole('link', { name: /Reportes/ })).toHaveTextContent(
+      'Los servicios hechos y la liquidación de los empleados, para exportar a Excel.'
+    );
+    expect(screen.getByText('Reporte de clientes.')).toBeInTheDocument();
+  });
 });

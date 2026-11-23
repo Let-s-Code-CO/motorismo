@@ -189,7 +189,8 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
   llegada), Mateo sin reserva y Valentina «No asistió».
 - Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
   «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
-  (CC 1020304050, 35 %), Paula Pineda (CC 52123456, 30 %) y Diego Desactivado. En cada entorno real
+  (CC 1020304050, 35 %, base $ 1.423.500), Paula Pineda (CC 52123456, 30 %, base $ 1.300.000) y Diego
+  Desactivado (base $ 900.000, desactivado hace 20 días), registrados hace 90 días (spec 016). En cada entorno real
   los carga el administrador.
 
 Los correos (invitaciones, confirmación de registro, recuperación) se ven en Mailpit:
@@ -343,6 +344,27 @@ e2e/                         # Playwright
   final, en un `SelectSection` «Desactivados».
 - Un enlace con aspecto de botón (descargar, «Quitar filtros») es un `<a>`/`Link` con
   `button(…)` de `@heroui/theme`: `Button as={Link}` conserva el rol «button».
+
+## Liquidación de empleados (spec 016)
+
+- **Salario base:** `employee_details.base_salary` (privado como la comisión: solo el admin lo lee
+  y lo escribe). `save_employee(…, p_base_salary)` lo recibe al final y opcional: nulo registra 0 y,
+  al corregir, conserva el que había.
+- **Días activos:** `employee_active_periods`, que llena un *trigger* al registrar, desactivar o
+  reactivar un empleado (nadie la escribe directamente). Un día cuenta si estuvo activo en algún
+  momento de ese día, en hora de Colombia. Para vaciar `employees` en una prueba, borra antes sus
+  periodos.
+- **Cálculo:** `private.payroll_lines_live` / `payroll_items_live`: valor × participación × comisión
+  (sin restar el descuento) de las órdenes cerradas en el mes; base × días activos ÷ días del mes;
+  se redondea una vez por empleado. Comisión y salario: los de ahora (RN-09).
+- **Cierre:** `close_payroll` (solo un mes terminado) guarda una copia fija en `payrolls`,
+  `payroll_lines` y `payroll_items`; `regenerate_payroll` la reescribe y guarda el total anterior.
+  `payroll_month` dice si «hubo cambios» comparando la copia con el cálculo de ahora. Todo
+  `security definer`, solo admin (`payroll_admin_only`); el reloj es `private.agenda_now()`.
+- **App:** «Reportes» tiene pestañas (`reports-tabs`): «Servicios» y «Liquidación»
+  (`/reports/payroll?month=AAAA-MM`, el detalle en `/reports/payroll/{empleado}` y el Excel en
+  `…/export`, con hojas «Resumen» y «Detalle»). Cerrar y regenerar van con `ConfirmDialog`,
+  `callAction` y `notify`.
 
 ## Autenticación y permisos (specs 002 y 004)
 

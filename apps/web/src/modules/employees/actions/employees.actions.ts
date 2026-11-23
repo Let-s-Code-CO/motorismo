@@ -38,7 +38,8 @@ export const saveEmployee = async (input: unknown): Promise<ActionResult<Employe
       fieldErrors: parsed.success ? undefined : fieldErrorsOf(parsed.error),
     };
   }
-  const { full_name, document_type, document_number, phone, commission_pct } = parsed.data;
+  const { full_name, document_type, document_number, phone, commission_pct, base_salary } =
+    parsed.data;
 
   const supabase = await createSupabaseServerClient();
   // Without an id it registers a new employee; without a phone, none is kept.
@@ -49,6 +50,8 @@ export const saveEmployee = async (input: unknown): Promise<ActionResult<Employe
     p_commission_pct: commission_pct,
     ...(phone ? { p_phone: phone } : {}),
     ...(id.data.id ? { p_id: id.data.id } : {}),
+    // Spec 016: the monthly base salary.
+    p_base_salary: base_salary,
   });
   if (error) return { ok: false, error: fromEmployeesGuardError(error) };
 

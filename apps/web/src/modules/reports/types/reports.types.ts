@@ -40,3 +40,23 @@ export type ReportFilters = {
 
 /** The period the report opens on: this month, from day 1 to today (CA-01). */
 export type ReportPeriod = Pick<ReportFilters, 'from' | 'to'>;
+
+/**
+ * The state of a month's payroll (spec 016), as `payroll_month` returns it: who closed or
+ * regenerated it and when, and the total before, only once it is closed.
+ */
+export type PayrollMonth = Omit<
+  WithNulls<
+    Functions['payroll_month']['Returns'][number],
+    'closed_at' | 'closed_by_name' | 'regenerated_at' | 'regenerated_by_name' | 'previous_total'
+  >,
+  'status'
+> & { status: PayrollStatus };
+
+export type PayrollStatus = 'provisional' | 'closed';
+
+/** An employee of a month's payroll (CA-05). */
+export type PayrollLine = Functions['payroll_lines']['Returns'][number];
+
+/** A service an employee took part in, with its commission (CA-11). */
+export type PayrollItem = Functions['payroll_items']['Returns'][number];

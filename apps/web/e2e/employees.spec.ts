@@ -6,7 +6,9 @@
  * - CA-10: an admin corrects the commission.
  * - CA-12 / CA-13: disabling asks first and moves the employee to «Desactivados», from where they
  *   come back.
+ * - Spec 016, CA-01: the base salary is set on registering and corrected, and shows in the list.
  * - CA-16 / RN-07: an operator sees only the names of the active employees.
+ * - Spec 016, CA-04: nor their base salary.
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -21,6 +23,8 @@ test.afterAll(async () => {
   const { data } = await adminClient().from('employees').select('id').eq('full_name', name);
   const ids = (data ?? []).map(({ id }) => id);
   if (!ids.length) return;
+  // The active periods of the payroll (spec 016) point at the employee.
+  await adminClient().from('employee_active_periods').delete().in('employee_id', ids);
   await adminClient().from('employee_details').delete().in('employee_id', ids);
   await adminClient().from('employees').delete().in('id', ids);
 });
@@ -42,7 +46,7 @@ const chooseAction = async (page: Page, employee: string, item: string) => {
   }).toPass({ timeout: 15_000 });
 };
 
-test('an admin registers, corrects, disables and reactivates an employee (CA-07, CA-09, CA-10, CA-12, CA-13)', async ({
+test('an admin registers, corrects, disables and reactivates an employee (CA-07, CA-09, CA-10, CA-12, CA-13; spec 016, CA-01)', async ({
   page,
 }) => {
   await openEmployees(page, SEED.admin.email);
@@ -54,10 +58,12 @@ test('an admin registers, corrects, disables and reactivates an employee (CA-07,
   await dialog.getByLabel('Número de documento').fill(document);
   await dialog.getByLabel('Celular (opcional)').fill('310 555 6677');
   await dialog.getByLabel('Comisión').fill('30');
+  await dialog.getByLabel('Salario base').fill('1.300.000');
   await dialog.getByRole('button', { name: 'Registrar empleado' }).click();
   await expect(page.getByText('Empleado registrado.')).toBeVisible();
   await expect(rowOf(page, name)).toContainText(`CC ${document}`);
   await expect(rowOf(page, name)).toContainText('30 %');
+  await expect(rowOf(page, name)).toContainText('$ 1.300.000');
 
   // CA-09: the same document with dots is taken.
   await page.getByRole('button', { name: 'Nuevo empleado' }).click();
@@ -65,17 +71,21 @@ test('an admin registers, corrects, disables and reactivates an employee (CA-07,
   await dialog.getByLabel('Nombre completo').fill('Otra Persona');
   await dialog.getByLabel('Número de documento').fill(withDots);
   await dialog.getByLabel('Comisión').fill('10');
+  await dialog.getByLabel('Salario base').fill('0');
   await dialog.getByRole('button', { name: 'Registrar empleado' }).click();
   await expect(dialog.getByText('Ya existe un empleado con ese documento.')).toBeVisible();
   await dialog.getByRole('button', { name: 'Cancelar' }).click();
 
-  // CA-10: correct the commission.
+  // CA-10: correct the commission; spec 016, CA-01: and the base salary.
   await chooseAction(page, name, 'Editar');
   dialog = page.getByRole('dialog', { name: /Editar empleado/ });
+  await expect(dialog.getByLabel('Salario base')).toHaveValue('1.300.000');
   await dialog.getByLabel('Comisión').fill('40');
+  await dialog.getByLabel('Salario base').fill('1.400.000');
   await dialog.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.getByText('Empleado actualizado.')).toBeVisible();
   await expect(rowOf(page, name)).toContainText('40 %');
+  await expect(rowOf(page, name)).toContainText('$ 1.400.000');
 
   // CA-12: disabling asks first.
   await chooseAction(page, name, 'Desactivar');
@@ -96,12 +106,15 @@ test('an admin registers, corrects, disables and reactivates an employee (CA-07,
   await expect(page.getByRole('grid', { name: 'Empleados activos' })).toContainText(name);
 });
 
-test('an operator sees only the names of the active employees (CA-16, RN-07)', async ({ page }) => {
+test('an operator sees only the names of the active employees (CA-16, RN-07; spec 016, CA-04)', async ({
+  page,
+}) => {
   await openEmployees(page, SEED.operator.email);
 
   await expect(rowOf(page, 'Elkin Estrada')).toBeVisible();
   await expect(page.getByText('1020304050')).toHaveCount(0);
   await expect(page.getByText('35 %')).toHaveCount(0);
+  await expect(page.getByText('$ 1.423.500')).toHaveCount(0);
   await expect(page.getByText('Diego Desactivado')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Nuevo empleado' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^Acciones de/ })).toHaveCount(0);
