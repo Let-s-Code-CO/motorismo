@@ -17,6 +17,7 @@ import {
 } from '@heroui/react';
 import { ArchiveRestore, Ban, Ellipsis, Pencil } from 'lucide-react';
 
+import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import type { EmployeeRow } from '@web/modules/employees/api/employees.server';
 
@@ -118,6 +119,9 @@ const EmployeesTable = ({
           <TableColumn key="commission" className="text-right">
             {t('table.commission')}
           </TableColumn>,
+          <TableColumn key="baseSalary" className="text-right">
+            {t('table.baseSalary')}
+          </TableColumn>,
         ]
       : []),
     ...(hasActions
@@ -175,6 +179,9 @@ const EmployeesTable = ({
                   </TableCell>,
                   <TableCell key="commission" className="text-right tabular-nums">
                     {details ? t('table.commissionValue', { value: details.commission_pct }) : ''}
+                  </TableCell>,
+                  <TableCell key="baseSalary" className="text-right whitespace-nowrap tabular-nums">
+                    {details ? formatPesos(details.base_salary) : ''}
                   </TableCell>,
                 ]
               : []),

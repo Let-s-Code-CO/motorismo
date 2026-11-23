@@ -16,8 +16,7 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 ### Administración
 
 4. **Reporte de clientes** (la lista con búsqueda está en la spec 004; falta exportarla).
-5. **Exportar liquidación por empleado** en un rango de fechas, con el total.
-6. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
+5. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
    personales de los clientes (hoy se atienden por los canales de la política publicada en la
    spec 004).
 
@@ -58,3 +57,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [013](013-avisos-flotantes/spec.md) | Avisos flotantes de confirmación | verificada (falta despliegue) |
 | [014](014-experiencia-cliente/spec.md) | Experiencia del cliente con cuenta | verificada (falta despliegue) |
 | [015](015-reporte-servicios/spec.md) | Reporte de servicios | verificada |
+| [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | implementada |

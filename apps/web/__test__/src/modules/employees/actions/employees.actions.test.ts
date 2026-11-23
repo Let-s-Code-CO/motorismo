@@ -40,6 +40,7 @@ const form = (overrides: Record<string, unknown> = {}) => ({
   document_number: '1.020.304.050',
   phone: '300 111 2233',
   commission_pct: '35',
+  base_salary: '1.423.500',
   ...overrides,
 });
 
@@ -95,6 +96,8 @@ describe('employees.actions', () => {
       p_document_number: '1020304050',
       p_commission_pct: 35,
       p_phone: '3001112233',
+      // Spec 016, CA-01: the monthly base salary, in whole pesos.
+      p_base_salary: 1423500,
     });
     expect(revalidatePath).toHaveBeenCalledWith('/employees');
   });
@@ -111,6 +114,7 @@ describe('employees.actions', () => {
       p_document_number: '1020304050',
       p_commission_pct: 40,
       p_id: ID,
+      p_base_salary: 1423500,
     });
   });
 

@@ -97,6 +97,20 @@ describe('ServicesReportScreen', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Reporte de servicios' })).toBeVisible();
   });
 
+  it('goes to the payroll from its tabs, «Servicios» marked (spec 016, RF-02)', () => {
+    renderScreen();
+
+    const tabs = screen.getByRole('navigation', { name: 'Secciones de reportes' });
+    expect(within(tabs).getByRole('link', { name: 'Servicios' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+    expect(within(tabs).getByRole('link', { name: 'Liquidación' })).toHaveAttribute(
+      'href',
+      '/reports/payroll'
+    );
+  });
+
   it('shows in the table each field of a service, with its closing day in Colombia (CA-01)', () => {
     renderScreen();
 

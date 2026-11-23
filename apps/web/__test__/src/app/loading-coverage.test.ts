@@ -41,6 +41,9 @@ const EXPECTED: Record<string, PageSkeletonVariant> = {
   // Spec 015: «Reportes» (on its way to its one report) and the services report.
   reports: 'list',
   'reports/services': 'list',
+  // Spec 016: the payroll of a month and an employee's detail.
+  'reports/payroll': 'list',
+  'reports/payroll/[employeeId]': 'detail',
 };
 
 const pages = (dir: string): string[] =>
@@ -55,7 +58,7 @@ const routes = pages(APP)
   .sort();
 
 describe('every screen of the signed-in app has its loading skeleton (spec 011, CA-01)', () => {
-  it('finds exactly the screens the plans list (21 today), so a new one gets its shape decided', () => {
+  it('finds exactly the screens the plans list (23 today), so a new one gets its shape decided', () => {
     expect(routes).toEqual(Object.keys(EXPECTED).sort());
   });
 

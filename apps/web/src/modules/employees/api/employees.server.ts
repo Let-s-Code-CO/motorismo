@@ -6,11 +6,11 @@ import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-serve
 
 export type EmployeeDetails = Pick<
   Tables<'employee_details'>,
-  'document_type' | 'document_number' | 'phone' | 'commission_pct'
+  'document_type' | 'document_number' | 'phone' | 'commission_pct' | 'base_salary'
 >;
 
 export type EmployeeRow = Pick<Tables<'employees'>, 'id' | 'full_name' | 'disabled_at'> & {
-  /** Document, phone and commission: only an admin gets them (RN-07). */
+  /** Document, phone, commission and base salary (spec 016): only an admin gets them (RN-07). */
   details: EmployeeDetails | null;
 };
 
@@ -34,7 +34,7 @@ export const listEmployees = async (isAdmin: boolean): Promise<EmployeeRow[]> =>
   const { data, error } = await supabase
     .from('employees')
     .select(
-      'id, full_name, disabled_at, employee_details(document_type, document_number, phone, commission_pct)'
+      'id, full_name, disabled_at, employee_details(document_type, document_number, phone, commission_pct, base_salary)'
     )
     .order('full_name');
   if (error) throw new Error(`Could not list employees: ${error.message}`);

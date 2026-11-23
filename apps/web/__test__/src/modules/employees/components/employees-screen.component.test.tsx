@@ -3,7 +3,8 @@
  * operator (spec 007, HU-02 to HU-04).
  *
  * Guards:
- * - CA-16 / RN-07: an admin sees each employee's document, phone and commission (on phones the
+ * - CA-16 / RN-07: an admin sees each employee's document, phone and commission (and, spec 016, their
+ *   base salary) (on phones the
  *   document and the phone go under the name); an operator sees only the names, without actions.
  * - CA-11: with no employees, an admin is invited to register the first one.
  * - CA-12: disabling asks first, then announces the result.
@@ -32,6 +33,7 @@ const employee = (overrides: Partial<EmployeeRow> = {}): EmployeeRow => ({
     document_number: '1020304050',
     phone: '3001112233',
     commission_pct: 35,
+    base_salary: 1423500,
   },
   ...overrides,
 });
@@ -40,19 +42,26 @@ const diego = employee({
   id: '30000000-0000-4000-8000-000000000002',
   full_name: 'Diego Desactivado',
   disabled_at: '2026-09-21T15:00:00Z',
-  details: { document_type: 'ce', document_number: '987654', phone: null, commission_pct: 25 },
+  details: {
+    document_type: 'ce',
+    document_number: '987654',
+    phone: null,
+    commission_pct: 25,
+    base_salary: 0,
+  },
 });
 
 describe('EmployeesScreen', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it("shows an admin each employee's document, phone and commission (CA-16, RN-07)", () => {
+  it("shows an admin each employee's document, phone, commission and base salary (CA-16, RN-07; spec 016, CA-01)", () => {
     renderWithProviders(<EmployeesScreen employees={[employee()]} isAdmin />);
 
     const row = screen.getByRole('row', { name: /Elkin Estrada/ });
     expect(row).toHaveTextContent('CC 1020304050');
     expect(row).toHaveTextContent('300 111 2233');
     expect(row).toHaveTextContent('35 %');
+    expect(row).toHaveTextContent('$ 1.423.500');
   });
 
   it('repeats the document and the phone under the name, for phones, where those columns are hidden (CA-07, RN-07)', () => {

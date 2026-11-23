@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { fullNameField, optionalMobileField } from '@web/modules/core/schemas/fields.schema';
+import { parsePesos } from '@web/modules/core/utils/money.utils';
 import { DOCUMENT_TYPES } from '@web/modules/employees/constants/employees.constants';
 
 /** CA-09: «1.020.304.050», «1020 304 050» and «1020-304-050» are the same document. */
@@ -30,6 +31,28 @@ const commissionField = z.union([z.number(), z.string()]).transform((raw, ctx) =
 });
 
 /**
+ * Spec 016, CA-01 / CA-02: the monthly base salary in whole pesos, typed as staff write it
+ * («1.300.000», «$ 1.300.000») or already a number; 0 or more.
+ */
+const baseSalaryField = z.union([z.number(), z.string()]).transform((raw, ctx) => {
+  if (typeof raw === 'number') {
+    if (Number.isInteger(raw) && raw >= 0) return raw;
+    ctx.addIssue({ code: 'custom', message: 'baseSalaryInvalid' });
+    return 0;
+  }
+  if (!raw.trim()) {
+    ctx.addIssue({ code: 'custom', message: 'baseSalaryRequired' });
+    return 0;
+  }
+  const value = parsePesos(raw);
+  if (value === null) {
+    ctx.addIssue({ code: 'custom', message: 'baseSalaryInvalid' });
+    return 0;
+  }
+  return value;
+});
+
+/**
  * An employee of the catalog (spec 007, HU-02). Errors are message keys under
  * `employees.validation`. The document is checked against its type even when other fields fail,
  * so the form shows every problem at once (CA-08).
@@ -44,6 +67,7 @@ export const employeeSchema = z
       .pipe(z.string().min(1, { error: 'documentRequired' })),
     phone: optionalMobileField,
     commission_pct: commissionField,
+    base_salary: baseSalaryField,
   })
   .refine(
     ({ document_type, document_number }) =>

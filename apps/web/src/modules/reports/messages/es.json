@@ -66,6 +66,90 @@
         "discounts": "Descuentos",
         "total": "Total"
       }
+    },
+    "tabs": {
+      "label": "Secciones de reportes",
+      "services": "Servicios",
+      "payroll": "Liquidación"
+    },
+    "payroll": {
+      "title": "Liquidación de empleados",
+      "description": "Salario base por los días activos más las comisiones de los servicios del mes.",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "provisional": "Provisional",
+      "provisionalText": "Se calcula con los datos de ahora y puede cambiar.",
+      "closed": "Cerrada",
+      "closedBy": "Cerrada el {date} a las {time} por {name}",
+      "regeneratedBy": "Regenerada el {date} a las {time} por {name}; antes sumaba {total}.",
+      "changed": "Hubo cambios después del cierre. Regenérala si quieres que los tenga en cuenta.",
+      "close": "Cerrar liquidación",
+      "regenerate": "Regenerar",
+      "export": "Exportar a Excel",
+      "closeTitle": "¿Cerrar la liquidación de {month}?",
+      "closeText": "Quedará guardada como comprobante de lo que se paga: aunque después se corrija una orden o cambie un salario o una comisión, no cambiará salvo que la regeneres.",
+      "regenerateTitle": "¿Regenerar la liquidación de {month}?",
+      "regenerateText": "Se volverá a calcular con los datos de ahora y reemplazará a la guardada. Los valores pueden cambiar.",
+      "closedNotice": "Liquidación de {month} cerrada.",
+      "regeneratedNotice": "Liquidación de {month} regenerada.",
+      "tableLabel": "Liquidación por empleado",
+      "columns": {
+        "employee": "Empleado",
+        "activeDays": "Días activos",
+        "basePay": "Salario del mes",
+        "commissions": "Comisiones",
+        "total": "Total"
+      },
+      "days": "{active} de {month}",
+      "monthTotal": "Total del mes",
+      "empty": "No hay empleados que liquidar en este mes.",
+      "errors": {
+        "forbidden": "Solo un administrador puede cerrar o regenerar la liquidación.",
+        "invalidInput": "Ese mes no es válido.",
+        "monthOpen": "Ese mes aún no termina: se cierra desde el día 1 del mes siguiente.",
+        "alreadyClosed": "Ese mes ya estaba cerrado.",
+        "notClosed": "Ese mes no está cerrado: no hay nada que regenerar.",
+        "generic": "No se pudo guardar. Inténtalo de nuevo."
+      },
+      "detail": {
+        "subtitle": "Liquidación de {month}",
+        "back": "Volver a la liquidación",
+        "baseTitle": "Salario base",
+        "base": "{active} de {month} días de {salary} = {pay}",
+        "commissionsTitle": "Comisiones ({pct} %)",
+        "commissionsLabel": "Comisiones del mes",
+        "order": "Orden #{number}",
+        "count": "{price} × {share} % × {pct} % = {commission}",
+        "none": "No participó en servicios este mes.",
+        "totalsLabel": "Totales de {name}",
+        "basePay": "Salario del mes",
+        "commissions": "Comisiones",
+        "total": "Total"
+      },
+      "sheet": {
+        "summary": "Resumen",
+        "detail": "Detalle",
+        "summaryColumns": {
+          "employee": "Empleado",
+          "activeDays": "Días activos",
+          "monthDays": "Días del mes",
+          "baseSalary": "Salario base",
+          "basePay": "Salario del mes",
+          "commissionPct": "Comisión (%)",
+          "commissions": "Comisiones",
+          "total": "Total",
+          "monthTotal": "Total del mes"
+        },
+        "detailColumns": {
+          "employee": "Empleado",
+          "closedAt": "Fecha",
+          "order": "Orden",
+          "service": "Servicio",
+          "price": "Valor",
+          "share": "Participación (%)",
+          "commission": "Comisión"
+        }
+      }
     }
   }
 }

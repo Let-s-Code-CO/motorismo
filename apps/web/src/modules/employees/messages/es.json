@@ -35,6 +35,7 @@
       "phone": "Celular",
       "commission": "Comisión",
       "commissionValue": "{value} %",
+      "baseSalary": "Salario base",
       "noPhone": "Sin celular",
       "disabledOn": "Desactivado el {date}",
       "actionsColumn": "Acciones",
@@ -56,6 +57,9 @@
       "commission": "Comisión",
       "commissionPlaceholder": "0",
       "commissionHint": "Porcentaje que gana por servicio; se usará en la liquidación.",
+      "baseSalary": "Salario base",
+      "baseSalaryPlaceholder": "0",
+      "baseSalaryHint": "Mensual, en pesos; la liquidación le suma las comisiones. 0 si solo gana comisión.",
       "submitNew": "Registrar empleado",
       "submitEdit": "Guardar cambios",
       "cancel": "Cancelar"
@@ -68,7 +72,9 @@
       "documentInvalid": "Revisa el número: solo dígitos (de 3 a 15), o letras y dígitos (de 5 a 20) si es pasaporte.",
       "phoneInvalid": "Introduce un celular colombiano de 10 dígitos que empiece por 3.",
       "commissionRequired": "Escribe la comisión.",
-      "commissionInvalid": "Escribe un porcentaje entero entre 0 y 100."
+      "commissionInvalid": "Escribe un porcentaje entero entre 0 y 100.",
+      "baseSalaryRequired": "Escribe el salario base.",
+      "baseSalaryInvalid": "Escribe el salario en pesos, sin decimales: 0 o más."
     },
     "errors": {
       "forbidden": "Solo un administrador puede cambiar los empleados.",

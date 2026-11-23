@@ -72,7 +72,8 @@ pnpm db:stop
   foto), `cliente.desactivado@` y dos clientes sin cuenta del punto de atención.
 - `seeds/03_vehicles.sql`: vehículos de esos clientes (spec 005), guardados con `save_vehicle`.
 - `seeds/04_catalogs.sql`: servicios y empleados de ejemplo (spec 007), solo locales: los reales
-  los carga el administrador. Las pruebas pgTAP de catálogos vacían esas tablas en su transacción.
+  los carga el administrador. Los empleados llevan salario base, se registran hace 90 días y Diego
+  se desactiva hace 20 (spec 016): sus periodos activos los llena el *trigger*. Las pruebas pgTAP de catálogos vacían esas tablas en su transacción.
 - `seeds/05_work_orders.sql`: órdenes de ejemplo (spec 008), creadas con las mismas funciones que la
   app, como el primer admin. Las pruebas pgTAP de catálogos y órdenes vacían primero las órdenes.
 - `seeds/06_reservations.sql`: agenda de ejemplo (spec 012), con fechas relativas a hoy: esta semana

@@ -6,6 +6,8 @@
  * - CA-07 / CA-10: registering and correcting send the typed data (the action normalises it
  *   again); the screen is told once it is saved. A new employee starts with a cédula (CC).
  * - CA-09: a document taken by a disabled employee suggests reactivating them.
+ * - Spec 016, CA-01 / CA-02: the monthly base salary, in pesos with thousands («1.300.000»), is
+ *   required and whole; a correction opens with the current one.
  */
 import { fireEvent, screen } from '@testing-library/react';
 
@@ -29,13 +31,14 @@ const elkin: EmployeeRow = {
     document_number: '1020304050',
     phone: '3001112233',
     commission_pct: 35,
+    base_salary: 1500000,
   },
 };
 
 describe('EmployeeForm', () => {
   afterEach(() => vi.clearAllMocks());
 
-  it('reports the missing name, document and commission, and sends nothing (CA-08)', async () => {
+  it('reports the missing name, document, commission and base salary, and sends nothing (CA-08; spec 016, CA-02)', async () => {
     renderWithProviders(<EmployeeForm onSaved={vi.fn()} onCancel={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Registrar empleado' }));
@@ -43,6 +46,7 @@ describe('EmployeeForm', () => {
     expect(await screen.findByText('Escribe el nombre completo.')).toBeVisible();
     expect(screen.getByText('Escribe el número de documento.')).toBeVisible();
     expect(screen.getByText('Escribe la comisión.')).toBeVisible();
+    expect(screen.getByText('Escribe el salario base.')).toBeVisible();
     expect(saveEmployee).not.toHaveBeenCalled();
   });
 
@@ -52,9 +56,25 @@ describe('EmployeeForm', () => {
     type(/Nombre completo/, 'Paula Pineda');
     type(/Número de documento/, '52123456');
     type(/Comisión/, '120');
+    type(/Salario base/, '1.300.000');
     fireEvent.click(screen.getByRole('button', { name: 'Registrar empleado' }));
 
     expect(await screen.findByText('Escribe un porcentaje entero entre 0 y 100.')).toBeVisible();
+    expect(saveEmployee).not.toHaveBeenCalled();
+  });
+
+  it('reports a base salary that is not whole pesos of 0 or more (spec 016, CA-02)', async () => {
+    renderWithProviders(<EmployeeForm onSaved={vi.fn()} onCancel={vi.fn()} />);
+
+    type(/Nombre completo/, 'Paula Pineda');
+    type(/Número de documento/, '52123456');
+    type(/Comisión/, '30');
+    type(/Salario base/, '1.300.000,50');
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar empleado' }));
+
+    expect(
+      await screen.findByText('Escribe el salario en pesos, sin decimales: 0 o más.')
+    ).toBeVisible();
     expect(saveEmployee).not.toHaveBeenCalled();
   });
 
@@ -66,6 +86,7 @@ describe('EmployeeForm', () => {
     type(/Nombre completo/, 'Paula Pineda');
     type(/Número de documento/, '52.123.456');
     type(/Comisión/, '30');
+    type(/Salario base/, '1.300.000');
     fireEvent.click(screen.getByRole('button', { name: 'Registrar empleado' }));
 
     await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
@@ -76,6 +97,7 @@ describe('EmployeeForm', () => {
       document_number: '52123456',
       phone: null,
       commission_pct: 30,
+      base_salary: 1300000,
     });
   });
 
@@ -85,6 +107,7 @@ describe('EmployeeForm', () => {
     renderWithProviders(<EmployeeForm employee={elkin} onSaved={onSaved} onCancel={vi.fn()} />);
 
     expect(screen.getByLabelText(/Celular/)).toHaveValue('300 111 2233');
+    expect(screen.getByLabelText(/Salario base/)).toHaveValue('1.500.000');
     type(/Comisión/, '40');
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
@@ -96,6 +119,7 @@ describe('EmployeeForm', () => {
       document_number: '1020304050',
       phone: '3001112233',
       commission_pct: 40,
+      base_salary: 1500000,
     });
   });
 
@@ -106,6 +130,7 @@ describe('EmployeeForm', () => {
     type(/Nombre completo/, 'Diego Otra Vez');
     type(/Número de documento/, '987654');
     type(/Comisión/, '25');
+    type(/Salario base/, '0');
     fireEvent.click(screen.getByRole('button', { name: 'Registrar empleado' }));
 
     expect(

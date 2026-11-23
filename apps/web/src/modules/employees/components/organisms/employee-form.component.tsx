@@ -9,6 +9,7 @@ import { Alert, Button, Input, Select, SelectItem } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IdCard, Percent, Phone, User } from 'lucide-react';
 
+import { formatAmount } from '@web/modules/core/utils/money.utils';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import { saveEmployee } from '@web/modules/employees/actions/employees.actions';
 import type { EmployeeRow } from '@web/modules/employees/api/employees.server';
@@ -55,6 +56,7 @@ const EmployeeForm = ({ employee, onSaved, onCancel }: EmployeeFormProps) => {
       document_number: details?.document_number ?? '',
       phone: details?.phone ? formatMobile(details.phone) : '',
       commission_pct: details ? String(details.commission_pct) : '',
+      base_salary: details ? formatAmount(details.base_salary) : '',
     },
   });
 
@@ -141,6 +143,22 @@ const EmployeeForm = ({ employee, onSaved, onCancel }: EmployeeFormProps) => {
           endContent={<Percent aria-hidden className={icon} />}
           isInvalid={!!errors.commission_pct}
           errorMessage={fieldError(errors.commission_pct?.message)}
+        />
+        {/* Spec 016: the monthly base salary, added to the commissions in the payroll. */}
+        <Input
+          {...register('base_salary')}
+          {...field}
+          inputMode="numeric"
+          label={t('form.baseSalary')}
+          placeholder={t('form.baseSalaryPlaceholder')}
+          description={t('form.baseSalaryHint')}
+          startContent={
+            <span aria-hidden className="text-sm text-default-400">
+              $
+            </span>
+          }
+          isInvalid={!!errors.base_salary}
+          errorMessage={fieldError(errors.base_salary?.message)}
         />
       </div>
       <div className="flex justify-end gap-2">
