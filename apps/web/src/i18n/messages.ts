@@ -2,6 +2,7 @@ import auth from '@web/modules/auth/messages/es.json';
 import core from '@web/modules/core/messages/es.json';
 import customerArea from '@web/modules/customer-area/messages/es.json';
 import customers from '@web/modules/customers/messages/es.json';
+import dataRights from '@web/modules/data-rights/messages/es.json';
 import employees from '@web/modules/employees/messages/es.json';
 import pwa from '@web/modules/pwa/messages/es.json';
 import reports from '@web/modules/reports/messages/es.json';
@@ -34,5 +35,6 @@ export const messages = {
   ...reservations,
   ...customerArea,
   ...reports,
+  ...dataRights,
   ...theme,
 };

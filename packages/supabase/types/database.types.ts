@@ -112,6 +112,7 @@ export type Database = {
           created_at: string
           disabled_at: string | null
           email: string | null
+          erased_at: string | null
           full_name: string
           id: string
           origin: Database["public"]["Enums"]["customer_origin"]
@@ -129,6 +130,7 @@ export type Database = {
           created_at?: string
           disabled_at?: string | null
           email?: string | null
+          erased_at?: string | null
           full_name: string
           id?: string
           origin?: Database["public"]["Enums"]["customer_origin"]
@@ -146,6 +148,7 @@ export type Database = {
           created_at?: string
           disabled_at?: string | null
           email?: string | null
+          erased_at?: string | null
           full_name?: string
           id?: string
           origin?: Database["public"]["Enums"]["customer_origin"]
@@ -163,6 +166,59 @@ export type Database = {
             columns: ["registered_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_requests: {
+        Row: {
+          channel: Database["public"]["Enums"]["data_request_channel"]
+          created_by: string
+          customer_id: string
+          description: string | null
+          due_on: string
+          id: string
+          kind: Database["public"]["Enums"]["data_request_kind"]
+          received_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          response: string | null
+          status: Database["public"]["Enums"]["data_request_status"]
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["data_request_channel"]
+          created_by: string
+          customer_id: string
+          description?: string | null
+          due_on: string
+          id?: string
+          kind: Database["public"]["Enums"]["data_request_kind"]
+          received_at: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          response?: string | null
+          status?: Database["public"]["Enums"]["data_request_status"]
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["data_request_channel"]
+          created_by?: string
+          customer_id?: string
+          description?: string | null
+          due_on?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["data_request_kind"]
+          received_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          response?: string | null
+          status?: Database["public"]["Enums"]["data_request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -1163,6 +1219,38 @@ export type Database = {
       }
     }
     Views: {
+      data_request_summaries: {
+        Row: {
+          business_days_left: number | null
+          channel: Database["public"]["Enums"]["data_request_channel"] | null
+          created_by: string | null
+          customer_erased: boolean | null
+          customer_has_account: boolean | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_origin: Database["public"]["Enums"]["customer_origin"] | null
+          description: string | null
+          due_on: string | null
+          id: string | null
+          kind: Database["public"]["Enums"]["data_request_kind"] | null
+          overdue: boolean | null
+          received_at: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_by_name: string | null
+          response: string | null
+          status: Database["public"]["Enums"]["data_request_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_extension_summaries: {
         Row: {
           created_at: string | null
@@ -1380,6 +1468,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      customer_data: { Args: { p_customer: string }; Returns: Json }
       customer_registrar_name: {
         Args: { p_customer_id: string }
         Returns: string
@@ -1392,10 +1481,15 @@ export type Database = {
         }[]
       }
       email_in_use: { Args: { p_email: string }; Returns: boolean }
+      erase_customer_data: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       extend_reservation_tolerance: { Args: { p_id: string }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       mark_reservation_no_show: { Args: { p_id: string }; Returns: undefined }
+      my_data: { Args: never; Returns: Json }
       my_order_history: {
         Args: { p_before?: string; p_limit?: number }
         Returns: {
@@ -1492,6 +1586,30 @@ export type Database = {
         }[]
       }
       regenerate_payroll: { Args: { p_month: string }; Returns: string }
+      register_data_request: {
+        Args: {
+          p_channel: Database["public"]["Enums"]["data_request_channel"]
+          p_customer: string
+          p_description: string
+          p_kind: Database["public"]["Enums"]["data_request_kind"]
+        }
+        Returns: string
+      }
+      reject_data_request: {
+        Args: { p_id: string; p_reason: string }
+        Returns: undefined
+      }
+      request_data_change: {
+        Args: {
+          p_description?: string
+          p_kind: Database["public"]["Enums"]["data_request_kind"]
+        }
+        Returns: string
+      }
+      resolve_data_request: {
+        Args: { p_id: string; p_response: string }
+        Returns: undefined
+      }
       save_agenda_settings: {
         Args: {
           p_seats: number
@@ -1601,10 +1719,14 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: undefined
       }
+      withdraw_data_request: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       customer_origin: "self_signup" | "google" | "counter"
       customer_status: "registered" | "walk_in" | "disabled"
+      data_request_channel: "app" | "counter" | "instagram"
+      data_request_kind: "inquiry" | "correction" | "erasure"
+      data_request_status: "received" | "attended" | "rejected" | "withdrawn"
       document_type: "cc" | "ce" | "ppt" | "passport"
       payment_method: "cash" | "transfer" | "card" | "other"
       reservation_status: "pending" | "attended" | "cancelled" | "no_show"
@@ -1759,6 +1881,9 @@ export const Constants = {
     Enums: {
       customer_origin: ["self_signup", "google", "counter"],
       customer_status: ["registered", "walk_in", "disabled"],
+      data_request_channel: ["app", "counter", "instagram"],
+      data_request_kind: ["inquiry", "correction", "erasure"],
+      data_request_status: ["received", "attended", "rejected", "withdrawn"],
       document_type: ["cc", "ce", "ppt", "passport"],
       payment_method: ["cash", "transfer", "card", "other"],
       reservation_status: ["pending", "attended", "cancelled", "no_show"],

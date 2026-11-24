@@ -546,3 +546,43 @@ test('the payroll of a month, an employee in detail and the dialog to close it h
   await expect(page.getByRole('heading', { name: 'Elkin Estrada', level: 1 })).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });
+
+test('«Mis datos» with its dialog to ask for the erasure has no serious accessibility issues (spec 017)', async ({
+  page,
+}) => {
+  await signIn(page, SEED_CUSTOMERS.customer.email);
+  await expect(page).toHaveURL('/my');
+  await page.goto('/my/data');
+  await expect(page.getByRole('heading', { name: 'Mis datos', level: 1 })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.getByRole('button', { name: 'Pedir la supresión de mis datos' }).click();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+});
+
+test('«Solicitudes de datos» and a request in detail have no serious accessibility issues (spec 017)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const { data: request } = await adminClient()
+    .from('data_requests')
+    .select('id')
+    .eq('kind', 'correction')
+    .limit(1)
+    .single();
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+
+  await page.goto('/admin/data-requests');
+  await expect(page.getByRole('list', { name: 'Solicitudes pendientes' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.goto(`/admin/data-requests/${request!.id}`);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // With its errors in sight (CLAUDE.md: forms are audited with their errors).
+  await page.getByRole('button', { name: 'Marcar atendida' }).click();
+  await expect(page.getByText('Escribe la respuesta o el motivo.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+});

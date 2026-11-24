@@ -205,11 +205,12 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
               </thead>
               <tbody className="divide-y divide-divider">
                 {lines.map((line) => (
-                  <tr key={line.employee_id} className="hover:bg-default-50">
+                  <tr key={line.employee_id} className="relative hover:bg-default-50">
                     <td className={CELL}>
                       <Link
                         href={payrollEmployeeHref(month, line.employee_id)}
-                        className="font-medium underline-offset-4 hover:underline"
+                        // The whole row opens it: the link stretches over the row (after:inset-0).
+                        className="font-medium underline-offset-4 outline-none after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:underline"
                       >
                         {line.employee_name}
                       </Link>

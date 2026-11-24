@@ -147,13 +147,14 @@ const ServicesReportScreen = ({
               </thead>
               <tbody className="divide-y divide-divider">
                 {rows.map((row) => (
-                  <tr key={row.line_id} className="hover:bg-default-50">
+                  <tr key={row.line_id} className="relative hover:bg-default-50">
                     <td className={`${CELL} whitespace-nowrap tabular-nums`}>{dayOf(row)}</td>
                     <td className={CELL}>
                       <Link
                         href={`/orders/${row.order_id}`}
                         aria-label={t('openOrder', { number: row.order_number })}
-                        className="font-medium underline-offset-4 hover:underline"
+                        // The whole row opens it: the link stretches over the row (after:inset-0).
+                        className="font-medium underline-offset-4 outline-none after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:underline"
                       >
                         {t('orderNumber', { number: row.order_number })}
                       </Link>

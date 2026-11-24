@@ -82,6 +82,8 @@ pnpm db:stop
   registra el seed) y una reserva por llegar. Las
   pruebas pgTAP de catálogos, órdenes y reservas vacían primero las reservas (apuntan a servicios y
   órdenes).
+- `seeds/07_data_requests.sql`: solicitudes de datos de ejemplo (spec 017): una corrección «Recibida» de
+  Camila desde la app y una consulta vencida de Valentina en el punto de atención.
 - **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
   municipios DANE de `municipalities_data`) van en
   una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo

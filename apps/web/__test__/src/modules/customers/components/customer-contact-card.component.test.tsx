@@ -30,6 +30,7 @@ const buildContact = (overrides: Partial<Contact> = {}): Contact => ({
   email: 'marta@correo.test',
   phone: '3120001111',
   user_id: null,
+  erased_at: null,
   ...overrides,
 });
 
@@ -43,6 +44,21 @@ describe('CustomerContactCard', () => {
 
     expect(within(card()).getByText('marta@correo.test')).toBeVisible();
     expect(within(card()).getByText('—')).toBeVisible();
+  });
+
+  it('offers no editing for an erased customer: nothing can change them (spec 017, RN-09)', () => {
+    renderWithProviders(
+      <CustomerContactCard
+        customer={buildContact({
+          full_name: 'Cliente suprimido',
+          email: null,
+          phone: null,
+          erased_at: '2026-11-24T15:00:00Z',
+        })}
+      />
+    );
+
+    expect(within(card()).queryByRole('button', { name: 'Editar datos' })).not.toBeInTheDocument();
   });
 
   it('offers editing as an icon button inside the contact card, not as a section of its own (CA-27)', () => {

@@ -8,6 +8,7 @@
  */
 import { expect, test } from '@playwright/test';
 
+import { openAdminSection } from './support/nav';
 import { SEED, SEED_CUSTOMERS, signIn } from './support/sandbox';
 
 test('an operator does not see user management (CA-07)', async ({ page }) => {
@@ -37,7 +38,8 @@ test('an operator opening an admin URL is told they have no permission (CA-08)',
 test('an admin sees user management', async ({ page }) => {
   await signIn(page, SEED.admin.email);
 
-  await page.getByRole('link', { name: 'Usuarios', exact: true }).click();
+  // Spec 017: under «Administración» in the desktop menu.
+  await openAdminSection(page, 'Usuarios');
 
   await expect(page.getByRole('grid', { name: 'Usuarios de la aplicación' })).toBeVisible();
 });

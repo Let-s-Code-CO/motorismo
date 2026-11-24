@@ -64,6 +64,7 @@ describe('MobileNav', () => {
       'Servicios',
       'Empleados',
       'Reportes',
+      'Habeas data',
       'Usuarios',
     ]);
     for (const link of within(panel).getAllByRole('link')) {

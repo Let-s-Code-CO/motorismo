@@ -27,6 +27,8 @@ type CustomerContactCardProps = {
     email: string | null;
     phone: string | null;
     user_id: string | null;
+    /** Spec 017: an erased customer is final, never edited again (RN-09). */
+    erased_at: string | null;
   };
 };
 
@@ -57,19 +59,21 @@ const CustomerContactCard = ({ customer }: CustomerContactCardProps) => {
         <h2 id={titleId} className="text-sm font-semibold">
           {t('detail.contact')}
         </h2>
-        <Tooltip content={t('detail.edit')} placement="left" delay={300} closeDelay={0}>
-          <Button
-            isIconOnly
-            size="sm"
-            radius="full"
-            variant="light"
-            aria-label={t('detail.edit')}
-            className="-my-1 -mr-1.5 text-default-500 transition-colors hover:text-foreground"
-            onPress={onOpen}
-          >
-            <Pencil aria-hidden className="size-4" />
-          </Button>
-        </Tooltip>
+        {!customer.erased_at && (
+          <Tooltip content={t('detail.edit')} placement="left" delay={300} closeDelay={0}>
+            <Button
+              isIconOnly
+              size="sm"
+              radius="full"
+              variant="light"
+              aria-label={t('detail.edit')}
+              className="-my-1 -mr-1.5 text-default-500 transition-colors hover:text-foreground"
+              onPress={onOpen}
+            >
+              <Pencil aria-hidden className="size-4" />
+            </Button>
+          </Tooltip>
+        )}
       </div>
 
       <dl className="flex flex-col gap-4">

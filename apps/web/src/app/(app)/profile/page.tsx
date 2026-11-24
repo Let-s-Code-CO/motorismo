@@ -1,4 +1,7 @@
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
+
+import { ChevronRight, ShieldCheck } from 'lucide-react';
 
 import { requireCustomer } from '@web/modules/auth/api/auth.server';
 import RoleChip from '@web/modules/auth/components/atoms/role-chip.component';
@@ -39,6 +42,20 @@ const ProfilePage = async () => {
         </div>
         <MyProfileForm customer={customer} />
       </div>
+      {/* Spec 017, RF-01: what the business keeps of them, and their requests about it. */}
+      <Link
+        href="/my/data"
+        className="flex items-center justify-between gap-3 rounded-large border border-divider bg-content1 p-5 shadow-small outline-none hover:bg-default-50 focus-visible:bg-default-50"
+      >
+        <span className="flex items-start gap-3">
+          <ShieldCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-default-500" />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-medium">{t('myData')}</span>
+            <span className="text-sm text-default-500">{t('myDataText')}</span>
+          </span>
+        </span>
+        <ChevronRight aria-hidden className="size-4 shrink-0 text-default-400" />
+      </Link>
       <VehiclesSection
         customerId={customer.id}
         audience="customer"
