@@ -19,7 +19,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(85);
+select plan(87);
 
 -- Helpers ------------------------------------------------------------------------------------------------
 create function pg_temp.new_staff(p_id uuid, p_email text, p_name text, p_role text)
@@ -145,6 +145,12 @@ begin
 end $$;
 select pg_temp.closed_order('o_suzuky', 'suzuky_gsx', 50000);
 select pg_temp.closed_order('o_renamed', 'renamed', 70000);
+
+-- A pending reservation of the renamed motorcycle (setup, written directly).
+insert into public.reservations (customer_id, vehicle_id, slot_start, slot_end, created_by)
+values (pg_temp.id_of('camilo'), pg_temp.id_of('renamed'), '2026-12-01 10:00-05', '2026-12-01 11:00-05',
+        '00000000-0000-0000-0000-0000000018a1');
+select pg_temp.remember('r_renamed', (select id from public.reservations where vehicle_id = pg_temp.id_of('renamed')));
 
 -- The admin's report, as the admin (security definer functions check the role).
 create function pg_temp.report_brand(p_order text)
@@ -273,6 +279,12 @@ select is(
 select is(pg_temp.report_brand('o_renamed'), 'Motorismo Motors', 'and so does the report (CA-07, RF-01)');
 select is((select brand_name from public.work_order_summaries where id = pg_temp.id_of('o_renamed')),
   'Motorismo Motors', 'and the order (CA-07, RF-01)');
+select is((select brand_name from public.reservation_summaries where id = pg_temp.id_of('r_renamed')),
+  'Motorismo Motors', 'and the reservation (CA-07, RF-01)');
+select pg_temp.act_as(:camilo_user);
+select is((select brand_name from public.my_order_history() where id = pg_temp.id_of('o_renamed')),
+  'Motorismo Motors', 'and the customer''s own history (CA-07, RF-01)');
+select pg_temp.act_as(:admin);
 select is((select reviewed from public.vehicle_catalog('motorcycle') where name = 'Motorismo Motors'), true,
   'a renamed brand is reviewed (CA-11, RN-07)');
 select lives_ok($$ select public.rename_vehicle_brand(pg_temp.brand('motorcycle', 'KTM'), 'Ktm') $$,

@@ -1,7 +1,7 @@
 ---
 id: "018"
 titulo: "Administrar marcas y líneas de vehículos"
-estado: implementada
+estado: verificada
 creada: 2026-11-24
 actualizada: 2026-11-24
 ---
@@ -112,6 +112,23 @@ queden juntos y la repetida desaparezca.
   vehículos que pasaron muestran la marca o línea que queda, y los totales de los reportes y de la
   liquidación no cambian.
 
+### HU-04 (P2) — Pasar una línea a otra marca
+
+Como administrador, quiero pasar una línea que quedó bajo la marca equivocada a la correcta, con
+sus vehículos, para no corregir vehículo por vehículo.
+
+**Criterios de aceptación**
+
+- **CA-18** — Dada la línea «FZ 2.0» bajo Honda (Motocicleta) con 3 vehículos, cuando el
+  administrador la pasa a Yamaha, entonces antes se le pregunta, diciendo que 3 vehículos pasan a
+  ser Yamaha FZ 2.0; al confirmar, la línea está bajo Yamaha, sus 3 vehículos son Yamaha FZ 2.0 en
+  todas partes (como en CA-07) y se avisa con un aviso flotante.
+- **CA-19** — Dado que la marca de destino ya tiene una línea con el mismo nombre (comparado como
+  en el catálogo), cuando el administrador pasa la línea, entonces las dos se unen en la que ya
+  estaba, con sus vehículos, y la pregunta previa lo dice.
+- **CA-20** — Dada la elección de la marca de destino, cuando el administrador la busca, entonces
+  solo se ofrecen marcas del mismo tipo, distintas de la actual.
+
 ### HU-05 (P1) — Un menú que no desborda
 
 Como persona del personal en un escritorio, quiero ver en la barra todas las secciones que caben y
@@ -134,23 +151,6 @@ encontrar las demás en un solo lugar, para que añadir «Marcas y líneas» no 
   menú, se va a ella.
 - **CA-24** — Dado un cambio de ancho de la ventana, cuando cabe una sección más o una menos,
   entonces pasa de «Más» a la barra o al revés, sin recargar.
-
-### HU-04 (P2) — Pasar una línea a otra marca
-
-Como administrador, quiero pasar una línea que quedó bajo la marca equivocada a la correcta, con
-sus vehículos, para no corregir vehículo por vehículo.
-
-**Criterios de aceptación**
-
-- **CA-18** — Dada la línea «FZ 2.0» bajo Honda (Motocicleta) con 3 vehículos, cuando el
-  administrador la pasa a Yamaha, entonces antes se le pregunta, diciendo que 3 vehículos pasan a
-  ser Yamaha FZ 2.0; al confirmar, la línea está bajo Yamaha, sus 3 vehículos son Yamaha FZ 2.0 en
-  todas partes (como en CA-07) y se avisa con un aviso flotante.
-- **CA-19** — Dado que la marca de destino ya tiene una línea con el mismo nombre (comparado como
-  en el catálogo), cuando el administrador pasa la línea, entonces las dos se unen en la que ya
-  estaba, con sus vehículos, y la pregunta previa lo dice.
-- **CA-20** — Dada la elección de la marca de destino, cuando el administrador la busca, entonces
-  solo se ofrecen marcas del mismo tipo, distintas de la actual.
 
 ### HU-06 (P2) — Registrar lo que falta y dar por revisado lo que está bien
 
@@ -274,3 +274,4 @@ Ninguna.
 | 2026-11-24 | Durante la implementación, a petición del usuario: la fila entera de una marca la despliega; el administrador registra marcas y líneas y da por revisadas las añadidas (HU-06, CA-26 a CA-29); las tarjetas pasan a «Por revisar» / «Revisadas» y renombrar, unir o pasar deja revisada la que queda (RN-07). |
 | 2026-11-24 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-24 | Implementada: estado `implementada`. Las tarjetas-filtro del proyecto atenúan sin opacidad (la etiqueta bajaba de AA con una tarjeta elegida). |
+| 2026-11-24 | Verificada. Correcciones aprobadas por el usuario: E2E de punta a punta de las sugerencias con un nombre unido (CA-16); pgTAP de reservas e historial del cliente tras renombrar (CA-07, RF-01); E2E del cliente en «Marcas y líneas» (CA-05); historias en orden. |

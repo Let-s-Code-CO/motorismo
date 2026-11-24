@@ -266,3 +266,5 @@ Cada prueba nueva se vio fallar con su mutación y se revirtió:
 | El operador pasa la guarda | pgTAP (22, 23, 25–28) |
 | La fila de la marca sin el botón estirado | E2E `ui` «whatever lights up…» (el centro de cada fila sin mano) |
 | Las tarjetas atenúan con opacidad | E2E `a11y` «Marcas y líneas» (contraste de la etiqueta) |
+| `fetchBrands` sin los nombres recordados (verificación) | E2E `vehicle-catalog-admin` «merges a brand…» (el nombre unido no sugiere la que quedó) |
+| Renombrar no cambia el nombre (verificación) | pgTAP 35 y 36 (reserva e historial del cliente) |

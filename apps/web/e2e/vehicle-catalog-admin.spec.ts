@@ -5,9 +5,10 @@
  * - CA-01, CA-03, CA-04: the admin opens it from «Administración», filters «Por revisar», searches, and
  *   a reload keeps the address.
  * - CA-07: a renamed brand shows its new name on the customer's record.
- * - CA-12: merging a brand asks first, saying how many vehicles pass, and the merged one is gone.
+ * - CA-12, CA-16: merging a brand asks first, saying how many vehicles pass, and the merged one is
+ *   gone; typed again in the vehicle form, its name suggests the brand that stayed.
  * - CA-18: a line moves to another brand.
- * - CA-05: an operator has no «Marcas y líneas» and is told they have no permission.
+ * - CA-05: an operator has no «Marcas y líneas» and is told they have no permission; a customer too.
  * - CA-06: a customer sees the brand of their vehicle, never whether it is to review.
  * - CA-26, CA-27, CA-29: the admin registers a brand and a line, reviewed, and marks reviewed one
  *   someone typed.
@@ -17,6 +18,7 @@ import { type Page, expect, test } from '@playwright/test';
 import { openAdminSection } from './support/nav';
 import {
   SEED,
+  SEED_CUSTOMERS,
   adminClient,
   createCustomerAccount,
   createWalkInCustomer,
@@ -125,7 +127,7 @@ test.describe('the admin', () => {
     await expect(page.getByText(`${prefix} Nuevo`).first()).toBeVisible();
   });
 
-  test('merges a brand after saying how many vehicles pass, and the merged one is gone (CA-12)', async ({
+  test('merges a brand after saying how many vehicles pass; it is gone, and its name suggests the one that stayed (CA-12, CA-16)', async ({
     page,
   }) => {
     const customer = await createWalkInCustomer(`${prefix} Cliente`);
@@ -158,6 +160,13 @@ test.describe('the admin', () => {
         has: page.getByRole('button', { name: `Ver líneas de ${prefix} Zeta` }),
       })
     ).toContainText('2 vehículos');
+
+    // CA-16: in the vehicle form, the merged name suggests the brand that stayed.
+    await page.goto(`/customers/${customer}`);
+    await page.getByRole('button', { name: 'Agregar vehículo' }).click();
+    const form = page.getByRole('dialog', { name: 'Agregar vehículo' });
+    await form.getByRole('combobox', { name: 'Marca' }).fill(`${prefix} Zetta`);
+    await expect(page.getByRole('option', { name: `${prefix} Zeta`, exact: true })).toBeVisible();
   });
 
   test('registers a brand and a line, reviewed, and marks reviewed a brand someone typed (CA-26, CA-27, CA-29)', async ({
@@ -244,6 +253,17 @@ test('an operator has no «Marcas y líneas» and is told they have no permissio
 
   await page.goto(CATALOG);
   await expect(page.getByText('No tienes permiso para ver esta página.')).toBeVisible();
+});
+
+test('a customer is told they have no permission at «Marcas y líneas» (CA-05)', async ({
+  page,
+}) => {
+  await signIn(page, SEED_CUSTOMERS.customer.email);
+  await expect(page).toHaveURL('/my');
+
+  await page.goto(CATALOG);
+  await expect(page.getByText('No tienes permiso para ver esta página.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Marcas y líneas' })).toHaveCount(0);
 });
 
 test('a customer sees the brand of their vehicle, never whether it is to review (CA-06)', async ({
