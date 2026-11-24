@@ -11,6 +11,8 @@
  * Spec 012: the agenda, a new reservation, a reservation and «Horario» fit a phone too.
  * Spec 015: the services report fits an iPhone, a card per service.
  * Spec 016: the payroll and an employee's detail fit an iPhone, a card per employee.
+ * Spec 018: «Marcas y líneas» fits a phone, its lines open; the desktop bar never overflows and,
+ * with today's sections, needs no «Más» for an admin or an operator (CA-22, CA-25).
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -41,6 +43,11 @@ test.describe('on a 360 px phone', () => {
 
     await page.goto('/admin/users');
     await expect(page.getByRole('grid')).toBeVisible();
+    expect(await horizontalOverflow(page)).toBe(0);
+
+    // Spec 018: the catalog, the lines of its brands open (a search shows them).
+    await page.goto('/admin/vehicle-catalog?q=a');
+    await expect(page.getByRole('list', { name: 'Marcas' })).toBeVisible();
     expect(await horizontalOverflow(page)).toBe(0);
 
     await page.goto('/customers');
@@ -237,6 +244,8 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       // Spec 017: the data requests and one of them (Camila's, from the seeds).
       '/admin/data-requests',
       `/admin/data-requests/${camilaRequest!.id}`,
+      // Spec 018: the catalog, with the lines open.
+      '/admin/vehicle-catalog?status=pending&q=a',
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();
@@ -458,6 +467,31 @@ test.describe('on an iPhone (390 × 844) — the phone experience (spec 009)', (
 test.describe('on a desktop', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
+  for (const [role, email, inBar] of [
+    ['an admin', SEED.admin.email, ['Inicio', 'Órdenes', 'Agenda', 'Clientes', 'Administración']],
+    [
+      'an operator',
+      SEED.operator.email,
+      ['Inicio', 'Órdenes', 'Agenda', 'Clientes', 'Servicios', 'Empleados'],
+    ],
+  ] as const) {
+    test(`the bar of ${role} fits from 1024 px up, all in line and without «Más» (spec 018, CA-21, CA-22, CA-25)`, async ({
+      page,
+    }) => {
+      await signIn(page, email);
+      await expect(page).toHaveURL('/');
+      const nav = page.getByRole('navigation', { name: 'Navegación principal' });
+      for (const width of [1024, 1440]) {
+        await page.setViewportSize({ width, height: 800 });
+        await expect(nav.getByRole('button', { name: 'Más' })).toHaveCount(0);
+        await expect(nav.getByRole('listitem')).toHaveText([...inBar]);
+        const overflow = await nav.evaluate((element) => element.scrollWidth - element.clientWidth);
+        expect(overflow, `${width} px`).toBeLessThanOrEqual(0);
+        expect(await horizontalOverflow(page)).toBe(0);
+      }
+    });
+  }
+
   test('the login shows the brand panel beside the form, without the band (CA-03; spec 009, CA-13)', async ({
     page,
   }) => {
@@ -598,6 +632,8 @@ test.describe('pointer cursor', () => {
       '/reports/services',
       '/reports/payroll',
       '/admin/data-requests',
+      // Spec 018: the brands, their lines open, and their action buttons.
+      '/admin/vehicle-catalog?q=a',
     ]) {
       if (path !== '/') await page.goto(path);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

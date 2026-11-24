@@ -47,6 +47,7 @@ describe('StaffHome', () => {
       '/employees',
       '/reports',
       '/admin/data-requests',
+      '/admin/vehicle-catalog', // spec 018, RF-04
       '/admin/users',
     ]);
     for (const tile of tiles()) {

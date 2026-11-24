@@ -1,5 +1,6 @@
 import {
   CalendarClock,
+  CarFront,
   ClipboardList,
   Contact,
   FileSpreadsheet,
@@ -22,8 +23,9 @@ export type NavLink = {
   icon: LucideIcon;
   audiences: Audience[];
   /**
-   * Sections only an admin opens go together in the desktop menu, under «Administración» (spec
-   * 017): nine in a row did not fit. The phone's panel and the home list them all.
+   * For an admin, these go together in the desktop menu, under «Administración» (specs 017 and
+   * 018): the sections they configure, which change little. Whoever has no «Administración» (the
+   * operator) sees them in the bar. The phone's panel and the home list them all.
    */
   group?: 'admin';
 };
@@ -40,8 +42,20 @@ export const NAV_LINKS: NavLink[] = [
   { href: '/orders', key: 'orders', icon: ClipboardList, audiences: ['admin', 'operator'] },
   { href: '/agenda', key: 'agenda', icon: CalendarClock, audiences: ['admin', 'operator'] },
   { href: '/customers', key: 'customers', icon: Contact, audiences: ['admin', 'operator'] },
-  { href: '/services', key: 'services', icon: Tags, audiences: ['admin', 'operator'] },
-  { href: '/employees', key: 'employees', icon: HardHat, audiences: ['admin', 'operator'] },
+  {
+    href: '/services',
+    key: 'services',
+    icon: Tags,
+    audiences: ['admin', 'operator'],
+    group: 'admin',
+  },
+  {
+    href: '/employees',
+    key: 'employees',
+    icon: HardHat,
+    audiences: ['admin', 'operator'],
+    group: 'admin',
+  },
   // Spec 015: the reports, with the business's figures: admin only.
   { href: '/reports', key: 'reports', icon: FileSpreadsheet, audiences: ['admin'], group: 'admin' },
   // Spec 017: the requests of the data subject, admin only.
@@ -49,6 +63,14 @@ export const NAV_LINKS: NavLink[] = [
     href: '/admin/data-requests',
     key: 'dataRequests',
     icon: ShieldCheck,
+    audiences: ['admin'],
+    group: 'admin',
+  },
+  // Spec 018: the vehicle brands and lines catalog, admin only.
+  {
+    href: '/admin/vehicle-catalog',
+    key: 'vehicleCatalog',
+    icon: CarFront,
     audiences: ['admin'],
     group: 'admin',
   },
@@ -66,6 +88,27 @@ const HOMES = ['/', '/my'];
 /** The sections this audience may open, in menu order. */
 export const navLinksFor = (audience: Audience) =>
   NAV_LINKS.filter(({ audiences }) => audiences.includes(audience));
+
+/** An entry of the desktop bar: a section, or the menu of a group of sections. */
+export type NavEntry =
+  { kind: 'link'; link: NavLink } | { kind: 'group'; group: 'admin'; links: NavLink[] };
+
+/**
+ * The entries of the desktop bar for this audience, in menu order (spec 018, CA-21): the sections of
+ * a group go together, as one entry where the first of them is, but only for an admin (whoever has
+ * «Administración»); anyone else sees them in line.
+ */
+export const navEntriesFor = (audience: Audience): NavEntry[] => {
+  const entries: NavEntry[] = [];
+  for (const link of navLinksFor(audience)) {
+    const group = audience === 'admin' ? link.group : undefined;
+    const existing = entries.find((entry) => entry.kind === 'group' && entry.group === group);
+    if (!group) entries.push({ kind: 'link', link });
+    else if (existing?.kind === 'group') existing.links.push(link);
+    else entries.push({ kind: 'group', group, links: [link] });
+  }
+  return entries;
+};
 
 /** Whether `href` is the section of `pathname` (sub-pages belong to their section). */
 export const isCurrentSection = (href: string, pathname: string | null) =>

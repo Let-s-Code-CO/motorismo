@@ -5,29 +5,46 @@ import type {
   VehicleType,
 } from '@web/modules/vehicles/types/vehicles.types';
 
+/** An entry with the names it remembers, as the form filters it (spec 018, CA-16). */
+const withAliases = ({
+  id,
+  name,
+  aliases,
+}: {
+  id: string;
+  name: string;
+  aliases: { name: string }[];
+}) => ({
+  id,
+  name,
+  aliases: aliases.map((alias) => alias.name),
+});
+
 /**
  * The catalog, read from the browser with the user's session (any session may read it; nobody
  * writes it through the API). Small lists — tens of brands per type, a few lines per brand — so
- * they are loaded whole and filtered in memory while typing (spec 005, CA-10).
+ * they are loaded whole and filtered in memory while typing (spec 005, CA-10). Each entry comes with
+ * the names it remembers (merged into it or before a rename), so typing one suggests it (spec 018,
+ * CA-16).
  */
 export const fetchBrands = async (type: VehicleType): Promise<CatalogItem[]> => {
   const { data, error } = await createSupabaseBrowserClient()
     .from('vehicle_brands')
-    .select('id, name')
+    .select('id, name, aliases:vehicle_brand_aliases(name)')
     .eq('vehicle_type', type)
     .order('name');
   if (error) throw new Error(`Could not load the brands: ${error.message}`);
-  return data;
+  return data.map(withAliases);
 };
 
 export const fetchLines = async (brandId: string): Promise<CatalogItem[]> => {
   const { data, error } = await createSupabaseBrowserClient()
     .from('vehicle_lines')
-    .select('id, name')
+    .select('id, name, aliases:vehicle_line_aliases(name)')
     .eq('brand_id', brandId)
     .order('name');
   if (error) throw new Error(`Could not load the lines: ${error.message}`);
-  return data;
+  return data.map(withAliases);
 };
 
 /** The API answers at most this many rows per request (PostgREST max_rows, Supabase default). */

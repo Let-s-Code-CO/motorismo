@@ -117,6 +117,92 @@
     },
     "plate": {
       "country": "COLOMBIA"
+    },
+    "catalog": {
+      "title": "Marcas y líneas",
+      "description": "Las marcas y líneas que se eligen al registrar un vehículo. Revisa las que se añadieron, corrige lo que esté mal escrito o repetido y registra lo que falte.",
+      "typesLabel": "Tipo de vehículo",
+      "addBrand": "Registrar marca",
+      "summary": {
+        "filterLabel": "Filtrar por revisión",
+        "pending": "Por revisar",
+        "reviewed": "Revisadas"
+      },
+      "searchLabel": "Buscar marcas y líneas",
+      "searchPlaceholder": "Buscar por marca o línea",
+      "filter": {
+        "total": "{count, plural, one {# marca} other {# marcas}}",
+        "shown": "{shown} de {total, plural, one {# marca} other {# marcas}}",
+        "search": "«{q}»"
+      },
+      "listLabel": "Marcas",
+      "linesOf": "Líneas de {name}",
+      "noLines": "Sin líneas.",
+      "empty": "Este tipo aún no tiene marcas.",
+      "noMatch": "No hay marcas ni líneas que coincidan.",
+      "pending": "Por revisar · {date}",
+      "pendingLines": "{count, plural, one {# línea por revisar} other {# líneas por revisar}}",
+      "vehicles": "{count, plural, =0 {Sin vehículos} one {# vehículo} other {# vehículos}}",
+      "showLines": "Ver líneas de",
+      "brandActions": "Acciones de {name}",
+      "lineActions": "Acciones de la línea {name}",
+      "actions": {
+        "rename": "Renombrar",
+        "markReviewed": "Dar por revisada",
+        "addLine": "Registrar línea",
+        "mergeBrand": "Unir con otra marca",
+        "mergeLine": "Unir con otra línea",
+        "moveLine": "Pasar a otra marca"
+      },
+      "rename": {
+        "brandTitle": "Renombrar la marca «{name}»",
+        "lineTitle": "Renombrar la línea «{name}»",
+        "label": "Nombre",
+        "submit": "Guardar",
+        "cancel": "Cancelar",
+        "saved": "Ahora se llama «{name}».",
+        "addBrandTitle": "Registrar una marca de {type}",
+        "addLineTitle": "Registrar una línea de {name}",
+        "addSubmit": "Registrar",
+        "added": "Se registró «{name}»."
+      },
+      "merge": {
+        "brandTitle": "Unir la marca «{name}»",
+        "lineTitle": "Unir la línea «{name}»",
+        "moveTitle": "Pasar la línea «{name}» a otra marca",
+        "brandTarget": "Marca que queda",
+        "lineTarget": "Línea que queda",
+        "moveTarget": "Marca de destino",
+        "placeholder": "Escribe para buscar",
+        "noOptions": "No hay otra con la que unir.",
+        "brandEffect": "{count, plural, =0 {No tiene vehículos.} one {# vehículo pasa a {target}.} other {# vehículos pasan a {target}.}} «{name}» desaparece y, si alguien la vuelve a escribir, quedará {target}.",
+        "lineEffect": "{count, plural, =0 {No tiene vehículos.} one {# vehículo pasa a {target}.} other {# vehículos pasan a {target}.}} «{name}» desaparece.",
+        "moveEffect": "{count, plural, =0 {No tiene vehículos.} one {# vehículo pasa a ser {target} {name}.} other {# vehículos pasan a ser {target} {name}.}}",
+        "moveJoins": "Se unirá con la línea «{line}» de {target}.",
+        "final": "No se puede deshacer.",
+        "mergeSubmit": "Unir",
+        "moveSubmit": "Pasar",
+        "cancel": "Cancelar",
+        "merged": "«{name}» se unió con {target}.",
+        "moved": "«{name}» pasó a {target}."
+      },
+      "errors": {
+        "forbidden": "Solo el administrador corrige el catálogo.",
+        "invalidInput": "Revisa los datos e inténtalo de nuevo.",
+        "nameTaken": "Ya existe una con ese nombre. Si son la misma, únelas.",
+        "nameRequired": "Escribe el nombre.",
+        "nameTooLong": "El nombre puede tener hasta 60 caracteres.",
+        "typeMismatch": "Solo se une con una marca del mismo tipo de vehículo.",
+        "brandMismatch": "Solo se une con una línea de la misma marca.",
+        "sameItem": "Elige otra distinta.",
+        "notFound": "Ya no existe: alguien la cambió. Recarga la página.",
+        "generic": "No se pudo guardar. Inténtalo de nuevo."
+      },
+      "validation": {
+        "required": "Escribe el nombre.",
+        "tooLong": "El nombre puede tener hasta 60 caracteres."
+      },
+      "reviewed": "«{name}» quedó revisada."
     }
   }
 }

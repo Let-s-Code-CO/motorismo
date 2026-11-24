@@ -844,8 +844,9 @@ export type Database = {
           },
         ]
       }
-      vehicle_brands: {
+      vehicle_brand_aliases: {
         Row: {
+          brand_id: string
           created_at: string
           id: string
           name: string
@@ -853,6 +854,7 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
         Insert: {
+          brand_id: string
           created_at?: string
           id?: string
           name: string
@@ -860,13 +862,84 @@ export type Database = {
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
         }
         Update: {
+          brand_id?: string
           created_at?: string
           id?: string
           name?: string
           name_key?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
         }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_brand_aliases_brand_fk"
+            columns: ["brand_id", "vehicle_type"]
+            isOneToOne: false
+            referencedRelation: "vehicle_brands"
+            referencedColumns: ["id", "vehicle_type"]
+          },
+        ]
+      }
+      vehicle_brands: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          name_key: string
+          reviewed: boolean
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          name_key?: string
+          reviewed?: boolean
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          name_key?: string
+          reviewed?: boolean
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
         Relationships: []
+      }
+      vehicle_line_aliases: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          line_id: string
+          name: string
+          name_key: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          line_id: string
+          name: string
+          name_key?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          line_id?: string
+          name?: string
+          name_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_line_aliases_line_fk"
+            columns: ["line_id", "brand_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_lines"
+            referencedColumns: ["id", "brand_id"]
+          },
+        ]
       }
       vehicle_lines: {
         Row: {
@@ -875,6 +948,7 @@ export type Database = {
           id: string
           name: string
           name_key: string
+          reviewed: boolean
         }
         Insert: {
           brand_id: string
@@ -882,6 +956,7 @@ export type Database = {
           id?: string
           name: string
           name_key?: string
+          reviewed?: boolean
         }
         Update: {
           brand_id?: string
@@ -889,6 +964,7 @@ export type Database = {
           id?: string
           name?: string
           name_key?: string
+          reviewed?: boolean
         }
         Relationships: [
           {
@@ -1415,6 +1491,17 @@ export type Database = {
       }
     }
     Functions: {
+      add_vehicle_brand: {
+        Args: {
+          p_name: string
+          p_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Returns: string
+      }
+      add_vehicle_line: {
+        Args: { p_brand_id: string; p_name: string }
+        Returns: string
+      }
       agenda_slots: {
         Args: { p_day: string }
         Returns: {
@@ -1489,6 +1576,26 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       mark_reservation_no_show: { Args: { p_id: string }; Returns: undefined }
+      mark_vehicle_brand_reviewed: {
+        Args: { p_brand_id: string }
+        Returns: undefined
+      }
+      mark_vehicle_line_reviewed: {
+        Args: { p_line_id: string }
+        Returns: undefined
+      }
+      merge_vehicle_brands: {
+        Args: { p_from: string; p_into: string }
+        Returns: number
+      }
+      merge_vehicle_lines: {
+        Args: { p_from: string; p_into: string }
+        Returns: number
+      }
+      move_vehicle_line: {
+        Args: { p_brand_id: string; p_line_id: string }
+        Returns: number
+      }
       my_data: { Args: never; Returns: Json }
       my_order_history: {
         Args: { p_before?: string; p_limit?: number }
@@ -1597,6 +1704,14 @@ export type Database = {
       }
       reject_data_request: {
         Args: { p_id: string; p_reason: string }
+        Returns: undefined
+      }
+      rename_vehicle_brand: {
+        Args: { p_brand_id: string; p_name: string }
+        Returns: undefined
+      }
+      rename_vehicle_line: {
+        Args: { p_line_id: string; p_name: string }
         Returns: undefined
       }
       request_data_change: {
@@ -1715,6 +1830,17 @@ export type Database = {
         Returns: undefined
       }
       start_work_order: { Args: { p_id: string }; Returns: undefined }
+      vehicle_catalog: {
+        Args: { p_type: Database["public"]["Enums"]["vehicle_type"] }
+        Returns: {
+          created_at: string
+          id: string
+          lines: Json
+          name: string
+          reviewed: boolean
+          vehicles: number
+        }[]
+      }
       void_work_order: {
         Args: { p_id: string; p_reason: string }
         Returns: undefined

@@ -42,7 +42,8 @@ const AppHeader = ({ account }: AppHeaderProps) => {
             {t('core.brand.short')}
           </span>
         </Link>
-        <nav aria-label={t('auth.header.navLabel')} className="hidden lg:block">
+        {/* Takes the room between the brand and the account: the menu measures it (spec 018, HU-05). */}
+        <nav aria-label={t('auth.header.navLabel')} className="hidden min-w-0 lg:block lg:flex-1">
           <NavLinks audience={audience} />
         </nav>
         <div className="justify-self-end lg:hidden">

@@ -6,6 +6,9 @@
  * form uses the SAME rule to filter suggestions while typing (CA-10, CA-12), so what the user sees
  * suggested is what the database will reuse. The cases below repeat those of
  * 07_vehicle_catalog.test.sql.
+ *
+ * Spec 018, CA-16: an entry also answers to the names it remembers (merged into it, or before a
+ * rename), so typing «suzuky» after the admin merged it into Suzuki suggests and reuses Suzuki.
  */
 import {
   catalogKey,
@@ -65,5 +68,24 @@ describe('findInCatalog', () => {
 
   it('finds nothing for a name that only contains part of an entry (it is a new name)', () => {
     expect(findInCatalog(SUZUKI_LINES, 'GSX')).toBeUndefined();
+  });
+});
+
+describe('remembered names (spec 018, CA-16)', () => {
+  const BRANDS = [
+    { id: 'suzuki', name: 'Suzuki', aliases: ['Suzuky'] },
+    { id: 'yamaha', name: 'Yamaha' },
+  ];
+
+  it('suggests the brand a typed remembered name belongs to: «suzuky» suggests Suzuki', () => {
+    expect(filterCatalog(BRANDS, 'suzuky').map((item) => item.name)).toEqual(['Suzuki']);
+  });
+
+  it('finds the brand by a remembered name written any way', () => {
+    expect(findInCatalog(BRANDS, 'SUZU-KY')?.id).toBe('suzuki');
+  });
+
+  it('still lists it once when both its name and a remembered one match', () => {
+    expect(filterCatalog(BRANDS, 'suzu').map((item) => item.name)).toEqual(['Suzuki']);
   });
 });
