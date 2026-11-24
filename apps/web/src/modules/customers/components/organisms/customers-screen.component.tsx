@@ -20,6 +20,7 @@ import { Search, UserPlus } from 'lucide-react';
 import type { CustomerStatus } from '@web/modules/auth/types/auth.types';
 import FilterBar from '@web/modules/core/components/filter-bar.component';
 import SummaryFilterCards from '@web/modules/core/components/summary-filter-cards.component';
+import useUrlFilters from '@web/modules/core/hooks/url-filters.hook';
 import { notify } from '@web/modules/core/lib/toast.lib';
 import { setCustomerDisabled } from '@web/modules/customers/actions/customers.actions';
 import type { CustomerListRow } from '@web/modules/customers/api/customers.server';
@@ -69,7 +70,6 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
   const t = useTranslations('customers');
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(filters.q);
   const [isToggling, startToggle] = useTransition();
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
@@ -92,18 +92,18 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
       router.refresh();
     });
 
-  const navigate = (next: CustomerFilters) =>
-    startTransition(() =>
-      router.replace(`${pathname}${customersQueryString(next)}`, { scroll: false })
-    );
-
-  // The URL changed from outside (back button, "Ver todos"): show its search in the box.
-  useEffect(() => {
-    if (filters.q !== lastSent.current) {
-      lastSent.current = filters.q;
-      setSearch(filters.q);
-    }
-  }, [filters.q]);
+  // Several changes can be on their way at once (a card pressed while the search waits): each
+  // builds on the newest asked for, so none undoes another (project standard, `useUrlFilters`).
+  const { navigate, latest, isPending } = useUrlFilters({
+    filters,
+    href: (next: CustomerFilters) => `${pathname}${customersQueryString(next)}`,
+    // The URL changed from outside (back button): show its search in the box.
+    onOutside: ({ q }) => {
+      if (q === lastSent.current) return;
+      lastSent.current = q;
+      setSearch(q);
+    },
+  });
 
   // The search waits until the person stops typing; a new search starts at page 1 (CA-16).
   useEffect(() => {
@@ -111,7 +111,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
     if (q === lastSent.current) return;
     const timer = setTimeout(() => {
       lastSent.current = q;
-      navigate({ ...filters, q, page: 1 });
+      navigate({ ...latest(), q, page: 1 });
     }, SEARCH_DELAY_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only typing triggers a search
@@ -166,7 +166,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
         label={t('summary.filterLabel')}
         options={SUMMARY.map(toOption)}
         selected={filters.status}
-        onSelect={(status) => navigate({ ...filters, status, page: 1 })}
+        onSelect={(status) => navigate({ ...latest(), status, page: 1 })}
       />
 
       <div className="flex flex-col gap-3">
@@ -205,7 +205,7 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
             <Pagination
               page={filters.page}
               total={pageCount(matching)}
-              onChange={(page) => navigate({ ...filters, page })}
+              onChange={(page) => navigate({ ...latest(), page })}
               showControls
               variant="light"
             />

@@ -7,6 +7,8 @@
  * - CA-04 / CA-05: filtering by Camila's plate, typed in lower case with a dash, leaves only her
  *   services; the filter is in the address and survives a reload and «atrás».
  * - CA-10: a service opens its order.
+ * - CA-04 / CA-05: a «Desde» chosen while the plate still waits keeps both (the plate does not
+ *   undo it).
  * - CA-03 / CA-06: filtering by Paula leaves only the services she took part in, without the
  *   discounts or the total.
  * - CA-12: «Exportar a Excel» downloads «servicios-…-a-….xlsx», not empty.
@@ -99,6 +101,24 @@ test.describe('the admin', () => {
     await expect(totals.getByText('Descuentos')).toHaveCount(0);
     await expect(totals.getByText('Total', { exact: true })).toHaveCount(0);
     await expect(page.getByText(/Con un empleado elegido no se muestran descuentos/)).toBeVisible();
+  });
+
+  test('a period chosen while the plate still waits keeps both: the plate does not undo it (CA-04, CA-05)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto(`/reports/services?${PERIOD}`);
+    await page.waitForLoadState('networkidle');
+    const from = bogotaDay(14);
+
+    // Typed and chosen at once: the new «Desde» goes out before the plate's 300 ms wait ends.
+    await page.getByRole('textbox', { name: 'Placa' }).fill('uih-03d');
+    await page.getByLabel('Desde').fill(from);
+
+    await expect(page).toHaveURL(new RegExp(`from=${from}&to=${bogotaDay()}&plate=UIH03D$`));
+    await expect(page.getByRole('textbox', { name: 'Placa' })).toHaveValue('uih-03d');
+    await expect(page.getByLabel('Desde')).toHaveValue(from);
   });
 
   test('renders on the server and the browser alike: no hydration error (its filters are drawn on the server)', async ({

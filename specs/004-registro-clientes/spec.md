@@ -320,3 +320,4 @@ opcional (los vehículos van en otra spec).
 | 2026-11-20 | A petición del usuario: el operador también desactiva y reactiva clientes (RN-09, CA-29 a CA-32); un cliente sigue sin poder hacerlo. |
 | 2026-11-20 | El buscador de «Clientes» dice «Buscar por nombre, correo, celular o placa» (la búsqueda por placa existe desde la spec 005, CA-17). |
 | 2026-11-21 | Cambiado por la spec 014: el cliente entra a su «Inicio» (`/my`), no a «Mi perfil» (CA-12), y ve «Inicio», «Mis reservas», «Historial» y «Mi perfil» (CA-08). La página «No tienes permiso» lleva a su inicio (CA-09). |
+| 2026-11-24 | Corregida una carrera de la lista (deuda técnica): una tarjeta pulsada mientras la búsqueda espera sus 300 ms ya no se pierde, y la respuesta tardía de una búsqueda anterior no pisa lo que se está escribiendo (CA-16, CA-17). La lógica es compartida con el reporte de servicios (spec 015). |

@@ -3,7 +3,8 @@
  *
  * Guards CA-15 (newest first, with name, email, phone, status and date), CA-16 (search by part of
  * the name/email/phone, ignoring case and accents, with an explicit "no match"), CA-17 (summary
- * cards filter the list per the project standard, combined with the search), CA-18 (the record)
+ * cards filter the list per the project standard, combined with the search, also when a card is
+ * pressed while the search still waits), CA-18 (the record)
  * and CA-19 (an unconfirmed sign-up is not a customer). Seeds never change, so they anchor rows.
  */
 import { expect, test } from '@playwright/test';
@@ -133,6 +134,27 @@ test('the summary cards filter, combine with the search, survive a reload and re
   await expect(page).toHaveURL('/customers');
   await expect(row(SEED_CUSTOMERS.customer.name)).toBeVisible();
   await expect(page.getByRole('searchbox', { name: 'Buscar clientes' })).toHaveValue('');
+});
+
+test('a card pressed while the search still waits keeps both: the search does not undo the card (CA-16, CA-17)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/customers');
+  await page.waitForLoadState('networkidle');
+  const walkInCard = page.getByRole('button', { name: /^Sin cuenta \d+$/ });
+
+  // Typed and pressed at once: the card goes out well before the search's 300 ms wait ends.
+  await page.getByRole('searchbox', { name: 'Buscar clientes' }).fill('andres');
+  await walkInCard.click();
+
+  await expect(page).toHaveURL('/customers?q=andres&status=walk_in');
+  await expect(walkInCard).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('searchbox', { name: 'Buscar clientes' })).toHaveValue('andres');
+  await expect(
+    page.getByRole('row', { name: new RegExp(SEED_CUSTOMERS.phoneOnly.name) })
+  ).toBeVisible();
 });
 
 test('"Activos" shows customers with and without account, but not the disabled ones (CA-17)', async ({

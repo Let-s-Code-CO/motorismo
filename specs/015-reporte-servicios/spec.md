@@ -150,3 +150,4 @@ Ninguna.
 | 2026-11-23 | Pedido del usuario durante la implementación: en la lista de empleados, los desactivados van aparte, al final (CA-03). |
 | 2026-11-23 | Implementada: estado `implementada`. |
 | 2026-11-23 | Verificación: se añaden pruebas del paso de filtros a la base (empleado, página, Excel), el filtro por empleado y «atrás» en E2E; RN-05 precisa la fecha en números. Estado `verificada`. |
+| 2026-11-24 | Corregida la misma carrera que tenía «Clientes»: un periodo o un empleado elegido mientras la placa espera sus 300 ms ya no se pierde, y la respuesta tardía de una placa anterior no pisa la que se está escribiendo (CA-04, CA-05). |
