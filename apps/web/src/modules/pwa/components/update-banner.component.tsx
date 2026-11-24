@@ -25,7 +25,12 @@ const UpdateBanner = () => {
   if (!isNew || !online) return null;
 
   return (
-    <div ref={makeRoom} className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl shadow-large">
+    // An opaque background under the faded (translucent) alert: in dark mode the page would show
+    // through.
+    <div
+      ref={makeRoom}
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-medium bg-content1 shadow-large"
+    >
       <Alert
         color="default"
         variant="faded"

@@ -92,6 +92,6 @@ describe('StaffHome', () => {
     expect(screen.getByRole('link', { name: /Reportes/ })).toHaveTextContent(
       'Los servicios hechos y la liquidación de los empleados, para exportar a Excel.'
     );
-    expect(screen.getByText('Reporte de clientes.')).toBeInTheDocument();
+    expect(screen.getByText('Administrar marcas y líneas de vehículos.')).toBeInTheDocument();
   });
 });

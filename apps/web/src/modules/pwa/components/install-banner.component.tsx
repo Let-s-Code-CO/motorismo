@@ -41,10 +41,12 @@ const InstallBanner = () => {
        * Sticky, not fixed: it floats at the bottom while scrolling, but at the end of the page it
        * takes its own room below the footer, so it never covers the last thing on a page (such as
        * «Anular orden», spec 008). It is the last child of the signed-in layout for that.
+       * Its own opaque background: the faded alert is translucent, and in dark mode the page under it
+       * would show through.
        */}
       <div
         ref={makeRoom}
-        className="sticky bottom-4 z-40 mx-4 mb-4 rounded-medium shadow-large sm:mx-auto sm:w-full sm:max-w-xl"
+        className="sticky bottom-4 z-40 mx-4 mb-4 rounded-medium bg-content1 shadow-large sm:mx-auto sm:w-full sm:max-w-xl"
       >
         <Alert
           color="default"

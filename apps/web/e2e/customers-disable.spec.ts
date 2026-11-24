@@ -8,6 +8,7 @@
  */
 import { expect, test } from '@playwright/test';
 
+import { chooseRowAction } from './support/menus';
 import {
   SEED,
   SEED_CUSTOMERS,
@@ -81,8 +82,7 @@ test('an operator disables and reactivates a customer from the row menu of «Cli
   const row = page.getByRole('row', { name: new RegExp(name) });
   await expect(row).toContainText('Sin cuenta');
 
-  await row.getByRole('button', { name: `Acciones de ${name}` }).click();
-  await page.getByRole('menuitem', { name: 'Desactivar cliente' }).click();
+  await chooseRowAction(page, name, 'Desactivar cliente', row);
   await expect(
     page.getByText(
       'Cliente desactivado. Si tiene una sesión abierta, se cerrará en su siguiente acción.'
@@ -90,8 +90,7 @@ test('an operator disables and reactivates a customer from the row menu of «Cli
   ).toBeVisible();
   await expect(row).toContainText('Desactivado');
 
-  await row.getByRole('button', { name: `Acciones de ${name}` }).click();
-  await page.getByRole('menuitem', { name: 'Reactivar cliente' }).click();
+  await chooseRowAction(page, name, 'Reactivar cliente', row);
   await expect(page.getByText('Cliente reactivado.')).toBeVisible();
   await expect(row).toContainText('Sin cuenta');
 });

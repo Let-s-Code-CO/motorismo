@@ -6,6 +6,7 @@
  */
 import { expect, test } from '@playwright/test';
 
+import { chooseRowAction } from './support/menus';
 import {
   SEED,
   adminClient,
@@ -36,8 +37,7 @@ test('a disabled user is removed on their next action and can return once reacti
   await expect(page).toHaveURL('/');
   await page.goto('/admin/users');
   const row = page.getByRole('row', { name: new RegExp(name) });
-  await page.getByRole('button', { name: `Acciones de ${name}` }).click();
-  await page.getByRole('menuitem', { name: 'Desactivar' }).click();
+  await chooseRowAction(page, name, 'Desactivar');
   await expect(row.getByText('Desactivado', { exact: true })).toBeVisible();
 
   // CA-19: the operator's next action.
@@ -48,8 +48,7 @@ test('a disabled user is removed on their next action and can return once reacti
   ).toBeVisible();
 
   // CA-20: reactivated, they sign in with the same password.
-  await page.getByRole('button', { name: `Acciones de ${name}` }).click();
-  await page.getByRole('menuitem', { name: 'Reactivar' }).click();
+  await chooseRowAction(page, name, 'Reactivar');
   await expect(row.getByText('Activo', { exact: true })).toBeVisible();
   await signIn(operator, email);
   await expect(operator.getByRole('heading', { name: `Hola, ${name}` })).toBeVisible();

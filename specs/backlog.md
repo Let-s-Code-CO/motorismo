@@ -9,14 +9,11 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 1. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
-2. **Transferir un vehículo a otro cliente** conservando su historial (la spec 005 solo lo
-   retira y se registra de nuevo).
-3. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
+2. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
 
 ### Administración
 
-4. **Reporte de clientes** (la lista con búsqueda está en la spec 004; falta exportarla).
-5. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
+3. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
    personales de los clientes (hoy se atienden por los canales de la política publicada en la
    spec 004).
 
@@ -27,12 +24,6 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 - Clientes (spec 004): si se pulsa una tarjeta-filtro antes de que la búsqueda (con espera de
   300 ms) llegue a la URL, la búsqueda pisa el filtro. Poco probable con una persona; lo destapó
   la E2E de la spec 005 bajo carga.
-- E2E de menús de fila (`disable-user.spec.ts`, `customers-disable.spec.ts`): a veces el elemento
-  del menú «no está estable» o se despega al pulsarlo, y pasa al repetir (visto el 2026-11-21).
-- Banner «Instala Motorismo» (spec 006): en tema oscuro su fondo es semitransparente y, mientras
-  flota sobre el contenido, el texto de debajo se lee a través (visto en el iPhone el 2026-11-21).
-- E2E `vehicle-catalog.spec.ts` («adds a really new brand and line…», spec 005) agota los 30 s
-  a veces en la suite completa y pasa sola: revisar qué espera bajo carga (visto el 2026-11-20).
 - Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
   con la confirmación por WhatsApp o las reservas.
 - `minimatch` < 11 (aviso moderado, solo en desarrollo) llega vía
