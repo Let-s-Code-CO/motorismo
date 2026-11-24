@@ -15,8 +15,6 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 - Crear los proyectos de Vercel y Supabase y cargar variables y secrets (ver spec 001, plan).
 - Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
   con la confirmación por WhatsApp o las reservas.
-- `minimatch` < 11 (aviso moderado, solo en desarrollo) llega vía
-  `@trivago/prettier-plugin-sort-imports`; revisar cuando el plugin lo actualice.
 
 ## Especificadas
 
