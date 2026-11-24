@@ -20,7 +20,7 @@ const BrandBand = () => {
       className="relative flex flex-auto items-center overflow-hidden bg-zinc-950 px-6 py-8 text-white lg:hidden dark:border-b dark:border-white/10"
     >
       <BrandOrnaments />
-      <div className="relative mx-auto flex w-full max-w-sm items-center gap-6">
+      <div className="relative mx-auto flex w-full max-w-sm items-center gap-9">
         <BrandRingLogo size={84} alt={t('logoAlt')} priority />
         <p className="bg-gradient-to-br from-white via-zinc-200 to-zinc-500 bg-clip-text text-2xl leading-tight font-semibold tracking-tight text-balance text-transparent">
           {t('tagline')}

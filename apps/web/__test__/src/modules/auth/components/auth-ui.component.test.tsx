@@ -22,7 +22,10 @@ import { renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('@web/modules/auth/actions/auth.actions', () => ({ signOut: vi.fn() }));
 // The page being shown: «Servicios».
-vi.mock('next/navigation', () => ({ usePathname: () => '/services' }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/services',
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 describe('UserMenu', () => {
   it('shows the user name, their role in Spanish and a sign-out button (CA-01, RF-05)', () => {
@@ -79,14 +82,18 @@ describe('AppHeader', () => {
 
     expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/');
     expect(screen.queryByRole('link', { name: 'Usuarios' })).not.toBeInTheDocument();
+    // Spec 017: the admin's own sections are under «Administración», which an operator lacks.
+    expect(screen.queryByRole('button', { name: 'Administración' })).not.toBeInTheDocument();
   });
 
-  it('offers user management to an admin', () => {
+  it('offers user management to an admin, under «Administración» (spec 017)', async () => {
     renderWithProviders(
       <AppHeader account={{ kind: 'staff', ...buildProfile({ role: 'admin' }) }} />
     );
 
-    expect(screen.getByRole('link', { name: 'Usuarios' })).toHaveAttribute('href', '/admin/users');
+    fireEvent.click(screen.getByRole('button', { name: 'Administración' }));
+    const menu = await screen.findByRole('menu', { name: 'Administración' });
+    expect(within(menu).getByRole('menuitem', { name: 'Usuarios' })).toBeInTheDocument();
   });
 
   it('shows a customer only "Mi perfil" and the "Cliente" label (spec 004, CA-08)', () => {

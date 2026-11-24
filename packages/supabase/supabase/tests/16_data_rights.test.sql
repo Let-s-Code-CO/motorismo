@@ -16,7 +16,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(45);
+select plan(47);
 
 -- Clock and helpers ---------------------------------------------------------------------------------------
 create or replace function private.agenda_now()
@@ -294,6 +294,15 @@ select results_eq(
   $$ values ('attended', null::text, 'Datos suprimidos'), ('rejected', null::text, null::text),
             ('withdrawn', null::text, null::text) $$,
   'CA-20, RN-06: their requests keep no personal data; the erasure says «Datos suprimidos»');
+
+-- RN-09: an erased customer is final.
+set local role authenticated;
+select pg_temp.act_as(:admin);
+select is(pg_temp.error_hint($$ update public.customers set full_name = 'Camilo Otra Vez' where id = pg_temp.id_of('camilo') $$),
+  'customer_erased', 'RN-09: nobody writes an erased customer''s name again');
+select is(pg_temp.error_hint($$ update public.customers set disabled_at = null where id = pg_temp.id_of('camilo') $$),
+  'customer_erased', 'RN-09: nor reactivates them');
+reset role;
 
 -- Who may (CA-15, RN-01) --------------------------------------------------------------------------------------
 set local role authenticated;

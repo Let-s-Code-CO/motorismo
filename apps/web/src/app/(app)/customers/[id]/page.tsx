@@ -58,7 +58,8 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
         <div className="rounded-large border border-divider bg-content1 p-5 shadow-small">
           <CustomerHistory orders={orders} variant="full" />
         </div>
-        <CustomerManage customer={customer} />
+        {/* Spec 017, RN-09: an erased customer is final: neither disabled nor reactivated again. */}
+        {!customer.erased_at && <CustomerManage customer={customer} />}
         {/* Spec 017, CA-16: the admin registers a data request that came by the counter or Instagram. */}
         {staff.role === 'admin' && !customer.erased_at && (
           <RegisterDataRequestDialog customerId={customer.id} />

@@ -11,7 +11,7 @@ import {
 } from '@web/modules/customers/utils/customers-filter.utils';
 
 const LIST_COLUMNS =
-  'id, full_name, email, phone, status, origin, avatar_url, created_at, vehicle_plates';
+  'id, full_name, email, phone, status, origin, avatar_url, created_at, vehicle_plates, erased_at';
 
 /**
  * One page of customers for the staff list (spec 004, HU-04), newest first (CA-15), read with the

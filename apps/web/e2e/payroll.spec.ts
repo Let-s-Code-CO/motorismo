@@ -14,6 +14,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+import { openAdminSection } from './support/nav';
 import { SEED, adminClient, signIn } from './support/sandbox';
 import { toast } from './support/toasts';
 
@@ -41,10 +42,7 @@ test.describe('the admin', () => {
     await expect(page).toHaveURL('/');
 
     // From «Reportes», its tab «Liquidación»: the month in progress.
-    await page
-      .getByRole('navigation', { name: 'Navegación principal' })
-      .getByRole('link', { name: 'Reportes' })
-      .click();
+    await openAdminSection(page, 'Reportes');
     await page
       .getByRole('navigation', { name: 'Secciones de reportes' })
       .getByRole('link', { name: 'Liquidación' })

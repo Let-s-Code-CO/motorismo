@@ -17,6 +17,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+import { openAdminSection } from './support/nav';
 import { SEED, signIn } from './support/sandbox';
 
 /** A day of Colombia, `days` before today. */
@@ -37,10 +38,7 @@ test.describe('the admin', () => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
 
-    await page
-      .getByRole('navigation', { name: 'Navegación principal' })
-      .getByRole('link', { name: 'Reportes' })
-      .click();
+    await openAdminSection(page, 'Reportes');
     await expect(page).toHaveURL(/\/reports\/services$/);
     await expect(
       page.getByRole('heading', { name: 'Reporte de servicios', level: 1 })
@@ -151,6 +149,7 @@ test('an operator has no «Reportes», no permission to the report, and no file 
       .getByRole('link', { name: 'Órdenes' })
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Reportes' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Administración' })).toHaveCount(0);
 
   await page.goto(`/reports/services?${PERIOD}`);
   await expect(page.getByText('No tienes permiso para ver esta página.')).toBeVisible();

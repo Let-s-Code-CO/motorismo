@@ -34,10 +34,14 @@
 }
 
 @theme {
-  /* Slow light sweep across the brand panel (the "shine" of detailing). */
-  --animate-shine: shine 9s ease-in-out infinite;
-  /* Sparkles around the logo. */
-  --animate-twinkle: twinkle 3.2s ease-in-out infinite;
+  /* Light sweep across the brand panel (the "shine" of detailing): once, then it stays out of
+     sight (`both`). Nothing on screen moves forever: what moves on its own stops within 5 s
+     (WCAG 2.2.2), and an endless animation made macOS browsers flicker the cursor (arrow over
+     links and buttons, arrow and I-beam over the fields) on the screens that had one. */
+  --animate-shine: shine 5s ease-in-out both;
+  /* Sparkles around the logo: one and a half beats, so each ends bright, as it looks when still
+     (`backwards` keeps it dim while it waits its turn). The last, 2 s late, ends at 5 s. */
+  --animate-twinkle: twinkle 2s ease-in-out 1.5 backwards;
   /* Small elements appearing in place (e.g. the "Ver todos" filter reset). */
   --animate-fade-in: fade-in 180ms ease-out;
   /* Spec 011: a screen's content entering (a short fade, rising a few pixels). */

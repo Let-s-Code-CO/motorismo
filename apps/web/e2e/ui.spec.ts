@@ -361,6 +361,11 @@ test.describe('on an iPhone (390 × 844) — the phone experience (spec 009)', (
 
     const tiles = page.getByRole('list', { name: 'Secciones' }).getByRole('link');
     await expect(tiles).toHaveCount(5);
+    // The page comes in 6 px low (spec 011, `page-in`): measured mid-way, the greeting is off
+    // against `main` (slow runs caught it). Measure once it has settled.
+    await page
+      .locator('[data-page]')
+      .evaluate((node) => Promise.all(node.getAnimations().map((animation) => animation.finished)));
     const [orders, agenda, customers, services, employees] = (await Promise.all(
       [0, 1, 2, 3, 4].map(async (index) => (await tiles.nth(index).boundingBox())!)
     )) as [Box, Box, Box, Box, Box];
@@ -528,6 +533,138 @@ test.describe('pointer cursor', () => {
     await expect(page).toHaveURL('/');
     await page.goto('/admin/users');
     expect(await cursorOf(page.getByRole('button', { name: /^Activos \d+$/ }))).toBe('pointer');
+  });
+
+  /**
+   * The rule (asked by the user, 2026-11-24): whatever lights up under the mouse shows the hand, and
+   * over all of it, its text included. What changes on hover (background, text, border, shadow) is
+   * clickable; what is not clickable does not light up.
+   */
+  const litWithoutHand = (page: Page) =>
+    page.evaluate(() => {
+      const lit = [
+        ...document.querySelectorAll<HTMLElement>(
+          'main [class*="hover:"], header [class*="hover:"]'
+        ),
+      ]
+        .filter((element) =>
+          /(^|\s)hover:(bg|text|border|shadow|underline)/.test(element.className)
+        )
+        .filter((element) => !element.closest('[aria-disabled="true"], :disabled, [inert]'))
+        .filter((element) => element.getClientRects().length > 0);
+      const misses: string[] = [];
+      for (const element of lit) {
+        element.scrollIntoView({ block: 'center', inline: 'center' });
+        // Where the mouse would be: the middle of the element and of each of its texts.
+        const points = [element, ...element.querySelectorAll<HTMLElement>('*')]
+          .filter(
+            (part) =>
+              part === element ||
+              [...part.childNodes].some((node) => node.nodeType === 3 && node.textContent?.trim())
+          )
+          .map((part) => part.getBoundingClientRect())
+          .filter((box) => box.width > 0 && box.height > 0)
+          .map((box) => [box.left + box.width / 2, box.top + box.height / 2] as const);
+        for (const [x, y] of points) {
+          const under = document.elementFromPoint(x, y);
+          if (!under) continue;
+          // Something else on top takes the mouse (and the click): that is a miss too.
+          if (!element.contains(under) && !under.contains(element)) {
+            misses.push(
+              `«${element.textContent?.trim().slice(0, 30)}» covered by ${under.tagName.toLowerCase()}.${String(under.className).slice(0, 40)}`
+            );
+            continue;
+          }
+          if (getComputedStyle(under).cursor !== 'pointer') {
+            misses.push(
+              `«${element.textContent?.trim().slice(0, 30)}» → ${under.tagName.toLowerCase()} «${under.textContent?.trim().slice(0, 20)}»`
+            );
+          }
+        }
+      }
+      return [...new Set(misses)];
+    });
+
+  test('whatever lights up on hover shows the hand, over all of it (staff screens)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    for (const path of [
+      '/',
+      '/orders',
+      '/agenda',
+      '/customers',
+      '/reports/services',
+      '/reports/payroll',
+      '/admin/data-requests',
+    ]) {
+      if (path !== '/') await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      expect(await litWithoutHand(page), path).toEqual([]);
+    }
+  });
+
+  test('whatever lights up on hover shows the hand, over all of it (customer screens)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    await expect(page).toHaveURL('/my');
+    for (const path of ['/my', '/my/history', '/my/reservations', '/my/data', '/profile']) {
+      if (path !== '/my') await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      expect(await litWithoutHand(page), path).toEqual([]);
+    }
+  });
+
+  /** The animations running now that never end, or end later than 5 s after the page opened. */
+  const endlessAnimations = (page: Page) =>
+    page.evaluate(() =>
+      document.getAnimations().flatMap((animation) => {
+        const timing = animation.effect?.getComputedTiming();
+        const end = Number(timing?.endTime ?? Infinity);
+        const name = (animation as CSSAnimation).animationName ?? 'animation';
+        return end > 5000 ? [`${name} ends at ${end} ms`] : [];
+      })
+    );
+
+  test('nothing moves forever: the brand’s shine and sparkles play once and stop within 5 s (WCAG 2.2.2; an endless one made macOS browsers flicker the cursor)', async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+    await expect(page.locator('[data-ornament="shine"]').first()).toBeAttached();
+    expect(await endlessAnimations(page), '/auth/login').toEqual([]);
+
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await expect(page.locator('main [data-ornament="shine"]')).toBeAttached();
+    expect(await endlessAnimations(page), '/').toEqual([]);
+  });
+
+  test('a text field shows the text cursor over all of its box, not only over the typing line', async ({
+    page,
+  }) => {
+    await page.goto('/auth/login');
+    for (const name of ['Correo', 'Contraseña']) {
+      const field = page.getByLabel(name, { exact: true });
+      const box = (await field
+        .locator('xpath=ancestor::*[@data-slot="input-wrapper"][1]')
+        .boundingBox())!;
+      // Near the edges and the middle of the box (the password's toggle sits at its right end).
+      const xs = [
+        box.x + 4,
+        box.x + box.width * 0.25,
+        box.x + box.width * 0.5,
+        box.x + box.width * 0.75,
+      ];
+      const ys = [box.y + 4, box.y + box.height / 2, box.y + box.height - 4];
+      const cursors = await page.evaluate(
+        (points) =>
+          points.map(([x, y]) => getComputedStyle(document.elementFromPoint(x!, y!)!).cursor),
+        xs.flatMap((x) => ys.map((y) => [x, y]))
+      );
+      expect(new Set(cursors), name).toEqual(new Set(['text']));
+    }
   });
 });
 

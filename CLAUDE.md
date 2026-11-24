@@ -36,7 +36,13 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   Iconos con `lucide-react`, decorativos (`aria-hidden`); los botones solo-icono llevan
   `aria-label`. Todo lo clicable muestra la «manito»: `globals.css` la restaura para
   `button` y `[role=button]` (Tailwind 4 ya no lo hace); un enlace o elemento clicable de otro tipo
-  necesita `cursor-pointer`. Nada de colores llamativos (salvo la placa amarilla de los vehículos, que reproduce la placa
+  necesita `cursor-pointer`. **Lo que se ilumina al pasar el ratón lleva la mano en toda su área**
+  (texto incluido) y lo que no es clicable no se ilumina: una fila de tabla que abre algo estira
+  su enlace sobre la fila (`relative` en el `tr`, `after:absolute after:inset-0` en el enlace).
+  `e2e/ui.spec.ts` («pointer cursor») lo comprueba en las pantallas del personal y del cliente.
+  **Nada se anima sin fin:** lo que se mueve solo termina antes de 5 s (WCAG 2.2.2); el brillo y
+  los destellos de la marca pasan una vez (una animación infinita hacía titilar el cursor en
+  macOS). Nada de colores llamativos (salvo la placa amarilla de los vehículos, que reproduce la placa
   colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
@@ -123,9 +129,12 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
     audiencias) alimenta el menú de escritorio (`nav-links`), el panel del teléfono y el inicio del
     personal (`staff-home`). Una sección nueva se añade ahí, con sus textos en `auth.header` y
     `auth.home`.
-  - **Encabezado:** por debajo de `md` hay tres columnas: «Menú» (`mobile-nav`, un `Drawer` desde
+  - **Encabezado:** por debajo de `lg` hay tres columnas: «Menú» (`mobile-nav`, un `Drawer` desde
     la izquierda), el logo centrado y el avatar (`account-menu`). El avatar abre un menú con nombre
-    y rol como cabecera, «Instalar app» y «Cerrar sesión». Desde `md`, el encabezado de siempre.
+    y rol como cabecera, «Instalar app» y «Cerrar sesión». Desde `lg`, el encabezado de siempre,
+    con las secciones del admin que llevan `group: 'admin'` en `NAV_LINKS` («Reportes», «Habeas
+    data», «Usuarios») bajo el menú «Administración ▾» (`nav-links`; en E2E, `openAdminSection` de
+    `e2e/support/nav.ts`) y el nombre de la marca desde `xl`.
     Los dos se dibujan y el CSS muestra uno según el ancho.
   - **Inicio:** «Órdenes» va destacada y oscura con los números; el resto son mosaicos en dos
     columnas y el inicio queda centrado en el teléfono.
@@ -384,8 +393,11 @@ e2e/                         # Playwright
   `auth.users`. `customers_contact_required` admite un cliente suprimido sin contacto.
 - **Correo:** el admin lo cambia con la API de administración de Auth (`correctCustomerEmail`); el de
   una cuenta de Google no se cambia (RN-08).
+- **Cliente suprimido = definitivo (RN-09):** `customers_guard` rechaza cualquier cambio desde la API
+  (`customer_erased`) y la ficha y la lista no ofrecen editar, desactivar ni registrar solicitudes.
 - **App:** «Mis datos» (`/my/data`, desde «Mi perfil»), «Habeas data» en el menú del admin
-  (`/admin/data-requests`, con su conteo en el inicio) y «Registrar solicitud de datos» en la ficha.
+  (`/admin/data-requests`, bajo «Administración», con su conteo en el inicio) y «Registrar
+  solicitud de datos» en la ficha.
 
 ## Autenticación y permisos (specs 002 y 004)
 

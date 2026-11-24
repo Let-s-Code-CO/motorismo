@@ -28,8 +28,8 @@ const AppHeader = ({ account }: AppHeaderProps) => {
 
   return (
     <header className="sticky top-0 z-40 border-b border-divider bg-background/75 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-2 md:flex md:gap-6 md:px-6">
-        <div className="justify-self-start md:hidden">
+      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-2 lg:flex lg:gap-6 lg:px-6">
+        <div className="justify-self-start lg:hidden">
           <MobileNav audience={audience} />
         </div>
         <Link
@@ -38,21 +38,21 @@ const AppHeader = ({ account }: AppHeaderProps) => {
           className="flex items-center gap-2.5 justify-self-center rounded-medium"
         >
           <BrandBadge size={34} alt="" />
-          <span className="hidden text-sm font-semibold tracking-tight md:inline">
+          <span className="hidden text-sm font-semibold tracking-tight xl:inline">
             {t('core.brand.short')}
           </span>
         </Link>
-        <nav aria-label={t('auth.header.navLabel')} className="hidden md:block">
+        <nav aria-label={t('auth.header.navLabel')} className="hidden lg:block">
           <NavLinks audience={audience} />
         </nav>
-        <div className="justify-self-end md:hidden">
+        <div className="justify-self-end lg:hidden">
           <AccountMenu
             name={account.full_name}
             avatarUrl={account.avatar_url}
             audience={audience}
           />
         </div>
-        <div className="hidden items-center gap-2 md:ml-auto md:flex">
+        <div className="hidden items-center gap-2 lg:ml-auto lg:flex">
           {/* The theme's own menu: its icon is the chosen theme (spec 010, CA-10). */}
           <ThemeMenu />
           <UserMenu name={account.full_name} avatarUrl={account.avatar_url} audience={audience} />

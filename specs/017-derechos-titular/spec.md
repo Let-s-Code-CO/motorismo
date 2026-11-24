@@ -1,7 +1,7 @@
 ---
 id: "017"
 titulo: "Derechos del titular de datos"
-estado: implementada
+estado: verificada
 creada: 2026-11-24
 actualizada: 2026-11-24
 ---
@@ -148,7 +148,9 @@ demostrar que se cumplió la ley si la Superintendencia lo pide.
   corrección o una supresión (reclamos), 15 días hábiles. Se cuentan desde el día siguiente al
   recibo. Días hábiles: de lunes a viernes, sin festivos nacionales de Colombia.
 - **RN-04** — Pedir la supresión es también revocar la autorización: mientras se atiende, el negocio
-  no usa sus datos para nada distinto de atender sus servicios en curso.
+  no usa sus datos para nada distinto de atender sus servicios en curso. Es una regla de
+  organización (el negocio no tiene envíos ni otros usos de los datos que la app pueda apagar):
+  la app no la comprueba.
 - **RN-05** — Suprimir los datos de un cliente:
   - se borran su nombre (queda «Cliente suprimido»), correo, celular, foto y su cuenta (ya no puede
     entrar, y su correo queda libre para registrarse de nuevo);
@@ -157,11 +159,15 @@ demostrar que se cumplió la ley si la Superintendencia lo pide.
   - sus reservas pendientes se cancelan;
   - sus órdenes cerradas y anuladas se conservan, sin datos personales, para las cuentas del negocio:
     los reportes y las liquidaciones no cambian.
-- **RN-06** — El registro de una solicitud de supresión ya ejecutada no guarda datos personales: dice
-  «Cliente suprimido», el tipo, las fechas y quién la atendió.
+- **RN-06** — Ejecutada la supresión, ninguna solicitud del cliente guarda datos personales: todas
+  (no solo la de supresión) pierden lo que pidió y la respuesta, y conservan el tipo, el canal, el
+  estado, las fechas y quién las atendió, con «Cliente suprimido» como nombre.
 - **RN-07** — No se suprime a un cliente con una orden abierta.
 - **RN-08** — El correo de una cuenta de Google lo pone Google y es con el que entra: no se corrige
   (la solicitud se rechaza con ese motivo). El de una cuenta con contraseña sí (CA-11).
+- **RN-09** — Un cliente suprimido es definitivo: nadie corrige sus datos, lo reactiva ni lo
+  desactiva. La ficha y la lista de clientes no ofrecen esas acciones, y la base de datos las
+  rechaza.
 
 ## Datos (vista conceptual)
 
@@ -218,3 +224,5 @@ Ninguna.
 | 2026-11-24 | Plan aprobado: estado `planificada`. Precisiones del plan: los festivos se calculan (suposición) y el correo de una cuenta de Google no se corrige (RN-08). |
 | 2026-11-24 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-24 | Implementada: estado `implementada`. En el menú la sección se llama «Habeas data»; `customers_contact_required` admite un cliente suprimido sin contacto. |
+| 2026-11-24 | Verificación, correcciones aprobadas por el usuario: RN-06 dice lo que hace el código (todas las solicitudes del cliente pierden sus textos); RN-04 es una regla de organización; nueva RN-09 (un cliente suprimido es definitivo); prueba del cambio de correo contra Auth real (CA-11). Con «Habeas data» el menú no cabía: las secciones propias del administrador van bajo «Administración» (spec 009). |
+| 2026-11-24 | Verificada: todos los criterios con su prueba en verde (Definición de terminado completa: lint, tipos, 1.372 unitarias, 54 de sandbox, 665 pgTAP, build y 205 E2E contra producción). |

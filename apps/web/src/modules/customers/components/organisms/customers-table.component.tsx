@@ -191,7 +191,12 @@ const CustomersTable = ({
               {format.dateTime(new Date(customer.created_at), { dateStyle: 'medium' })}
             </TableCell>,
             ...(onToggleAccess
-              ? [<TableCell key="actions">{actionsMenu(customer, onToggleAccess)}</TableCell>]
+              ? [
+                  <TableCell key="actions">
+                    {/* Spec 017, RN-09: an erased customer is final: no actions. */}
+                    {customer.erased_at ? null : actionsMenu(customer, onToggleAccess)}
+                  </TableCell>,
+                ]
               : []),
           ];
           return (

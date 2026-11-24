@@ -21,6 +21,11 @@ export type NavLink = {
   key: string;
   icon: LucideIcon;
   audiences: Audience[];
+  /**
+   * Sections only an admin opens go together in the desktop menu, under «Administración» (spec
+   * 017): nine in a row did not fit. The phone's panel and the home list them all.
+   */
+  group?: 'admin';
 };
 
 /**
@@ -38,10 +43,16 @@ export const NAV_LINKS: NavLink[] = [
   { href: '/services', key: 'services', icon: Tags, audiences: ['admin', 'operator'] },
   { href: '/employees', key: 'employees', icon: HardHat, audiences: ['admin', 'operator'] },
   // Spec 015: the reports, with the business's figures: admin only.
-  { href: '/reports', key: 'reports', icon: FileSpreadsheet, audiences: ['admin'] },
+  { href: '/reports', key: 'reports', icon: FileSpreadsheet, audiences: ['admin'], group: 'admin' },
   // Spec 017: the requests of the data subject, admin only.
-  { href: '/admin/data-requests', key: 'dataRequests', icon: ShieldCheck, audiences: ['admin'] },
-  { href: '/admin/users', key: 'users', icon: Users, audiences: ['admin'] },
+  {
+    href: '/admin/data-requests',
+    key: 'dataRequests',
+    icon: ShieldCheck,
+    audiences: ['admin'],
+    group: 'admin',
+  },
+  { href: '/admin/users', key: 'users', icon: Users, audiences: ['admin'], group: 'admin' },
   // Spec 014: the customer's own area.
   { href: '/my', key: 'myHome', icon: House, audiences: ['customer'] },
   { href: '/my/reservations', key: 'myReservations', icon: CalendarClock, audiences: ['customer'] },

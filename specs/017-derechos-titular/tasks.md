@@ -206,3 +206,21 @@ que no quedó ninguna, y la base local tiene las funciones originales.
 | El operador ve «Habeas data» | navegación (3) |
 | Esqueleto `list` en el detalle | `loading-coverage` (1) |
 | «Mi perfil» sin el enlace; la ficha sin «Registrar solicitud de datos» | E2E `data-rights` (las dos pruebas que los usan) |
+
+### Verificación (`/verificar 017`)
+
+Correcciones aprobadas por el usuario y lo que se arregló al revisar la app en el navegador. Cada
+prueba nueva se vio fallar con su mutación y se revirtió:
+
+| Mutación | Prueba que falla |
+|---|---|
+| `customers_guard` sin la guarda de cliente suprimido | pgTAP `16_data_rights` (37 y 38: editar y reactivar a Camilo) |
+| Sin `updateUserById` al corregir el correo | sandbox `data-rights` (CA-11: el correo viejo sigue entrando) |
+| La ficha ofrece «Editar datos» a un suprimido | `customer-contact-card` (1) |
+| La lista ofrece acciones a un suprimido | `customers-table` (1) |
+| Secciones del admin en línea (sin `group: 'admin'`) | `nav-links` (3) |
+| «Administración» no navega al elegir | `nav-links` (1) |
+| «Administración» sin marcar en `/admin/users` | `nav-links` (1) |
+| Fila del reporte sin el enlace estirado | E2E `ui` «whatever lights up…» (40 celdas sin mano) |
+| El brillo de la marca vuelve a ser infinito | E2E `ui` «nothing moves forever» (`shine ends at Infinity ms`) |
+| El recuadro del correo con `cursor-default` | E2E `ui` «a text field shows the text cursor…» |

@@ -28,6 +28,7 @@ const row = (overrides: Partial<CustomerListRow> = {}): CustomerListRow => ({
   avatar_url: null,
   created_at: '2026-11-01T15:00:00.000Z',
   vehicle_plates: '',
+  erased_at: null,
   ...overrides,
 });
 
@@ -85,6 +86,21 @@ describe('CustomersTable — row actions', () => {
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Reactivar cliente' }));
 
     expect(onToggleAccess).toHaveBeenCalledWith(daniel);
+  });
+
+  it('draws no actions menu for an erased customer: nothing can change them (spec 017, RN-09)', () => {
+    renderTable(
+      [
+        row({
+          full_name: 'Cliente suprimido',
+          status: 'disabled',
+          erased_at: '2026-11-24T15:00:00Z',
+        }),
+      ],
+      vi.fn()
+    );
+
+    expect(screen.queryByRole('button', { name: /^Acciones de/ })).not.toBeInTheDocument();
   });
 
   it('draws no actions menu when no action handler is given', () => {

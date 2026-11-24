@@ -73,3 +73,49 @@ describe('erasing a customer through the API (spec 017)', () => {
     expect(again).not.toBe(customerId);
   });
 });
+
+describe('changing a customer’s email through Auth’s admin API (spec 017, CA-11)', () => {
+  const before = uniqueEmail('email-before');
+  const after = uniqueEmail('email-after');
+
+  afterAll(async () => {
+    const admin = adminClient();
+    const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    for (const user of data?.users ?? []) {
+      if (user.email === before || user.email === after) {
+        await admin.from('customers').delete().eq('user_id', user.id);
+        await admin.auth.admin.deleteUser(user.id);
+      }
+    }
+  });
+
+  it('lets the customer sign in with the new email, the record following it (CA-11)', async () => {
+    const admin = adminClient();
+    const { data: created, error } = await admin.auth.admin.createUser({
+      email: before,
+      password: SEED.password,
+      email_confirm: true,
+      user_metadata: { full_name: 'Sandbox Correo', data_consent: true },
+    });
+    if (error) throw new Error(`createUser failed: ${error.code}`);
+    const userId = created.user.id;
+
+    // What correctCustomerEmail does: Auth first, then the record.
+    const changed = await admin.auth.admin.updateUserById(userId, {
+      email: after,
+      email_confirm: true,
+    });
+    expect(changed.error).toBeNull();
+    const updated = await admin.from('customers').update({ email: after }).eq('user_id', userId);
+    expect(updated.error).toBeNull();
+
+    const { error: oldSignIn } = await publicClient().auth.signInWithPassword({
+      email: before,
+      password: SEED.password,
+    });
+    expect(oldSignIn?.code).toBe('invalid_credentials');
+    const { client } = await signedInAs(after);
+    const { data: me } = await client.from('customers').select('email').single();
+    expect(me?.email).toBe(after);
+  });
+});
