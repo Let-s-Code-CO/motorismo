@@ -96,7 +96,9 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   - **Pruebas:** `renderWithProviders` monta la pila de avisos; se buscan con `inToasts()`.
 - **Tarjetas de resumen = filtros (estándar).** En cualquier listado con tarjetas que resumen por
   estado o categoría, cada tarjeta filtra la lista al pulsarla y se desmarca con otro clic. El
-  filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»), las tarjetas son
+  filtro vive en la URL (`?status=…`, sobrevive a recargar y al botón «atrás»; la pantalla navega
+  con `useUrlFilters` de `core/hooks`, que construye cada cambio sobre el último pedido: una búsqueda
+  que espera sus 300 ms no deshace una tarjeta, ni una respuesta tardía la caja de búsqueda), las tarjetas son
   botones con `aria-pressed` y la elegida se marca (borde y anillo; el resto se atenúa). Al pasar el
   ratón la tarjeta se ilumina y nunca se mueve: en claro crecen la sombra y el borde; en oscuro, donde
   la sombra no se ve, se aclaran el fondo y el borde (`e2e/summary-hover.spec.ts`). Sobre la

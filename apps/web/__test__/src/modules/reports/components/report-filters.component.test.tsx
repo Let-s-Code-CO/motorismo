@@ -12,6 +12,9 @@
  *   chosen.
  * - CA-04: the plate waits until the person stops typing (300 ms), so each key is not a request.
  * - When the address changes from outside («Quitar filtros», «atrás»), the boxes show it.
+ * - Several changes on their way at once (a period or an employee chosen while the plate waits, a
+ *   plate typed slowly on a slow network): each builds on the newest asked for, so none undoes
+ *   another, and an older answer arriving late does not overwrite the plate being typed.
  */
 import { act, fireEvent, screen, within } from '@testing-library/react';
 
@@ -170,6 +173,70 @@ describe('ReportFilters', () => {
       '/reports/services?from=2026-11-01&to=2026-11-23&plate=UIH03D',
       { scroll: false }
     );
+  });
+
+  it('keeps an employee chosen while the plate waits: the plate does not undo it (CA-05)', () => {
+    renderFilters();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Placa' }), {
+      target: { value: 'uih-03d' },
+    });
+    act(() => vi.advanceTimersByTime(100));
+    fireEvent.click(screen.getByRole('button', { name: /Empleado/ }));
+    fireEvent.click(
+      within(screen.getByRole('listbox')).getByRole('option', { name: 'Elkin Estrada' })
+    );
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(replace).toHaveBeenLastCalledWith(
+      `/reports/services?from=2026-11-01&to=2026-11-23&employee=${ELKIN}&plate=UIH03D`,
+      { scroll: false }
+    );
+  });
+
+  it('keeps a period chosen while the plate waits (CA-05)', () => {
+    renderFilters();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Placa' }), {
+      target: { value: 'uih-03d' },
+    });
+    act(() => vi.advanceTimersByTime(100));
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-05' } });
+    act(() => vi.advanceTimersByTime(200));
+
+    expect(replace).toHaveBeenLastCalledWith(
+      '/reports/services?from=2026-10-05&to=2026-11-23&plate=UIH03D',
+      { scroll: false }
+    );
+  });
+
+  it('builds a change on the one before it, even before the server answers (CA-05)', () => {
+    renderFilters();
+
+    fireEvent.click(screen.getByRole('button', { name: /Empleado/ }));
+    fireEvent.click(
+      within(screen.getByRole('listbox')).getByRole('option', { name: 'Elkin Estrada' })
+    );
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-05' } });
+
+    expect(replace).toHaveBeenLastCalledWith(
+      `/reports/services?from=2026-10-05&to=2026-11-23&employee=${ELKIN}`,
+      { scroll: false }
+    );
+  });
+
+  it('keeps the plate being typed when the answer to an older plate arrives late (CA-04)', () => {
+    const { rerender } = renderFilters();
+    const plate = screen.getByRole('textbox', { name: 'Placa' });
+
+    fireEvent.change(plate, { target: { value: 'uih' } });
+    act(() => vi.advanceTimersByTime(300));
+    fireEvent.change(plate, { target: { value: 'uih-03d' } });
+    act(() => vi.advanceTimersByTime(300));
+    // A slow network: «UIH» comes back after «UIH03D» went out.
+    rerender(<ReportFilters filters={filters({ plate: 'UIH', page: 1 })} employees={EMPLOYEES} />);
+
+    expect(screen.getByRole('textbox', { name: 'Placa' })).toHaveValue('uih-03d');
   });
 
   it('shows the filters of a new address, e.g. after «Quitar filtros» (CA-05, CA-08)', () => {

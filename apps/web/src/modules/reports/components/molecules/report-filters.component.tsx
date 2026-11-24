@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 
 import { Input, Select, SelectItem, SelectSection } from '@heroui/react';
 import { Search } from 'lucide-react';
 
+import useUrlFilters from '@web/modules/core/hooks/url-filters.hook';
 import { reportPlate } from '@web/modules/reports/schemas/reports.schema';
 import type {
   ReportFilters as Filters,
@@ -33,25 +33,24 @@ type ReportFiltersProps = {
  */
 const ReportFilters = ({ filters, employees }: ReportFiltersProps) => {
   const t = useTranslations('reports.filters');
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   const [plate, setPlate] = useState(formatPlate(filters.plate));
   const lastSent = useRef(filters.plate);
   const active = employees.filter((employee) => !employee.disabled_at);
   const disabled = employees.filter((employee) => employee.disabled_at);
 
-  const navigate = (next: Partial<Filters>) =>
-    startTransition(() =>
-      router.replace(reportHref({ ...filters, ...next, page: 1 }), { scroll: false })
-    );
-
-  // The address changed from outside («Quitar filtros», «atrás»): show its plate in the box.
-  useEffect(() => {
-    if (filters.plate !== lastSent.current) {
-      lastSent.current = filters.plate;
-      setPlate(formatPlate(filters.plate));
-    }
-  }, [filters.plate]);
+  // Several changes can be on their way at once (an employee chosen while the plate waits): each
+  // builds on the newest asked for, so none undoes another (project standard, `useUrlFilters`).
+  const { navigate: go, latest } = useUrlFilters({
+    filters,
+    href: reportHref,
+    // The address changed from outside («Quitar filtros», «atrás»): show its plate in the box.
+    onOutside: ({ plate: shown }) => {
+      if (shown === lastSent.current) return;
+      lastSent.current = shown;
+      setPlate(formatPlate(shown));
+    },
+  });
+  const navigate = (next: Partial<Filters>) => go({ ...latest(), ...next, page: 1 });
 
   useEffect(() => {
     const next = reportPlate(plate);
@@ -67,11 +66,13 @@ const ReportFilters = ({ filters, employees }: ReportFiltersProps) => {
   // CA-02: the period is never upside down: the other end moves with the one chosen.
   const changeFrom = (from: string) => {
     if (!from) return;
-    navigate({ from, to: from > filters.to ? from : filters.to });
+    const { to: current } = latest();
+    navigate({ from, to: from > current ? from : current });
   };
   const changeTo = (to: string) => {
     if (!to) return;
-    navigate({ from: to < filters.from ? to : filters.from, to });
+    const { from: current } = latest();
+    navigate({ from: to < current ? to : current, to });
   };
 
   return (

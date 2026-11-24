@@ -15,9 +15,6 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 - Definir la rama de producción y su entorno en Vercel/Supabase (hoy solo existe `develop`).
 - Crear los proyectos de Vercel y Supabase y cargar variables y secrets (ver spec 001, plan).
-- Clientes (spec 004): si se pulsa una tarjeta-filtro antes de que la búsqueda (con espera de
-  300 ms) llegue a la URL, la búsqueda pisa el filtro. Poco probable con una persona; lo destapó
-  la E2E de la spec 005 bajo carga.
 - Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
   con la confirmación por WhatsApp o las reservas.
 - `minimatch` < 11 (aviso moderado, solo en desarrollo) llega vía
