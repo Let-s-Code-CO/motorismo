@@ -16,6 +16,8 @@ type StaffHomeProps = {
   role: UserRole;
   /** In progress and queued, for the «Órdenes» tile (spec 009, CA-07). */
   openOrders: OpenOrdersCount;
+  /** Pending and overdue data requests, for the admin's «Solicitudes de datos» tile (spec 017, CA-10). */
+  dataRequests?: { pending: number; overdue: number };
 };
 
 /** The desktop's card for every section but «Órdenes» (spec 009, CA-09: as before). */
@@ -32,7 +34,7 @@ const DESKTOP_CARD =
  * sections (RN-01): the same list as the menu, without «Inicio». Monochrome (RN-02). On a phone the
  * whole menu sits centred in the screen, not stuck to the top.
  */
-const StaffHome = ({ name, role, openOrders }: StaffHomeProps) => {
+const StaffHome = ({ name, role, openOrders, dataRequests }: StaffHomeProps) => {
   const t = useTranslations('auth');
   const summary = openOrdersSummary(openOrders);
   const sections = navLinksFor(role).filter(({ href }) => href !== '/');
@@ -55,6 +57,21 @@ const StaffHome = ({ name, role, openOrders }: StaffHomeProps) => {
       >
         {sections.map(({ href, key, icon: Icon }, index) => {
           const title = t(`home.${key}Title`);
+          // Spec 017, CA-10: how many data requests wait, and how many are overdue, on phone and desktop.
+          const requests =
+            key === 'dataRequests' && dataRequests ? (
+              <span className="text-xs font-medium text-default-600">
+                {dataRequests.pending === 0
+                  ? t('home.dataRequestsNone')
+                  : [
+                      t('home.dataRequestsPending', { pending: dataRequests.pending }),
+                      dataRequests.overdue > 0 &&
+                        t('home.dataRequestsOverdue', { overdue: dataRequests.overdue }),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+              </span>
+            ) : null;
           const description = (
             <span className="hidden text-sm text-default-500 md:block">{t(`home.${key}Text`)}</span>
           );
@@ -126,10 +143,14 @@ const StaffHome = ({ name, role, openOrders }: StaffHomeProps) => {
                   <Icon aria-hidden className="size-5 md:size-6" />
                 </span>
                 <span className="flex w-full items-end justify-between gap-2 md:flex-col md:items-start md:gap-1">
-                  <span className="leading-tight font-semibold">
-                    {/* The menu's short name fits a tile («Usuarios»); the desktop keeps the title. */}
-                    <span className="md:hidden">{t(`header.${key}`)}</span>
-                    <span className="hidden md:inline">{title}</span>
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="leading-tight font-semibold">
+                      {/* The menu's short name fits a tile («Usuarios»); the desktop keeps the title. */}
+                      <span className="md:hidden">{t(`header.${key}`)}</span>
+                      <span className="hidden md:inline">{title}</span>
+                    </span>
+                    {/* Spec 017: the requests waiting, under the name on a phone too. */}
+                    {requests}
                   </span>
                   <ChevronRight
                     aria-hidden

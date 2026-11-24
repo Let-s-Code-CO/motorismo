@@ -7,6 +7,7 @@ import {
   History,
   House,
   type LucideIcon,
+  ShieldCheck,
   Tags,
   UserRound,
   Users,
@@ -38,6 +39,8 @@ export const NAV_LINKS: NavLink[] = [
   { href: '/employees', key: 'employees', icon: HardHat, audiences: ['admin', 'operator'] },
   // Spec 015: the reports, with the business's figures: admin only.
   { href: '/reports', key: 'reports', icon: FileSpreadsheet, audiences: ['admin'] },
+  // Spec 017: the requests of the data subject, admin only.
+  { href: '/admin/data-requests', key: 'dataRequests', icon: ShieldCheck, audiences: ['admin'] },
   { href: '/admin/users', key: 'users', icon: Users, audiences: ['admin'] },
   // Spec 014: the customer's own area.
   { href: '/my', key: 'myHome', icon: House, audiences: ['customer'] },

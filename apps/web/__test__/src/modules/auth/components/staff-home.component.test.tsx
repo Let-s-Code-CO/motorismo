@@ -20,8 +20,11 @@ import { renderWithProviders } from '@tests/test-utils/render';
 const renderHome = ({
   role = 'admin' as UserRole,
   openOrders = { inProgress: 2, queued: 1 },
+  dataRequests = { pending: 0, overdue: 0 },
 } = {}) =>
-  renderWithProviders(<StaffHome name="Carlos Díaz" role={role} openOrders={openOrders} />);
+  renderWithProviders(
+    <StaffHome name="Carlos Díaz" role={role} openOrders={openOrders} dataRequests={dataRequests} />
+  );
 
 const tiles = () => within(screen.getByRole('list', { name: 'Secciones' })).getAllByRole('link');
 
@@ -43,6 +46,7 @@ describe('StaffHome', () => {
       '/services',
       '/employees',
       '/reports',
+      '/admin/data-requests',
       '/admin/users',
     ]);
     for (const tile of tiles()) {
@@ -93,5 +97,28 @@ describe('StaffHome', () => {
       'Los servicios hechos y la liquidación de los empleados, para exportar a Excel.'
     );
     expect(screen.getByText('Administrar marcas y líneas de vehículos.')).toBeInTheDocument();
+  });
+});
+
+describe('StaffHome — data requests (spec 017, CA-10)', () => {
+  const tile = () => screen.getByRole('link', { name: /Solicitudes de datos|Habeas data/ });
+
+  it('says on «Solicitudes de datos» how many are pending and how many overdue', () => {
+    renderHome({ dataRequests: { pending: 2, overdue: 1 } });
+
+    expect(tile()).toHaveTextContent('2 pendientes · 1 vencida');
+  });
+
+  it('says only how many are pending when none is overdue', () => {
+    renderHome({ dataRequests: { pending: 1, overdue: 0 } });
+
+    expect(tile()).toHaveTextContent('1 pendiente');
+    expect(tile()).not.toHaveTextContent('vencida');
+  });
+
+  it('says when there is none pending', () => {
+    renderHome();
+
+    expect(tile()).toHaveTextContent('Sin solicitudes pendientes');
   });
 });

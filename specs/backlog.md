@@ -11,12 +11,6 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
    las precarga y amplía; servicios y empleados pasaron a la spec 007).
 2. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
 
-### Administración
-
-3. **Derechos del titular de datos desde la app** — consulta, corrección y supresión de datos
-   personales de los clientes (hoy se atienden por los canales de la política publicada en la
-   spec 004).
-
 ## Deuda técnica y tareas de plataforma
 
 - Definir la rama de producción y su entorno en Vercel/Supabase (hoy solo existe `develop`).
@@ -49,3 +43,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [014](014-experiencia-cliente/spec.md) | Experiencia del cliente con cuenta | verificada (falta despliegue) |
 | [015](015-reporte-servicios/spec.md) | Reporte de servicios | verificada |
 | [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | verificada |
+| [017](017-derechos-titular/spec.md) | Derechos del titular de datos | implementada |

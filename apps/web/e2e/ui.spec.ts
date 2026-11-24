@@ -191,7 +191,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
   });
 
-  test('every staff screen of specs 007, 008, 012, 015 and 016 has no horizontal scroll', async ({
+  test('every staff screen of specs 007, 008, 012, 015, 016 and 017 has no horizontal scroll', async ({
     page,
   }) => {
     const { data: open } = await adminClient()
@@ -199,6 +199,13 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       .select('id, customer_id')
       .eq('status', 'open')
       .order('number')
+      .limit(1)
+      .single();
+    // Spec 017: a data request of the seeds.
+    const { data: camilaRequest } = await adminClient()
+      .from('data_requests')
+      .select('id')
+      .eq('kind', 'correction')
       .limit(1)
       .single();
     // Spec 016: an employee of the payroll, for its detail.
@@ -227,6 +234,9 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       // Spec 016: the payroll of the month and an employee's detail.
       '/reports/payroll',
       `/reports/payroll/${elkin!.id}`,
+      // Spec 017: the data requests and one of them (Camila's, from the seeds).
+      '/admin/data-requests',
+      `/admin/data-requests/${camilaRequest!.id}`,
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();
@@ -266,7 +276,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       .toBe(true);
     expect(await horizontalOverflow(page)).toBe(0);
   });
-  test('the customer area has no horizontal scroll (spec 014)', async ({ page }) => {
+  test('the customer area has no horizontal scroll (specs 014 and 017)', async ({ page }) => {
     await signIn(page, SEED_CUSTOMERS.customer.email);
     await expect(page).toHaveURL('/my');
 
@@ -276,6 +286,8 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       '/my/reservations',
       '/my/reservations/new',
       '/profile',
+      // Spec 017.
+      '/my/data',
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();

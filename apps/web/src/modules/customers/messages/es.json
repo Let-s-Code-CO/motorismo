@@ -88,6 +88,8 @@
     },
     "profile": {
       "title": "Mi perfil",
+      "myData": "Mis datos",
+      "myDataText": "Ve y descarga lo que guardamos de ti, o pide corregirlo o suprimirlo.",
       "description": "Mantén tus datos al día para que podamos contactarte.",
       "fullName": "Nombre completo",
       "email": "Correo",

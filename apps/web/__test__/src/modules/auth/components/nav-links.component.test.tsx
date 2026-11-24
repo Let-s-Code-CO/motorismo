@@ -34,7 +34,7 @@ describe('NavLinks', () => {
     expect(screen.getByRole('link', { name: 'Clientes' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows Inicio, Órdenes, Agenda, Clientes, Servicios, Empleados, Reportes and Usuarios to an admin (specs 007, 008, 012 and 015)', () => {
+  it('shows Inicio, Órdenes, Agenda, Clientes, Servicios, Empleados, Reportes, Habeas data and Usuarios to an admin (specs 007, 008, 012, 015 and 017)', () => {
     vi.mocked(usePathname).mockReturnValue('/');
     renderWithProviders(<NavLinks audience="admin" />);
 
@@ -46,6 +46,7 @@ describe('NavLinks', () => {
       'Servicios',
       'Empleados',
       'Reportes',
+      'Habeas data',
       'Usuarios',
     ]);
   });

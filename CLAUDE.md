@@ -366,6 +366,27 @@ e2e/                         # Playwright
   `…/export`, con hojas «Resumen» y «Detalle»). Cerrar y regenerar van con `ConfirmDialog`,
   `callAction` y `notify`.
 
+## Derechos del titular de datos (spec 017)
+
+- **Solicitudes:** `data_requests` (consulta, corrección, supresión), escrita solo por funciones
+  `security definer`: el cliente pide (`request_data_change`) y retira; el admin registra (punto de
+  atención o Instagram), atiende, rechaza o suprime. Una abierta por tipo; un estado final una sola
+  vez. RLS: el admin lee todas, el cliente las suyas. La vista `data_request_summaries` da los días
+  hábiles que faltan y las vencidas.
+- **Días hábiles:** `private.colombian_holidays(año)` los calcula (fijos, Ley Emiliani y Pascua);
+  `private.add_business_days` cuenta desde el día siguiente: consulta 10, reclamo 15.
+- **Datos del cliente:** `my_data()` (el cliente) y `customer_data(id)` (el admin) arman el mismo JSON,
+  sin empleados, personal ni notas de órdenes; se descargan en `/my/data/export` y
+  `/customers/{id}/data/export`.
+- **Supresión:** `erase_customer_data` en una transacción: rechaza con orden abierta; cancela reservas
+  pendientes, vacía notas, retira vehículos y borra sus placas (`vehicles_guard` lo permite solo con
+  `motorismo.erasing`), deja «Cliente suprimido» desactivado y con `erased_at`, y borra su cuenta de
+  `auth.users`. `customers_contact_required` admite un cliente suprimido sin contacto.
+- **Correo:** el admin lo cambia con la API de administración de Auth (`correctCustomerEmail`); el de
+  una cuenta de Google no se cambia (RN-08).
+- **App:** «Mis datos» (`/my/data`, desde «Mi perfil»), «Habeas data» en el menú del admin
+  (`/admin/data-requests`, con su conteo en el inicio) y «Registrar solicitud de datos» en la ficha.
+
 ## Autenticación y permisos (specs 002 y 004)
 
 - Dos tipos de cuenta, nunca ambos a la vez: **personal** en `public.profiles` (rol

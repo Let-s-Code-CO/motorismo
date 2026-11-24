@@ -59,7 +59,7 @@ export const getCustomer = async (id: string) => {
   const supabase = await createSupabaseServerClient();
   const { data: customer, error } = await supabase
     .from('customers')
-    .select(`${LIST_COLUMNS}, user_id, consent_at, disabled_at`)
+    .select(`${LIST_COLUMNS}, user_id, consent_at, disabled_at, erased_at`)
     .eq('id', id)
     .maybeSingle();
   if (error) throw new Error(`Could not read the customer: ${error.message}`);
