@@ -8,7 +8,8 @@
  * - CA-18 / CA-19 (HU-03): on an iPhone, a signed-in person is told the app can be installed;
  *   «Instalar» shows the steps and «Ahora no» hides the notice, also after reloading. The notice
  *   never covers the end of a page: scrolled to the bottom, the last thing on it can be tapped (a
- *   destructive action like «Anular orden» lives there, spec 008). (Headless
+ *   destructive action like «Anular orden» lives there, spec 008). In dark mode too, nothing under
+ *   it shows through: its background is opaque. (Headless
  *   Chromium never offers to install, so the browser's own install is covered by unit tests.)
  *
  * Opening the installed app from its icon (CA-02) and the iPhone home screen (CA-04) are checked
@@ -16,6 +17,7 @@
  */
 import { expect, test } from '@playwright/test';
 
+import { floatsOpaque } from './support/banners';
 import { SEED_CUSTOMERS, signIn } from './support/sandbox';
 
 test.describe('installable app (spec 006, HU-01)', () => {
@@ -123,5 +125,22 @@ test.describe('the install notice on an iPhone (spec 006, HU-03)', () => {
       return Boolean(found && footer.contains(found));
     });
     expect(hit).toBe(true);
+  });
+});
+
+test.describe('the install notice on an iPhone, in dark mode (spec 006, HU-03; spec 010)', () => {
+  test.use({
+    colorScheme: 'dark',
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+  });
+
+  test('is opaque: the page under it never shows through (CA-18)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    const notice = page.getByText('Instala Motorismo en este dispositivo');
+    await expect(notice).toBeVisible();
+
+    expect(await floatsOpaque(notice)).toBe(true);
   });
 });

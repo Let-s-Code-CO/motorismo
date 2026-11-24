@@ -66,6 +66,9 @@ test('suggests brands of the chosen type and lines of the chosen brand (CA-10, C
 });
 
 test('adds a really new brand and line to the catalog, once (CA-13, CA-14)', async ({ page }) => {
+  // The longest of this file (two vehicles saved, suggestions asked twice): under the load of the whole
+  // suite it neared the 30 s of a test, though alone it takes 5.
+  test.slow();
   const brand = `E2E Marca ${Date.now()}`;
   createdBrands.push(brand);
   const dialog = await openForm(page);

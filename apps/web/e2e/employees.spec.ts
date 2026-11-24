@@ -12,6 +12,7 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
+import { chooseRowAction } from './support/menus';
 import { SEED, adminClient, signIn } from './support/sandbox';
 
 const name = `E2E Empleado ${Date.now()}`;
@@ -38,13 +39,8 @@ const openEmployees = async (page: Page, email: string) => {
 
 const rowOf = (page: Page, text: string) => page.getByRole('row', { name: new RegExp(text) });
 
-/** Opens the row actions menu and picks an item, retrying while the list refreshes. */
-const chooseAction = async (page: Page, employee: string, item: string) => {
-  await expect(async () => {
-    await page.getByRole('button', { name: `Acciones de ${employee}` }).click();
-    await page.getByRole('menuitem', { name: item }).click({ timeout: 2_000 });
-  }).toPass({ timeout: 15_000 });
-};
+const chooseAction = (page: Page, employee: string, item: string) =>
+  chooseRowAction(page, employee, item);
 
 test('an admin registers, corrects, disables and reactivates an employee (CA-07, CA-09, CA-10, CA-12, CA-13; spec 016, CA-01)', async ({
   page,

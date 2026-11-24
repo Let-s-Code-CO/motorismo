@@ -428,8 +428,10 @@ constitución). Si la spec es ambigua o incorrecta, detente y propón el cambio 
   Variables: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` por entorno.
 - **Supabase**: las migraciones llegan al proyecto remoto con el workflow `db-deploy` al entrar
   en `develop` (secret `SUPABASE_DB_URL`). Nunca se edita el esquema desde el dashboard.
-- **CI** (`.github/workflows/ci.yml`): lint, tipos, unit, build, E2E y validación de Supabase en
-  cada PR.
+- **CI** (`.github/workflows/ci.yml`): lint, tipos, unit, build y validación de Supabase (pgTAP,
+  tipos generados y sandbox) en cada PR y al entrar en `develop`. Las **E2E** solo corren al entrar
+  en `main` (la rama de producción, aún por crear): en local siguen siendo parte de la Definición de
+  terminado.
 
 ## No hacer
 

@@ -1,14 +1,16 @@
 name: ci
 
-# Runs on every PR and on pushes to develop. Keep job names stable: branch protection rules
-# reference them as required checks.
+# Runs on every PR and on pushes to develop and main. Keep job names stable: branch protection
+# rules reference them as required checks.
 #   quality      lint, types, unit tests and a build — no services needed.
-#   integration  real local Supabase (Docker): pgTAP, generated types, sandbox suites and E2E.
+#   integration  real local Supabase (Docker): pgTAP, generated types and sandbox suites.
+#   e2e          Playwright against the local Supabase, only when something reaches main (the
+#                production branch): the slowest check, run once before production.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [develop]
+    branches: [develop, main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -75,6 +77,37 @@ jobs:
         run: pnpm --filter @motorismo/supabase types:check
       - name: Sandbox suites (Auth, RLS and emails through the real API)
         run: pnpm --filter web test:sandbox
+      - name: Stop Supabase
+        if: always()
+        run: pnpm db:stop
+
+  e2e:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # The Supabase CLI comes from the lockfile (exact version), never from a setup action.
+      - run: pnpm install --frozen-lockfile
+      - name: Start Supabase (replays every migration + seeds)
+        run: pnpm db:start
+      - name: Export the sandbox settings for the build and the tests
+        working-directory: packages/supabase
+        run: |
+          status="$(./node_modules/.bin/supabase status -o json 2>/dev/null)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(jq -r .API_URL <<<"$status")"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(jq -r .PUBLISHABLE_KEY <<<"$status")"
+            echo "SUPABASE_SECRET_KEY=$(jq -r .SECRET_KEY <<<"$status")"
+            echo "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
+          } >> "$GITHUB_ENV"
       - name: Build
         run: pnpm --filter web build
       - name: Install Playwright browser
