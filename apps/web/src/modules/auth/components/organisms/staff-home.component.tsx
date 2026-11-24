@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
-import { ArrowRight, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 
 import { navLinksFor } from '@web/modules/auth/constants/nav.constants';
 import type { UserRole } from '@web/modules/auth/types/auth.types';
@@ -166,18 +166,6 @@ const StaffHome = ({ name, role, openOrders, dataRequests }: StaffHomeProps) => 
             </li>
           );
         })}
-        {/* Information, not a section to go to: only on the desktop (CA-08). */}
-        <li className="hidden md:flex">
-          <div className="flex w-full flex-col gap-4 rounded-large border border-dashed border-divider p-6">
-            <span className="grid size-12 place-items-center rounded-large bg-default-100 text-default-600">
-              <Sparkles aria-hidden className="size-6" />
-            </span>
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold">{t('home.soonTitle')}</span>
-              <span className="text-sm text-default-500">{t('home.soonText')}</span>
-            </div>
-          </div>
-        </li>
       </ul>
     </section>
   );

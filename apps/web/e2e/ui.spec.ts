@@ -522,7 +522,8 @@ test.describe('on a desktop', () => {
     await expect(
       page.getByText('Consulta, busca y registra a los clientes del negocio.')
     ).toBeVisible();
-    await expect(page.getByText('Muy pronto')).toBeVisible();
+    // Spec 018: nothing left to announce as «Muy pronto».
+    await expect(page.getByText('Muy pronto')).toHaveCount(0);
     await expect(
       page.getByRole('list', { name: 'Secciones' }).getByRole('link').first()
     ).toContainText(/\d+En proceso\d+En cola|Sin órdenes abiertas/);

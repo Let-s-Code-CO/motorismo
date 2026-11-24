@@ -82,7 +82,8 @@ lo que hay en el lavadero a la vista, para entrar a cualquier sección con un to
   página, en números grandes (p. ej. «2 · En proceso» y «1 · En cola»); si no hay ninguna abierta,
   «Sin órdenes abiertas».
 - **CA-08** — Dado el inicio en un teléfono, cuando se muestra, entonces no aparece la tarjeta
-  «Próximamente» (es información, no una sección a la que ir).
+  «Próximamente» (es información, no una sección a la que ir). Desde la spec 018 tampoco en
+  escritorio: lo que anunciaba ya es una sección.
 - **CA-09** — Dado un escritorio, cuando el personal abre el inicio, entonces ve las tarjetas como
   hoy (ícono, nombre y descripción, del mismo tamaño); «Órdenes», oscura y con los números de CA-07.
 
@@ -162,7 +163,7 @@ Sin datos nuevos. El resumen de «Órdenes» cuenta las órdenes abiertas de la 
 - El resumen de «Órdenes» se calcula al cargar el inicio; no se actualiza solo mientras se mira.
 - En la franja del acceso no van las cuatro tarjetas de servicios del panel de escritorio (PPF,
   cerámico, pulido, lavado): ocuparían la pantalla y empujarían el formulario.
-- La tarjeta «Próximamente» sigue en escritorio.
+- La tarjeta «Próximamente» siguió en escritorio hasta la spec 018, que la quitó.
 
 ## Preguntas abiertas
 
@@ -192,3 +193,4 @@ Ninguna.
 | 2026-11-20 | Spec 011: al iniciar sesión, el logo de la marca mientras carga el inicio; esqueletos con la forma de cada pantalla. |
 | 2026-11-24 | Spec 017: con «Habeas data» las secciones no cabían en una línea. El encabezado del teléfono se usa hasta 1024 px; en escritorio, «Reportes», «Habeas data» y «Usuarios» van bajo «Administración» y el nombre de la marca junto al logo aparece desde 1280 px. En la franja del acceso, el texto se separa más del logo para que el destello no lo toque. El brillo y los destellos de la marca pasan una vez y se detienen antes de 5 s (WCAG 2.2.2): una animación sin fin hacía titilar el cursor en macOS. |
 | 2026-11-24 | Spec 018: «Administración ▾» gana «Servicios» y «Empleados» (para el administrador; el operador los sigue viendo en la barra) y «Marcas y líneas», y la barra suma «Más ▾» según el ancho: lo que no cabe sale por el final. «Inicio» siempre en la barra. |
+| 2026-11-24 | Spec 018: el inicio ya no muestra «Muy pronto» en escritorio: anunciaba «Marcas y líneas», que ya es una sección, y no queda nada especificado que anunciar. |

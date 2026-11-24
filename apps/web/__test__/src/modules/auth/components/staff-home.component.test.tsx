@@ -91,13 +91,22 @@ describe('StaffHome', () => {
     );
   });
 
-  it('says «Reportes» holds the services and the payroll, and «Muy pronto» what comes next (spec 016)', () => {
+  it('says «Reportes» holds the services and the payroll (spec 016)', () => {
     renderHome();
 
     expect(screen.getByRole('link', { name: /Reportes/ })).toHaveTextContent(
       'Los servicios hechos y la liquidación de los empleados, para exportar a Excel.'
     );
-    expect(screen.getByText('Administrar marcas y líneas de vehículos.')).toBeInTheDocument();
+  });
+
+  it('announces nothing as «Muy pronto»: what it announced, the brands and lines, is a section now (spec 018)', () => {
+    renderHome();
+
+    expect(screen.queryByText('Muy pronto')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Marcas y líneas/ })).toHaveAttribute(
+      'href',
+      '/admin/vehicle-catalog'
+    );
   });
 });
 
