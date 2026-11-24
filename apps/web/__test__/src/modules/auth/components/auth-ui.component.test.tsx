@@ -135,6 +135,7 @@ describe('AppHeader', () => {
       'Empleados',
       'Reportes',
       'Habeas data',
+      'Marcas y líneas', // spec 018, RF-04
       'Usuarios',
     ]);
     // The current section is marked (spec 003, CA-06).

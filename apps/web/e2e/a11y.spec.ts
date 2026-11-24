@@ -586,3 +586,40 @@ test('«Solicitudes de datos» and a request in detail have no serious accessibi
   await expect(page.getByText('Escribe la respuesta o el motivo.')).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });
+
+test('«Marcas y líneas», its rename dialog with an error and its merge dialog have no serious accessibility issues (spec 018)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+
+  // The seeds' «Yamaja» (to review), its lines open by the search.
+  await page.goto('/admin/vehicle-catalog?status=pending&q=yamaja');
+  await expect(page.getByRole('list', { name: 'Líneas de Yamaja' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  // With its error in sight (CLAUDE.md: forms are audited with their errors).
+  await page.getByRole('button', { name: 'Acciones de Yamaja' }).click();
+  await page.getByRole('menuitem', { name: 'Renombrar' }).click();
+  const rename = page.getByRole('dialog', { name: 'Renombrar la marca «Yamaja»' });
+  await rename.getByRole('textbox', { name: 'Nombre' }).fill('');
+  await rename.getByRole('button', { name: 'Guardar' }).click();
+  await expect(rename.getByText('Escribe el nombre.')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+  await rename.getByRole('button', { name: 'Cancelar' }).click();
+
+  // The merge, with the brand that stays chosen and what will happen in sight (not confirmed).
+  await page.getByRole('button', { name: 'Acciones de Yamaja' }).click();
+  await page.getByRole('menuitem', { name: 'Unir con otra marca' }).click();
+  const merge = page.getByRole('dialog', { name: 'Unir la marca «Yamaja»' });
+  await merge.getByRole('combobox', { name: 'Marca que queda' }).fill('Yamaha');
+  await page.getByRole('option', { name: 'Yamaha', exact: true }).click();
+  await expect(merge.getByText('No se puede deshacer.')).toBeVisible();
+  // «Unir» fades in from disabled: audited once it has (mid-fade, its colours are blended).
+  await expect(merge.getByRole('button', { name: 'Unir' })).toBeEnabled();
+  await page.evaluate(() =>
+    Promise.allSettled(document.getAnimations().map((animation) => animation.finished))
+  );
+  expect(await audit(page)).toEqual([]);
+});

@@ -84,6 +84,9 @@ pnpm db:stop
   órdenes).
 - `seeds/07_data_requests.sql`: solicitudes de datos de ejemplo (spec 017): una corrección «Recibida» de
   Camila desde la app y una consulta vencida de Valentina en el punto de atención.
+- `seeds/08_vehicle_catalog.sql`: entradas «Añadidas» del catálogo para revisar (spec 018): la marca
+  «Yamaja» (Motocicleta) con «Fz 2.0», para unir con Yamaha, y la línea «Fz 2.0» bajo Honda, para
+  pasar a Yamaha. Sin vehículos, para no cambiar los de los clientes de los seeds.
 - **Datos que necesita todo entorno** (p. ej. el catálogo de marcas y líneas de vehículos, o los
   municipios DANE de `municipalities_data`) van en
   una **migración** de datos repetible (`on conflict do nothing`), nunca en un seed: los seeds solo

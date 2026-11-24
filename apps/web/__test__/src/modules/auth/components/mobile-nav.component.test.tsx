@@ -65,6 +65,7 @@ describe('MobileNav', () => {
       'Empleados',
       'Reportes',
       'Habeas data',
+      'Marcas y líneas', // spec 018, RF-04
       'Usuarios',
     ]);
     for (const link of within(panel).getAllByRole('link')) {

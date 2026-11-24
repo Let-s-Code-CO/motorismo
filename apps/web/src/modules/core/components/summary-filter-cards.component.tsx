@@ -24,7 +24,10 @@ type SummaryFilterCardsProps<T extends string> = {
 const MOTION =
   'outline-none transition-[transform,box-shadow,opacity,border-color,background-color] duration-200 focus-visible:ring-2 focus-visible:ring-focus';
 const CHOSEN = 'border-foreground ring-1 ring-foreground';
-const DIMMED = 'opacity-55 hover:opacity-100';
+// The others, once one is chosen: muted without fading the text (opacity took the small label under
+// AA contrast): no shadow, and the count and dot greyed; hovering brings them back.
+const DIMMED =
+  'shadow-none [&_[data-card-count]]:text-default-500 [&_[data-card-dot]]:opacity-40 hover:[&_[data-card-count]]:text-foreground hover:[&_[data-card-dot]]:opacity-100';
 // Hover lights a card up, never moves it: a stronger shadow and border in light; in dark, where a
 // shadow does not show on the near-black page, a lighter background and border.
 const LIT_BORDER = 'hover:border-default-300';
@@ -33,11 +36,13 @@ const LIT_BORDER = 'hover:border-default-300';
 const CardText = ({ label, count, dot }: { label: string; count: number; dot: string }) => (
   <>
     <span className="flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-default-500 sm:gap-2 sm:text-xs">
-      <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${dot}`} />
+      <span aria-hidden data-card-dot className={`size-1.5 shrink-0 rounded-full ${dot}`} />
       <span className="truncate">{label}</span>
     </span>
     {/* The accessible name comes from the visible text ("Activos 3", WCAG 2.5.3). */}{' '}
-    <span className="mt-1 block text-2xl font-semibold tracking-tight tabular-nums">{count}</span>
+    <span data-card-count className="mt-1 block text-2xl font-semibold tracking-tight tabular-nums">
+      {count}
+    </span>
   </>
 );
 

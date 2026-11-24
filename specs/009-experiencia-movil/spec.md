@@ -59,9 +59,10 @@ izquierda, logo al centro, mi cuenta a la derecha), para ubicarme y moverme sin 
   foto.
 - **CA-05** — Dado un escritorio, cuando el usuario mira el encabezado, entonces se ve como hoy:
   logo con el nombre a la izquierda, las secciones en línea, y su nombre, rol, «Instalar app» y
-  «Cerrar sesión» a la derecha. Las secciones propias del administrador («Reportes», «Habeas
-  data», «Usuarios») van en un menú «Administración», marcado cuando una de ellas está abierta
-  (spec 017).
+  «Cerrar sesión» a la derecha. Las secciones del administrador («Servicios», «Empleados», «Reportes»,
+  «Habeas data», «Marcas y líneas», «Usuarios») van en el menú «Administración ▾» (specs 017 y 018), y lo
+  que no cabe en la barra pasa, por el final, a un menú «Más ▾» (spec 018, HU-05); cada menú se
+  marca cuando una de sus secciones está abierta.
 
 ### HU-02 (P1) — Inicio como menú de app
 
@@ -107,8 +108,9 @@ para reconocerlo y confiar, sin que me estorbe para entrar.
 ## Requisitos funcionales
 
 - **RF-01** — En el teléfono y la tableta (por debajo de 1024 px), el menú principal es un panel
-  lateral que abre el botón «Menú»; en escritorio, las secciones siguen en línea en el encabezado,
-  las del administrador agrupadas en «Administración» (spec 017).
+  lateral que abre el botón «Menú»; en escritorio, las secciones siguen en línea en el encabezado
+  mientras quepan (las del administrador en «Administración ▾»),
+  y las demás en «Más ▾» (spec 018).
 - **RF-02** — En el teléfono, la cuenta (nombre, rol, «Instalar app», «Cerrar sesión») vive en el
   menú del avatar.
 - **RF-03** — El inicio del personal resume las órdenes abiertas: en proceso y en cola (spec 008).
@@ -189,3 +191,4 @@ Ninguna.
 | 2026-11-20 | Spec 010: el menú de la cuenta gana «Tema» y el encabezado de escritorio, su menú de tema. |
 | 2026-11-20 | Spec 011: al iniciar sesión, el logo de la marca mientras carga el inicio; esqueletos con la forma de cada pantalla. |
 | 2026-11-24 | Spec 017: con «Habeas data» las secciones no cabían en una línea. El encabezado del teléfono se usa hasta 1024 px; en escritorio, «Reportes», «Habeas data» y «Usuarios» van bajo «Administración» y el nombre de la marca junto al logo aparece desde 1280 px. En la franja del acceso, el texto se separa más del logo para que el destello no lo toque. El brillo y los destellos de la marca pasan una vez y se detienen antes de 5 s (WCAG 2.2.2): una animación sin fin hacía titilar el cursor en macOS. |
+| 2026-11-24 | Spec 018: «Administración ▾» gana «Servicios» y «Empleados» (para el administrador; el operador los sigue viendo en la barra) y «Marcas y líneas», y la barra suma «Más ▾» según el ancho: lo que no cabe sale por el final. «Inicio» siempre en la barra. |

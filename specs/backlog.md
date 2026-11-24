@@ -7,9 +7,7 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 ### Operación
 
-1. **Administrar marcas y líneas de vehículos** — renombrar, unir duplicados (la spec 005 solo
-   las precarga y amplía; servicios y empleados pasaron a la spec 007).
-2. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
+1. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
 
 ## Deuda técnica y tareas de plataforma
 
@@ -41,3 +39,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [015](015-reporte-servicios/spec.md) | Reporte de servicios | verificada |
 | [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | verificada |
 | [017](017-derechos-titular/spec.md) | Derechos del titular de datos | verificada |
+| [018](018-marcas-lineas/spec.md) | Administrar marcas y líneas de vehículos | verificada |

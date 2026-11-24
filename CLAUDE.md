@@ -133,10 +133,12 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
     `auth.home`.
   - **Encabezado:** por debajo de `lg` hay tres columnas: «Menú» (`mobile-nav`, un `Drawer` desde
     la izquierda), el logo centrado y el avatar (`account-menu`). El avatar abre un menú con nombre
-    y rol como cabecera, «Instalar app» y «Cerrar sesión». Desde `lg`, el encabezado de siempre,
-    con las secciones del admin que llevan `group: 'admin'` en `NAV_LINKS` («Reportes», «Habeas
-    data», «Usuarios») bajo el menú «Administración ▾» (`nav-links`; en E2E, `openAdminSection` de
-    `e2e/support/nav.ts`) y el nombre de la marca desde `xl`.
+    y rol como cabecera, «Instalar app» y «Cerrar sesión». Desde `lg`, el encabezado de siempre:
+    las secciones con `group: 'admin'` en `NAV_LINKS` («Servicios», «Empleados», «Reportes», «Habeas
+    data», «Marcas y líneas», «Usuarios») van, para el admin, bajo «Administración ▾» (el operador
+    ve Servicios y Empleados en la barra; `navEntriesFor`). Lo que no quepa sale, por el final, a
+    «Más ▾»: `nav-links` mide con una copia `inert` y un `ResizeObserver` (`visibleCount`, spec 018).
+    En E2E, `openAdminSection` de `e2e/support/nav.ts`. El nombre de la marca, desde `xl`.
     Los dos se dibujan y el CSS muestra uno según el ancho.
   - **Inicio:** «Órdenes» va destacada y oscura con los números; el resto son mosaicos en dos
     columnas y el inicio queda centrado en el teléfono.
@@ -376,6 +378,31 @@ e2e/                         # Playwright
   (`/reports/payroll?month=AAAA-MM`, el detalle en `/reports/payroll/{empleado}` y el Excel en
   `…/export`, con hojas «Resumen» y «Detalle»). Cerrar y regenerar van con `ConfirmDialog`,
   `callAction` y `notify`.
+
+## Marcas y líneas de vehículos (spec 018)
+
+- **Revisión:** cada marca y línea tiene `reviewed`. Lo que la gente escribe al registrar un vehículo
+  entra por revisar; la carga inicial y lo que el admin registra, renombra, da por revisado o deja
+  tras unir o pasar queda revisado (RN-07). `reviewed` y `created_at` no se leen desde la API
+  (privilegios por columna): solo `vehicle_catalog(tipo)`, del admin.
+- **Funciones** (`security definer`, solo admin, `catalog_*` como hint):
+  - `rename_vehicle_brand`, `rename_vehicle_line`;
+  - `merge_vehicle_brands`, `merge_vehicle_lines`;
+  - `move_vehicle_line`;
+  - `add_vehicle_brand`, `add_vehicle_line`;
+  - `mark_vehicle_brand_reviewed`, `mark_vehicle_line_reviewed`.
+- **Unir y pasar** mueven también los vehículos retirados: `vehicles_guard` lo permite solo para
+  `brand_id`/`line_id` con `motorismo.recataloging` (lo encienden esas funciones), y
+  `vehicles_line_fk` es diferible.
+- **Nombres recordados:** `vehicle_brand_aliases` y `vehicle_line_aliases` guardan lo unido y el nombre
+  anterior a un renombre. `ensure_vehicle_*` los resuelve antes de añadir y las sugerencias los
+  reconocen (`aliases` en `CatalogItem`). Nunca coinciden con una marca o línea viva (RN-02).
+- **App:** «Marcas y líneas» (`/admin/vehicle-catalog?type=&status=pending|reviewed&q=`), bajo
+  «Administración».
+  - La fila entera abre una marca.
+  - Hay un diálogo de nombre (`catalog-name-dialog`: renombrar o registrar) y otro de unir o pasar
+    (`catalog-merge-dialog`).
+  - Seed local: «Yamaja» y «Fz 2.0» bajo Honda, por revisar.
 
 ## Derechos del titular de datos (spec 017)
 
