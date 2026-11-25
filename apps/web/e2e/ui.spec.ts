@@ -285,7 +285,9 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       .toBe(true);
     expect(await horizontalOverflow(page)).toBe(0);
   });
-  test('the customer area has no horizontal scroll (specs 014 and 017)', async ({ page }) => {
+  test('the customer area has no horizontal scroll, the booking form with its estimated time too (specs 014, 017 and 021)', async ({
+    page,
+  }) => {
     await signIn(page, SEED_CUSTOMERS.customer.email);
     await expect(page).toHaveURL('/my');
 
@@ -300,6 +302,16 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();
+      if (path === '/my/reservations/new') {
+        // Spec 021: the estimated time of the services ticked, with one not estimated named.
+        await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
+        // With the keyboard: the install notice of this iPhone (spec 006) may lie over the list.
+        for (const name of ['Lavado detallado', 'Recubrimiento cerámico']) {
+          await page.getByRole('checkbox', { name }).focus();
+          await page.keyboard.press('Space');
+        }
+        await expect(page.locator('[data-booking-estimate]')).toContainText('Sin estimar');
+      }
       await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
     }
   });

@@ -8,7 +8,8 @@
 -- * my_reservations and bookable_day: their reservations and the slots of a day, with no data of
 --   anyone else (CA-12, CA-13, CA-17, CA-22).
 -- * save_reservation / cancel_reservation for a customer: only their own, with the agenda's rules
---   (spec 012), one pending reservation per vehicle and one without vehicle (RN-03), never the
+--   (spec 012), one pending reservation per vehicle and one without vehicle a day (RN-03, as amended
+--   by spec 021; 18_customer_reservations_per_day covers the days), never the
 --   tolerance (RN-05); recorded as made, changed or cancelled by the customer (CA-14 to CA-21).
 -- * The tables and the staff views stay closed to customers (RN-01).
 --
@@ -270,12 +271,12 @@ set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000014c1');
 select is(pg_temp.error_hint($$ select public.save_reservation(pg_temp.id_of('camilo'), pg_temp.id_of('camilo_moto'),
        pg_temp.ts('13', '11:00'), '{}', null) $$),
-  'reservation_customer_limit', 'CA-15, RN-03: one pending reservation per vehicle from the app');
+  'reservation_customer_limit', 'CA-15, RN-03 (spec 021, RN-01): one pending reservation per vehicle a day from the app');
 select pg_temp.remember('r_none', public.save_reservation(pg_temp.id_of('camilo'), null,
   pg_temp.ts('13', '09:00'), '{}', null));
 select is(pg_temp.error_hint($$ select public.save_reservation(pg_temp.id_of('camilo'), null,
        pg_temp.ts('13', '15:00'), '{}', null) $$),
-  'reservation_customer_limit', 'CA-15, RN-03: and one without vehicle');
+  'reservation_customer_limit', 'CA-15, RN-03 (spec 021, RN-01): and one without vehicle a day');
 select is(pg_temp.error_hint($$ select public.save_reservation(pg_temp.id_of('carla'), pg_temp.id_of('carla_moto'),
        pg_temp.ts('13', '11:00'), '{}', null) $$),
   'reservation_customer_only', 'CA-21: never for another customer');

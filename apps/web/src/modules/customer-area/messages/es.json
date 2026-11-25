@@ -79,6 +79,9 @@
       "slot": "Hora",
       "services": "Servicios (opcional)",
       "servicesHint": "Lo que quieres hacerte; el valor se confirma al llegar.",
+      "estimate": "Tiempo estimado: ≈ {duration}",
+      "estimateMissing": "Sin estimar: {names}",
+      "estimateNone": "Sin tiempo estimado",
       "notes": "Observaciones (opcional)",
       "save": "Reservar",
       "saveChanges": "Guardar cambios",
@@ -100,7 +103,7 @@
     "errors": {
       "forbidden": "Inicia sesión con tu cuenta para reservar.",
       "invalidInput": "Revisa los datos de la reserva.",
-      "customerLimit": "Ya tienes una reserva pendiente para ese vehículo (o sin vehículo): cámbiala si quieres otra hora.",
+      "customerLimit": "Ya tienes una reserva ese día para ese vehículo (o sin vehículo): cámbiala si quieres otra hora.",
       "customerOnly": "Esa reserva no es tuya.",
       "notFound": "No se encontró la reserva.",
       "notPending": "Esta reserva ya no está pendiente.",

@@ -1518,6 +1518,7 @@ export type Database = {
         Returns: {
           bicycle: boolean
           car: boolean
+          estimated_minutes: number
           id: string
           motorcycle: boolean
           name: string

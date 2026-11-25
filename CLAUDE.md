@@ -349,11 +349,14 @@ e2e/                         # Playwright
   y `NAV_LINKS` lo reflejan.
 - **Lecturas:** todo lo que lee el cliente sale de funciones `security definer` que devuelven solo
   sus filas y campos permitidos: `my_shop_orders` («Van N antes» con la regla del turno),
-  `my_order_history`, `my_reservations`, `bookable_day` y `bookable_services`. Las tablas y vistas
-  del personal siguen cerradas para él (sin nombres de empleados ni del personal).
+  `my_order_history`, `my_reservations`, `bookable_day` y `bookable_services` (con el tiempo
+  estimado de cada servicio, nunca el precio: spec 021). Las tablas y vistas del personal siguen
+  cerradas para él (sin nombres de empleados ni del personal).
 - **Reservas:** el cliente usa `save_reservation` y `cancel_reservation`, que tienen una rama para
-  él: solo lo suyo, una reserva pendiente por vehículo y una «Sin vehículo» (RN-03); nunca la
-  tolerancia. Las reservas registran `booked_by_customer`, `updated_by_customer` y
+  él: solo lo suyo, como mucho una reserva pendiente por vehículo **y día** y una «Sin vehículo» por
+  día (spec 021, RN-01), comprobado con el día bloqueado (sandbox: cuatro a la vez dejan una); nunca
+  la tolerancia. Al reservar ve el tiempo estimado de los servicios que marca (`booking-estimate`,
+  con `orderEstimate` de las órdenes). Las reservas registran `booked_by_customer`, `updated_by_customer` y
   `cancelled_by_customer`, y el rastro del personal lo dice.
 - **Al día:** `PollRefresh` (`core`) refresca cada 15 s mientras la pestaña está visible en `/my` y
   `/my/reservations`. No usa Realtime: el cliente no puede leer las filas y la cola depende de

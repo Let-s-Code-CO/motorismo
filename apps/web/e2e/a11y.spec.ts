@@ -462,7 +462,7 @@ test('a confirmation and an error, floating, have no serious accessibility issue
   await cleanup();
 });
 
-test('the customer area, its booking form and the dialog to cancel have no serious accessibility issues (spec 014)', async ({
+test('the customer area, its booking form with the estimated time and the dialog to cancel have no serious accessibility issues (spec 014; spec 021)', async ({
   page,
 }) => {
   await signIn(page, SEED_CUSTOMERS.customer.email);
@@ -477,6 +477,13 @@ test('the customer area, its booking form and the dialog to cancel have no serio
   ] as const) {
     await page.goto(path);
     await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
+    if (path === '/my/reservations/new') {
+      // Spec 021, CA-06, CA-07: with the estimated time in sight, a service without a time named.
+      await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
+      await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
+      await page.getByRole('checkbox', { name: 'Recubrimiento cerámico' }).check({ force: true });
+      await expect(page.locator('[data-booking-estimate]')).toContainText('Sin estimar');
+    }
     expect(await audit(page), path).toEqual([]);
   }
 
