@@ -1,7 +1,7 @@
 ---
 id: "020"
 titulo: "Liquidación quincenal y por rango de fechas"
-estado: borrador
+estado: aprobada
 creada: 2026-11-25
 actualizada: 2026-11-25
 ---
@@ -84,16 +84,37 @@ de lo que pagué; y poder regenerarla si tuve que corregir algo.
   guardado, «Cerrada el … por …», avisa si hubo cambios después del cierre y se puede regenerar
   (spec 016, CA-15 a CA-17).
 
-### HU-04 (P2) — Exportar a Excel
+### HU-04 (P1) — Elegir cómo se calcula el salario base
+
+Como administrador, quiero calcular el salario base como mes comercial (lo habitual en Colombia) o
+por días reales, según lo que necesite al liquidar.
+
+**Criterios de aceptación**
+
+- **CA-13** — Dada la liquidación de una quincena o de un rango, entonces se calcula por «Mes
+  comercial» salvo que el administrador elija «Días reales»; la elección se ve en la pantalla y se
+  conserva al cambiar de periodo y en la dirección (RN-02).
+- **CA-14** — Dado un empleado activo toda la segunda quincena de un mes de 31 días, entonces por
+  «Mes comercial» recibe la mitad del salario (15 días de 30), y por «Días reales» salario × 16 ÷ 31.
+  Dada la segunda quincena de febrero completa (13 días), entonces por «Mes comercial» también
+  recibe la mitad.
+- **CA-15** — Dado un empleado activo solo parte de una quincena, entonces por «Mes comercial»
+  recibe salario ÷ 30 por cada día activo, como mucho 15 días; por «Días reales», salario × días
+  activos ÷ días del mes.
+- **CA-16** — Dada una quincena cerrada, entonces guarda con qué método se cerró y lo muestra;
+  regenerarla vuelve a calcular con el método que esté elegido al regenerar.
+
+### HU-05 (P2) — Exportar a Excel
 
 Como administrador, quiero llevarme a Excel la liquidación de una quincena o de un rango.
 
 **Criterios de aceptación**
 
-- **CA-13** — Dada la liquidación de una quincena o de un rango, cuando pulsa «Exportar a Excel»,
+- **CA-17** — Dada la liquidación de una quincena o de un rango, cuando pulsa «Exportar a Excel»,
   entonces descarga el mismo archivo de hoy (hojas «Resumen» y «Detalle», spec 016, CA-18 y CA-19),
   con el periodo en el nombre («liquidacion-2026-11-1a-quincena.xlsx»,
-  «liquidacion-2026-11-03-a-2026-11-20.xlsx») y en la hoja, y diciendo si es provisional o consulta.
+  «liquidacion-2026-11-03-a-2026-11-20.xlsx») y en la hoja, diciendo si es provisional o consulta y
+  con qué método se calculó el salario base.
 
 ## Requisitos funcionales
 
@@ -107,11 +128,13 @@ Como administrador, quiero llevarme a Excel la liquidación de una quincena o de
   (RN-01), solo órdenes cerradas por su fecha de cierre en Colombia (RN-02), el descuento no reduce
   comisiones (RN-03), redondeo a pesos (RN-05), privacidad del salario y la comisión (RN-08) y los
   valores de ahora del empleado (RN-09).
-- **RN-02** — Salario base de un periodo: [NECESITA ACLARACIÓN: ¿cómo se calcula? Opciones:
-  (A) **mes comercial**, como la nómina en Colombia: cada quincena es la mitad del salario y un día
-  activo vale salario ÷ 30; (B) **días reales**, como hoy: salario × días activos ÷ días del mes
-  (en un mes de 31 días las quincenas son de 15 y 16 días); (C) el administrador elige A o B en la
-  configuración]. En un rango que cruza meses, cada mes aporta lo suyo según la regla elegida.
+- **RN-02** — Salario base de un periodo, por uno de dos métodos que elige el administrador al
+  liquidar; por defecto, **mes comercial**:
+  - **Mes comercial** (como la nómina en Colombia): cada quincena vale 15 días de 30. Un empleado
+    activo toda la quincena recibe la mitad del salario, sea el mes de 28, 30 o 31 días; si estuvo
+    activo solo parte, salario ÷ 30 por día activo, como mucho 15 días.
+  - **Días reales** (como hoy, spec 016): salario × días activos ÷ días del mes.
+  - En un rango, cada quincena (o parte de quincena) que toca aporta lo suyo con el método elegido.
 - **RN-03** — Un día activo cuenta como hoy (spec 016, RN-04): el empleado estuvo activo en algún
   momento de ese día, en hora de Colombia.
 - **RN-04** — Solo se cierra una quincena que ya terminó (spec 016, RN-06, por quincena); una
@@ -121,7 +144,7 @@ Como administrador, quiero llevarme a Excel la liquidación de una quincena o de
 
 | Entidad | Atributos relevantes | Notas |
 |---|---|---|
-| Liquidación cerrada | Quincena (año, mes, primera o segunda), por empleado: días activos, salario base, comisiones con su detalle y total; quién la cerró o regeneró, cuándo, total anterior | Reemplaza al cierre por mes de la spec 016. |
+| Liquidación cerrada | Quincena (año, mes, primera o segunda), método del salario base, por empleado: días activos, salario base, comisiones con su detalle y total; quién la cerró o regeneró, cuándo, total anterior | Reemplaza al cierre por mes de la spec 016. |
 
 ## Requisitos no funcionales
 
@@ -143,18 +166,20 @@ Como administrador, quiero llevarme a Excel la liquidación de una quincena o de
   cierre por mes se reemplaza por el de quincena sin migrar cierres; los de las pruebas locales se
   descartan.
 - El selector de fechas del rango es el mismo del reporte de servicios.
+- El método se elige en la pantalla de la liquidación (no es una configuración guardada): por
+  defecto «Mes comercial», y la elección viaja en la dirección como el periodo.
 - Navegar entre quincenas es como hoy entre meses («‹ Quincena anterior», «Quincena siguiente ›»).
 
 ## Preguntas abiertas
 
-- [NECESITA ACLARACIÓN: RN-02, cómo se calcula el salario base de una quincena y de un rango.]
+Ninguna.
 
 ## Checklist de calidad de la spec
 
 - [x] No menciona tecnologías, librerías, tablas ni componentes.
 - [x] Cada historia tiene prioridad y criterios Dado/Cuando/Entonces con ID.
 - [x] Cada criterio es verificable por una prueba.
-- [ ] No quedan marcas `[NECESITA ACLARACIÓN]`.
+- [x] No quedan marcas `[NECESITA ACLARACIÓN]`.
 - [x] El alcance (y lo que queda fuera) está explícito.
 - [x] La P1 sola aporta valor y se puede desplegar.
 
@@ -163,3 +188,5 @@ Como administrador, quiero llevarme a Excel la liquidación de una quincena o de
 | Fecha | Cambio |
 |---|---|
 | 2026-11-25 | Creación, a pedido del usuario: liquidación quincenal por defecto y por rango de fechas. Decisión del usuario: solo se cierran quincenas; el rango es para consultar y exportar. Queda abierto cómo se calcula el salario base. |
+| 2026-11-25 | Decisión del usuario sobre RN-02: el administrador elige el método al liquidar, «Mes comercial» por defecto o «Días reales». Nuevos CA-13 a CA-16 (método); el Excel pasa a CA-17. Sin preguntas abiertas. |
+| 2026-11-25 | Aprobada por el usuario. |
