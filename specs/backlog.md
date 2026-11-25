@@ -38,3 +38,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | verificada |
 | [017](017-derechos-titular/spec.md) | Derechos del titular de datos | verificada |
 | [018](018-marcas-lineas/spec.md) | Administrar marcas y líneas de vehículos | verificada |
+| [019](019-estilo-automotriz/spec.md) | Estilo automotriz premium con acento plata | implementada |

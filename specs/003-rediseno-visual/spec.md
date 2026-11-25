@@ -67,4 +67,5 @@ Como usuario, quiero una interfaz moderna, sobria y coherente para trabajar con 
 | 2026-11-20 | Spec 009: en teléfono y tablet el acceso lleva una franja de marca arriba (CA-03 queda solo para escritorio). |
 | 2026-11-20 | Spec 010: el sistema visual gana su versión oscura (mismas reglas; colores por tokens o con su variante `dark:`). |
 | 2026-11-20 | Spec 011: transiciones entre pantallas, esqueletos de carga y barra de progreso, todo con `motion-safe`. |
+| 2026-11-25 | Spec 019 (estilo automotriz premium): el sistema visual pasa a acento acero en claro y plata en oscuro, radios de 10, 14 y 22 px, títulos cromados, cifras y encabezados de tabla en letra monoespaciada, fondo con trama y grano, foco de luz en las tarjetas, botón principal en píldora y encabezado flotante. En claro, fondo gris de exposición y texto secundario un paso más oscuro para mantener AA. El hover de las tarjetas de resumen enciende el borde con el acento. |
 | 2026-11-20 | Tarjetas de resumen: el hover ilumina en lugar de subir la tarjeta 2 px. En oscuro la sombra no se veía y solo quedaba el salto; ahora se aclaran el fondo y el borde (y las partes de un panel ya no se oscurecen). |

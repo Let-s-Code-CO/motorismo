@@ -62,8 +62,8 @@ describe('applyTheme', () => {
   /** The tags the layout renders for «Sistema»: one colour per device preference. */
   const systemTags = () => {
     document.head.innerHTML =
-      '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#fafafa">' +
-      '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b">';
+      '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9ebef">' +
+      '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050506">';
     return [...document.querySelectorAll('meta[name="theme-color"]')];
   };
   const tags = () =>
@@ -82,7 +82,7 @@ describe('applyTheme', () => {
 
     expect(document.documentElement).toHaveClass('dark');
     expect(document.documentElement.style.colorScheme).toBe('dark');
-    expect(tags()).toEqual([{ media: null, content: '#09090b' }]);
+    expect(tags()).toEqual([{ media: null, content: '#050506' }]);
   });
 
   it('keeps the page own theme-color tags attached, recoloured for the chosen theme (React owns them)', () => {
@@ -95,8 +95,8 @@ describe('applyTheme', () => {
     expect(dark!.isConnected).toBe(true);
     // Without their media query, both say the chosen theme whatever the device prefers.
     expect(tags()).toEqual([
-      { media: null, content: '#09090b' },
-      { media: null, content: '#09090b' },
+      { media: null, content: '#050506' },
+      { media: null, content: '#050506' },
     ]);
   });
 
@@ -107,8 +107,8 @@ describe('applyTheme', () => {
     applyTheme('light');
 
     expect(tags()).toEqual([
-      { media: null, content: '#fafafa' },
-      { media: null, content: '#fafafa' },
+      { media: null, content: '#e9ebef' },
+      { media: null, content: '#e9ebef' },
     ]);
   });
 });

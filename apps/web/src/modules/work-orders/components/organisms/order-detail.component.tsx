@@ -367,9 +367,9 @@ const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
               {order.payments.length ? (
                 <ul className="flex flex-col gap-1">
                   {order.payments.map((payment, index) => (
-                    <li key={index} className="flex justify-between gap-4 tabular-nums">
+                    <li key={index} className="flex justify-between gap-4">
                       <span>{t(`methods.${payment.method}`)}</span>
-                      <span>{formatPesos(payment.amount)}</span>
+                      <span className="tabular-nums">{formatPesos(payment.amount)}</span>
                     </li>
                   ))}
                 </ul>

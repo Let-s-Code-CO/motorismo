@@ -3,9 +3,10 @@ import type { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { Geist } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import { cookies } from 'next/headers';
 
+import Spotlight from '@web/modules/core/components/spotlight.component';
 import ToastRegion from '@web/modules/core/components/toast-region.component';
 import AppProvider from '@web/modules/core/providers/app.provider';
 import { THEME_COLORS, THEME_COOKIE } from '@web/modules/theme/constants/theme.constants';
@@ -16,6 +17,12 @@ import { parseThemeChoice } from '@web/modules/theme/utils/theme.utils';
 import './globals.css';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' });
+// Spec 019, CA-04: figures and table headers in the mono face, like a dashboard.
+const geistMono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+  display: 'swap',
+});
 
 export const generateMetadata = async (): Promise<Metadata> => {
   const t = await getTranslations('core.metadata');
@@ -62,7 +69,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
   return (
     <html
       lang={locale}
-      className={`${geist.variable}${choice === 'dark' ? ' dark' : ''}`}
+      className={`${geist.variable} ${geistMono.variable} bg-background${choice === 'dark' ? ' dark' : ''}`}
       data-theme-choice={choice}
       style={choice === 'system' ? undefined : { colorScheme: choice }}
       suppressHydrationWarning
@@ -70,7 +77,11 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
+      {/* Spec 019: the page colour is on <html>; <body> stays transparent so the fixed backdrop
+          (z-index −1) is painted between them, behind everything. */}
+      <body className="min-h-dvh font-sans text-foreground antialiased">
+        <div aria-hidden className="garage" />
+        <Spotlight />
         <NextIntlClientProvider>
           <ThemeProvider initialChoice={choice}>
             <AppProvider>

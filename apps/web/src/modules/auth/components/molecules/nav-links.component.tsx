@@ -24,8 +24,9 @@ import {
 import type { Audience } from '@web/modules/auth/types/auth.types';
 import { visibleCount } from '@web/modules/auth/utils/nav-overflow.utils';
 
-const ITEM = 'rounded-medium px-3 py-1.5 font-medium whitespace-nowrap transition-colors';
-const CURRENT = 'bg-default-100 text-foreground';
+const ITEM = 'rounded-full px-3 py-1.5 font-medium whitespace-nowrap transition-colors';
+// Spec 019, CA-07: the current section (or the menu that holds it) in the accent.
+const CURRENT = 'bg-primary text-primary-foreground';
 const OTHER = 'text-default-500 hover:bg-default-100/60 hover:text-foreground';
 const MENU_TRIGGER = `${ITEM} inline-flex items-center gap-1`;
 

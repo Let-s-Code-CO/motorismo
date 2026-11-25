@@ -27,8 +27,9 @@ const AppHeader = ({ account }: AppHeaderProps) => {
   const audience = audienceOf(account);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-divider bg-background/75 backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-2 lg:flex lg:gap-6 lg:px-6">
+    // Spec 019, CA-07: a floating pill, off the edges, instead of a bar stuck to the top.
+    <header className="sticky top-3 z-40 mx-3 mt-3 self-stretch rounded-full border border-divider bg-background/70 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 lg:mx-auto lg:w-[min(72rem,calc(100%-1.5rem))] lg:self-center">
+      <div className="mx-auto grid h-14 grid-cols-[1fr_auto_1fr] items-center px-2 lg:flex lg:gap-6 lg:px-3">
         <div className="justify-self-start lg:hidden">
           <MobileNav audience={audience} />
         </div>

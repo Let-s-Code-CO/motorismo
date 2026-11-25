@@ -502,7 +502,7 @@ test.describe('on a desktop', () => {
     await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible();
   });
 
-  test('the header and the home are as before; «Órdenes» dark, the same size, with the open orders (spec 009, CA-05, CA-09)', async ({
+  test('the header and the home are as before; «Órdenes» dark and two by two, with the open orders (spec 009, CA-05, CA-09; spec 019, CA-08)', async ({
     page,
   }) => {
     await signIn(page, SEED.admin.email);
@@ -528,7 +528,8 @@ test.describe('on a desktop', () => {
       page.getByRole('list', { name: 'Secciones' }).getByRole('link').first()
     ).toContainText(/\d+En proceso\d+En cola|Sin órdenes abiertas/);
 
-    // «Órdenes» is dark like the brand panel, and the same size as the other cards.
+    // «Órdenes» is dark like the brand panel. Spec 019 (bento): on a desktop it takes two columns
+    // and two rows of the other cards, with the 16 px gap between them.
     const tiles = page.getByRole('list', { name: 'Secciones' }).getByRole('link');
     const background = (index: number) =>
       tiles.nth(index).evaluate((element) => getComputedStyle(element).backgroundColor);
@@ -545,8 +546,8 @@ test.describe('on a desktop', () => {
     const [orders, customers] = (await Promise.all(
       [0, 1].map(async (index) => (await tiles.nth(index).boundingBox())!)
     )) as [Box, Box];
-    expect(Math.abs(orders.width - customers.width)).toBeLessThanOrEqual(1);
-    expect(Math.abs(orders.height - customers.height)).toBeLessThanOrEqual(1);
+    expect(Math.abs(orders.width - (customers.width * 2 + 16))).toBeLessThanOrEqual(2);
+    expect(Math.abs(orders.height - (customers.height * 2 + 16))).toBeLessThanOrEqual(2);
   });
 });
 
@@ -676,6 +677,27 @@ test.describe('pointer cursor', () => {
     await expect(page).toHaveURL('/');
     await expect(page.locator('main [data-ornament="shine"]')).toBeAttached();
     expect(await endlessAnimations(page), '/').toEqual([]);
+  });
+
+  test('nothing moves forever in «Órdenes» nor in the customer area, under the automotive look (spec 019, RN-02)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/orders');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    // A pass over a row lets a plate's glint run: it crosses once and ends.
+    await page.getByRole('list', { name: 'Órdenes en cola' }).getByRole('listitem').first().hover();
+    expect(await endlessAnimations(page), '/orders').toEqual([]);
+
+    await page.context().clearCookies();
+    await signIn(page, SEED_CUSTOMERS.customer.email);
+    await expect(page).toHaveURL('/my');
+    for (const path of ['/my', '/my/history', '/my/reservations']) {
+      if (path !== '/my') await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      expect(await endlessAnimations(page), path).toEqual([]);
+    }
   });
 
   test('a text field shows the text cursor over all of its box, not only over the typing line', async ({
@@ -954,7 +976,7 @@ test.describe('customer record actions', () => {
 });
 
 test.describe('placeholders', () => {
-  test('are painted in the muted zinc-500 grey, not in the colour of typed text, so an empty field does not look filled in', async ({
+  test('are painted in the muted secondary grey, not in the colour of typed text, so an empty field does not look filled in', async ({
     page,
   }) => {
     // HeroUI paints placeholders with `foreground-500`; if the theme drops the foreground scale the
@@ -967,7 +989,8 @@ test.describe('placeholders', () => {
       text: getComputedStyle(element).color,
     }));
 
-    expect(colours.placeholder).toBe('rgb(113, 113, 122)'); // zinc-500, #71717a
+    // Spec 019: the secondary grey of the showroom look, #63636b (zinc-500 was below AA on it).
+    expect(colours.placeholder).toBe('rgb(99, 99, 107)');
     expect(colours.text).toBe('rgb(24, 24, 27)'); // foreground, #18181b
   });
 });

@@ -5,7 +5,8 @@
  * Guards:
  * - CA-09 / CA-10 / CA-11: choosing a theme changes the page at once (the `dark` class and the
  *   browser's colour scheme) and remembers it in the device's cookie.
- * - CA-07: the system bar colour (`theme-color`) follows the theme: #09090b dark, #fafafa light.
+ * - CA-07: the system bar colour (`theme-color`) follows the theme: #050506 dark, #e9ebef light
+ *   (spec 019: the near black and the showroom grey).
  * - CA-02: with «Sistema», a change of the device's theme while the app is open applies at once;
  *   with «Claro» or «Oscuro» it does not.
  */
@@ -97,10 +98,10 @@ describe('ThemeProvider', () => {
     renderProvider('system');
 
     choose('dark');
-    expect(themeColor()).toEqual(['#09090b']);
+    expect(themeColor()).toEqual(['#050506']);
 
     choose('light');
-    expect(themeColor()).toEqual(['#fafafa']);
+    expect(themeColor()).toEqual(['#e9ebef']);
   });
 
   it('follows the device while open with «Sistema» (CA-02)', () => {

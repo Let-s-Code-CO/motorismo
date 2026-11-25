@@ -2,22 +2,34 @@
  * Hovering a summary card lights it up; it never moves (summary cards standard, specs 003 CA-09
  * and 004 CA-17; dark theme, spec 010).
  *
- * In light the shadow grows and the border darkens a step. In dark a shadow does not show on the
- * near-black page, so the card's background and border turn a step lighter instead. In both, the
- * card stays where it is (no lift): the change is in light, not in position.
+ * In light the shadow grows. In dark a shadow does not show on the near-black page, so the card's
+ * background turns a step lighter instead. In both, the border lights up with the accent (spec 019,
+ * CA-05: steel in light, silver in dark) and the card stays where it is (no lift): the change is in
+ * light, not in position.
  *
- * Colours are the theme's zinc steps, as the browser computes them.
+ * Colours are the theme's zinc steps, as the browser computes them; the accent border, through a
+ * probe (the browser writes `color-mix` its own way).
  */
-import { type Locator, expect, test } from '@playwright/test';
+import { type Locator, type Page, expect, test } from '@playwright/test';
 
 import { SEED, signIn } from './support/sandbox';
 
 const ZINC = {
   300: 'rgb(212, 212, 216)',
-  600: 'rgb(82, 82, 91)',
   700: 'rgb(63, 63, 70)',
   800: 'rgb(39, 39, 42)',
 };
+
+/** The accent border of spec 019 (60 % of the accent), as the browser computes it. */
+const accentBorder = (page: Page, accent: string) =>
+  page.evaluate((colour) => {
+    const probe = document.createElement('span');
+    probe.style.color = `color-mix(in srgb, ${colour} 60%, transparent)`;
+    document.body.append(probe);
+    const result = getComputedStyle(probe).color;
+    probe.remove();
+    return result;
+  }, accent);
 
 const style = (card: Locator, property: 'backgroundColor' | 'borderColor') =>
   card.evaluate((element, name) => getComputedStyle(element)[name], property);
@@ -42,30 +54,34 @@ const hoverUntil = async (card: Locator, check: () => Promise<void>) => {
 test.use({ viewport: { width: 1280, height: 800 } });
 
 test.describe('in light', () => {
-  test('a user card darkens its border on hover and stays in place', async ({ page }) => {
-    await signIn(page, SEED.admin.email);
-    await expect(page).toHaveURL('/');
-    await page.goto('/admin/users');
-    const card = page.getByRole('button', { name: /^Invitados \d+$/ });
-
-    await hoverUntil(card, () => expect.poll(() => style(card, 'borderColor')).toBe(ZINC[300]));
-  });
-});
-
-test.describe('in dark', () => {
-  test.use({ colorScheme: 'dark' });
-
-  test('a user card turns a step lighter on hover (zinc-900 → zinc-800) and stays in place', async ({
+  test('a user card lights its border with the steel accent on hover and stays in place', async ({
     page,
   }) => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
     await page.goto('/admin/users');
     const card = page.getByRole('button', { name: /^Invitados \d+$/ });
+    const steel = await accentBorder(page, ZINC[700]);
+
+    await hoverUntil(card, () => expect.poll(() => style(card, 'borderColor')).toBe(steel));
+  });
+});
+
+test.describe('in dark', () => {
+  test.use({ colorScheme: 'dark' });
+
+  test('a user card turns a step lighter on hover (to zinc-800), its border silver, and stays in place', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/admin/users');
+    const card = page.getByRole('button', { name: /^Invitados \d+$/ });
+    const silver = await accentBorder(page, ZINC[300]);
 
     await hoverUntil(card, async () => {
       await expect.poll(() => style(card, 'backgroundColor')).toBe(ZINC[800]);
-      await expect.poll(() => style(card, 'borderColor')).toBe(ZINC[600]);
+      await expect.poll(() => style(card, 'borderColor')).toBe(silver);
     });
   });
 

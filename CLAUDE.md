@@ -31,8 +31,8 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Next.js 16 + React 19, TypeScript estricto.
 - UI: HeroUI 2.8 + Tailwind CSS 4. HeroUI usa contexto de React: los componentes que lo usan
   llevan `'use client'`.
-- Sistema visual (spec 003): Geist, base zinc con primario casi negro, radios 8/12/16 px, sombras
-  suaves; tema en `src/app/hero.ts` y animaciones en `globals.css` (siempre `motion-safe:`).
+- Sistema visual (spec 003, renovado por la spec 019): Geist, base zinc, radios 10/14/22 px; tema
+  en `src/app/hero.ts` y animaciones en `globals.css` (siempre `motion-safe:`).
   Iconos con `lucide-react`, decorativos (`aria-hidden`); los botones solo-icono llevan
   `aria-label`. Todo lo clicable muestra la «manito»: `globals.css` la restaura para
   `button` y `[role=button]` (Tailwind 4 ya no lo hace); un enlace o elemento clicable de otro tipo
@@ -46,6 +46,30 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   colombiana: tokens `--color-plate*` en `globals.css`, spec 005 HU-07): los semánticos solo para estados y para
   las acciones destructivas, que son un botón sólido `danger` con fondo `bg-danger-600` (el
   `danger-500` por defecto no da contraste AA con texto blanco), como «Desactivar cliente».
+- **Estilo automotriz premium (spec 019).**
+  - **Acento:** acero `#3f3f46` con tinta blanca en claro y plata `#d4d4d8` con tinta `#0a0a0a` en
+    oscuro (`primary` y `--accent`). Sobre el bloque negro de «Órdenes», plata en los dos modos
+    (`--accent-on-dark`). No hay selector de color (`no-accent-picker.test.ts`).
+  - **Fondos:** gris de exposición `#e9ebef` y casi negro `#050506`, en `<html>` (`bg-background`);
+    `<body>` es transparente para que la capa fija `.garage` (trama, resplandor y grano, quieta,
+    `z-index` −1) quede detrás de todo. Tarjetas blancas o `#0d0d10` con canto de luz
+    (`boxShadow` del tema). `THEME_COLORS` y «Sin conexión» usan los mismos colores.
+  - **Texto secundario en claro:** `#63636b` (`SECONDARY_ON_SHOWROOM`), no zinc-500, que no da AA
+    sobre el gris.
+  - **CSS global fuera de capas** (`globals.css`, para ganarle a las utilidades), sin tocar cada
+    pantalla: `main h1` cromado (degradado con `background-clip: text`; axe no mide ese contraste,
+    lo mide `e2e/style.spec.ts`), foco de luz en `.bg-content1` (`Spotlight` escribe `--mx`/`--my`),
+    borde con el acento al pasar sobre una tarjeta pulsable, botón `primary` en píldora y la placa
+    metálica (`[data-plate]`, destello que cruza una vez solo con movimiento permitido).
+  - **Cifras:** una cifra sola (precio, celular, conteo, fecha en tabla) es `tabular-nums`, en
+    Geist Mono; los `th` van en mono y mayúsculas espaciadas. Una línea que mezcla palabras y cifras
+    («2 vehículos», «CC … · Sin celular», una frase con un valor) y la placa usan `tabular-figures`
+    (cifras alineadas en Geist).
+  - **Encabezado e inicio:** encabezado en píldora flotante, con la sección actual en el acento;
+    inicio del personal en escritorio como bento de cuatro columnas con «Órdenes» de dos por dos (y
+    su esqueleto igual). El teléfono conserva la forma de la spec 009.
+  - **Pruebas:** `e2e/style.spec.ts` en claro y oscuro (el proyecto `chromium-dark` corre `a11y` y
+    `style`).
 - **Carga y transiciones (spec 011).**
   - **Esqueletos:** toda pantalla nueva con datos lleva su `loading.tsx`, con un `PageSkeleton`
     de `core` (`home`, `list`, `detail`, `form` o `profile`). Aparece a los 300 ms solo con

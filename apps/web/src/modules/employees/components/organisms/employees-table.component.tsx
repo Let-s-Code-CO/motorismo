@@ -156,7 +156,7 @@ const EmployeesTable = ({
                 {/* On phones the document and the phone go under the name: nothing behind a
                     sideways scroll (like the phone in «Clientes»). */}
                 {showDetails && (
-                  <span className="text-xs text-default-500 tabular-nums md:hidden">
+                  <span className="text-xs text-default-500 tabular-figures md:hidden">
                     {document} · {phone}
                   </span>
                 )}

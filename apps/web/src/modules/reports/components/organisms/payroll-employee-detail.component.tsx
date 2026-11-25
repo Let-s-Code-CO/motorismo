@@ -55,7 +55,7 @@ const PayrollEmployeeDetail = ({ month, line, items, status }: PayrollEmployeeDe
 
       <div className="flex flex-col gap-2 rounded-large border border-divider bg-content1 p-4 shadow-small">
         <h2 className="text-base font-semibold tracking-tight">{t('detail.baseTitle')}</h2>
-        <p className="text-sm text-default-600 tabular-nums">
+        <p className="text-sm text-default-600 tabular-figures">
           {t('detail.base', {
             active: line.active_days,
             month: line.month_days,
@@ -95,7 +95,7 @@ const PayrollEmployeeDetail = ({ month, line, items, status }: PayrollEmployeeDe
                     · {closingDay(item.closed_at).split('-').reverse().join('/')}
                   </span>
                 </span>
-                <span className="text-sm text-default-600 tabular-nums">
+                <span className="text-sm text-default-600 tabular-figures">
                   {t('detail.count', {
                     price: formatPesos(item.price),
                     share: item.share_pct,

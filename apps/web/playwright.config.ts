@@ -21,11 +21,12 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // The whole accessibility audit again on a device in dark mode (spec 010, CA-03).
+    // The whole accessibility audit again on a device in dark mode (spec 010, CA-03), and the look
+    // of spec 019 in dark.
     {
       name: 'chromium-dark',
       use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
-      testMatch: /a11y\.spec\.ts$/,
+      testMatch: /(a11y|style)\.spec\.ts$/,
     },
   ],
   webServer: {

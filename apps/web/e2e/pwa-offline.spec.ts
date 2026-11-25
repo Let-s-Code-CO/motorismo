@@ -115,7 +115,8 @@ test.describe('«Sin conexión» in dark mode (spec 010, CA-08)', () => {
 
     test('the page is dark', async ({ page, context }) => {
       await offlinePage(page, context);
-      expect(await pageBackground(page)).toBe('rgb(9, 9, 11)');
+      // Spec 019: the near black of the automotive look (#050506).
+      expect(await pageBackground(page)).toBe('rgb(5, 5, 6)');
     });
   });
 
@@ -124,7 +125,7 @@ test.describe('«Sin conexión» in dark mode (spec 010, CA-08)', () => {
       { name: 'motorismo-theme', value: 'dark', url: 'http://localhost:3000' },
     ]);
     await offlinePage(page, context);
-    expect(await pageBackground(page)).toBe('rgb(9, 9, 11)');
+    expect(await pageBackground(page)).toBe('rgb(5, 5, 6)');
   });
 });
 
