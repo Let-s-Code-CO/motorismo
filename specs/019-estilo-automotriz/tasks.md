@@ -181,6 +181,19 @@ ninguna.
 | `ui` · nada sin fin en «Órdenes» y el cliente (RN-02) | animación infinita en la cola | falla |
 | `ui` · marcador de posición / axe en claro | `SECONDARY_ON_SHOWROOM` `#71717a` | falla |
 
+Añadidas en `/verificar` (tres tandas más, cada una con su build):
+
+| Prueba | Mutación | Resultado |
+|---|---|---|
+| `style` · trama del fondo (CA-02) | sin el tamaño de 22 px de los puntos | falla |
+| `style` · se desvanece hacia abajo (CA-02) | sin `mask-image` | falla |
+| `style` · grano (CA-02) | sin la imagen del grano | falla |
+| `style` · títulos apretados (CA-03) | `letter-spacing: 0` | falla |
+| `style` · foco de luz donde está el puntero (CA-05) | sin `<Spotlight />` en el layout | falla |
+| `style` · canto de luz (CA-05) | `boxShadow` sin la línea `inset` | falla |
+| `style` · encabezado translúcido (CA-07) | sin `backdrop-blur-xl` / fondo opaco | falla |
+| `style` · destello al pasar por la fila (CA-13) | sin `li:hover [data-plate]::after` | falla |
+
 ## Cobertura
 
 | Criterio | Tareas de prueba |

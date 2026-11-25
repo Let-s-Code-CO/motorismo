@@ -1,7 +1,7 @@
 ---
 id: "019"
 titulo: "Estilo automotriz premium con acento plata"
-estado: implementada
+estado: verificada
 creada: 2026-11-25
 actualizada: 2026-11-25
 ---
@@ -44,8 +44,10 @@ calidad del servicio del negocio.
 - **CA-03** — Dado el título principal de una pantalla, cuando se muestra, entonces es grande, de
   letra apretada y con un degradado cromado, y mantiene contraste AA en todo su degradado.
 - **CA-04** — Dados números (precios, celulares, contadores, fechas en tablas) y encabezados de
-  tabla, cuando se muestran, entonces los números van en letra monoespaciada y los encabezados en
-  mayúsculas espaciadas y monoespaciadas, como un tablero.
+  tabla, cuando se muestran, entonces una cifra sola va en letra monoespaciada y los encabezados en
+  mayúsculas espaciadas y monoespaciadas, como un tablero; en una línea que mezcla palabras y cifras
+  («2 vehículos», «CC … · Sin celular», una frase con un valor), las cifras van alineadas en la
+  letra normal, para que las palabras no se lean como código.
 - **CA-05** — Dada una tarjeta, cuando se muestra, entonces tiene bordes finos, esquinas más
   redondeadas que hoy y un canto de luz arriba; cuando el ratón pasa sobre ella, un foco de luz
   sigue al cursor, y si se puede pulsar su borde se ilumina con el acento.
@@ -167,4 +169,5 @@ Ninguna.
 | 2026-11-25 | Aprobada por el usuario. |
 | 2026-11-25 | Plan aprobado: estado `planificada`. |
 | 2026-11-25 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
+| 2026-11-25 | Verificada. Enmienda de CA-04 (cifra sola en mono; en una línea mixta, cifras alineadas en la letra normal), tal como se decidió en la implementación. `style.spec.ts` se completó: la trama, el resplandor y el grano del fondo (CA-02); el tamaño y el espaciado de los títulos y el área del cliente (CA-03); el foco de luz pintado donde está el puntero y el canto de luz (CA-05); el encabezado translúcido (CA-07); el destello al pasar por la fila de la placa (CA-13). Cada comprobación se vio fallar con una mutación. |
 | 2026-11-25 | Implementada. La regresión completa (E2E en claro y oscuro, axe, teléfono, capturas de 30 pantallas en 1280, 360 y 440 px) llevó a tres ajustes, dentro de lo especificado: texto secundario del claro más oscuro (RN-01: zinc-500 no daba AA sobre el gris de exposición), la mono solo en cifras solas (las líneas que mezclan palabras y la placa conservan Geist con cifras alineadas, CA-04 y CA-12) y «Reintentar» de «Sin conexión» en píldora (CA-06). |

@@ -15,6 +15,10 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 - Crear los proyectos de Vercel y Supabase y cargar variables y secrets (ver spec 001, plan).
 - Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
   con la confirmación por WhatsApp o las reservas.
+- Estabilizar dos E2E intermitentes: cada una falló una vez en una corrida completa (2026-11-25)
+  y pasa aislada. `reservations.spec.ts` «a reservation moves to another slot…» falló porque
+  `check({ force: true })` del radio de las 4:00 p. m. no cambió su estado. `loading.spec.ts`
+  «going back finds the list where it was» no recuperó el desplazamiento al volver.
 
 ## Especificadas
 
@@ -38,4 +42,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [016](016-liquidacion-empleados/spec.md) | Liquidación de empleados | verificada |
 | [017](017-derechos-titular/spec.md) | Derechos del titular de datos | verificada |
 | [018](018-marcas-lineas/spec.md) | Administrar marcas y líneas de vehículos | verificada |
-| [019](019-estilo-automotriz/spec.md) | Estilo automotriz premium con acento plata | implementada |
+| [019](019-estilo-automotriz/spec.md) | Estilo automotriz premium con acento plata | verificada (falta despliegue) |

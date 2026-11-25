@@ -13,7 +13,8 @@
  * - CA-07: a floating pill header with the current section in the accent.
  * - CA-08: the staff home on a desktop as a bento: «Órdenes» two by two, no holes.
  * - CA-10, CA-11: the showroom grey and the near-black backgrounds, white and charcoal cards.
- * - CA-12, CA-13: the plate looks like metal; a glint crosses it once on hover, not with less motion.
+ * - CA-12, CA-13: the plate looks like metal; a glint crosses it once on hover of the plate or its
+ *   row, not with less motion.
  */
 import { type Locator, type Page, type TestInfo, expect, test } from '@playwright/test';
 
@@ -126,17 +127,40 @@ test('a still backdrop sits behind everything, out of reach (CA-02, RN-02)', asy
   expect(
     await backdrop.evaluate((element) => element.getAnimations({ subtree: true }).length)
   ).toBe(0);
+  // Its look: a glow on top, a glow in a corner and a fine dotted grid (three radial layers, the
+  // dots every 22 px), fading downwards, and a faint grain over it.
+  expect((await css(backdrop, 'background-image')).match(/radial-gradient/g)).toHaveLength(3);
+  expect(await css(backdrop, 'background-size')).toContain('22px 22px');
+  expect(await css(backdrop, 'mask-image')).toMatch(
+    /linear-gradient\(.*rgba\(0, 0, 0, 0\) 100%\)$/
+  );
+  expect(await css(backdrop, 'background-image', '::after')).toContain('url(');
 });
 
 test.describe('titles, dashboard figures, cards and buttons', () => {
-  test('every title is chrome, with each stop of its gradient readable as large text (CA-03, RN-01)', async ({
+  test('every title is large, tight and chrome, each stop of its gradient readable as large text, for the staff and the customer (CA-03, RN-01)', async ({
     page,
   }) => {
     await toStaffHome(page);
-    for (const path of ['/', '/orders', '/customers', '/admin/vehicle-catalog']) {
-      if (path !== '/') await page.goto(path);
+    const paths = [
+      '/',
+      '/orders',
+      '/customers',
+      '/admin/vehicle-catalog',
+      '/my',
+      '/my/reservations',
+    ];
+    for (const path of paths) {
+      if (path === '/my') {
+        await page.context().clearCookies();
+        await signIn(page, SEED_CUSTOMERS.customer.email);
+        await expect(page).toHaveURL('/my');
+      } else if (path !== '/') await page.goto(path);
       const title = page.getByRole('heading', { level: 1 });
       await expect(title).toBeVisible();
+      // Large (at least 36 px) and tight (negative letter spacing).
+      expect(Number.parseFloat(await css(title, 'font-size')), path).toBeGreaterThanOrEqual(36);
+      expect(Number.parseFloat(await css(title, 'letter-spacing')), path).toBeLessThan(0);
       expect(await css(title, '-webkit-background-clip'), path).toBe('text');
       const stops = (await css(title, 'background-image')).match(/rgba?\([^)]+\)/g) ?? [];
       expect(stops.length, path).toBeGreaterThan(1);
@@ -182,12 +206,22 @@ test.describe('titles, dashboard figures, cards and buttons', () => {
     );
   });
 
-  test('cards have the larger radius and a pressable one lights its border with the accent (CA-05)', async ({
+  test('cards have the larger radius and a lit edge, a light follows the cursor, and a pressable one lights its border with the accent (CA-05)', async ({
     page,
   }, testInfo) => {
     await toStaffHome(page);
     const card = sections(page).nth(1);
     expect(await css(card, 'border-top-left-radius')).toBe('22px');
+    // A lit top edge: a light inset line in its shadow.
+    expect(await css(card, 'box-shadow')).toContain('inset');
+    // The light follows the cursor: drawn where the pointer is, relative to the card.
+    await card.hover({ position: { x: 40, y: 30 } });
+    // (within 2 px: the card's border and sub-pixel layout shift the pointer a little).
+    const light = async () => {
+      const [, x, y] = /at ([\d.]+)px ([\d.]+)px/.exec(await css(card, 'background-image')) ?? [];
+      return Math.abs(Number(x) - 40) <= 2 && Math.abs(Number(y) - 30) <= 2;
+    };
+    await expect.poll(light).toBe(true);
     await card.hover();
     const accent = await computed(
       page,
@@ -207,7 +241,7 @@ test.describe('titles, dashboard figures, cards and buttons', () => {
 });
 
 test.describe('the header and the home', () => {
-  test('the header floats as a pill, off the edges (CA-07)', async ({ page }) => {
+  test('the header floats as a translucent pill, off the edges (CA-07)', async ({ page }) => {
     await toStaffHome(page);
     const header = page
       .getByRole('banner')
@@ -216,6 +250,10 @@ test.describe('the header and the home', () => {
     const box = (await header.boundingBox())!;
     expect(box.y).toBeGreaterThanOrEqual(8);
     expect(box.x).toBeGreaterThanOrEqual(8);
+    // Translucent: a see-through background, blurred behind.
+    const alpha = /\/\s*([\d.]+)\)$|,\s*([\d.]+)\)$/.exec(await css(header, 'background-color'));
+    expect(Number(alpha?.[1] ?? alpha?.[2] ?? 1)).toBeLessThan(1);
+    expect(await css(header, 'backdrop-filter')).toContain('blur');
     // A pill: Tailwind 4's `rounded-full` is an «infinite» radius (3.35544e+07px).
     expect(Number.parseFloat(await css(header, 'border-top-left-radius'))).toBeGreaterThanOrEqual(
       9999
@@ -276,6 +314,17 @@ test.describe('the metal plate (CA-12, CA-13)', () => {
     await plate.hover();
     await expect.poll(() => css(plate, 'transform', '::after')).not.toBe(before);
     expect(await css(plate, 'transition-duration', '::after')).not.toBe('0s');
+  });
+
+  test('a glint crosses it once when its row is hovered, not only the plate (CA-13)', async ({
+    page,
+  }) => {
+    const plate = await toCamila(page);
+    const row = plate.locator('xpath=ancestor::li[1]');
+    const before = await css(plate, 'transform', '::after');
+    // The row's left edge, away from the plate (on its right).
+    await row.hover({ position: { x: 4, y: 4 } });
+    await expect.poll(() => css(plate, 'transform', '::after')).not.toBe(before);
   });
 
   test('the glint does not move when the device asks for less motion (CA-13, RN-02)', async ({
