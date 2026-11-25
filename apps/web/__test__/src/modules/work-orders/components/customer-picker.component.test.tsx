@@ -11,8 +11,14 @@
  * - CA-01: the vehicle is optional («Sin vehículo»); the only one still comes chosen (RN-10).
  * - A vehicle with an open order today can be booked for another time.
  * - CA-02: a customer not registered yet is registered right there (without account) and chosen.
+ *
+ * Spec 022, HU-01: «Registrar cliente» is there for an order too, always under the search (CA-01),
+ * with the same «Nuevo cliente» form (CA-02) given what was searched (CA-04); saving chooses the
+ * customer, cancelling leaves the search as it was (CA-03), and the vehicle registered with them is
+ * chosen, for an order and for a reservation (CA-08, CA-09: their only vehicle, RN-10).
  */
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -34,17 +40,37 @@ vi.mock('@web/modules/work-orders/api/work-orders.client', () => ({
   searchCustomers: vi.fn(),
   fetchCustomerVehicles: vi.fn(),
 }));
-// The customer form has its own tests (spec 004): here it only reports the new customer.
+// The customer form has its own tests (spec 004, spec 022): here it shows what it was given to
+// prefill, reports the new customer or is cancelled.
 vi.mock('@web/modules/customers/components/organisms/customer-form.component', () => ({
-  default: ({ onSaved }: { onSaved: (customer: object) => void }) => (
-    <button
-      type="button"
-      onClick={() =>
-        onSaved({ id: 'customer-new', full_name: 'Wendy Walkin', email: null, phone: '3001234567' })
-      }
-    >
-      Guardar cliente de prueba
-    </button>
+  default: ({
+    onSaved,
+    onCancel,
+    initialSearch,
+  }: {
+    onSaved: (customer: object) => void;
+    onCancel: () => void;
+    initialSearch?: string;
+  }) => (
+    <div>
+      <p>Búsqueda recibida: {initialSearch ?? '—'}</p>
+      <button
+        type="button"
+        onClick={() =>
+          onSaved({
+            id: 'customer-new',
+            full_name: 'Wendy Walkin',
+            email: null,
+            phone: '3001234567',
+          })
+        }
+      >
+        Guardar cliente de prueba
+      </button>
+      <button type="button" onClick={onCancel}>
+        Cancelar de prueba
+      </button>
+    </div>
   ),
 }));
 // The vehicle form has its own tests (spec 005): here it only reports the new vehicle's id.
@@ -111,6 +137,29 @@ describe('CustomerPicker', () => {
 
     expect(searchCustomers).toHaveBeenCalledWith('uih');
     expect(onCustomerChange).toHaveBeenCalledWith(camila);
+  });
+
+  it('shows, on the right, the plate a result matched by, and none when it matched by name (spec 022, CA-11)', async () => {
+    vi.mocked(searchCustomers).mockResolvedValue([
+      { ...camila, matchedPlate: { plate: 'UIH03D', city: null } },
+      {
+        id: 'customer-2',
+        full_name: 'Gabriel Gómez',
+        phone: null,
+        email: null,
+        matchedPlate: null,
+      },
+    ]);
+    renderPicker();
+
+    fireEvent.change(screen.getByLabelText('Buscar cliente'), { target: { value: 'uih' } });
+
+    const camilaRow = await screen.findByRole('button', { name: /Camila Cliente/ });
+    // The whole plate: a motorcycle's says COLOMBIA under its characters.
+    expect(camilaRow.querySelector('[data-plate]')).toHaveTextContent('UIH-03DCOLOMBIA');
+    expect(
+      screen.getByRole('button', { name: /Gabriel Gómez/ }).querySelector('[data-plate]')
+    ).toBeNull();
   });
 
   it('chooses the only vehicle of a customer by itself (CA-01, RN-10)', async () => {
@@ -209,7 +258,7 @@ describe('CustomerPicker for a reservation (spec 012)', () => {
     );
   });
 
-  it('offers neither «Sin vehículo» nor registering a customer for an order', async () => {
+  it('offers no «Sin vehículo» for an order, nor registering a customer once one is chosen', async () => {
     vi.mocked(fetchCustomerVehicles).mockResolvedValue([vehicle()]);
     renderPicker(camila);
 
@@ -247,4 +296,103 @@ describe('CustomerPicker from a reservation that arrived (spec 012, CA-12)', () 
     );
     expect(onVehicleChange).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'vehicle-1' }));
   });
+});
+
+describe('CustomerPicker registering the customer it did not find (spec 022)', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it('offers «Registrar cliente» for an order too, with what was searched (CA-01, CA-02, CA-04)', async () => {
+    vi.mocked(searchCustomers).mockResolvedValue([]);
+    const { onCustomerChange } = renderPicker(null, 'order');
+
+    fireEvent.change(screen.getByLabelText('Buscar cliente'), { target: { value: 'wendy' } });
+    // The link sits in the sentence that says nobody was found.
+    expect(await screen.findByText('No se encontró ningún cliente activo.')).toContainElement(
+      screen.getByRole('button', { name: 'Registrar cliente' })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar cliente' }));
+
+    expect(await screen.findByText('Búsqueda recibida: wendy')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente de prueba' }));
+    await vi.waitFor(() =>
+      expect(onCustomerChange).toHaveBeenCalledWith(expect.objectContaining({ id: 'customer-new' }))
+    );
+  });
+
+  it('keeps «Registrar cliente» at hand even when the search finds someone (corrected assumption)', async () => {
+    vi.mocked(searchCustomers).mockResolvedValue([camila]);
+    renderPicker(null, 'order');
+
+    fireEvent.change(screen.getByLabelText('Buscar cliente'), { target: { value: 'camila' } });
+
+    expect(await screen.findByRole('button', { name: /Camila Cliente/ })).toBeVisible();
+    // A link in a quiet sentence under the results, not a button of its own.
+    expect(screen.getByText('¿Es un cliente nuevo?')).toContainElement(
+      screen.getByRole('button', { name: 'Registrar cliente' })
+    );
+  });
+
+  it('leaves the search as it was when the registration is cancelled (CA-03)', async () => {
+    vi.mocked(searchCustomers).mockResolvedValue([]);
+    const { onCustomerChange } = renderPicker(null, 'order');
+    fireEvent.change(screen.getByLabelText('Buscar cliente'), { target: { value: 'wendy' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Registrar cliente' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancelar de prueba' }));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'Guardar cliente de prueba' })
+      ).not.toBeInTheDocument()
+    );
+    expect(screen.getByLabelText('Buscar cliente')).toHaveValue('wendy');
+    expect(onCustomerChange).not.toHaveBeenCalled();
+  });
+
+  /** A screen that keeps what the picker chooses, as «Nueva orden» and the reservation form do. */
+  const Host = ({
+    purpose,
+    onVehicle,
+  }: {
+    purpose: 'order' | 'reservation';
+    onVehicle: (vehicle: PickerVehicle | null) => void;
+  }) => {
+    const [customer, setCustomer] = useState<PickerCustomer | null>(null);
+    const [vehicleId, setVehicleId] = useState<string | null>(null);
+    return (
+      <QueryClientProvider client={new QueryClient()}>
+        <CustomerPicker
+          customer={customer}
+          vehicleId={vehicleId}
+          purpose={purpose}
+          onCustomerChange={setCustomer}
+          onVehicleChange={(chosen) => {
+            setVehicleId(chosen?.id ?? null);
+            onVehicle(chosen);
+          }}
+        />
+      </QueryClientProvider>
+    );
+  };
+
+  it.each(['order', 'reservation'] as const)(
+    'chooses the new customer and the vehicle registered with them, for a(n) %s (CA-08, CA-09)',
+    async (purpose) => {
+      vi.mocked(searchCustomers).mockResolvedValue([]);
+      // The customer just registered has one vehicle: the one registered with them.
+      vi.mocked(fetchCustomerVehicles).mockResolvedValue([vehicle({ id: 'vehicle-new' })]);
+      const onVehicle = vi.fn();
+      renderWithProviders(<Host purpose={purpose} onVehicle={onVehicle} />);
+
+      fireEvent.change(screen.getByLabelText('Buscar cliente'), { target: { value: 'wendy' } });
+      fireEvent.click(await screen.findByRole('button', { name: 'Registrar cliente' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Guardar cliente de prueba' }));
+
+      expect(await screen.findByText('Wendy Walkin')).toBeVisible();
+      expect(fetchCustomerVehicles).toHaveBeenCalledWith('customer-new');
+      await vi.waitFor(() =>
+        expect(onVehicle).toHaveBeenCalledWith(expect.objectContaining({ id: 'vehicle-new' }))
+      );
+    }
+  );
 });

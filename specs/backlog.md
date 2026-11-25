@@ -7,6 +7,10 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 ### Operación
 
+0. **Placa según la norma colombiana** (spec 023, por especificar): medidas, tipografía, marco y
+   leyenda de la ciudad según la norma del Ministerio de Transporte; ciudades de la placa solo de los
+   municipios con organismo de tránsito, con su leyenda oficial.
+
 1. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
 
 ## Deuda técnica y tareas de plataforma
@@ -45,6 +49,6 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [017](017-derechos-titular/spec.md) | Derechos del titular de datos | verificada |
 | [018](018-marcas-lineas/spec.md) | Administrar marcas y líneas de vehículos | verificada |
 | [019](019-estilo-automotriz/spec.md) | Estilo automotriz premium con acento plata | verificada (falta despliegue) |
-| [020](020-liquidacion-quincenal/spec.md) | Liquidación quincenal y por rango de fechas | borrador (falta decidir el salario base) |
+| [020](020-liquidacion-quincenal/spec.md) | Liquidación quincenal y por rango de fechas | aprobada |
 | [021](021-reservas-cliente-varias/spec.md) | Reservas del cliente: varias por vehículo y tiempo estimado | verificada (falta despliegue) |
-| [022](022-cliente-desde-orden/spec.md) | Registrar cliente y su primer vehículo desde «Nueva orden» | aprobada |
+| [022](022-cliente-desde-orden/spec.md) | Registrar cliente y su primer vehículo desde «Nueva orden» | verificada (falta despliegue) |

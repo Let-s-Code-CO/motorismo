@@ -5,6 +5,7 @@ import {
   optionalEmailField,
   optionalMobileField,
 } from '@web/modules/core/schemas/fields.schema';
+import { vehicleFormSchema } from '@web/modules/vehicles/schemas/vehicle.schema';
 
 /**
  * "Mi perfil" (spec 004, HU-03): a customer changes only their name and phone; the email is not
@@ -53,3 +54,12 @@ export type EditCustomerInput = z.input<typeof editCustomerSchema>;
 export type EditCustomerValues = z.output<typeof editCustomerSchema>;
 export type NewCustomerInput = z.input<typeof newCustomerSchema>;
 export type NewCustomerValues = z.output<typeof newCustomerSchema>;
+
+/**
+ * What staff send to register a customer at the counter: the customer and, optionally, their first
+ * vehicle, checked with the vehicle's own rules (spec 022, CA-05, CA-07).
+ */
+export const registerCustomerSchema = z.intersection(
+  newCustomerSchema,
+  z.object({ vehicle: vehicleFormSchema.optional() })
+);

@@ -10,6 +10,10 @@
  *   «En proceso».
  * - CA-11: closing with two payment methods adding up to the total.
  * - CA-10: a disabled customer is not offered.
+ * - Spec 022 (CA-01, CA-03, CA-04, CA-08): a customer not found is registered from the order, with
+ *   their first motorcycle, and the order is opened with both chosen. CA-11: a search by «UIH» shows
+ *   the plate each result matched by (seeds: Camila's UIH-03D, Gabriel's UIH-58E; Valentina's KDM-482
+ *   of Bogotá and Gabriel's KDM-917 of Medellín); by name, none.
  * - HU-03 / HU-04 / HU-06, on the seed orders of Camila (#2 closed, #3 voided, #4 open with an
  *   «Otro» without time):
  *   - choosing her in «Nueva orden» shows 1 visit and the last one (CA-15);
@@ -127,6 +131,76 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   await expect(page.getByText('Orden cerrada.')).toBeVisible();
   await expect(page.getByText('Cerrada', { exact: true })).toBeVisible();
   await expect(page.getByText('Transferencia')).toBeVisible();
+});
+
+test('an operator registers the customer they did not find, with their motorcycle, without leaving the order (spec 022, CA-01, CA-03, CA-04, CA-08)', async ({
+  page,
+}) => {
+  const name = `E2E Nuevo ${Date.now()}`;
+  const plate = uniquePlate('motorcycle');
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+
+  // CA-01: nobody found; «Registrar cliente» is there.
+  await page.goto('/orders/new');
+  await page.getByLabel('Buscar cliente').fill(name);
+  await expect(page.getByText('No se encontró ningún cliente activo.')).toBeVisible();
+  await page.getByRole('button', { name: 'Registrar cliente' }).click();
+
+  // CA-04: what was searched is the name; the first motorcycle, in the same form.
+  const dialog = page.getByRole('dialog', { name: 'Registrar cliente sin cuenta' });
+  await expect(dialog.getByLabel('Nombre completo')).toHaveValue(name);
+  await dialog.getByLabel('Celular (opcional)').fill('312 000 3333');
+  await dialog.getByRole('checkbox', { name: /El cliente autorizó/ }).check();
+  await dialog.getByRole('checkbox', { name: 'Registrar también su primer vehículo' }).check();
+  const vehicle = dialog.getByRole('group', { name: 'Primer vehículo' });
+  await pick(page, vehicle, 'Marca', 'Suzuki');
+  await pick(page, vehicle, 'Línea', 'GSX-R600');
+  await vehicle.getByRole('button', { name: /Color/ }).click();
+  await page.getByRole('option', { name: 'Negro', exact: true }).click();
+  await vehicle.getByRole('textbox', { name: 'Placa' }).fill(plate);
+  await dialog.getByRole('button', { name: 'Registrar cliente' }).click();
+
+  // CA-03, CA-08: back in the order, with the customer and the motorcycle chosen.
+  await expect(dialog).toBeHidden();
+  const { data: customer } = await adminClient()
+    .from('customers')
+    .select('id')
+    .eq('full_name', name)
+    .single();
+  created.push(customer!.id);
+  await expect(page.getByText(name)).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Suzuki GSX-R600/ })).toBeChecked();
+
+  await page.getByRole('button', { name: 'Añadir Lavado sencillo' }).click();
+  await page.getByRole('button', { name: 'Abrir orden' }).click();
+  await expect(page.getByText('Orden abierta.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Orden #\d+$/ })).toBeVisible();
+  await expect(page.getByText(name)).toBeVisible();
+});
+
+test('the search shows the plate a customer matched by, only when it matched by plate (spec 022, CA-11)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/orders/new');
+
+  await page.getByLabel('Buscar cliente').fill('uih');
+  const camila = page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.customer.name) });
+  const gabriel = page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.google.name) });
+  await expect(camila.locator('[data-plate]')).toHaveText(/UIH.?03D.*COLOMBIA/);
+  await expect(gabriel.locator('[data-plate]')).toHaveText(/UIH.?58E.*COLOMBIA/);
+
+  // Car plates with the city that issued them: Valentina's in Bogotá, Gabriel's in Medellín.
+  await page.getByLabel('Buscar cliente').fill('kdm');
+  const valentina = page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) });
+  await expect(valentina.locator('[data-plate]')).toContainText('BOGOTÁ, D.C.');
+  await expect(gabriel.locator('[data-plate]')).toContainText('MEDELLÍN');
+
+  await page.getByLabel('Buscar cliente').fill(SEED_CUSTOMERS.customer.name);
+  await expect(camila).toBeVisible();
+  await expect(camila.locator('[data-plate]')).toHaveCount(0);
 });
 
 test('a disabled customer is not offered for a new order (CA-10)', async ({ page }) => {

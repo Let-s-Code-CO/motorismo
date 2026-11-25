@@ -17,11 +17,12 @@ import {
   Radio,
   RadioGroup,
 } from '@heroui/react';
-import { Plus, Search, UserRound } from 'lucide-react';
+import { Plus, Search, UserPlus, UserRound } from 'lucide-react';
 
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import { singleOption } from '@web/modules/core/utils/selection.utils';
 import CustomerForm from '@web/modules/customers/components/organisms/customer-form.component';
+import PlateLabel from '@web/modules/vehicles/components/atoms/plate-label.component';
 import VehicleForm from '@web/modules/vehicles/components/organisms/vehicle-form.component';
 import { orderKeys } from '@web/modules/work-orders/queries/work-orders.keys';
 import {
@@ -59,6 +60,9 @@ const NO_VEHICLE = 'none';
  * Who brings which vehicle (spec 008, HU-01): find the customer by name, phone or plate (CA-01),
  * then choose one of their active vehicles — the only one comes already chosen (RN-10) — or register
  * it right there (CA-02). A vehicle with an open order offers that order instead.
+ * A customer not found is registered right there, with what was searched and, optionally, their
+ * first vehicle (spec 012, CA-02; spec 022, HU-01): they come out chosen, and their only vehicle
+ * with them (RN-10).
  */
 const CustomerPicker = ({
   customer,
@@ -113,19 +117,6 @@ const CustomerPicker = ({
           startContent={<Search aria-hidden className="size-4 shrink-0 text-default-400" />}
           autoFocus
         />
-        {search.data && search.data.length === 0 && (
-          <p className="text-sm text-default-500">{t('noResults')}</p>
-        )}
-        {forReservation && (
-          <Button
-            variant="bordered"
-            className="w-max"
-            startContent={<Plus aria-hidden className="size-4" />}
-            onPress={() => setRegisteringCustomer(true)}
-          >
-            {t('registerCustomer')}
-          </Button>
-        )}
         <Modal
           isOpen={registeringCustomer}
           onOpenChange={(open) => !open && setRegisteringCustomer(false)}
@@ -139,6 +130,7 @@ const CustomerPicker = ({
                 <ModalBody className="pb-6">
                   <CustomerForm
                     mode="create"
+                    initialSearch={q}
                     onCancel={onClose}
                     onSaved={(saved) => {
                       onClose();
@@ -160,7 +152,7 @@ const CustomerPicker = ({
                   onClick={() => onCustomerChange(found)}
                 >
                   <UserRound aria-hidden className="size-4 shrink-0 text-default-400" />
-                  <span className="flex min-w-0 flex-col">
+                  <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-medium">{found.full_name}</span>
                     <span className="truncate text-xs text-default-500">
                       {[found.phone && formatMobile(found.phone), found.email]
@@ -168,11 +160,32 @@ const CustomerPicker = ({
                         .join(' · ')}
                     </span>
                   </span>
+                  {/* Spec 022, CA-11: the plate it matched by, only when it matched by plate. */}
+                  {found.matchedPlate && (
+                    <PlateLabel
+                      plate={found.matchedPlate.plate}
+                      city={found.matchedPlate.city ?? undefined}
+                      className="shrink-0"
+                    />
+                  )}
                 </button>
               </li>
             ))}
           </ul>
         )}
+        {/* Spec 012, CA-02; spec 022, CA-01: always at hand, as a link in the sentence that says
+            nobody was found (or, otherwise, under the search and its results). */}
+        <p className="text-sm text-default-500">
+          {search.data?.length === 0 ? t('noResults') : t('newCustomerHint')}{' '}
+          <button
+            type="button"
+            onClick={() => setRegisteringCustomer(true)}
+            className="inline-flex cursor-pointer items-center gap-1 rounded-small font-medium text-foreground underline decoration-default-400 underline-offset-4 outline-none hover:decoration-foreground focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            <UserPlus aria-hidden className="size-3.5" />
+            {t('registerCustomer')}
+          </button>
+        </p>
       </div>
     );
   }

@@ -1,12 +1,16 @@
 import type { Enums, Tables } from '@motorismo/supabase/types';
 
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
+import type { MatchedPlate } from '@web/modules/work-orders/utils/plate-search.utils';
 
 export type WorkOrderStatus = Enums<'work_order_status'>;
 export type PaymentMethod = Enums<'payment_method'>;
 
 /** A customer found in «Nueva orden» (active only, CA-10). */
-export type PickerCustomer = Pick<Tables<'customers'>, 'id' | 'full_name' | 'phone' | 'email'>;
+export type PickerCustomer = Pick<Tables<'customers'>, 'id' | 'full_name' | 'phone' | 'email'> & {
+  /** The active plate the search matched, with its city, if it matched by plate (spec 022, CA-11). */
+  matchedPlate?: MatchedPlate | null;
+};
 
 /** An active vehicle of the chosen customer, and its open order if it has one. */
 export type PickerVehicle = {

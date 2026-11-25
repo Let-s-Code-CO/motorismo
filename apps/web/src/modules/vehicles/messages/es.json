@@ -96,7 +96,8 @@
       "classRequired": "Elige la clase.",
       "displacementInvalid": "El cilindraje va de 50 a 2.500 cc.",
       "nameTooLong": "Máximo 60 caracteres.",
-      "plateCityRequired": "Elige la ciudad de la placa."
+      "plateCityRequired": "Elige la ciudad de la placa.",
+      "plateTaken": "Ya hay un vehículo registrado con esta placa."
     },
     "errors": {
       "forbidden": "No tienes permiso para hacer esto.",

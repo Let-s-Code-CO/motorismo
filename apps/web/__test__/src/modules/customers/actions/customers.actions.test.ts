@@ -8,6 +8,9 @@
  * - CA-25: invalid input returns one error per field and nothing is written.
  * - CA-26: the guard's "email already in use" becomes its own message.
  * - CA-27 / RN-10: the email of a customer WITH account is never sent in an edit.
+ * - Spec 022: registering goes through register_customer, with the first vehicle when it comes, so
+ *   both are registered together or not at all (RN-01); a refusal of the vehicle comes back as the
+ *   vehicle's own error (CA-07), told apart from the customer's.
  * - CA-29 / CA-30 / CA-31 / RN-09: ACTIVE STAFF (operator or admin) disable or reactivate; for a customer with
  *   an account, Auth also bans (or lifts the ban on) the account — no new session can be issued —
  *   and if Auth fails the change is reverted. A customer without account has nothing to ban.
@@ -44,9 +47,15 @@ type Outcome = { data?: unknown; error?: { code?: string; hint?: string; message
 /** The staff member's own session: customers insert/select/update. */
 const fakeSession = ({
   insert = { data: { id: 'customer-new' }, error: null },
+  register = { data: 'customer-new', error: null },
   current = { user_id: null, disabled_at: null },
   updates = [{ data: { id: ID }, error: null }],
-}: { insert?: Outcome; current?: Record<string, unknown> | null; updates?: Outcome[] } = {}) => {
+}: {
+  insert?: Outcome;
+  register?: Outcome;
+  current?: Record<string, unknown> | null;
+  updates?: Outcome[];
+} = {}) => {
   const insertFn = vi.fn(() => ({
     select: () => ({ single: () => Promise.resolve({ data: null, error: null, ...insert }) }),
   }));
@@ -64,8 +73,9 @@ const fakeSession = ({
     eq: () => ({ maybeSingle: () => Promise.resolve({ data: current, error: null }) }),
   }));
   const from = vi.fn(() => ({ insert: insertFn, update, select }));
-  vi.mocked(createSupabaseServerClient).mockResolvedValue({ from } as never);
-  return { from, insert: insertFn, update };
+  const rpc = vi.fn(() => Promise.resolve({ data: null, error: null, ...register }));
+  vi.mocked(createSupabaseServerClient).mockResolvedValue({ from, rpc } as never);
+  return { from, insert: insertFn, update, rpc };
 };
 
 const fakeAuthAdmin = (banError: { message: string } | null = null) => {
@@ -90,7 +100,7 @@ describe('createCustomer', () => {
   });
 
   it('returns one error per invalid field and writes nothing (CA-25)', async () => {
-    const { insert } = fakeSession();
+    const { rpc } = fakeSession();
 
     await expect(
       createCustomer({ full_name: '', email: '', phone: '', data_consent: false })
@@ -103,28 +113,85 @@ describe('createCustomer', () => {
         data_consent: ['consentRequired'],
       },
     });
-    expect(insert).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
   });
 
-  it('inserts only the contact data with the staff session, refreshes the list and returns the new id (CA-24; spec 012, CA-02)', async () => {
-    const { from, insert } = fakeSession();
+  it('registers only the contact data with the staff session, refreshes the list and returns the new id (CA-24; spec 012, CA-02; spec 022, CA-06)', async () => {
+    const { rpc } = fakeSession();
 
-    // The id lets a reservation choose the customer it has just registered (spec 012, CA-02).
+    // The id lets a reservation or an order choose the customer just registered.
     await expect(createCustomer(input)).resolves.toEqual({ ok: true, id: 'customer-new' });
-    expect(from).toHaveBeenCalledWith('customers');
-    // Origin, registrar and consent date are set by the database (customers_guard).
-    expect(insert).toHaveBeenCalledWith({ full_name: 'Marta', email: null, phone: '3120001111' });
+    // Origin, registrar and consent date are set by the database (customers_guard); no vehicle.
+    expect(rpc).toHaveBeenCalledWith('register_customer', {
+      p_full_name: 'Marta',
+      p_email: null,
+      p_phone: '3120001111',
+    });
     expect(revalidatePath).toHaveBeenCalledWith('/customers', 'layout');
+  });
+
+  it('registers the first vehicle in the same call, normalised (spec 022, CA-07, RN-01)', async () => {
+    const { rpc } = fakeSession();
+
+    await createCustomer({
+      ...input,
+      vehicle: {
+        vehicle_type: 'motorcycle',
+        vehicle_class: null,
+        brand_name: 'Suzuki',
+        line_name: 'GSX-R600',
+        displacement_cc: 600,
+        color: 'black',
+        plate: 'uih-03d',
+        plate_city_code: null,
+      },
+    });
+
+    expect(rpc).toHaveBeenCalledWith('register_customer', {
+      p_full_name: 'Marta',
+      p_email: null,
+      p_phone: '3120001111',
+      p_vehicle_type: 'motorcycle',
+      p_brand_name: 'Suzuki',
+      p_line_name: 'GSX-R600',
+      p_displacement_cc: 600,
+      p_color: 'black',
+      p_plate: 'UIH03D',
+    });
   });
 
   it('maps the duplicate-email refusal of the database (CA-26)', async () => {
     fakeSession({
-      insert: { error: { code: '23505', hint: 'customer_email_taken', message: 'x' } },
+      register: { error: { code: '23505', hint: 'customer_email_taken', message: 'x' } },
     });
 
     await expect(createCustomer(input)).resolves.toEqual({ ok: false, error: 'emailTaken' });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['vehicle_plate_taken', '23505', 'plateTaken'],
+    ['vehicle_class_required', 'P0001', 'classRequired'],
+  ])(
+    'tells a refusal of the vehicle (%s) apart, with its own message (spec 022, CA-07)',
+    async (hint, code, vehicleError) => {
+      fakeSession({ register: { error: { code, hint, message: 'x' } } });
+
+      await expect(
+        createCustomer({
+          ...input,
+          vehicle: {
+            vehicle_type: 'motorcycle',
+            brand_name: 'Suzuki',
+            line_name: 'GSX-R600',
+            color: 'black',
+            plate: 'UIH03D',
+          },
+        })
+      ).resolves.toEqual({ ok: false, error: 'vehicle', vehicleError });
+      expect(revalidatePath).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe('updateCustomer', () => {

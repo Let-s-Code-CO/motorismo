@@ -115,7 +115,7 @@ test('Clientes and a customer record have no serious accessibility issues (spec 
   expect(await audit(page)).toEqual([]);
 });
 
-test('the new-customer dialog and the edit form have no serious accessibility issues (spec 004)', async ({
+test('the new-customer dialog, with its first vehicle and errors, and the edit form have no serious accessibility issues (spec 004; spec 022)', async ({
   page,
 }) => {
   await signIn(page, SEED.admin.email);
@@ -124,6 +124,15 @@ test('the new-customer dialog and the edit form have no serious accessibility is
   await page.goto('/customers');
   await page.getByRole('button', { name: 'Nuevo cliente' }).click();
   await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+
+  // Spec 022: with the first vehicle asked for, and every error in sight.
+  const dialog = page.getByRole('dialog', { name: /Nuevo cliente/ });
+  await dialog.getByRole('checkbox', { name: 'Registrar también su primer vehículo' }).check();
+  await dialog.getByRole('button', { name: 'Registrar cliente' }).click();
+  await expect(
+    dialog.getByRole('group', { name: 'Primer vehículo' }).getByText('Escribe la marca.')
+  ).toBeVisible();
   expect(await audit(page)).toEqual([]);
 
   await page.keyboard.press('Escape');

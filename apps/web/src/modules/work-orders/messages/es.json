@@ -49,6 +49,7 @@
       "customerSearch": "Buscar cliente",
       "customerSearchPlaceholder": "Nombre, celular o placa",
       "noResults": "No se encontró ningún cliente activo.",
+      "newCustomerHint": "¿Es un cliente nuevo?",
       "noVehicleChoice": "Sin vehículo (aún no sabe cuál traerá)",
       "registerCustomer": "Registrar cliente",
       "registerCustomerTitle": "Registrar cliente sin cuenta",

@@ -84,7 +84,9 @@
       "contactHint": "Indica al menos un correo o un celular.",
       "consent": "El cliente autorizó el tratamiento de sus datos personales según la <link>política de tratamiento de datos</link>.",
       "submit": "Registrar cliente",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "withVehicle": "Registrar también su primer vehículo",
+      "vehicleTitle": "Primer vehículo"
     },
     "profile": {
       "title": "Mi perfil",
