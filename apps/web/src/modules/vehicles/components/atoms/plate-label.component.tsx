@@ -22,7 +22,7 @@ const RIM_MD =
   'rounded-[6px] shadow-[inset_0_0_0_2px_var(--color-plate),inset_0_0_0_3px_var(--color-plate-ink),0_0_0_0.5px_var(--color-plate-edge),0_1px_2px_rgb(0_0_0/0.18)]';
 const RIM_SM =
   'rounded-[4px] shadow-[inset_0_0_0_1px_var(--color-plate),inset_0_0_0_1.75px_var(--color-plate-ink),0_0_0_0.5px_var(--color-plate-edge)]';
-const CHARACTERS = 'font-bold leading-none tracking-[0.06em] tabular-nums';
+const CHARACTERS = 'font-bold leading-none tracking-[0.06em] tabular-figures';
 const SMALL_PRINT = 'text-[6.5px] leading-none font-semibold tracking-[0.14em]';
 
 /** The two mounting screws of the plate, decorative. */
@@ -46,7 +46,7 @@ const PlateLabel = ({ plate, city, size = 'md', className = '' }: PlateLabelProp
 
   if (size === 'sm') {
     return (
-      <span className={`${PLATE} ${RIM_SM} px-1.5 py-[3px] text-[11px] ${className}`}>
+      <span data-plate className={`${PLATE} ${RIM_SM} px-1.5 py-[3px] text-[11px] ${className}`}>
         <span className={CHARACTERS}>{shown}</span>
       </span>
     );
@@ -60,7 +60,11 @@ const PlateLabel = ({ plate, city, size = 'md', className = '' }: PlateLabelProp
   const readable = isCar && city ? `${shown}, ${city}` : shown;
 
   return (
-    <span className={`${PLATE} ${RIM_MD} min-w-[5.25rem] px-3 pt-[5px] pb-1 ${className}`}>
+    // Spec 019, CA-12: `data-plate` gives it the metal look (globals.css).
+    <span
+      data-plate
+      className={`${PLATE} ${RIM_MD} min-w-[5.25rem] px-3 pt-[5px] pb-1 ${className}`}
+    >
       {readable !== shown && <span className="sr-only">{readable}</span>}
       <Screws />
       <span aria-hidden={readable !== shown || undefined} className={`${CHARACTERS} text-[15px]`}>

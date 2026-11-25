@@ -127,8 +127,8 @@ Sin datos nuevos en el servidor. La preferencia (Claro, Oscuro o Sistema) vive e
 ## Suposiciones
 
 - En oscuro, el panel y la franja de marca siguen negros con su brillo plateado y se separan del
-  fondo con un borde. La tarjeta «Órdenes» destaca por relieve: un degradado carbón un poco más
-  claro que el resto, borde plateado y un resplandor suave (nunca clara: encandilaría).
+  fondo con un borde. La tarjeta «Órdenes» destaca por relieve (nunca clara: encandilaría); desde la
+  spec 019, negra con un anillo y un resplandor plata, y su ícono y sus cifras en plata.
 - El logo (plateado sobre negro) se usa igual en los dos temas.
 - El ícono de la app instalada no cambia con el tema.
 
@@ -157,3 +157,4 @@ Ninguna.
 | 2026-11-20 | Implementada. |
 | 2026-11-20 | Verificada: pruebas añadidas para el contraste del foco con teclado en oscuro, botón y campo (CA-03, WCAG 1.4.11), y el borde de la franja de marca en el teléfono (CA-06). |
 | 2026-11-20 | Corrección: al elegir un tema, las etiquetas `theme-color` de la página se recolorean en su sitio en vez de borrarse. Borrarlas hacía fallar la navegación siguiente (la pantalla no se pintaba y la barra de carga se quedaba). Prueba E2E en `theme.spec.ts`. |
+| 2026-11-25 | Spec 019: el oscuro pasa a casi negro (`#050506`, también en la barra del sistema y en «Sin conexión») con tarjetas carbón y acento plata; «Órdenes» deja el degradado carbón por un anillo y un resplandor plata. |

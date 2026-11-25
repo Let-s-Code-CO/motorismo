@@ -51,9 +51,11 @@ const StaffHome = ({ name, role, openOrders, dataRequests }: StaffHomeProps) => 
         </p>
       </div>
 
+      {/* Spec 019, CA-08: on a desktop, a bento of four columns with «Órdenes» two by two; on a
+          phone, «Órdenes» on top and two columns, as before (spec 009). */}
       <ul
         aria-label={t('home.sectionsLabel')}
-        className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"
+        className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4"
       >
         {sections.map(({ href, key, icon: Icon }, index) => {
           const title = t(`home.${key}Title`);
@@ -78,18 +80,18 @@ const StaffHome = ({ name, role, openOrders, dataRequests }: StaffHomeProps) => 
 
           if (key === 'orders') {
             return (
-              <li key={href} className="col-span-2 flex md:col-span-1">
+              <li key={href} className="col-span-2 flex md:col-span-2 lg:row-span-2">
                 {/* Dark like the brand panel, on the phone and the desktop alike; the desktop keeps
                     the card's size and its description. In the dark theme, where every card is dark,
                     it stands out by relief instead: a lighter charcoal gradient, a silver edge like
                     the logo's ring and a soft glow (spec 010, CA-06). */}
                 <Link
                   href={href}
-                  className="group relative flex w-full flex-col gap-5 overflow-hidden rounded-large bg-zinc-950 p-5 text-white shadow-medium transition-[box-shadow,transform] hover:shadow-large active:scale-[0.99] md:gap-4 md:p-6 dark:bg-gradient-to-br dark:from-zinc-700 dark:via-zinc-800 dark:to-zinc-950 dark:shadow-[0_0_44px_-14px_rgba(212,212,216,0.35)] dark:ring-1 dark:ring-zinc-300/35"
+                  className="group relative flex w-full flex-col gap-5 overflow-hidden rounded-large bg-zinc-950 p-5 text-white shadow-medium transition-[box-shadow,transform] hover:shadow-large active:scale-[0.99] md:gap-4 md:p-6 shadow-[0_0_80px_-24px_var(--accent-on-dark)] ring-1 ring-[color-mix(in_srgb,var(--accent-on-dark)_35%,transparent)]"
                 >
                   <BrandOrnaments />
                   <span className="relative flex w-full items-center gap-3 md:flex-col md:items-start md:gap-4">
-                    <span className="grid size-12 shrink-0 place-items-center rounded-large bg-white/10 ring-1 ring-white/20">
+                    <span className="grid size-12 shrink-0 place-items-center rounded-large bg-[var(--accent-on-dark)] text-[var(--accent-on-dark-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
                       <Icon aria-hidden className="size-6" />
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -114,10 +116,14 @@ const StaffHome = ({ name, role, openOrders, dataRequests }: StaffHomeProps) => 
                         <span
                           key={label}
                           data-stat={label}
-                          className="flex flex-col rounded-medium bg-white/[0.06] px-3 py-2 ring-1 ring-white/10"
+                          className="flex flex-col rounded-medium bg-white/[0.04] px-4 py-3 ring-1 ring-white/10"
                         >
-                          <span className="text-2xl font-semibold tabular-nums">{count}</span>
-                          <span className="text-xs text-zinc-400">{t(`home.${label}`)}</span>
+                          <span className="text-5xl font-semibold text-[var(--accent-on-dark)] tabular-nums md:text-7xl">
+                            {count}
+                          </span>
+                          <span className="font-mono text-[10.5px] tracking-[0.12em] text-zinc-400 uppercase">
+                            {t(`home.${label}`)}
+                          </span>
                         </span>
                       ))}
                     </span>

@@ -45,10 +45,11 @@ test.describe('installable app (spec 006, HU-01)', () => {
       'href',
       '/manifest.webmanifest'
     );
-    // A light device sees the light background as its system bar (spec 010 adds the dark one).
+    // A light device sees the light background as its system bar (spec 010 adds the dark one):
+    // the showroom grey of spec 019.
     await expect(
       page.locator('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')
-    ).toHaveAttribute('content', '#fafafa');
+    ).toHaveAttribute('content', '#e9ebef');
     await expect(page.locator('meta[name="mobile-web-app-capable"]')).toHaveAttribute(
       'content',
       'yes'

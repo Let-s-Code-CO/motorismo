@@ -43,12 +43,13 @@ const Fields = ({ count }: { count: number }) => (
 );
 
 const SHAPES: Record<PageSkeletonVariant, () => React.ReactNode> = {
-  // The staff home: greeting, «Órdenes» first and wide, then the section tiles (spec 009).
+  // The staff home: greeting, «Órdenes» first and wide, then the section tiles (spec 009); on a
+  // desktop, the bento of spec 019 (CA-08): four columns, «Órdenes» two by two.
   home: () => (
     <>
       <Heading />
-      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
-        <Skeleton className="col-span-2 h-40 rounded-large md:col-span-1 md:h-52" />
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+        <Skeleton className="col-span-2 h-40 rounded-large md:h-52 lg:row-span-2 lg:h-auto" />
         {Array.from({ length: 4 }, (_, index) => (
           <Skeleton key={index} className="h-28 rounded-large md:h-52" />
         ))}

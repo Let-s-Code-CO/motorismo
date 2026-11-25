@@ -211,7 +211,7 @@ const CloseOrderDialog = ({
                 >
                   {t('close.addPayment')}
                 </Button>
-                <p aria-live="polite" className="text-sm text-default-600 tabular-nums">
+                <p aria-live="polite" className="text-sm text-default-600 tabular-figures">
                   {remaining > 0
                     ? t('close.remaining', { amount: formatPesos(remaining) })
                     : remaining < 0

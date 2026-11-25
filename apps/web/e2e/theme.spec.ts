@@ -26,9 +26,10 @@ import { SEED, SEED_CUSTOMERS, signIn } from './support/sandbox';
 
 const isDark = (page: Page) =>
   page.evaluate(() => document.documentElement.classList.contains('dark'));
+// Spec 019: the page colour is on <html> (<body> is transparent, so the backdrop shows through).
 const background = (page: Page) =>
-  page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-const DARK_BG = 'rgb(9, 9, 11)';
+  page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor);
+const DARK_BG = 'rgb(5, 5, 6)'; // #050506, spec 019
 
 /** WCAG contrast ratio between two `rgb(…)` colours. */
 const contrast = (a: string, b: string) => {
@@ -42,7 +43,7 @@ const contrast = (a: string, b: string) => {
   const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (light! + 0.05) / (dark! + 0.05);
 };
-const LIGHT_BG = 'rgb(250, 250, 250)';
+const LIGHT_BG = 'rgb(233, 235, 239)'; // #e9ebef, the showroom grey of spec 019
 
 test.describe('following the device (HU-01)', () => {
   test.use({ colorScheme: 'dark' });
@@ -73,7 +74,7 @@ test.describe('following the device (HU-01)', () => {
     const html = await response.text();
 
     expect(html).toMatch(/<html[^>]*class="[^"]*\bdark\b/);
-    expect(html).toContain('<meta name="theme-color" content="#09090b"');
+    expect(html).toContain('<meta name="theme-color" content="#050506"');
   });
 
   test('the plate keeps its yellow and black (CA-04)', async ({ page }) => {
@@ -142,9 +143,15 @@ test.describe('following the device (HU-01)', () => {
 
     await signIn(page, SEED.operator.email);
     await expect(page).toHaveURL('/');
+    // Spec 019: «Órdenes» stands out by a silver ring and glow, with its icon and figures silver.
     const orders = page.getByRole('list', { name: 'Secciones' }).getByRole('link').first();
-    const image = await orders.evaluate((element) => getComputedStyle(element).backgroundImage);
-    expect(image).toContain('linear-gradient');
+    // The ring is `color-mix` of the silver (#d4d4d8 = 212, 212, 216), written as `color(srgb …)`.
+    const ring = await orders.evaluate((element) => {
+      const [, r, g, b] =
+        /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)/.exec(getComputedStyle(element).boxShadow) ?? [];
+      return [r, g, b].map((channel) => Math.round(Number(channel) * 255));
+    });
+    expect(ring).toEqual([212, 212, 216]);
   });
 
   test("the keyboard focus stands out on dark: a button's ring and a field's border (CA-03)", async ({
@@ -225,7 +232,7 @@ test.describe('following the device (HU-01)', () => {
         .map((meta) => meta.getAttribute('content'))
     );
 
-    expect(bar).toEqual(['#09090b']);
+    expect(bar).toEqual(['#050506']);
   });
 });
 

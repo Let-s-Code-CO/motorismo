@@ -85,7 +85,8 @@ lo que hay en el lavadero a la vista, para entrar a cualquier sección con un to
   «Próximamente» (es información, no una sección a la que ir). Desde la spec 018 tampoco en
   escritorio: lo que anunciaba ya es una sección.
 - **CA-09** — Dado un escritorio, cuando el personal abre el inicio, entonces ve las tarjetas como
-  hoy (ícono, nombre y descripción, del mismo tamaño); «Órdenes», oscura y con los números de CA-07.
+  hoy (ícono, nombre y descripción); «Órdenes», oscura y con los números de CA-07. Desde la spec 019
+  (CA-08), en un bento de cuatro columnas en el que «Órdenes» ocupa dos por dos.
 
 ### HU-03 (P2) — La marca en el acceso desde el celular
 
@@ -194,3 +195,4 @@ Ninguna.
 | 2026-11-24 | Spec 017: con «Habeas data» las secciones no cabían en una línea. El encabezado del teléfono se usa hasta 1024 px; en escritorio, «Reportes», «Habeas data» y «Usuarios» van bajo «Administración» y el nombre de la marca junto al logo aparece desde 1280 px. En la franja del acceso, el texto se separa más del logo para que el destello no lo toque. El brillo y los destellos de la marca pasan una vez y se detienen antes de 5 s (WCAG 2.2.2): una animación sin fin hacía titilar el cursor en macOS. |
 | 2026-11-24 | Spec 018: «Administración ▾» gana «Servicios» y «Empleados» (para el administrador; el operador los sigue viendo en la barra) y «Marcas y líneas», y la barra suma «Más ▾» según el ancho: lo que no cabe sale por el final. «Inicio» siempre en la barra. |
 | 2026-11-24 | Spec 018: el inicio ya no muestra «Muy pronto» en escritorio: anunciaba «Marcas y líneas», que ya es una sección, y no queda nada especificado que anunciar. |
+| 2026-11-25 | Spec 019: en escritorio, el inicio es un bento de cuatro columnas con «Órdenes» de dos por dos (CA-09 ya no pide el mismo tamaño); el encabezado es una píldora flotante con la sección actual en el acento. El teléfono no cambia. |

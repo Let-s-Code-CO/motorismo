@@ -153,7 +153,7 @@ const VehicleCatalogScreen = ({ filters, brands }: VehicleCatalogScreenProps) =>
     );
   const pendingLines = (brand: CatalogBrand) => brand.lines.filter((line) => !line.reviewed).length;
   const count = (item: CatalogLine) => (
-    <span className="text-sm whitespace-nowrap text-default-500 tabular-nums">
+    <span className="text-sm whitespace-nowrap text-default-500 tabular-figures">
       {t('catalog.vehicles', { count: item.vehicles })}
     </span>
   );

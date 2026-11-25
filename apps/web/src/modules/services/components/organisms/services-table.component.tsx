@@ -152,7 +152,7 @@ const ServicesTable = ({
                   </span>
                 )}
                 {/* On phones the prices go under the name: nothing behind a sideways scroll. */}
-                <span className="flex flex-col text-xs text-default-500 tabular-nums sm:hidden">
+                <span className="flex flex-col text-xs text-default-500 tabular-figures sm:hidden">
                   {PRICES.map((price) => (
                     <span key={price}>
                       {t(PRICE_LABEL[price])}: {priceText(service[price])}

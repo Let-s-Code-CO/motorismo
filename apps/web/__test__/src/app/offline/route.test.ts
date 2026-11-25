@@ -39,6 +39,12 @@ describe('GET /offline', () => {
     expect(html).toContain('<button type="button" onclick="location.reload()">Reintentar</button>');
   });
 
+  it('shows «Reintentar» as a pill, like the main button of every screen (spec 019, CA-06)', async () => {
+    const { html } = await render();
+
+    expect(html).toMatch(/button \{[^}]*border-radius: 9999px/);
+  });
+
   it('is self-contained: no scripts or style sheets to fetch, and no personal data (RN-02)', async () => {
     const { html } = await render();
 
@@ -60,7 +66,7 @@ describe('GET /offline', () => {
     // The choice is read from the device's cookie, and the system bar follows it.
     expect(html).toContain('motorismo-theme=(light|dark)');
     expect(html).toContain(
-      '<meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">'
+      '<meta name="theme-color" content="#050506" media="(prefers-color-scheme: dark)">'
     );
   });
 });

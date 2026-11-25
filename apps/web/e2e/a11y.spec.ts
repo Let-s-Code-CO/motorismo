@@ -19,14 +19,17 @@ import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 import { refuseNoShow, saveAgendaSettings } from './support/toasts';
 
 const audit = async (page: Page) => {
-  // Every screen enters with a short fade (spec 011, `page-in`), and so does a floating notice
-  // (spec 013): mid-fade, colours are blended and axe would measure a contrast nobody sees. Wait
-  // for them to end first.
+  // Every screen enters with a short fade (spec 011, `page-in`), and so do a floating notice
+  // (spec 013) and «Ver todos» (filter bar): mid-fade, colours are blended and axe would measure a
+  // contrast nobody sees (on the showroom grey of spec 019 such a blend dips below AA). Wait for
+  // every animation that ends to do so first (none should run forever, WCAG 2.2.2 and spec 019
+  // RN-02, which `ui.spec.ts` checks; one that did would otherwise stall the audit).
   await page.evaluate(() =>
-    Promise.all(
-      [...document.querySelectorAll('[data-page], [data-toast]')].flatMap((node) =>
-        node.getAnimations().map((animation) => animation.finished)
-      )
+    Promise.allSettled(
+      document
+        .getAnimations()
+        .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+        .map((animation) => animation.finished)
     )
   );
   const { violations } = await new AxeBuilder({ page })

@@ -20,6 +20,8 @@
 
 @theme inline {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  /* Spec 019, CA-04: the dashboard face of figures and table headers. */
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 /* The vehicle plate (spec 005, HU-07): a Colombian private plate, the only non-neutral colour of
@@ -165,4 +167,179 @@
     width: 100%;
     animation: progress-fade 300ms ease-out both;
   }
+}
+
+/* ── Automotive premium look (spec 019) ──────────────────────────────────────────────────────────
+   Outside Tailwind's layers on purpose: these rules have to win over HeroUI's and Tailwind's
+   utilities (the titles' own size, the cards' background, the buttons' radius) on every screen
+   without touching each one. Nothing here moves on its own (RN-02). */
+
+/* The accent (CA-01): steel with white ink in light, silver with dark ink in dark. On the dark
+   «Órdenes» block, silver in both modes. HeroUI's `primary` carries the same colours (hero.ts). */
+:root {
+  --accent: #3f3f46;
+  --accent-ink: #ffffff;
+  --accent-on-dark: #d4d4d8;
+  --accent-on-dark-ink: #0a0a0a;
+}
+.dark {
+  --accent: #d4d4d8;
+  --accent-ink: #0a0a0a;
+}
+
+/* The backdrop (CA-02): a fine dotted grid fading downwards, a soft glow on top and a faint grain,
+   fixed behind everything (the page colour is on <html>, <body> is transparent). */
+.garage {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 45% at 50% -8%,
+      color-mix(in srgb, var(--accent) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(45% 40% at 100% 0%, rgb(255 255 255 / 0.9), transparent 70%),
+    radial-gradient(rgb(9 9 11 / 0.16) 1px, transparent 1px) 0 0 / 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
+  mask-image: linear-gradient(180deg, black 0%, black 60%, transparent 100%);
+}
+.dark .garage {
+  background:
+    radial-gradient(
+      55% 42% at 50% -6%,
+      color-mix(in srgb, var(--accent) 18%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(40% 35% at 100% 0%, rgb(255 255 255 / 0.06), transparent 70%),
+    radial-gradient(rgb(255 255 255 / 0.075) 1px, transparent 1px) 0 0 / 22px 22px;
+}
+.garage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Chrome titles (CA-03): every stop of the gradient reads as large text on the page (RN-01:
+   3:1 at least; e2e/style.spec.ts measures it, axe cannot). */
+main h1 {
+  font-size: clamp(2.25rem, 3vw + 1.25rem, 3.5rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  background-image: linear-gradient(180deg, #000000 0%, #3f3f46 48%, #71717a 62%, #18181b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark main h1 {
+  background-image: linear-gradient(180deg, #ffffff 0%, #d4d4d8 40%, #71717a 62%, #e4e4e7 100%);
+}
+
+/*
+ * Like a dashboard (CA-04): a figure on its own (a price, a phone, a count, a date in a table) is
+ * `tabular-nums`, in the mono face; table headers in spaced mono capitals. A line that mixes words
+ * and figures («CC 1020304050 · Sin celular», «2 vehículos», a sentence with an amount) and the plate
+ * use `tabular-figures` instead: aligned digits in Geist, since words in mono read as code and widen
+ * the line on a phone.
+ */
+@utility tabular-figures {
+  font-variant-numeric: tabular-nums;
+}
+.tabular-nums {
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+}
+thead th {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+}
+
+/* Cards (CA-05): a light of the accent follows the cursor (Spotlight writes --mx and --my); in dark,
+   a faint lit top edge. A card that can be pressed lights its border with the accent. */
+.bg-content1 {
+  background-image: radial-gradient(
+    420px circle at var(--mx, -999px) var(--my, -999px),
+    color-mix(in srgb, var(--accent) 14%, transparent),
+    transparent 45%
+  );
+}
+.dark .bg-content1 {
+  background-image:
+    radial-gradient(
+      420px circle at var(--mx, -999px) var(--my, -999px),
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(180deg, rgb(255 255 255 / 0.035), transparent 40%);
+}
+a.bg-content1:hover,
+button.bg-content1:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* The main button is a pill (CA-06). */
+.bg-primary.rounded-medium,
+.bg-primary.rounded-small {
+  border-radius: 9999px;
+}
+
+/* Metal plates (CA-12, CA-13): reflective aluminium with volume, a brushed grain, embossed
+   characters and a still glint; another glint crosses once when the plate or its row is hovered,
+   only if the device allows motion. It keeps its yellow and ink (spec 005, HU-07). */
+[data-plate] {
+  overflow: hidden;
+  isolation: isolate;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.5) 0%,
+      rgb(255 255 255 / 0) 40%,
+      rgb(0 0 0 / 0) 60%,
+      rgb(0 0 0 / 0.16) 100%
+    ),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.07) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, var(--color-plate-light), var(--color-plate) 60%);
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6),
+    0 -1px 0 rgb(0 0 0 / 0.28);
+}
+[data-plate]::before,
+[data-plate]::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+[data-plate]::before {
+  inset: 0;
+  background: linear-gradient(118deg, transparent 18%, rgb(255 255 255 / 0.4) 28%, transparent 38%);
+}
+[data-plate]::after {
+  inset: -50% -80%;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgb(255 255 255 / 0.8) 49%,
+    rgb(255 255 255 / 0.2) 53%,
+    transparent 60%
+  );
+  transform: translateX(-70%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-plate]::after {
+    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+}
+[data-plate]:hover::after,
+a:hover [data-plate]::after,
+li:hover [data-plate]::after,
+tr:hover [data-plate]::after {
+  transform: translateX(70%);
 }

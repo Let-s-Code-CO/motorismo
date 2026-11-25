@@ -13,7 +13,8 @@ export type ThemeChoice = (typeof THEME_CHOICES)[number];
 export type Theme = 'light' | 'dark';
 
 /** The page's background in each theme, also the system bar's colour (CA-07; `hero.ts`). */
-export const THEME_COLORS: Record<Theme, string> = { light: '#fafafa', dark: '#09090b' };
+// Spec 019: the showroom grey and the near black of the automotive look.
+export const THEME_COLORS: Record<Theme, string> = { light: '#e9ebef', dark: '#050506' };
 
 /** The device's own preference, as the browser reports it. */
 export const PREFERS_DARK = '(prefers-color-scheme: dark)';
