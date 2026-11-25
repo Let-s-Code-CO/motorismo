@@ -191,7 +191,7 @@ describe('MyReservationForm', () => {
     }
   );
 
-  it('changes a reservation: it starts with what it has and sends its id (CA-18)', async () => {
+  it('changes a reservation: it starts with what it has, its estimated time included, and sends its id (CA-18; spec 021, CA-06)', async () => {
     vi.mocked(saveMyReservation).mockResolvedValue({ ok: true, id: 'r1' });
     const reservation = {
       id: '3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f',
@@ -206,6 +206,10 @@ describe('MyReservationForm', () => {
 
     expect(screen.getByRole('radio', { name: 'Suzuki GSX-R600 · UIH-03D' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Limpieza de cadena' })).toBeChecked();
+    // Spec 021, CA-06: the time of what it already has, before touching anything (15 min).
+    expect(document.querySelector('[data-booking-estimate]')).toHaveTextContent(
+      'Tiempo estimado: ≈ 15 min'
+    );
     expect(screen.getByLabelText('Observaciones (opcional)')).toHaveValue('Antes de las 11');
     submit();
 

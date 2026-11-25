@@ -1,7 +1,7 @@
 ---
 id: "021"
 titulo: "Reservas del cliente: varias por vehículo y tiempo estimado"
-estado: implementada
+estado: verificada
 creada: 2026-11-25
 actualizada: 2026-11-25
 ---
@@ -121,3 +121,4 @@ Ninguna.
 | 2026-11-25 | Plan aprobado: estado `planificada`. |
 | 2026-11-25 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-25 | Implementada. Además de lo previsto, una prueba de concurrencia en el sandbox (cuatro reservas del mismo vehículo y día a la vez dejan una). Enmendada la spec 014. |
+| 2026-11-25 | Verificada: los 8 criterios con prueba vista fallar; E2E 253/253 contra producción. Se añadió que, al cambiar una reserva, el estimado de los servicios que ya tiene se ve desde el principio (CA-06), vista fallar con una mutación. |

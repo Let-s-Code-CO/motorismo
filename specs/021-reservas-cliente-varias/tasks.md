@@ -118,6 +118,7 @@ Convenciones:
 | `my-reservation-form` · CA-06 | sumar lo no ofrecido para el vehículo | falla |
 | `my-reservation-form` · CA-02 | el mensaje sin «ese día» | falla |
 | `my-reservations-screen` · CA-05 | una sola pendiente por vehículo | falla |
+| `my-reservation-form` · CA-06 al cambiar (en `/verificar`) | sin estimado al cambiar una reserva | falla |
 
 Al final, `git diff` y `grep` (`{false &&`, `{true &&`, `null::smallint` en la migración) sin restos.
 
