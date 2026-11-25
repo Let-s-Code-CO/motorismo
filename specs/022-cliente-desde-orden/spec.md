@@ -1,7 +1,7 @@
 ---
 id: "022"
 titulo: "Registrar cliente y su primer vehículo desde «Nueva orden»"
-estado: implementada
+estado: verificada
 creada: 2026-11-25
 actualizada: 2026-11-25
 ---
@@ -140,3 +140,4 @@ Ninguna.
 | 2026-11-25 | Ajuste del usuario al verlo: «Registrar cliente» pasa de botón con borde a enlace dentro de la frase de debajo de la búsqueda. Implementada. Además, el selector de color del vehículo ya no se cierra solo en un modal más alto que la pantalla (encontrado por la E2E de la orden). |
 | 2026-11-25 | Añadido a pedido del usuario: CA-11 (HU-03), la placa que coincidió con la búsqueda, a la derecha del resultado y con el diseño de placa; solo si fue por placa. |
 | 2026-11-25 | A pedido del usuario: las placas tienen ancho fijo en toda la app y una ciudad larga reduce su letra en vez de cortarse. Provisional hasta la spec 023 («Placa según la norma colombiana»). |
+| 2026-11-25 | Verificada: CA-01 a CA-11 con prueba vista fallar (pgTAP, unitarias, componentes y E2E). Sobre `02eed0b`: 1521 unitarias, pgTAP 778, sandbox 55, E2E 257/257 contra producción. |

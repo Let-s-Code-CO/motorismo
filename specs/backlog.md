@@ -51,4 +51,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [019](019-estilo-automotriz/spec.md) | Estilo automotriz premium con acento plata | verificada (falta despliegue) |
 | [020](020-liquidacion-quincenal/spec.md) | Liquidación quincenal y por rango de fechas | aprobada |
 | [021](021-reservas-cliente-varias/spec.md) | Reservas del cliente: varias por vehículo y tiempo estimado | verificada (falta despliegue) |
-| [022](022-cliente-desde-orden/spec.md) | Registrar cliente y su primer vehículo desde «Nueva orden» | implementada |
+| [022](022-cliente-desde-orden/spec.md) | Registrar cliente y su primer vehículo desde «Nueva orden» | verificada (falta despliegue) |
