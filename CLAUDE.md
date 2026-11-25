@@ -210,7 +210,9 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Clientes: **`cliente@motorismo.test`** (cuenta de prueba para usar la app como cliente: entra a
   su «Inicio», `/my`), `cliente.desactivado@motorismo.test`; `cliente.google@motorismo.test` (origen
   Google, con foto, sin contraseña) y dos clientes sin cuenta del punto de atención.
-- Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada),
+- Vehículos (spec 005): Camila tiene la Suzuki GSX-R600 `UIH-03D` (y la `JWJ-07` retirada); Gabriel, además
+  de su Yamaha, la AKT `UIH-58E` y el Mazda `KDM-917` de Medellín (buscar «UIH» o «KDM» da dos
+  resultados por placa, spec 022);
   Valentina la camioneta `KDM-482` (placa de Bogotá, D.C.) y Andrés una bicicleta. El catálogo de
   marcas y líneas y los 1.104 municipios (ciudad de la placa) llegan por migración (existen en
   todos los entornos), no por seed.
@@ -271,7 +273,9 @@ e2e/                         # Playwright
   `popoverProps={{ portalContainer }}` con un elemento del modal; si no, el modal los oculta a los
   lectores de pantalla (`aria-hidden`). Y ese `Modal` lleva `scrollBehavior="outside"`: con
   `normal` (por defecto) o `inside` la tarjeta del modal recorta la lista abierta. Ver
-  `vehicle-form` y `vehicles-section` (spec 005).
+  `vehicle-form` y `vehicles-section` (spec 005). Un `Select` en un modal más alto que la pantalla
+  lleva además `shouldCloseOnScroll: false` en `popoverProps`: al abrirlo, el foco baja a sus
+  opciones, el modal se desplaza y HeroUI lo cerraría al instante (`color-select`, spec 022).
 
 ## App instalable y sin conexión (spec 006)
 
@@ -468,6 +472,14 @@ e2e/                         # Playwright
   `getStaffForPage()` (un cliente recibe «No tienes permiso») o `requireCustomer()`, y en Server
   Actions `getActiveStaff()` / `getActiveAdmin()` / `getActiveCustomer()`
   (`modules/auth/api/auth.server.ts`) → RLS y guardas en Postgres.
+- **Registrar un cliente en el punto de atención (spec 022):** `createCustomer` llama a
+  `register_customer` (`security invoker`: la RLS y `customers_guard` de siempre), que registra al
+  cliente y, si viene, su primer vehículo con `save_vehicle`, juntos o ninguno. El formulario
+  («Nuevo cliente» en «Clientes», «Nueva orden» y «Nueva reserva») tiene la parte opcional «Primer
+  vehículo» con `VehicleFields` (los campos de `VehicleForm`, extraídos). En el buscador
+  (`customer-picker`), «Registrar cliente» es un enlace en la frase de debajo («No se encontró
+  ningún cliente activo.» o «¿Es un cliente nuevo?»), y lo buscado se lleva a su campo
+  (`prefillFromSearch`: celular, placa con su tipo o nombre).
 - Clientes Supabase: `supabase-server.lib.ts` (sesión del usuario, por defecto),
   `supabase-proxy.lib.ts` (solo el proxy) y `supabase-admin.lib.ts` (secret key, solo servidor y
   solo para lo que la sesión del usuario no puede hacer, tras comprobar permisos).

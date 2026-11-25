@@ -285,6 +285,23 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       .toBe(true);
     expect(await horizontalOverflow(page)).toBe(0);
   });
+  test('«Nueva orden» registering a customer with their first vehicle has no horizontal scroll (spec 022)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+    await page.goto('/orders/new');
+    await page.getByLabel('Buscar cliente').fill('Nadie Con Este Nombre');
+    await page.getByRole('button', { name: 'Registrar cliente' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Registrar cliente sin cuenta' });
+    // With the keyboard: the install notice of this iPhone (spec 006) may lie over the form.
+    await dialog.getByRole('checkbox', { name: 'Registrar también su primer vehículo' }).focus();
+    await page.keyboard.press('Space');
+    await expect(dialog.getByRole('group', { name: 'Primer vehículo' })).toBeVisible();
+
+    await expect.poll(() => horizontalOverflow(page)).toBe(0);
+  });
+
   test('the customer area has no horizontal scroll, the booking form with its estimated time too (specs 014, 017 and 021)', async ({
     page,
   }) => {

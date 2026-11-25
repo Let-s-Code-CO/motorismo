@@ -8,6 +8,8 @@
  * - in the "Clientes" table it is compact: one line, no city and no "COLOMBIA" (CA-29).
  * The drawing is never the only way to read it (CA-28): assistive technologies get the plate with
  * its hyphen (UIH-03D) and, for a car, its city; what is only decoration is hidden from them.
+ * Every plate has the same width, whatever its letters (a list of plates lines up), wide enough for
+ * the widest plate; a long city name is never cut: its small print shrinks to fit (spec 022, CA-11).
  */
 import { screen } from '@testing-library/react';
 
@@ -73,4 +75,42 @@ describe('PlateLabel', () => {
       expect(screen.queryByText(/Bogotá|BOGOTÁ/)).not.toBeInTheDocument();
     }
   );
+
+  it.each([
+    ['md', 'UIH03D', 'WMW88W'],
+    ['sm', 'UIH03D', 'WMW88W'],
+  ] as const)(
+    'gives every %s plate the same width, whatever its letters (%s and %s)',
+    (size, narrow, wide) => {
+      const { container } = renderWithProviders(
+        <>
+          <PlateLabel plate={narrow} size={size} />
+          <PlateLabel plate={wide} size={size} />
+        </>
+      );
+      const [first, second] = container.querySelectorAll<HTMLElement>('[data-plate]');
+      // One fixed width class, the same for both: no width that depends on the text.
+      const width = (plate: HTMLElement) => plate.className.match(/\bw-\[[^\]]+\]/g);
+      expect(width(first!)).toHaveLength(1);
+      expect(width(first!)).toEqual(width(second!));
+      expect(first!.className).not.toMatch(/\bmin-w-/);
+    }
+  );
+
+  it('never cuts a long city: it keeps the whole name and shrinks its small print to fit', () => {
+    renderWithProviders(
+      <>
+        <PlateLabel plate="ABC123" city="Cali" />
+        <PlateLabel plate="ABC124" city="San Antonio del Tequendama" />
+      </>
+    );
+
+    const short = screen.getByText('CALI');
+    const long = screen.getByText('SAN ANTONIO DEL TEQUENDAMA');
+    expect(long.className).not.toMatch(/\btruncate\b/);
+    // A short name keeps the plate's small print; a long one is smaller, never cut.
+    expect(short.style.fontSize).toBe('');
+    expect(Number.parseFloat(long.style.fontSize)).toBeLessThan(6.5);
+    expect(Number.parseFloat(long.style.fontSize)).toBeGreaterThan(4);
+  });
 });

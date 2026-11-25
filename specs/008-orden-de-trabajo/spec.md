@@ -44,7 +44,8 @@ harán y quién los hace, para que quede registrado desde que entra al lavadero.
 
 - **CA-01** — Dado un miembro del personal en «Nueva orden», cuando busca al cliente por nombre,
   celular o placa y lo elige, entonces ve sus vehículos activos para elegir uno; si tiene uno
-  solo, ya viene elegido (RN-10).
+  solo, ya viene elegido (RN-10). *(Enmienda de la spec 022: si no lo encuentra, lo registra ahí
+  mismo, con su primer vehículo si quiere, y queda elegido.)*
 - **CA-02** — Dado un cliente sin el vehículo que trae, cuando el personal lo registra desde la
   misma orden (con las reglas de la spec 005), entonces queda elegido para la orden, sin salir de
   ella.
@@ -336,3 +337,4 @@ Ninguna. Resueltas con el usuario el 2026-11-20:
 | 2026-11-20 | Ajustes visuales del detalle: vehículo con el ícono de su tipo y la placa como en la ficha del cliente; historial con íconos; «Anular orden» en su propia sección al final, como «Desactivar cliente». |
 | 2026-11-20 | Verificada: CA-29 alineado con RN-12/CA-34 (la entrega cuenta desde el inicio); se añadieron pruebas del contenido de cada fila de «Órdenes» (CA-18), del vehículo retirado que no se ofrece (CA-10) y la etiqueta CA-35 en pgTAP. |
 | 2026-11-21 | Enmienda de la spec 012: «En cola» se ordena por hora de turno (RN-04 de la 012) y muestra las reservas por llegar (CA-18). Sin reservas, el orden es el de llegada, como antes. |
+| 2026-11-25 | Enmienda de la spec 022: «Registrar cliente» desde «Nueva orden» (CA-01), con su primer vehículo opcional; ambos quedan elegidos. |

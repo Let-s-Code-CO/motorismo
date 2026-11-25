@@ -1,7 +1,7 @@
 ---
 id: "022"
 titulo: "Registrar cliente y su primer vehículo desde «Nueva orden»"
-estado: aprobada
+estado: implementada
 creada: 2026-11-25
 actualizada: 2026-11-25
 ---
@@ -62,6 +62,18 @@ en que lo registro, para no hacer dos pasos.
 - **CA-10** — Dado un cliente registrado con su vehículo desde «Clientes», entonces su ficha muestra
   el vehículo.
 
+### HU-03 (P2) — Ver por qué salió un resultado
+
+Como miembro del personal, quiero ver la placa con la que coincidió mi búsqueda, para reconocer al
+cliente por su vehículo.
+
+**Criterios de aceptación**
+
+- **CA-11** — Dada una búsqueda de cliente (en «Nueva orden» o al reservar) que coincide con la
+  placa de un vehículo activo del cliente, entonces su resultado muestra esa placa a la derecha, con
+  el diseño de placa completo (spec 005, HU-07: la ciudad debajo si es de carro, «COLOMBIA» si es de
+  moto); si coincidió por el nombre, el celular o el correo, no se muestra ninguna placa.
+
 ## Requisitos funcionales
 
 - **RF-01** — «Nueva orden» permite registrar al cliente que no encuentra, como ya lo permite la
@@ -97,8 +109,10 @@ Sin datos nuevos: se registran un cliente y un vehículo como hoy.
 
 ## Suposiciones
 
-- «Registrar cliente» aparece cuando la búsqueda no encuentra a nadie, como al reservar; no se
-  muestra mientras hay resultados.
+- «Registrar cliente» está siempre a la vista bajo la búsqueda, en la orden como en la reserva:
+  también sirve cuando la búsqueda encuentra a otra persona con el mismo nombre. Es un enlace en
+  la frase de debajo: «No se encontró ningún cliente activo. Registrar cliente» o, con resultados
+  o sin buscar, «¿Es un cliente nuevo? Registrar cliente» (decisión del usuario al verlo).
 - La placa reconocida en CA-04 sigue el formato de placa de la spec 005; un número de 10 dígitos que
   empieza por 3 es un celular.
 
@@ -121,3 +135,8 @@ Ninguna.
 |---|---|
 | 2026-11-25 | Creación, a pedido del usuario: registrar al cliente desde «Nueva orden» con el mismo formulario y, opcional, su primer vehículo. Enmienda las specs 004 (HU-06) y 008 (CA-01). |
 | 2026-11-25 | Aprobada por el usuario. |
+| 2026-11-25 | Corrección aprobada por el usuario al planificar: «Registrar cliente» siempre a la vista, como al reservar (la suposición decía «solo sin resultados»). Plan aprobado: estado `planificada`. |
+| 2026-11-25 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
+| 2026-11-25 | Ajuste del usuario al verlo: «Registrar cliente» pasa de botón con borde a enlace dentro de la frase de debajo de la búsqueda. Implementada. Además, el selector de color del vehículo ya no se cierra solo en un modal más alto que la pantalla (encontrado por la E2E de la orden). |
+| 2026-11-25 | Añadido a pedido del usuario: CA-11 (HU-03), la placa que coincidió con la búsqueda, a la derecha del resultado y con el diseño de placa; solo si fue por placa. |
+| 2026-11-25 | A pedido del usuario: las placas tienen ancho fijo en toda la app y una ciudad larga reduce su letra en vez de cortarse. Provisional hasta la spec 023 («Placa según la norma colombiana»). |

@@ -1694,6 +1694,22 @@ export type Database = {
         }[]
       }
       regenerate_payroll: { Args: { p_month: string }; Returns: string }
+      register_customer: {
+        Args: {
+          p_brand_name?: string
+          p_color?: Database["public"]["Enums"]["vehicle_color"]
+          p_displacement_cc?: number
+          p_email: string
+          p_full_name: string
+          p_line_name?: string
+          p_phone: string
+          p_plate?: string
+          p_plate_city_code?: string
+          p_vehicle_class?: Database["public"]["Enums"]["vehicle_class"]
+          p_vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Returns: string
+      }
       register_data_request: {
         Args: {
           p_channel: Database["public"]["Enums"]["data_request_channel"]

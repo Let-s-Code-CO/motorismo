@@ -47,7 +47,10 @@ const ColorSelect = ({
       onClose={onBlur}
       // The list is drawn inside the form (portalContainer): without padding against that
       // container, a field in the left column would get its list shifted 12 px to the right.
-      popoverProps={{ portalContainer, containerPadding: 0 }}
+      // It stays open when its container scrolls: in a modal taller than the screen (a new customer
+      // with their first vehicle, spec 022; a vehicle on a phone), opening it moves the focus to its
+      // options, the modal scrolls to show them, and HeroUI's default would close it at once.
+      popoverProps={{ portalContainer, containerPadding: 0, shouldCloseOnScroll: false }}
       isInvalid={isInvalid}
       errorMessage={errorMessage}
       renderValue={(items) =>

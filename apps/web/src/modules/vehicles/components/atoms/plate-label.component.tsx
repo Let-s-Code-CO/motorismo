@@ -25,6 +25,30 @@ const RIM_SM =
 const CHARACTERS = 'font-bold leading-none tracking-[0.06em] tabular-figures';
 const SMALL_PRINT = 'text-[6.5px] leading-none font-semibold tracking-[0.14em]';
 
+/*
+ * Every plate has the same width, whatever its letters, so a list of plates lines up: the widest
+ * plate there can be (WMW-88W) measures 90 px of characters at 15 px (11 px when small), plus its
+ * side padding. 116 px and 80 px hold it with a little room.
+ */
+const WIDTH_MD = 'w-[7.25rem]';
+const WIDTH_SM = 'w-[5rem]';
+/** Room for the city under the characters: the width less the side padding (2 × 12 px). */
+const CITY_ROOM_PX = 92;
+/** How wide one letter of the small print is, with its spacing (measured: 26 letters, 128 px). */
+const CITY_LETTER_PX = 4.94;
+const CITY_FONT_PX = 6.5;
+
+/**
+ * The small print's size for a city: the plate's own, or smaller for a long name so it fits whole
+ * («SAN ANTONIO DEL TEQUENDAMA»), never cut. Undefined keeps the class size.
+ */
+const cityFontSize = (city: string) => {
+  const needed = city.length * CITY_LETTER_PX;
+  return needed > CITY_ROOM_PX
+    ? `${((CITY_FONT_PX * CITY_ROOM_PX) / needed).toFixed(2)}px`
+    : undefined;
+};
+
 /** The two mounting screws of the plate, decorative. */
 const Screws = () => (
   <>
@@ -46,7 +70,10 @@ const PlateLabel = ({ plate, city, size = 'md', className = '' }: PlateLabelProp
 
   if (size === 'sm') {
     return (
-      <span data-plate className={`${PLATE} ${RIM_SM} px-1.5 py-[3px] text-[11px] ${className}`}>
+      <span
+        data-plate
+        className={`${PLATE} ${RIM_SM} ${WIDTH_SM} px-1.5 py-[3px] text-[11px] ${className}`}
+      >
         <span className={CHARACTERS}>{shown}</span>
       </span>
     );
@@ -61,20 +88,19 @@ const PlateLabel = ({ plate, city, size = 'md', className = '' }: PlateLabelProp
 
   return (
     // Spec 019, CA-12: `data-plate` gives it the metal look (globals.css).
-    <span
-      data-plate
-      className={`${PLATE} ${RIM_MD} min-w-[5.25rem] px-3 pt-[5px] pb-1 ${className}`}
-    >
+    <span data-plate className={`${PLATE} ${RIM_MD} ${WIDTH_MD} px-3 pt-[5px] pb-1 ${className}`}>
       {readable !== shown && <span className="sr-only">{readable}</span>}
       <Screws />
       <span aria-hidden={readable !== shown || undefined} className={`${CHARACTERS} text-[15px]`}>
         {shown}
       </span>
       {below && (
-        // Taller line than SMALL_PRINT: truncate clips, and the accent of BOGOTÁ sits above.
+        // Taller line than SMALL_PRINT: the accent of BOGOTÁ sits above. A long name is never cut:
+        // its print shrinks to fit the plate's width.
         <span
           aria-hidden="true"
-          className={`${SMALL_PRINT} mt-[2px] max-w-[6.5rem] truncate !leading-[1.35]`}
+          className={`${SMALL_PRINT} mt-[2px] !leading-[1.35]`}
+          style={{ fontSize: cityFontSize(below) }}
         >
           {below}
         </span>

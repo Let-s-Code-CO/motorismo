@@ -4,6 +4,7 @@
  * Guards CA-24 (a customer with a name and a phone only, no email sent), CA-26 (an email already in
  * use is refused), CA-27 (editing; the email of a customer with an account is read-only) and CA-28
  * (a counter customer who later signs up with the same email keeps one record, now with account).
+ * Spec 022, CA-10: a customer registered with their first vehicle has it in their record.
  */
 import { expect, test } from '@playwright/test';
 
@@ -12,11 +13,13 @@ import {
   SEED_CUSTOMERS,
   adminClient,
   confirmLinkFromEmail,
+  deleteCustomers,
   deleteUsersByEmail,
   emailCountFor,
   publicClient,
   signIn,
   uniqueEmail,
+  uniquePlate,
 } from './support/sandbox';
 
 const later = uniqueEmail('later');
@@ -24,10 +27,13 @@ const edited = uniqueEmail('edited');
 const withEmail = uniqueEmail('counteremail');
 // Tests of this file run in parallel workers: each removes only what it created.
 const createdNames: string[] = [];
+// Customers with a vehicle: removed with their vehicles.
+const createdIds: string[] = [];
 
 test.afterAll(async () => {
   if (createdNames.length)
     await adminClient().from('customers').delete().in('full_name', createdNames);
+  await deleteCustomers(createdIds);
   await deleteUsersByEmail([later, edited, withEmail]);
 });
 
@@ -55,6 +61,42 @@ test('registers a customer with a name and a phone only (CA-24)', async ({ page 
   await expect(row).toContainText('Sin correo');
   await expect(row).toContainText('312 000 1111');
   await expect(row).toContainText('Sin cuenta');
+});
+
+test('registers a customer with their first vehicle, which their record shows (spec 022, CA-05, CA-10)', async ({
+  page,
+}) => {
+  const name = `E2E Con Moto ${Date.now()}`;
+  const plate = uniquePlate('motorcycle');
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+
+  const dialog = await openNewCustomer(page);
+  await dialog.getByLabel('Nombre completo').fill(name);
+  await dialog.getByLabel('Celular (opcional)').fill('312 000 4444');
+  await dialog.getByRole('checkbox', { name: /El cliente autorizó/ }).check();
+  await dialog.getByRole('checkbox', { name: 'Registrar también su primer vehículo' }).check();
+  const vehicle = dialog.getByRole('group', { name: 'Primer vehículo' });
+  await vehicle.getByRole('combobox', { name: 'Marca' }).fill('Suzuki');
+  await page.getByRole('option', { name: 'Suzuki', exact: true }).click();
+  await vehicle.getByRole('combobox', { name: 'Línea' }).fill('GSX-R600');
+  await page.getByRole('option', { name: 'GSX-R600', exact: true }).click();
+  await vehicle.getByRole('button', { name: /Color/ }).click();
+  await page.getByRole('option', { name: 'Negro', exact: true }).click();
+  await vehicle.getByRole('textbox', { name: 'Placa' }).fill(plate);
+  await dialog.getByRole('button', { name: 'Registrar cliente' }).click();
+
+  await expect(page.getByText('Cliente registrado.')).toBeVisible();
+  const { data: customer } = await adminClient()
+    .from('customers')
+    .select('id')
+    .eq('full_name', name)
+    .single();
+  createdIds.push(customer!.id);
+  await page.goto(`/customers/${customer!.id}`);
+  const vehicles = page.getByRole('region', { name: 'Vehículos' });
+  await expect(vehicles.getByText('Suzuki GSX-R600')).toBeVisible();
+  await expect(vehicles.locator('[data-plate]')).toContainText(plate.slice(0, 3));
 });
 
 test('registering a customer with an email sends them nothing (CA-24)', async ({ page }) => {

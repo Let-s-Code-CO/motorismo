@@ -7,6 +7,7 @@ import type {
   ServiceOption,
   WorkOrderSummary,
 } from '@web/modules/work-orders/types/work-orders.types';
+import { matchedPlates, plateQuery } from '@web/modules/work-orders/utils/plate-search.utils';
 
 /** How many customers «Nueva orden» suggests while typing. */
 const SEARCH_LIMIT = 8;
@@ -14,9 +15,11 @@ const SEARCH_LIMIT = 8;
 /**
  * Active customers matching a name, phone, email or plate (spec 008, CA-01), read from the browser
  * with the staff member's session (RLS). Disabled customers are not offered (CA-10).
+ * Each one says the active plate it matched by, if any (spec 022, CA-11).
  */
 export const searchCustomers = async (q: string): Promise<PickerCustomer[]> => {
-  const { data, error } = await createSupabaseBrowserClient()
+  const supabase = createSupabaseBrowserClient();
+  const { data, error } = await supabase
     .from('customers')
     .select('id, full_name, phone, email')
     .ilike('search_text', toLikePattern(q))
@@ -24,7 +27,21 @@ export const searchCustomers = async (q: string): Promise<PickerCustomer[]> => {
     .order('full_name')
     .limit(SEARCH_LIMIT);
   if (error) throw new Error(`Could not search customers: ${error.message}`);
-  return data;
+
+  const query = plateQuery(q);
+  if (!query || !data.length) return data;
+  const { data: vehicles, error: plateError } = await supabase
+    .from('vehicles')
+    .select('customer_id, plate, plate_city:municipalities(name)')
+    .in(
+      'customer_id',
+      data.map(({ id }) => id)
+    )
+    .is('retired_at', null)
+    .ilike('plate', `%${query}%`);
+  if (plateError) throw new Error(`Could not search plates: ${plateError.message}`);
+  const plates = matchedPlates(vehicles, query);
+  return data.map((customer) => ({ ...customer, matchedPlate: plates.get(customer.id) ?? null }));
 };
 
 /**

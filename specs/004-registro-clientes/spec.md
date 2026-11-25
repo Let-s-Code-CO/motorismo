@@ -152,7 +152,9 @@ datos, para tenerlo en la lista aunque no use la app.
 
 - **CA-24** — Dado un miembro del personal, cuando crea un cliente con nombre, al menos un correo
   o un celular válidos y marca que el cliente autorizó el tratamiento de sus datos, entonces el
-  cliente aparece en la lista como «Sin cuenta» y no recibe ningún correo.
+  cliente aparece en la lista como «Sin cuenta» y no recibe ningún correo. *(Enmienda de la spec
+  022: el mismo formulario puede registrar, opcional, su primer vehículo, juntos o ninguno; y se
+  usa también desde «Nueva orden».)*
 - **CA-25** — Dado un miembro del personal, cuando envía el formulario sin nombre, sin correo ni
   celular, con formatos inválidos o sin marcar la autorización, entonces ve el error junto a cada
   campo y no se crea el cliente.
@@ -321,3 +323,4 @@ opcional (los vehículos van en otra spec).
 | 2026-11-20 | El buscador de «Clientes» dice «Buscar por nombre, correo, celular o placa» (la búsqueda por placa existe desde la spec 005, CA-17). |
 | 2026-11-21 | Cambiado por la spec 014: el cliente entra a su «Inicio» (`/my`), no a «Mi perfil» (CA-12), y ve «Inicio», «Mis reservas», «Historial» y «Mi perfil» (CA-08). La página «No tienes permiso» lleva a su inicio (CA-09). |
 | 2026-11-24 | Corregida una carrera de la lista (deuda técnica): una tarjeta pulsada mientras la búsqueda espera sus 300 ms ya no se pierde, y la respuesta tardía de una búsqueda anterior no pisa lo que se está escribiendo (CA-16, CA-17). La lógica es compartida con el reporte de servicios (spec 015). |
+| 2026-11-25 | Enmienda de la spec 022: el formulario de «Nuevo cliente» registra, opcional, el primer vehículo (juntos o ninguno) y se abre también desde «Nueva orden», con lo buscado ya en su campo. |
