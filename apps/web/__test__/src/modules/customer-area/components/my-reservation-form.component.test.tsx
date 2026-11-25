@@ -8,8 +8,10 @@
  *   chosen and «Reserva guardada.» shows in «Mis reservas».
  * - CA-13: a closed day or a week not enabled offers no hours.
  * - CA-14: an hour that filled up meanwhile is said and the hours come back up to date.
- * - CA-15: the app's limit (one pending reservation per vehicle) is said.
+ * - CA-15: the app's limit (one pending reservation per vehicle a day, spec 021) is said.
  * - CA-18: changing starts with what the reservation has and sends its id.
+ * - Spec 021, CA-06: the estimated time of the chosen services, only those offered for the chosen
+ *   vehicle (the ones it would send), updated as they are ticked.
  * The customer is never chosen here: the server takes it from the session.
  */
 import { act, fireEvent, screen } from '@testing-library/react';
@@ -59,8 +61,22 @@ const mazda = {
 };
 
 const services: BookableService[] = [
-  { id: WASH, name: 'Lavado detallado', motorcycle: true, car: true, bicycle: false },
-  { id: CHAIN, name: 'Limpieza de cadena', motorcycle: true, car: false, bicycle: false },
+  {
+    id: WASH,
+    name: 'Lavado detallado',
+    motorcycle: true,
+    car: true,
+    bicycle: false,
+    estimated_minutes: 90,
+  },
+  {
+    id: CHAIN,
+    name: 'Limpieza de cadena',
+    motorcycle: true,
+    car: false,
+    bicycle: false,
+    estimated_minutes: 15,
+  },
 ];
 
 const day = (overrides: Partial<BookableDay> = {}): BookableDay => ({
@@ -119,6 +135,25 @@ describe('MyReservationForm', () => {
     expect(screen.queryByRole('checkbox', { name: 'Limpieza de cadena' })).not.toBeInTheDocument();
   });
 
+  it('shows the estimated time of the services ticked for the chosen vehicle (spec 021, CA-06)', () => {
+    renderForm();
+    const estimate = () => document.querySelector<HTMLElement>('[data-booking-estimate]')!;
+    fireEvent.click(screen.getByRole('radio', { name: 'Suzuki GSX-R600 · UIH-03D' }));
+    expect(estimate()).toBeEmptyDOMElement();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Lavado detallado' }));
+    expect(estimate()).toHaveTextContent('Tiempo estimado: ≈ 1 h 30 min');
+    // 90 + 15 min.
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Limpieza de cadena' }));
+    expect(estimate()).toHaveTextContent('Tiempo estimado: ≈ 1 h 45 min');
+
+    // The chain is not offered for the car: it would not be sent, so it does not count (90 min).
+    fireEvent.click(screen.getByRole('radio', { name: 'Mazda CX-30 · KDM-482' }));
+    expect(estimate()).toHaveTextContent('Tiempo estimado: ≈ 1 h 30 min');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Lavado detallado' }));
+    expect(estimate()).toBeEmptyDOMElement();
+  });
+
   it('chooses their only vehicle by itself (spec 008, RN-10)', () => {
     renderForm({ vehicles: [suzuki] });
 
@@ -136,7 +171,8 @@ describe('MyReservationForm', () => {
     ['slotFull', 'Esa hora se llenó mientras elegías: elige otra.', true],
     [
       'customerLimit',
-      'Ya tienes una reserva pendiente para ese vehículo (o sin vehículo): cámbiala si quieres otra hora.',
+      // Spec 021, RN-01: one a day, so the message speaks of that day.
+      'Ya tienes una reserva ese día para ese vehículo (o sin vehículo): cámbiala si quieres otra hora.',
       false,
     ],
   ] as const)(

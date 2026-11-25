@@ -8,6 +8,8 @@
  * - CA-19: cancelling asks first, takes an optional reason, and says «Reserva cancelada.»; a refusal
  *   stays in the dialog (spec 013, CA-08).
  * - With none, it says so; «Reservar» is always at hand.
+ * - Spec 021, CA-05: several pending reservations of one vehicle (on different days), each with its
+ *   own «Cambiar» and «Cancelar reserva».
  */
 import { fireEvent, screen, within } from '@testing-library/react';
 
@@ -103,6 +105,40 @@ describe('MyReservationsScreen', () => {
     ).toBeVisible();
     expect(within(pastList()).queryByRole('button')).not.toBeInTheDocument();
     expect(within(pastList()).getByText('Atendida')).toBeVisible();
+  });
+
+  it('lists two pending reservations of the same vehicle, each changed or cancelled on its own (spec 021, CA-05)', () => {
+    renderWithProviders(
+      <MyReservationsScreen
+        reservations={[
+          reservation(),
+          reservation({
+            id: 'r2',
+            slot_start: '2030-06-15T09:00:00-05:00',
+            slot_end: '2030-06-15T10:00:00-05:00',
+            grace_until: '2030-06-15T09:15:00-05:00',
+          }),
+        ]}
+      />
+    );
+
+    const [thursday, saturday] = within(pendingList()).getAllByRole('listitem') as [
+      HTMLElement,
+      HTMLElement,
+    ];
+    expect(thursday).toHaveTextContent('jueves, 13 de junio');
+    expect(saturday).toHaveTextContent('sábado, 15 de junio');
+    for (const [item, id] of [
+      [thursday, 'r1'],
+      [saturday, 'r2'],
+    ] as const) {
+      expect(item).toHaveTextContent('Suzuki GSX-R600 · UIH-03D');
+      expect(within(item).getByRole('button', { name: /^Cambiar la reserva del/ })).toHaveAttribute(
+        'href',
+        `/my/reservations/${id}`
+      );
+      expect(within(item).getByRole('button', { name: /^Cancelar reserva del/ })).toBeVisible();
+    }
   });
 
   it('says who cancelled a past one (CA-17)', () => {

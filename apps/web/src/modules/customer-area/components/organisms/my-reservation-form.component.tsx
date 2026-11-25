@@ -20,6 +20,7 @@ import {
 
 import { notify } from '@web/modules/core/lib/toast.lib';
 import { saveMyReservation } from '@web/modules/customer-area/actions/customer-area.actions';
+import BookingEstimate from '@web/modules/customer-area/components/molecules/booking-estimate.component';
 import type {
   BookableDay,
   BookableService,
@@ -88,6 +89,9 @@ const MyReservationForm = ({ day, vehicles, services, reservation }: MyReservati
   const vehicleId = useWatch({ control, name: 'vehicle' });
   const chosen = vehicles.find((vehicle) => vehicle.id === vehicleId);
   const offered = offeredFor(services, chosen?.vehicle_type);
+  // Spec 021, CA-06: the time of what would be sent (the ticked services offered for the vehicle).
+  const serviceIds = useWatch({ control, name: 'service_ids' });
+  const ticked = offered.filter((service) => serviceIds.includes(service.id));
 
   const goToDay = (date: string) => {
     if (!isAgendaDate(date) || date === day.date) return;
@@ -206,6 +210,7 @@ const MyReservationForm = ({ day, vehicles, services, reservation }: MyReservati
             </CheckboxGroup>
           )}
         />
+        <BookingEstimate services={ticked} />
         <Textarea
           {...register('notes', { maxLength: { value: 500, message: 'notesTooLong' } })}
           label={t('form.notes')}

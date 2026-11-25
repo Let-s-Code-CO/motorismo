@@ -86,9 +86,10 @@ Como cliente, quiero reservar mi turno desde la app, para asegurar mi puesto sin
   como para el personal.
 - **CA-14** — Dada una franja que se llenó mientras el cliente elegía, cuando guarda, entonces se le
   dice que ya no hay puestos y las franjas se muestran al día.
-- **CA-15** — Dado un vehículo suyo con una reserva pendiente, cuando intenta reservarlo otra vez,
-  entonces se le dice que ese vehículo ya tiene una reserva y que la cambie si quiere otra hora;
-  igual con una segunda reserva «Sin vehículo» (RN-03).
+- **CA-15** — Dado un vehículo suyo con una reserva pendiente, cuando intenta reservarlo otra vez
+  **ese mismo día**, entonces se le dice que ese vehículo ya tiene una reserva ese día y que la
+  cambie si quiere otra hora; igual con una segunda reserva «Sin vehículo» ese día (RN-03). *(Enmienda
+  de la spec 021: en días distintos sí puede.)*
 - **CA-16** — Dada una reserva hecha por el cliente, cuando el personal la ve en la agenda o en su
   detalle, entonces es una reserva más (ocupa su puesto y sigue la regla del turno, spec 012) y dice
   «Reservó el cliente desde la app».
@@ -136,7 +137,8 @@ llamar.
   franjas que no han empezado de días abiertos de semanas habilitadas, nunca más reservas que
   puestos, y un vehículo no se repite en la misma franja.
 - **RN-03** — Desde la app, el cliente tiene como mucho una reserva pendiente por cada vehículo suyo
-  y una «Sin vehículo». El personal puede hacerle más (spec 012, RN-03).
+  **por día**, y una «Sin vehículo» por día (enmienda de la spec 021, RN-01). El personal puede
+  hacerle más (spec 012, RN-03).
 - **RN-04** — El cliente cambia o cancela una reserva suya solo mientras está pendiente.
 - **RN-05** — El cliente no cambia la tolerancia, no da «+5 min», no marca «No asistió» ni
   «Llegó»: eso sigue siendo del personal (spec 012).
@@ -223,3 +225,4 @@ Ninguna.
 | 2026-11-21 | Añadido a petición del usuario: CA-23, una reserva pendiente cuya hora para conservar el turno ya pasó lo dice, en vez de «Puedes llegar hasta…». Estado `en-progreso`. |
 | 2026-11-21 | CA-23 implementado (`ArriveBy`, en el inicio y en «Mis reservas»). Estado `implementada`. |
 | 2026-11-21 | Verificada: los 23 criterios con prueba vista fallar (pgTAP, unitarias, sandbox y E2E contra producción). Cierres de la verificación: el mensaje del límite nombra también «sin vehículo» (CA-15) y una comprobación pgTAP de que la reserva del cliente ocupa su puesto (CA-16). Estado `verificada`. |
+| 2026-11-25 | Enmienda de la spec 021: una reserva pendiente por vehículo y día (antes, una por vehículo), y el tiempo estimado de los servicios al reservar (RN-03, CA-15). |

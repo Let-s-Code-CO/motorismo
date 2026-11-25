@@ -18,7 +18,9 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 - Estabilizar dos E2E intermitentes: cada una falló una vez en una corrida completa (2026-11-25)
   y pasa aislada. `reservations.spec.ts` «a reservation moves to another slot…» falló porque
   `check({ force: true })` del radio de las 4:00 p. m. no cambió su estado. `loading.spec.ts`
-  «going back finds the list where it was» no recuperó el desplazamiento al volver.
+  «going back finds the list where it was» no recuperó el desplazamiento al volver. También
+  `vehicle-catalog.spec.ts` «adds a really new brand and line to the catalog, once» (una vez, en la
+  corrida completa de la spec 021).
 
 ## Especificadas
 
@@ -43,3 +45,6 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [017](017-derechos-titular/spec.md) | Derechos del titular de datos | verificada |
 | [018](018-marcas-lineas/spec.md) | Administrar marcas y líneas de vehículos | verificada |
 | [019](019-estilo-automotriz/spec.md) | Estilo automotriz premium con acento plata | verificada (falta despliegue) |
+| [020](020-liquidacion-quincenal/spec.md) | Liquidación quincenal y por rango de fechas | borrador (falta decidir el salario base) |
+| [021](021-reservas-cliente-varias/spec.md) | Reservas del cliente: varias por vehículo y tiempo estimado | implementada |
+| [022](022-cliente-desde-orden/spec.md) | Registrar cliente y su primer vehículo desde «Nueva orden» | aprobada |

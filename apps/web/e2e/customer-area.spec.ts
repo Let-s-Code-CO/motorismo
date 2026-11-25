@@ -8,6 +8,8 @@
  * - CA-12 / CA-16: they book from the app; staff see «Reservó el cliente desde la app».
  * - CA-22: staff give «+5 min» and «Mis reservas» shows the new time without reloading.
  * - CA-19: they cancel with a reason; staff see «Cancelada por el cliente» and the reason.
+ * - Spec 021: the same vehicle booked for two days, not twice the same day (CA-01, CA-02, CA-05),
+ *   with the estimated time of the services ticked (CA-06, CA-07).
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -186,5 +188,65 @@ test.describe('the customer area (spec 014)', () => {
     await expect(staffPage.getByText(/^Cancelada por el cliente el /)).toBeVisible();
     await expect(staffPage.getByText('Motivo: Me salió un viaje')).toBeVisible();
     await staffPage.close();
+  });
+
+  test('they book the same vehicle for two days, not twice the same day, seeing the time of what they choose (spec 021, CA-01, CA-02, CA-05, CA-06, CA-07)', async ({
+    page,
+  }) => {
+    const { email, customerId } = await newCustomer('varias', true);
+    await signIn(page, email);
+    await expect(page).toHaveURL('/my');
+    const day = (days: number) =>
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(
+        new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      );
+    const estimate = page.locator('[data-booking-estimate]');
+    const book = async (date: string, hour: RegExp) => {
+      await page.goto(`/my/reservations/new?date=${date}`);
+      // Their only vehicle comes chosen (spec 008, RN-10).
+      await page.getByRole('radio', { name: hour }).check({ force: true });
+      await page.getByRole('button', { name: 'Reservar', exact: true }).click();
+    };
+
+    // Tomorrow at 4:00 p. m., with the time of the services ticked (CA-06, CA-07).
+    await page.goto(`/my/reservations/new?date=${day(1)}`);
+    await page.getByRole('radio', { name: /^4:00 p\. m\./ }).check({ force: true });
+    await page.getByRole('checkbox', { name: 'Lavado sencillo' }).check({ force: true });
+    // 30 + 90 min.
+    await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
+    await expect(estimate).toHaveText('Tiempo estimado: ≈ 2 h');
+    await page.getByRole('checkbox', { name: 'Recubrimiento cerámico' }).check({ force: true });
+    await expect(estimate).toContainText('Sin estimar: Recubrimiento cerámico');
+    await page.getByRole('button', { name: 'Reservar', exact: true }).click();
+    await expect(page).toHaveURL('/my/reservations');
+
+    // The day after, 3:00 p. m.: the same vehicle again (CA-01), both listed (CA-05).
+    await book(day(2), /^3:00 p\. m\./);
+    await expect(page).toHaveURL('/my/reservations');
+    const pending = page.getByRole('list', { name: 'Próximas' });
+    await expect(pending.getByRole('listitem')).toHaveCount(2);
+    await expect(pending.getByText(/Suzuki GSX-R600/)).toHaveCount(2);
+
+    // Tomorrow again, at another hour: refused, and nothing is created (CA-02).
+    await book(day(1), /^5:00 p\. m\./);
+    await expect(
+      page.getByText(
+        'Ya tienes una reserva ese día para ese vehículo (o sin vehículo): cámbiala si quieres otra hora.'
+      )
+    ).toBeVisible();
+    const { count } = await adminClient()
+      .from('reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('customer_id', customerId)
+      .eq('status', 'pending');
+    expect(count).toBe(2);
+
+    // «Inicio» shows the nearest one: tomorrow's, at 4:00 p. m. (CA-05).
+    await page.goto('/my');
+    await expect(
+      page
+        .getByRole('region', { name: 'Tu próxima reserva' })
+        .getByText(/4:00 p\. m\. – 5:00 p\. m\./)
+    ).toBeVisible();
   });
 });

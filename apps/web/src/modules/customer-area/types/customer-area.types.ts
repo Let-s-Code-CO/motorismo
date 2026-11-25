@@ -35,8 +35,14 @@ export type MyReservation = Omit<
   'status'
 > & { status: ReservationStatus };
 
-/** An active service to choose when booking, and for which vehicles it is offered (CA-12). */
-export type BookableService = Functions['bookable_services']['Returns'][number];
+/**
+ * An active service to choose when booking, for which vehicles it is offered (CA-12) and how long it
+ * usually takes, if it has a time (spec 021, RF-02). Never its price.
+ */
+export type BookableService = WithNulls<
+  Functions['bookable_services']['Returns'][number],
+  'estimated_minutes'
+>;
 
 /** A day to book in: its state and its slots with seats (CA-12, CA-13). */
 export type BookableDay = { date: string; state: AgendaDayState; slots: AgendaSlot[] };
