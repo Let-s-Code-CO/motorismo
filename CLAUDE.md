@@ -393,7 +393,9 @@ e2e/                         # Playwright
   (`work_order_category_required`, `work_order_price_required` para un a convenir sin valor).
   `line-price.utils`: `referencePrice(servicio, tipo, categoría)`, `isOffered`, `needsCategory`. El
   editor muestra «Categoría de la moto» y, si falta, la pide con `VehicleCategoryDialog` antes de
-  añadir (en cola, si una reserva trae varios).
+  añadir (en cola, si una reserva trae varios). La tarjeta de la orden también la muestra; ambos usan
+  `vehicleCategoryQueryOptions`. Al cliente la app nunca se la muestra (RN-03), y la base le impide
+  cambiarla (leerla no se bloquea: no es un dato personal ni un precio).
 - **Reservas:** el personal da el tiempo de cada servicio a convenir
   (`save_reservation(…, p_service_minutes)`, `{id: minutos}`, de 5 a 1.440;
   `reservation_services.estimated_minutes`); `reservation_summaries` trae `service_minutes`,

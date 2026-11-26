@@ -177,7 +177,7 @@ actualizado: 2026-11-26
 - Las acciones escriben las columnas nuevas.
 
 **`work-orders`:**
-- `referencePrice(service, { type, category })` reemplaza la versión por tipo. Da el valor de la
+- `referencePrice(service, type, category)` (la categoría, opcional) reemplaza la versión por tipo. Da el valor de la
   categoría, el único, o nulo («a convenir», o moto sin categoría con valores por categoría).
 - **Editor:**
   - **servicio con valores por categoría en una moto sin categoría:** abre el diálogo «Categoría de la

@@ -256,10 +256,21 @@ el formulario y el detalle de la reserva, las tarjetas de servicios, el modo ded
 | `line-price.utils` | `referencePrice` con el valor único en vez del de la categoría | 3 |
 | `line-price.utils` | `isOffered` sin los a convenir | 1 |
 | `service-cards` | los paquetes sin ordenar por valor | 1 |
+| `order-detail` (verificación) | sin la categoría en la tarjeta de la orden | 2 |
 
 Dos guardas de `line-price.utils` (`on_quote` en `referencePrice` y `needsCategory`) sobrevivieron a
 su mutación: eran redundantes (un servicio a convenir no tiene valores, lo exige la base) y se
 quitaron.
+
+### Verificación
+
+- CA-04: la tarjeta de la orden guardada muestra la categoría de la moto (o «Sin categoría»); la orden
+  y su editor comparten `vehicleCategoryQueryOptions` (`orderKeys.category`), así que lo que elige el
+  diálogo se ve en ambos.
+- RN-03 precisada en la spec: la app nunca muestra la categoría al cliente y la base le impide
+  cambiarla; leerla no se bloquea (no es un dato personal ni un precio).
+- `ui.spec` («on an iPhone»): el diálogo de categoría de una orden y el tiempo del PPF en una reserva,
+  sin desplazamiento lateral.
 
 ## Cobertura
 

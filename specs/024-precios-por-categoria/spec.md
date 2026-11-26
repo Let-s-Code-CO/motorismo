@@ -1,7 +1,7 @@
 ---
 id: "024"
 titulo: "Categoría de moto y precios por categoría"
-estado: implementada
+estado: verificada
 creada: 2026-11-26
 actualizada: 2026-11-26
 ---
@@ -70,7 +70,7 @@ sea el de su tipo.
   Mientras no tenga una propia, sigue la de su línea: si el administrador cambia la categoría de la
   línea, cambia la de esas motos.
 - **CA-04** — Dada una moto, cuando se ve en la ficha del cliente, en la orden o en el buscador del
-  personal, entonces se ve su categoría.
+  personal, entonces se ve su categoría (en la orden: en su tarjeta y al editarla).
 - **CA-05** — Dado un cliente, cuando registra, corrige o mira su moto en la app, entonces no ve ni elige
   su categoría (la confirma el personal al recibir la moto).
 - **CA-06** — Dada una moto sin categoría (registrada antes de esta spec, o de una línea nueva aún sin
@@ -153,7 +153,9 @@ precios, para no escribirlos uno a uno.
   categoría de una moto o los valores del catálogo no altera órdenes existentes.
 - **RN-02** — Una orden no se guarda con una línea «a convenir» sin valor.
 - **RN-03** — El cliente nunca ve precios (spec 021) ni la categoría de su moto: solo el personal la
-  elige y la ve.
+  elige y la ve. *(Precisado al verificar:* la app nunca le muestra la categoría y la base le impide
+  cambiarla; leerla no se le bloquea en la base, porque no es un dato personal ni un precio y el
+  personal la lee en el formulario y en la orden.)
 - **RN-04** — La categoría de una moto es la propia si el personal le dio una; si no, la de su línea.
 
 ## Datos (vista conceptual)
@@ -214,3 +216,4 @@ Ninguna.
 | 2026-11-26 | Aprobada por el usuario: la lista de precios de las imágenes es la base, cargada una vez (el administrador la cambia después); la clasificación de las líneas de moto actuales es parte de la implementación. |
 | 2026-11-26 | Plan aprobado, con dos precisiones del usuario: la descripción opcional de un servicio (CA-19) y el tiempo estimado en la reserva del personal (CA-14). Estado `planificada`. |
 | 2026-11-26 | Implementada: estado `implementada`. A pedido del usuario, «Servicios» pasa a tarjetas en tres grupos (CA-09 precisado; enmienda de la spec 007, CA-02). |
+| 2026-11-26 | Verificada. Correcciones aprobadas por el usuario: la categoría también en la tarjeta de la orden guardada (CA-04); RN-03 precisada (la app nunca la muestra al cliente y la base le impide cambiarla); prueba en el iPhone del diálogo de categoría y del tiempo del PPF. Estado `verificada`. |
