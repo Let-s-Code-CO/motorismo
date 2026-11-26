@@ -1,7 +1,7 @@
 ---
 id: "020"
 titulo: "Liquidación quincenal y por rango de fechas"
-estado: implementada
+estado: verificada
 creada: 2026-11-25
 actualizada: 2026-11-26
 ---
@@ -64,7 +64,8 @@ coinciden con una quincena.
   «Hasta», ambos incluidos, y el salario base es proporcional a los días activos del rango (RN-02).
 - **CA-08** — Dado un rango, entonces se ve como «Consulta»: no se puede cerrar (RN-04). Puede
   volver a la quincena en curso con un clic. Un rango que coincide exactamente con una quincena (del 1
-  al 15, o del 16 al último día) es esa quincena: provisional o cerrada, y se cierra si terminó.
+  al 15, o del 16 al último día) es esa quincena: provisional o cerrada, y se cierra si terminó; si la
+  quincena aún no llega, es una «Consulta», como cualquier rango.
 - **CA-09** — Dado un rango con «Desde» después de «Hasta», o una fecha que no existe, cuando se
   abre, entonces se muestra la quincena en curso, como el reporte de servicios con sus filtros
   inválidos (spec 015).
@@ -194,3 +195,4 @@ Ninguna.
 | 2026-11-25 | Aprobada por el usuario. |
 | 2026-11-26 | Plan aprobado, con dos precisiones del usuario: un rango igual a una quincena es esa quincena (CA-08), y una quincena cerrada abre con el método del cierre (CA-16). Estado `planificada`. |
 | 2026-11-26 | Implementada: estado `implementada`. |
+| 2026-11-26 | `/verificar`: CA-01 a CA-17, RF y RN ✅ tras una corrección: unas fechas que son exactamente una quincena futura son una «Consulta» (CA-08), como `?fortnight=` no abre una quincena por venir. Estado `verificada`. |

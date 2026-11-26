@@ -107,9 +107,11 @@ const PayrollPeriodBar = ({ query, currentFortnight, selectedMethod }: PayrollPe
           onChange={({ from, to }) =>
             navigate({
               ...latest(),
-              period: isFortnight(from, to)
-                ? { kind: 'fortnight', start: from }
-                : { kind: 'range', from, to },
+              // As the address reads it: a future fortnight is a query (CA-08).
+              period:
+                isFortnight(from, to) && from <= currentFortnight
+                  ? { kind: 'fortnight', start: from }
+                  : { kind: 'range', from, to },
             })
           }
         />

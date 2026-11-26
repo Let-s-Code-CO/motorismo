@@ -212,4 +212,5 @@ verde):
 | La quincena completa no vale 15 días por mes comercial | `15_payroll.test.sql` (febrero, CA-14) |
 | «Hubo cambios» con el método comercial y no el del cierre | `15_payroll.test.sql` (CA-16) |
 | El método elegido solo se marca al responder el servidor (código previo) | `payroll.spec.ts` (`toBeChecked`) |
+| Unas fechas que son una quincena futura se toman por esa quincena (código previo, `/verificar`) | `reports.schema.test` y `payroll-screen.component.test` (CA-08, escritas antes de la corrección) |
 

@@ -60,7 +60,8 @@ export const reportFiltersSchema = (today: string) =>
 /**
  * The period and method of the payroll, read from the address (spec 020, CA-10). Like the services
  * report, nothing there can break it: what is wrong is the fortnight in progress (CA-09).
- * - A range, both days in order (CA-06); exactly a fortnight, that fortnight (CA-08).
+ * - A range, both days in order (CA-06); exactly a fortnight, that fortnight (CA-08), unless it is
+ *   still to come (it cannot be paid yet): then a query.
  * - Otherwise a fortnight `2026-11-1` / `2026-11-2`, not one still to come (CA-01).
  * - The method only when the address says one of the two (CA-13); null means «not chosen».
  */
@@ -77,7 +78,8 @@ export const payrollQuerySchema = (today: string) =>
       const asked = fortnightFromParam(fortnight);
       const period: PayrollQuery['period'] =
         from && to && from <= to
-          ? isFortnight(from, to)
+          ? // Exactly a fortnight, up to the one in progress; a future one is a query (CA-08).
+            isFortnight(from, to) && from <= current
             ? { kind: 'fortnight', start: from }
             : { kind: 'range', from, to }
           : { kind: 'fortnight', start: asked && asked <= current ? asked : current };

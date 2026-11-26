@@ -238,6 +238,20 @@ describe('PayrollScreen — a range (HU-02)', () => {
     });
   });
 
+  it('keeps dates exactly a fortnight still to come as a query (CA-08)', () => {
+    renderScreen({
+      query: RANGE,
+      payroll: state({ kind: 'range', status: 'query', can_close: false }),
+    });
+
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-12-15' } });
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-12-01' } });
+
+    expect(replace).toHaveBeenLastCalledWith('/reports/payroll?from=2026-12-01&to=2026-12-15', {
+      scroll: false,
+    });
+  });
+
   it('is a query: its days, the same columns and total, never closed, and a way back (CA-06, CA-08)', () => {
     renderScreen({
       query: RANGE,

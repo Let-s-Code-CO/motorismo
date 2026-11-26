@@ -15,7 +15,8 @@
  *
  * The payroll (spec 020):
  * - RF-01: by default, the fortnight in progress; another one is `?fortnight=2026-11-1`; a range is
- *   `?from=…&to=…` (CA-06), and one exactly a fortnight is that fortnight (CA-08).
+ *   `?from=…&to=…` (CA-06), and one exactly a fortnight is that fortnight (CA-08), unless it is still
+ *   to come: then it is a query.
  * - CA-09: a range upside down, a day that does not exist, half a range, a fortnight still to come or
  *   badly written, and the month of spec 016 (`?month=`) are the fortnight in progress.
  * - CA-13: «Mes comercial» unless `base=actual`; the method is «chosen» only when the address says it
@@ -136,6 +137,15 @@ describe('payrollQuerySchema (spec 020)', () => {
     expect(payroll({ from: '2026-11-01', to: '2026-11-15' }).period).toEqual({
       kind: 'fortnight',
       start: '2026-11-01',
+    });
+  });
+
+  it('takes dates exactly a fortnight still to come as a query, not as that fortnight (CA-08)', () => {
+    // A fortnight is shown up to the one in progress, as `?fortnight=` (a future one cannot be paid).
+    expect(payroll({ from: '2026-12-01', to: '2026-12-15' }).period).toEqual({
+      kind: 'range',
+      from: '2026-12-01',
+      to: '2026-12-15',
     });
   });
 
