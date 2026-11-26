@@ -257,6 +257,19 @@ el formulario y el detalle de la reserva, las tarjetas de servicios, el modo ded
 | `line-price.utils` | `isOffered` sin los a convenir | 1 |
 | `service-cards` | los paquetes sin ordenar por valor | 1 |
 | `order-detail` (verificación) | sin la categoría en la tarjeta de la orden | 2 |
+| `service-combination.utils` | sin herencia de incluidos | 2 |
+| `service-combination.utils` | sin el corte de bucle | la prueba del ciclo no termina |
+| `service-combination.utils` | sin la regla de un paquete | 1 |
+| `service-combination.utils` | sin la regla de cruce | 2 |
+| `service-combination.utils` | marca los elegidos como no disponibles | 1 |
+| `service-form` | ofrece los que ya lo incluyen | 1 |
+| `reservation-form`, `my-reservation-form` | sin deshabilitar los no disponibles | 1 y 1 |
+| `order-editor` | sin deshabilitar «Añadir» | 1 |
+| `order-editor` | la línea sin «Incluye» | 1 |
+| `order-editor` | el servicio añadido no se quita (vuelve a «Añadir») | 1 |
+| `service-groups` | todo en «Servicios adicionales» | 3 |
+| `reservation-lines.utils` (verificación) | sin omitir un servicio que ya se cruza | 1 |
+| `reservation-form`, `order-editor` (verificación) | sin ordenar los paquetes por valor | 1 y 1 |
 
 Dos guardas de `line-price.utils` (`on_quote` en `referencePrice` y `needsCategory`) sobrevivieron a
 su mutación: eran redundantes (un servicio a convenir no tiene valores, lo exige la base) y se
@@ -271,6 +284,67 @@ quitaron.
   cambiarla; leerla no se bloquea (no es un dato personal ni un precio).
 - `ui.spec` («on an iPhone»): el diálogo de categoría de una orden y el tiempo del PPF en una reserva,
   sin desplazamiento lateral.
+
+## Fase 6 — Enmienda HU-05: paquetes e incluidos
+
+- [x] T100 pgTAP en rojo (`21_motorcycle_categories`): `service_inclusions` (RLS, privilegios),
+  `set_service_inclusions` (solo admin, ciclo), cierre heredado, datos de la lista, reservas del
+  personal y del cliente y orden con dos paquetes o con cruce, «Otro» fuera, `bookable_services` con
+  `includes` (CA-20, CA-22, CA-26).
+- [x] T101 Migración (la misma, aún sin desplegar): tabla, funciones, la regla en `save_reservation`
+  y `work_order_write_lines`, `bookable_services` y los incluidos de la lista. Seed de la orden #2.
+  `db:reset`, `db:test`, `db:types`.
+- [x] T102 [P] `service-combination.utils` en rojo y luego en verde (CA-23 a CA-25).
+- [x] T103 Servicios: lecturas con `includes`, «Incluye» en el formulario y en la tarjeta, acciones
+  con `set_service_inclusions` (CA-20, CA-21).
+- [x] T104 Reservas del personal y del cliente: servicios no disponibles con su motivo; errores
+  nuevos (CA-23 a CA-26).
+- [x] T105 Órdenes: «Añadir X» no disponible con su motivo; «Incluye» en la línea del editor y del
+  detalle; errores nuevos (CA-23 a CA-27).
+- [x] T105b Grupos «Paquetes» y «Servicios adicionales» al elegir servicios en las dos reservas y en la
+  orden (CA-28). En la orden, el botón de un servicio añadido lo quita («−», CA-29).
+- [x] T106 E2E: reserva del personal y orden con Premium (Pro Wash y Sellador no disponibles, otro
+  paquete tampoco); `services.spec` con «Incluye»; regresión por el seed de la orden #2 (reporte,
+  órdenes); `a11y` y `ui` de los formularios con servicios no disponibles.
+- [x] T107 Definición de terminado, mutaciones, documentación (`CLAUDE.md`, spec y plan) y
+  `/verificar`.
+
+### Registro de la fase 6 (HU-05)
+
+- **Base:** `service_inclusions` (RLS: la lee el personal; nadie la escribe directo),
+  `private.service_closure`, `set_service_inclusions` (solo admin, sin ciclos),
+  `private.check_service_combination` en `save_reservation` y `work_order_write_lines`;
+  `bookable_services` con `package`, `includes` (heredado) y los paquetes de menor a mayor valor (sin
+  enviar el precio); los incluidos de la lista. pgTAP: 63 en el archivo 21 (885 en total).
+- **Seeds:** la orden #2 de Camila pasa a Deluxe + Limpieza de asientos (193.000; 150.000 + 43.000).
+  La prueba de CA-11 deja de repetir el mismo servicio (RN-06 lo impide): conserva la línea y luego
+  la vuelve a añadir.
+- **App:**
+  - `service-combination.utils` (`closureOf`, `unavailableServices`, `combinableOf`, `byLowestPrice`);
+  - `ServiceGroups` (CA-28) en las dos reservas y en la orden; el motivo («Incluido en …», «Ya hay
+    un paquete: …», «Se cruza con …») va en la etiqueta de la casilla o en el botón, porque el
+    `Checkbox` de HeroUI no pasa `aria-describedby`;
+  - en la orden, el botón de un servicio añadido lo quita («−», «Quitar X de la orden», CA-29);
+  - «Incluye» en el formulario, la tarjeta, la línea del editor y el detalle.
+- **E2E:** órdenes (Deluxe deja a Pro Wash y Premium no disponibles; «Quitar … de la orden»),
+  reserva del personal (grupos y paquete no disponible), cliente (un paquete), «Servicios» (Incluye);
+  regresión del reporte y de las órdenes por el seed #2.
+- **Definición de terminado:**
+  - lint, tipos y build en verde; 1.778 unitarias; 885 pgTAP; tipos al día; sandbox 55;
+  - E2E completa: 266 en verde y 5 que fallan solo en paralelo y pasan solas (las dos del
+    esqueleto con red lenta, como en `develop`; dos de `vehicles.spec` y la búsqueda por placa de
+    `work-orders.spec`).
+
+### Verificación de la enmienda
+
+- «Llegó» con una reserva cuyos servicios ya se cruzan: `linesFromReservation` deja fuera, en
+  «omitidos», el que ya no va con los anteriores (el plan lo pedía y faltaba). La prueba del diálogo
+  de categoría desde una reserva usa un paquete y un adicional: dos paquetes ya no pueden ir juntos.
+- CA-28: prueba del orden de menor a mayor valor en la reserva del personal y en la orden.
+- `a11y.spec` (claro y oscuro) y `ui.spec` (iPhone): una orden con un paquete añadido y los demás no
+  disponibles.
+- Comprobaciones: lint, tipos y build en verde; 1.781 unitarias; E2E de órdenes y reservas (17),
+  accesibilidad e iPhone (5).
 
 ## Cobertura
 
@@ -296,3 +370,9 @@ quitaron.
 | RF-01 a RF-03 | T002 |
 | RN-01 a RN-04 | T002 |
 | RNF | T034 |
+| CA-20 a CA-22 | T100, T103 |
+| CA-23 a CA-25 | T102, T104, T105, T106 |
+| CA-26 | T100, T104, T105 |
+| CA-27 | T105 |
+| CA-28 | T105b, T106 |
+| CA-29 | T105b, T106 |

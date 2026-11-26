@@ -139,6 +139,55 @@ precios, para no escribirlos uno a uno.
   catálogo inicial ya tiene su categoría; las que la gente añada después llegan sin categoría, por
   revisar (spec 018).
 
+### HU-05 (P1) — Paquetes e incluidos *(enmienda 2026-11-26)*
+
+Como persona del personal o cliente, quiero que al elegir un paquete se vea lo que ya incluye y no
+pueda elegir otro paquete ni pedir aparte algo incluido, para no cobrar ni reservar dos veces lo
+mismo.
+
+Un **paquete** es un servicio con valores por categoría: Pro Wash o un combo (Premium, Deluxe,
+Supreme).
+
+**Criterios de aceptación**
+
+- **CA-20** — Dado el formulario de un servicio, cuando el administrador marca qué servicios del
+  catálogo incluye, entonces se guardan como sus «incluidos». Un servicio no se incluye a sí mismo
+  ni incluye a uno que ya lo incluye.
+- **CA-21** — Dada la lista de «Servicios», cuando un servicio incluye otros, entonces su tarjeta dice
+  «Incluye: …» con sus nombres.
+- **CA-22** — Dado un entorno nuevo, cuando se abre «Servicios», entonces los incluidos de la lista de
+  precios ya están cargados:
+  - Premium: Pro Wash, Limpieza completa de kit con tapa piñón, Sellador y Limpieza de asientos;
+  - Deluxe: Pro Wash y Desengrasado y lubricado de cadena;
+  - Supreme: Pro Wash, Limpieza completa de kit con tapa piñón y Limpieza de asientos;
+  - Limpieza completa de kit con tapa piñón: Desengrasado y lubricado de cadena;
+  - Limpieza completa de kit con tapa piñón y cubrecadena: Limpieza completa de kit con tapa piñón;
+  - Desengrasado y lubricado de cadena: Desengrasado de cadena y Lubricado de cadena.
+
+  Lo que no se vende suelto (micropulido al 60 % o al 90 %, recubrimiento cerámico) sigue en la
+  descripción.
+- **CA-23** — Dada una reserva (del personal o del cliente) o una orden, cuando ya tiene un paquete,
+  entonces no se puede elegir otro: los demás se ven como no disponibles, con el motivo.
+- **CA-24** — Dado un servicio elegido, cuando incluye otros (también lo que estos incluyen), entonces
+  cada incluido se ve como «Incluido en {servicio}» y no se puede elegir aparte. Con Premium: Pro
+  Wash, las limpiezas de kit, el desengrasado, el lubricado, el sellador y los asientos.
+- **CA-25** — Dados dos servicios que comparten algo incluido, cuando se elige uno, entonces el otro no
+  se puede elegir y se dice con cuál se cruza (Premium y «Limpieza completa de kit con tapa piñón y
+  cubrecadena» incluyen ambos la limpieza de kit). Al quitar el elegido, vuelven a poder elegirse.
+- **CA-26** — Dada una reserva o una orden que llega con dos paquetes o con servicios que se cruzan
+  (sin pasar por la app), cuando se guarda, entonces se rechaza y se dice por qué. Las líneas «Otro»
+  no cuentan.
+- **CA-27** — Dada una orden con un paquete, cuando se ve, entonces el paquete es una sola línea con su
+  valor y dice lo que incluye; los incluidos no son líneas aparte (totales, reporte y liquidación
+  como hoy).
+- **CA-28** — Dada la elección de servicios de una reserva (del personal o del cliente) o de una orden,
+  cuando se muestran, entonces van en dos grupos con su título, «Paquetes» y «Servicios adicionales»
+  (el resto, también «Otro» en la orden), para no confundirlos. *(Pedido por el usuario durante la
+  implementación.)*
+- **CA-29** — Dada una orden, cuando un servicio del catálogo ya está añadido, entonces su botón pasa de
+  «+» a «−» y al pulsarlo se quita la línea: no se añade dos veces («Otro» sí se puede repetir).
+  *(Pedido por el usuario durante la implementación.)*
+
 ## Requisitos funcionales
 
 - **RF-01** — Cada moto tiene una de ocho categorías: Street/Roadster, SBK/SSP, Scooter, Maxi Scooter,
@@ -146,6 +195,8 @@ precios, para no escribirlos uno a uno.
 - **RF-02** — El valor de moto de un servicio es único o por categoría; carro y bicicleta, único.
 - **RF-03** — Un servicio puede ser «a convenir»: sin valores ni tiempo de referencia, para cualquier
   tipo de vehículo.
+- **RF-04** — Un servicio puede incluir otros servicios del catálogo. Lo incluido se hereda: si A
+  incluye B y B incluye C, A incluye C.
 
 ## Reglas de negocio
 
@@ -157,6 +208,9 @@ precios, para no escribirlos uno a uno.
   cambiarla; leerla no se le bloquea en la base, porque no es un dato personal ni un precio y el
   personal la lee en el formulario y en la orden.)
 - **RN-04** — La categoría de una moto es la propia si el personal le dio una; si no, la de su línea.
+- **RN-05** — Una reserva o una orden lleva como mucho un paquete.
+- **RN-06** — Dos servicios de una misma reserva u orden no comparten nada incluido (cada servicio
+  cuenta como incluido en sí mismo). Se comprueba al guardar; lo ya guardado no cambia.
 
 ## Datos (vista conceptual)
 
@@ -166,6 +220,7 @@ precios, para no escribirlos uno a uno.
 | Línea de moto | Categoría | La del catálogo inicial, clasificada; las nuevas, sin categoría. |
 | Moto | Categoría propia (opcional) | Si no tiene, la de su línea. |
 | Servicio | Valor de moto único o por categoría; «a convenir» | Carro y bicicleta, como en la spec 007. |
+| Incluido | Servicio que incluye, servicio incluido | Sin ciclos; se hereda (RF-04). |
 
 ## Requisitos no funcionales
 
@@ -174,15 +229,18 @@ precios, para no escribirlos uno a uno.
 
 ## Fuera de alcance
 
-- Paquetes que se arman sumando servicios: cada paquete o combo es un servicio con sus valores.
+- Calcular el valor de un paquete sumando sus incluidos: cada paquete tiene su propio valor.
 - Precios por categoría para carros o bicicletas.
 - Mostrar precios al cliente.
 - Descuentos automáticos por paquete («ahorro de $ 2.000» de la imagen es informativo).
 
 ## Suposiciones
 
-- Cada lavado, paquete y combo de la lista es un servicio del catálogo con valores por categoría; su
-  descripción dice lo que incluye. Cada variante de limpieza de kit es un servicio con valor único.
+- Cada lavado, paquete y combo de la lista es un servicio del catálogo con valores por categoría; sus
+  incluidos dicen qué servicios del catálogo trae (HU-05) y su descripción, el resto. Cada variante
+  de limpieza de kit es un servicio con valor único. «Kit» es el kit de arrastre: limpiarlo incluye
+  desengrasar y lubricar la cadena.
+- En el entorno local, la orden #2 de Camila deja de llevar Pro Wash junto con Deluxe (lo incluye).
 - Los tiempos de la lista se cargan como tiempo estimado del servicio (Premium 2 h, Deluxe 3 h 30
   min). El Supreme («2 días hábiles») supera el tiempo máximo de un servicio (1.440 min, spec 008): se
   carga sin tiempo y el personal lo ajusta.
@@ -217,3 +275,6 @@ Ninguna.
 | 2026-11-26 | Plan aprobado, con dos precisiones del usuario: la descripción opcional de un servicio (CA-19) y el tiempo estimado en la reserva del personal (CA-14). Estado `planificada`. |
 | 2026-11-26 | Implementada: estado `implementada`. A pedido del usuario, «Servicios» pasa a tarjetas en tres grupos (CA-09 precisado; enmienda de la spec 007, CA-02). |
 | 2026-11-26 | Verificada. Correcciones aprobadas por el usuario: la categoría también en la tarjeta de la orden guardada (CA-04); RN-03 precisada (la app nunca la muestra al cliente y la base le impide cambiarla); prueba en el iPhone del diálogo de categoría y del tiempo del PPF. Estado `verificada`. |
+| 2026-11-26 | Enmienda HU-05 «Paquetes e incluidos» (CA-20 a CA-27, RF-04, RN-05, RN-06), a pedido del usuario antes del merge: un solo paquete por reserva u orden, los incluidos no se eligen aparte y la limpieza de kit incluye desengrasar y lubricar la cadena. Aprobada por el usuario, con su plan y tareas. |
+| 2026-11-26 | Enmienda HU-05 implementada, con dos precisiones del usuario: grupos «Paquetes» / «Servicios adicionales» (CA-28) y quitar con «−» un servicio ya añadido a la orden (CA-29). Estado `implementada`. |
+| 2026-11-26 | Enmienda HU-05 verificada. Correcciones aprobadas por el usuario: «Llegó» deja en «omitidos» un servicio de la reserva que ya se cruza con otro (RN-06); prueba del orden por valor de los paquetes en la reserva del personal y en la orden (CA-28); auditorías de accesibilidad y de iPhone de la orden con un paquete. Estado `verificada`. |

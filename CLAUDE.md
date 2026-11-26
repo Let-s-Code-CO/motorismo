@@ -403,6 +403,25 @@ e2e/                         # Playwright
   `core`. El cliente nunca ve los a convenir (`bookable_services`).
 - **«Servicios»:** tarjetas (`service-cards`) en tres grupos —«Paquetes por categoría» de menor a
   mayor, «Valor único», «A convenir»—; un tipo al que no se ofrece no se nombra.
+- **Paquetes e incluidos (HU-05):**
+  - **Datos:** un paquete es un servicio con valores por categoría (Pro Wash o un combo). Un
+    servicio incluye otros (`service_inclusions`, heredado con `private.service_closure`; el admin
+    lo cambia con `set_service_inclusions`, sin ciclos). «Kit» es el kit de arrastre: limpiarlo
+    incluye desengrasar y lubricar la cadena.
+  - **Regla (en la base):** `private.check_service_combination`, desde `save_reservation` y
+    `work_order_write_lines`. Una reserva u orden lleva como mucho un paquete
+    (`services_one_package`) y ningún par de servicios comparte algo incluido (`services_overlap`;
+    el mismo servicio dos veces también cuenta). «Otro» no cuenta.
+  - **App:**
+    - `service-combination.utils` (`unavailableServices`) dice qué no se puede elegir y por qué;
+    - `ServiceGroups` agrupa «Paquetes» (de menor a mayor) y «Servicios adicionales» en las dos
+      reservas y en la orden;
+    - el motivo va en la etiqueta de la casilla o en el botón (el `Checkbox` de HeroUI no pasa
+      `aria-describedby`);
+    - en la orden, el botón de un servicio ya añadido lo quita («−»);
+    - «Llegó» deja en «omitidos» un servicio de la reserva que ya se cruza con otro.
+  - **Lectura del cliente:** `bookable_services` trae `package` e `includes` (heredado), y los
+    paquetes ordenados por valor sin enviar el precio.
 
 ## Reporte de servicios (spec 015)
 

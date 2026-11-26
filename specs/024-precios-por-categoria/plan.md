@@ -266,6 +266,89 @@ Ninguna.
    (solo la del cliente, spec 021). El plan lo muestra en el formulario y en el detalle de la reserva
    del personal; propongo dejarlo explícito en CA-14.
 
+## Enmienda HU-05 — Paquetes e incluidos
+
+La migración `20261126160457_motorcycle_categories.sql` no ha llegado a ningún entorno remoto (la
+rama no se ha fusionado): la enmienda se escribe en ella, no en una migración nueva.
+
+### Base de datos
+
+- **Tabla `service_inclusions`** (`service_id`, `included_id`, clave compuesta):
+  - `check (service_id <> included_id)`; claves foráneas a `services`;
+  - RLS: la lee el personal (como `services`); nadie la escribe directamente.
+- **Funciones:**
+  - `private.service_closure(uuid) → setof uuid`: el servicio y todo lo que incluye, con CTE
+    recursiva (RF-04);
+  - `set_service_inclusions(p_service_id, p_included uuid[])`, `security definer`, solo admin
+    (hint `service_admin_only`). Reemplaza los incluidos de un servicio y rechaza un ciclo (hint
+    `service_inclusion_cycle`: alguno de los nuevos ya incluye al servicio) (CA-20);
+  - `private.check_service_combination(uuid[])` (RN-05, RN-06, CA-26):
+    - rechaza más de un servicio con valores por categoría (hint `services_one_package`);
+    - rechaza dos servicios cuyos cierres se cruzan (hint `services_overlap`).
+- **Dónde se aplica la regla:**
+  - `save_reservation` la llama con los servicios de la reserva, en sus dos ramas (personal y
+    cliente);
+  - `work_order_write_lines` la llama con los `service_id` de las líneas (las «Otro» no cuentan).
+    Cubre `save_work_order` y `correct_work_order`.
+- **`bookable_services`** añade `includes uuid[]`: lo que incluye cada servicio (directo), para el
+  formulario del cliente.
+- **Datos (CA-22):** los incluidos de la lista, por nombre (`name_key`), filtrando los que ya existan.
+- **Seeds:** la orden #2 de Camila pasa a Deluxe + Limpieza de asientos:
+  182.000 + 16.000 − 5.000 = 193.000; efectivo 150.000 + transferencia 43.000.
+- **pgTAP** (`21_…`):
+  - tabla, RLS y privilegios;
+  - ciclo rechazado, operador rechazado, cierre heredado;
+  - datos de la lista;
+  - reserva del personal y del cliente con dos paquetes o con cruce: rechazada;
+  - orden con cruce: rechazada; «Otro» no cuenta;
+  - `bookable_services` con `includes`.
+
+### Aplicación
+
+- **`services/utils/service-combination.utils.ts`** (pura y probada, la usan todos los formularios):
+  - `closureOf(id, includes)`: el servicio y todo lo que incluye;
+  - `unavailable(elegidos, servicios)`: para cada servicio no elegido, por qué no se puede, con el
+    nombre del que lo impide:
+    - `included`: «Incluido en Premium»;
+    - `package`: «Ya hay un paquete: Premium»;
+    - `overlap`: «Se cruza con Premium».
+- **Lecturas:**
+  - `fetchActiveServices` trae `includes` (`service_inclusions!service_id(included_id)`), y
+    `ServiceOption` gana `includes: string[]`;
+  - `getServices` (pantalla «Servicios») también.
+- **Formularios que eligen servicios:**
+  - reserva del personal (`reservation-form`) y del cliente (`my-reservation-form`): el
+    `CheckboxGroup` deshabilita los no disponibles y dice el motivo en su descripción;
+  - editor de la orden: el botón «Añadir X» de un no disponible queda deshabilitado, con el motivo
+    debajo del nombre (también para el lector de pantalla);
+  - si una reserva traía servicios ya incompatibles (guardada antes), la orden los nombra en
+    «omitidos».
+- **«Servicios»:**
+  - la tarjeta dice «Incluye: …» (CA-21);
+  - el formulario tiene «Incluye»: los demás servicios activos, salvo los que ya lo incluyen;
+  - las acciones `createService` y `updateService` guardan el servicio y luego llaman a
+    `set_service_inclusions`.
+- **Orden (CA-27):** la línea de un paquete dice «Incluye: …» en el editor y en el detalle.
+- **Errores:** las pistas nuevas en `reservations-errors`, los errores del área del cliente y los de
+  órdenes y servicios.
+
+### Pruebas
+
+| Criterio | Prueba |
+|---|---|
+| CA-20 | pgTAP (ciclo, solo admin); `service-form` (Incluye, sin los que lo incluyen); acciones |
+| CA-21 | `service-cards` |
+| CA-22 | pgTAP (incluidos de la lista) |
+| CA-23 a CA-25 | `service-combination.utils`; `reservation-form`, `my-reservation-form` y `order-editor`; E2E de reserva y de orden |
+| CA-26 | pgTAP (reserva del personal y del cliente, orden; «Otro» no cuenta); mapeo de errores |
+| CA-27 | `order-editor`, `order-detail` |
+| CA-28 | `ServiceGroups` en `reservation-form`, `my-reservation-form` y `order-editor`; pgTAP (orden de `bookable_services`); `byLowestPrice` |
+| CA-29 | `order-editor` (el botón de un servicio añadido lo quita; «Otro» se repite) |
+
+Precisiones pedidas por el usuario durante la implementación: los grupos «Paquetes» y «Servicios
+adicionales», con los paquetes de menor a mayor valor (CA-28), y el botón «−» que quita un servicio
+ya añadido a la orden (CA-29).
+
 ## Despliegue
 
 - La migración (datos incluidos) y después la app, en el mismo PR. La lista de precios entra con
