@@ -20,6 +20,7 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
+import { untilHydrated } from './support/hydration';
 import {
   SEED,
   SEED_CUSTOMERS,
@@ -446,7 +447,10 @@ test.describe('changing, cancelling and no-shows (spec 012, HU-04)', () => {
 
     await page.goto(`/agenda/${id}`);
     await page.getByRole('button', { name: 'Cambiar' }).click();
+    // Hydrated first: a slot ticked before React takes over is unticked when it does.
+    await untilHydrated(page.getByRole('radio', { name: /^4:00 p\. m\./ }));
     await page.getByRole('radio', { name: /^4:00 p\. m\./ }).check({ force: true });
+    await expect(page.getByRole('radio', { name: /^4:00 p\. m\./ })).toBeChecked();
     await page.getByRole('button', { name: 'Guardar cambios' }).click();
     await expect(
       page.getByRole('region', { name: 'Avisos' }).getByText('Reserva guardada.')

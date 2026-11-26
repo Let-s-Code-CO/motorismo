@@ -14,9 +14,17 @@
  * - CA-12 / CA-14: signing in shows the brand («Entrando…») while home loads; still with
  *   «reducir movimiento».
  * - CA-13: after signing out, the sign-in page fades in.
+ * - CA-03: a screen still loading, with its skeleton, has no serious accessibility issues, in light
+ *   and in dark.
+ *
+ * These tests measure times on a slowed network, so they run apart, after the rest of the suite
+ * (their own project in `playwright.config.ts`): other tests loading the server at the same time
+ * changed what a slow screen showed.
  */
 import { type Page, expect, test } from '@playwright/test';
 
+import { audit } from './support/audit';
+import { untilHydrated } from './support/hydration';
 import { SEED, signIn } from './support/sandbox';
 
 /** A bad signal: every request waits and the answer trickles in. */
@@ -24,6 +32,7 @@ const slowNetwork = async (page: Page) => {
   // The app must be fully loaded (hydrated) first, as for a real user: a tap before that is a
   // plain page load, which no bar or transition is meant to cover.
   await page.waitForLoadState('networkidle');
+  await untilHydrated(page.locator('a, button').first());
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Network.enable');
   await cdp.send('Network.emulateNetworkConditions', {
@@ -56,6 +65,8 @@ test.describe('on a desktop', () => {
   test('a slow screen shows its shape and «Cargando…», then its content; the bar comes and goes (CA-01, CA-02, CA-06)', async ({
     page,
   }) => {
+    // Two screens on a 30 KB/s network, each waiting up to 30 s: more than the default 30 s.
+    test.slow();
     await signIn(page, SEED.operator.email);
     await expect(page).toHaveURL('/');
     const network = await slowNetwork(page);
@@ -247,3 +258,47 @@ test.describe('with «reducir movimiento»', () => {
     await network.restore();
   });
 });
+
+for (const colorScheme of ['light', 'dark'] as const) {
+  test.describe(`the skeleton in ${colorScheme}`, () => {
+    test.use({ colorScheme });
+
+    test('a screen still loading, with its skeleton, has no serious accessibility issues (CA-03)', async ({
+      page,
+    }) => {
+      await signIn(page, SEED.operator.email);
+      await expect(page).toHaveURL('/');
+      // A bad signal, so the skeleton stays on screen while it is audited.
+      // Fully loaded first, as for a real user (a tap before hydration is a plain page load).
+      await page.waitForLoadState('networkidle');
+      await untilHydrated(
+        page
+          .getByRole('navigation', { name: 'Navegación principal' })
+          .getByRole('link', { name: 'Clientes', exact: true })
+      );
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Network.enable');
+      await cdp.send('Network.emulateNetworkConditions', {
+        offline: false,
+        latency: 800,
+        downloadThroughput: 30 * 1024,
+        uploadThroughput: -1,
+      });
+
+      await page
+        .getByRole('navigation', { name: 'Navegación principal' })
+        .getByRole('link', { name: 'Clientes', exact: true })
+        .click();
+      await expect(page.getByRole('status').filter({ hasText: 'Cargando…' })).toBeVisible();
+      // Past its 300 ms appearance, fully drawn.
+      await page.waitForTimeout(500);
+      // Next 16 takes the old screen's metadata away with it and puts the new one when it arrives: for
+      // about a second of a slow navigation the tab has no <title> (in the backlog). Audited once it is
+      // back, the skeleton still on screen.
+      await expect.poll(() => page.evaluate(() => document.title)).not.toBe('');
+      await expect(page.getByRole('status').filter({ hasText: 'Cargando…' })).toBeVisible();
+
+      expect(await audit(page)).toEqual([]);
+    });
+  });
+}

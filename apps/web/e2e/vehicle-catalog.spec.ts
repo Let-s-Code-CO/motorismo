@@ -69,7 +69,8 @@ test('adds a really new brand and line to the catalog, once (CA-13, CA-14)', asy
   // The longest of this file (two vehicles saved, suggestions asked twice): under the load of the whole
   // suite it neared the 30 s of a test, though alone it takes 5.
   test.slow();
-  const brand = `E2E Marca ${Date.now()}`;
+  // Unique even when two copies start in the same millisecond (one's cleanup would take the other's).
+  const brand = `E2E Marca ${Date.now()}${test.info().workerIndex}${Math.floor(Math.random() * 1000)}`;
   createdBrands.push(brand);
   const dialog = await openForm(page);
 
@@ -87,8 +88,12 @@ test('adds a really new brand and line to the catalog, once (CA-13, CA-14)', asy
   // Next time it is suggested (CA-13)…
   await page.getByRole('button', { name: 'Agregar vehículo' }).click();
   const again = page.getByRole('dialog', { name: 'Agregar vehículo' });
-  await field(again, 'Marca').fill(brand.slice(0, 12).toLowerCase());
-  await page.getByRole('option', { name: brand, exact: true }).click();
+  // The brands are fetched again after the save (CA-13): if they arrive while the list is open, it
+  // is drawn again and closes. Typed and chosen again until it holds.
+  await expect(async () => {
+    await field(again, 'Marca').fill(brand.slice(0, 12).toLowerCase());
+    await page.getByRole('option', { name: brand, exact: true }).click({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
   await field(again, 'Línea').fill('modelo x1');
   await expect(page.getByRole('option', { name: 'Modelo X-1', exact: true })).toBeVisible();
   await leaveField(page);

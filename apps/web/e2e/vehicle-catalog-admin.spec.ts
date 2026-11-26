@@ -17,6 +17,7 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
+import { chooseRowAction } from './support/menus';
 import { openAdminSection } from './support/nav';
 import {
   SEED,
@@ -118,8 +119,7 @@ test.describe('the admin', () => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
     await openCatalogFor(page, prefix);
-    await page.getByRole('button', { name: `Acciones de ${prefix} Viejo` }).click();
-    await page.getByRole('menuitem', { name: 'Renombrar' }).click();
+    await chooseRowAction(page, `${prefix} Viejo`, 'Renombrar');
     const dialog = page.getByRole('dialog', { name: `Renombrar la marca «${prefix} Viejo»` });
     await dialog.getByRole('textbox', { name: 'Nombre' }).fill(`${prefix} Nuevo`);
     await dialog.getByRole('button', { name: 'Guardar' }).click();
@@ -140,8 +140,7 @@ test.describe('the admin', () => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
     await openCatalogFor(page, prefix);
-    await page.getByRole('button', { name: `Acciones de ${prefix} Zetta` }).click();
-    await page.getByRole('menuitem', { name: 'Unir con otra marca' }).click();
+    await chooseRowAction(page, `${prefix} Zetta`, 'Unir con otra marca');
     const dialog = page.getByRole('dialog', { name: `Unir la marca «${prefix} Zetta»` });
     await chooseInDialog(
       page,
@@ -195,8 +194,7 @@ test.describe('the admin', () => {
     await expect(voge).not.toContainText('Por revisar');
 
     // CA-27: a line of it.
-    await page.getByRole('button', { name: `Acciones de ${prefix} Voge` }).click();
-    await page.getByRole('menuitem', { name: 'Registrar línea' }).click();
+    await chooseRowAction(page, `${prefix} Voge`, 'Registrar línea');
     const addLine = page.getByRole('dialog', { name: `Registrar una línea de ${prefix} Voge` });
     await addLine.getByRole('textbox', { name: 'Nombre' }).fill('525 Dsx');
     await addLine.getByRole('button', { name: 'Registrar' }).click();
@@ -208,8 +206,7 @@ test.describe('the admin', () => {
     // The row of the brand itself (its lines, still to review, are listed under it).
     const bien = page.getByRole('button', { name: `Ver líneas de ${prefix} Bien` }).locator('..');
     await expect(bien).toContainText('Por revisar ·');
-    await page.getByRole('button', { name: `Acciones de ${prefix} Bien` }).click();
-    await page.getByRole('menuitem', { name: 'Dar por revisada' }).click();
+    await chooseRowAction(page, `${prefix} Bien`, 'Dar por revisada');
     await expect(page.getByText(`«${prefix} Bien» quedó revisada.`)).toBeVisible();
     await expect(bien).not.toContainText('Por revisar ·');
     await expect(bien).toContainText('1 línea por revisar');
@@ -224,8 +221,7 @@ test.describe('the admin', () => {
     await signIn(page, SEED.admin.email);
     await expect(page).toHaveURL('/');
     await openCatalogFor(page, prefix);
-    await page.getByRole('button', { name: 'Acciones de la línea Linea Movil' }).click();
-    await page.getByRole('menuitem', { name: 'Pasar a otra marca' }).click();
+    await chooseRowAction(page, 'la línea Linea Movil', 'Pasar a otra marca');
     const dialog = page.getByRole('dialog', { name: 'Pasar la línea «Linea Movil» a otra marca' });
     await chooseInDialog(
       page,
@@ -253,8 +249,7 @@ test.describe('the admin', () => {
     await openCatalogFor(page, prefix);
     const lines = page.getByRole('list', { name: `Líneas de ${prefix} Zeta` });
     await expect(lines).toContainText('Sin categoría');
-    await page.getByRole('button', { name: 'Acciones de la línea Aventura 900' }).click();
-    await page.getByRole('menuitem', { name: 'Categoría' }).click();
+    await chooseRowAction(page, 'la línea Aventura 900', 'Categoría');
     const dialog = page.getByRole('dialog', { name: 'Categoría de Aventura 900' });
     await dialog.getByRole('button', { name: /Categoría/ }).click();
     await page.getByRole('option', { name: 'Maxi Trail', exact: true }).click();

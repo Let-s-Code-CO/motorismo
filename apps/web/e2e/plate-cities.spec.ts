@@ -8,6 +8,7 @@
  */
 import { type Page, expect, test } from '@playwright/test';
 
+import { untilHydrated } from './support/hydration';
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 
 const BOGOTA = '11001';
@@ -37,6 +38,8 @@ test('an admin gives Bogotá, D.C. its own legend, its cars show it, and clearin
   // RN-04: the 294 cities of the RUNT's transit authorities.
   await expect(page.getByText('294 ciudades')).toBeVisible();
 
+  // Hydrated first: typed or tapped before, the search and the dialog do nothing.
+  await untilHydrated(page.getByLabel('Buscar ciudad'));
   await page.getByLabel('Buscar ciudad').fill('bogota');
   await page.getByRole('button', { name: 'Cambiar leyenda de Bogotá, D.C.' }).click();
   const dialog = page.getByRole('dialog', { name: 'Leyenda de Bogotá, D.C.' });
@@ -50,6 +53,8 @@ test('an admin gives Bogotá, D.C. its own legend, its cars show it, and clearin
   await expect(await valentinaPlate(page)).toHaveAttribute('data-legend', 'STFE DE BOGOTA');
 
   await page.goto('/admin/vehicle-catalog/plate-cities');
+  // Hydrated first: typed or tapped before, the search and the dialog do nothing.
+  await untilHydrated(page.getByLabel('Buscar ciudad'));
   await page.getByLabel('Buscar ciudad').fill('bogota');
   await page.getByRole('button', { name: 'Cambiar leyenda de Bogotá, D.C.' }).click();
   await page.getByRole('button', { name: 'Quitar leyenda' }).click();
