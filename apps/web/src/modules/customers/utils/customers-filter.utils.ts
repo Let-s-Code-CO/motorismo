@@ -77,6 +77,29 @@ export const customersQueryString = ({ q, status, page }: CustomerFilters): stri
   return query ? `?${query}` : '';
 };
 
+/**
+ * A customer's record, opened from the list in some state (CA-33): it carries that state in `?list=`
+ * so «Volver a clientes» returns to the same filter, search and page.
+ */
+export const customerRecordHref = (id: string, filters: CustomerFilters): string => {
+  const query = customersQueryString(filters).slice(1);
+  return query ? `/customers/${id}?list=${encodeURIComponent(query)}` : `/customers/${id}`;
+};
+
+/**
+ * The list a record goes back to (CA-33): the state it carries, read again as filters, so nothing
+ * else in it survives (it only ever leads to the list); without it, the whole list.
+ */
+export const customersListHref = (list: string | null | undefined): string => {
+  const params = new URLSearchParams(list ?? '');
+  const filters = parseCustomerFilters({
+    q: params.get('q'),
+    status: params.get('status'),
+    page: params.get('page'),
+  });
+  return `/customers${customersQueryString(filters)}`;
+};
+
 /** Customers who can be served: with or without account, not disabled (CA-17). */
 export const activeCount = (counts: Record<CustomerStatus, number>): number =>
   counts.registered + counts.walk_in;

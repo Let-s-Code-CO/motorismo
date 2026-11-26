@@ -11,6 +11,7 @@
  * Spec 012: the agenda, a new reservation, a reservation and «Horario» fit a phone too.
  * Spec 015: the services report fits an iPhone, a card per service.
  * Spec 016: the payroll and an employee's detail fit an iPhone, a card per employee.
+ * Spec 023: «Ciudades de placa» and the plates of «Clientes» fit an iPhone.
  * Spec 018: «Marcas y líneas» fits a phone, its lines open; the desktop bar never overflows and,
  * with today's sections, needs no «Más» for an admin or an operator (CA-22, CA-25).
  */
@@ -198,7 +199,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
   });
 
-  test('every staff screen of specs 007, 008, 012, 015, 016 and 017 has no horizontal scroll', async ({
+  test('every staff screen of specs 007, 008, 012, 015, 016, 017, 018 and 023 has no horizontal scroll', async ({
     page,
   }) => {
     const { data: open } = await adminClient()
@@ -246,6 +247,9 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       `/admin/data-requests/${camilaRequest!.id}`,
       // Spec 018: the catalog, with the lines open.
       '/admin/vehicle-catalog?status=pending&q=a',
+      // Spec 023: the cities that issue plates, and «Clientes» with the plates a search matched.
+      '/admin/vehicle-catalog/plate-cities',
+      '/customers?q=kdm',
     ]) {
       await page.goto(path);
       await expect(page.getByRole('main')).toBeVisible();
@@ -822,7 +826,7 @@ test.describe('customer record actions', () => {
     );
   });
 
-  test('the plate is drawn yellow with black characters, a car with its city and a motorcycle with COLOMBIA (CA-27)', async ({
+  test('the plate is drawn yellow with black characters, a car with its city and a motorcycle with COLOMBIA (CA-27; spec 023)', async ({
     page,
   }) => {
     await signIn(page, SEED.operator.email);
@@ -831,31 +835,26 @@ test.describe('customer record actions', () => {
     await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) }).click();
     const vehicles = page.getByRole('region', { name: 'Vehículos' });
     // Valentina's KDM-482 (seeds), issued in Bogotá, D.C.
-    const carPlate = vehicles.getByText('KDM-482', { exact: true });
-    const look = await carPlate.evaluate((characters) => {
-      const plate = characters.parentElement!;
-      return {
-        background: getComputedStyle(plate).backgroundImage,
-        ink: getComputedStyle(characters).color,
-        below: plate.lastElementChild!.textContent,
-      };
-    });
+    const carPlate = vehicles.locator('[data-plate]').filter({ hasText: 'KDM-482' });
+    const look = await carPlate.evaluate((plate) => ({
+      background: getComputedStyle(plate).backgroundImage,
+      ink: getComputedStyle(plate.querySelector('svg')!).color,
+    }));
     expect(look.background).toContain('rgb(255, 219, 61)'); // --color-plate-light, #ffdb3d
     expect(look.background).toContain('rgb(247, 198, 0)'); // --color-plate, #f7c600
     expect(look.ink).toBe('rgb(17, 17, 17)'); // --color-plate-ink, #111
-    expect(look.below).toBe('BOGOTÁ, D.C.');
+    // Spec 023, RN-05: in capitals without accents, as plates are stamped.
+    await expect(carPlate).toHaveAttribute('data-legend', 'BOGOTA, D.C.');
 
     // Camila's UIH-03D (seeds): the same plate, with COLOMBIA below.
     await page.goto(`/customers?q=${encodeURIComponent(SEED_CUSTOMERS.customer.email)}`);
     await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
-    const motoPlate = page
-      .getByRole('region', { name: 'Vehículos' })
-      .getByText('UIH-03D', { exact: true });
-    expect(
-      await motoPlate.evaluate(
-        (characters) => characters.parentElement!.lastElementChild!.textContent
-      )
-    ).toBe('COLOMBIA');
+    await expect(
+      page
+        .getByRole('region', { name: 'Vehículos' })
+        .locator('[data-plate]')
+        .filter({ hasText: 'UIH-03D' })
+    ).toHaveAttribute('data-legend', 'COLOMBIA');
   });
 
   test('the colour list of a car (Color in the left column) opens right under the field, over the modal without being clipped, and each swatch is centred on its name', async ({

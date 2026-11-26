@@ -10,20 +10,25 @@ import NoPermission from '@web/modules/auth/components/organisms/no-permission.c
 import { getCustomer } from '@web/modules/customers/api/customers.server';
 import CustomerDetail from '@web/modules/customers/components/organisms/customer-detail.component';
 import CustomerManage from '@web/modules/customers/components/organisms/customer-manage.component';
+import { customersListHref } from '@web/modules/customers/utils/customers-filter.utils';
 import RegisterDataRequestDialog from '@web/modules/data-rights/components/organisms/register-data-request-dialog.component';
 import { listCustomerVehicles } from '@web/modules/vehicles/api/vehicles.server';
 import VehiclesSection from '@web/modules/vehicles/components/organisms/vehicles-section.component';
 import { listCustomerOrders } from '@web/modules/work-orders/api/work-orders.server';
 import CustomerHistory from '@web/modules/work-orders/components/organisms/customer-history.component';
 
-type CustomerPageProps = { params: Promise<{ id: string }> };
+type CustomerPageProps = {
+  params: Promise<{ id: string }>;
+  /** `?list=`: the list it was opened from, for «Volver a clientes» (CA-33). */
+  searchParams: Promise<{ list?: string | string[] }>;
+};
 
 /**
  * A customer's record (spec 004, CA-18) with their vehicles (spec 005, HU-01) and their work
  * orders (spec 008, CA-16), where staff edit it
  * (CA-27) and staff disable or reactivate it (RN-09, CA-29 to CA-31). Staff only; data protected by RLS and the database guard.
  */
-const CustomerPage = async ({ params }: CustomerPageProps) => {
+const CustomerPage = async ({ params, searchParams }: CustomerPageProps) => {
   const staff = await getStaffForPage();
   if (!staff) return <NoPermission audience="customer" />;
 
@@ -37,11 +42,14 @@ const CustomerPage = async ({ params }: CustomerPageProps) => {
   ]);
 
   const t = await getTranslations('customers.detail');
+  const { list } = await searchParams;
+  // CA-33: back to the list it was opened from, with its filter, search and page.
+  const back = customersListHref(typeof list === 'string' ? list : null);
 
   return (
     <section className="flex flex-col gap-6">
       <Link
-        href="/customers"
+        href={back}
         className="inline-flex w-max items-center gap-1.5 rounded-medium text-sm font-medium text-default-600 hover:text-foreground"
       >
         <ArrowLeft aria-hidden className="size-4" />

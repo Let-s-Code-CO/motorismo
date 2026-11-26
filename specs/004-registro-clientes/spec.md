@@ -122,6 +122,9 @@ de contacto.
   atención, quién lo registró.
 - **CA-19** — Dado un registro sin confirmar (CA-02), cuando el personal consulta «Clientes»,
   entonces no aparece ni cuenta en los totales.
+- **CA-33** — Dada la lista de «Clientes» filtrada, con una búsqueda o en otra página, cuando el personal
+  abre un cliente y pulsa «Volver a clientes», entonces vuelve a la misma lista: el mismo filtro, la
+  misma búsqueda y la misma página. Abierta la ficha de otra forma, vuelve a la lista completa.
 
 ### HU-05 (P2) — Entrar o registrarse con Google
 
@@ -324,3 +327,4 @@ opcional (los vehículos van en otra spec).
 | 2026-11-21 | Cambiado por la spec 014: el cliente entra a su «Inicio» (`/my`), no a «Mi perfil» (CA-12), y ve «Inicio», «Mis reservas», «Historial» y «Mi perfil» (CA-08). La página «No tienes permiso» lleva a su inicio (CA-09). |
 | 2026-11-24 | Corregida una carrera de la lista (deuda técnica): una tarjeta pulsada mientras la búsqueda espera sus 300 ms ya no se pierde, y la respuesta tardía de una búsqueda anterior no pisa lo que se está escribiendo (CA-16, CA-17). La lógica es compartida con el reporte de servicios (spec 015). |
 | 2026-11-25 | Enmienda de la spec 022: el formulario de «Nuevo cliente» registra, opcional, el primer vehículo (juntos o ninguno) y se abre también desde «Nueva orden», con lo buscado ya en su campo. |
+| 2026-11-25 | A petición del usuario: «Volver a clientes» conserva el filtro, la búsqueda y la página con que se abrió la ficha (CA-33). |

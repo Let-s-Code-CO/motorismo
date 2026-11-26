@@ -10,8 +10,11 @@ export const plateQuery = (search: string): string | null => {
   return /^[A-Z0-9]{2,}$/.test(query) ? query : null;
 };
 
-/** The plate a result matched by, with the city that issued it if it is a car's (spec 005, HU-07). */
-export type MatchedPlate = { plate: string; city: string | null };
+/**
+ * The plate a result matched by, with the city that issued it if it is a car's (spec 005, HU-07) and
+ * that city's own legend for the plate, if the admin gave it one (spec 023, HU-03).
+ */
+export type MatchedPlate = { plate: string; city: string | null; legend: string | null };
 
 /**
  * For each customer, the first of their plates that contains the plate query (CA-11): the plate a
@@ -21,14 +24,18 @@ export const matchedPlates = (
   vehicles: readonly {
     customer_id: string;
     plate: string | null;
-    plate_city: { name: string } | null;
+    plate_city: { name: string; plate_legend: string | null } | null;
   }[],
   query: string
 ): Map<string, MatchedPlate> => {
   const found = new Map<string, MatchedPlate>();
   for (const { customer_id, plate, plate_city } of vehicles) {
     if (plate?.includes(query) && !found.has(customer_id)) {
-      found.set(customer_id, { plate, city: plate_city?.name ?? null });
+      found.set(customer_id, {
+        plate,
+        city: plate_city?.name ?? null,
+        legend: plate_city?.plate_legend ?? null,
+      });
     }
   }
   return found;

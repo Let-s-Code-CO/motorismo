@@ -5,6 +5,7 @@
  * API answers at most 1,000 rows per request (PostgREST max_rows, the Supabase default), so a
  * single request would silently lose the last 104: the list is read page by page, in a stable
  * order (by DANE code), until a page comes back incomplete.
+ * Spec 023, CA-07: only the municipalities that issue plates (with a transit authority, RN-04).
  */
 import { createSupabaseBrowserClient } from '@web/modules/core/lib/supabase-browser.lib';
 import { fetchMunicipalities } from '@web/modules/vehicles/api/vehicles.client';
@@ -28,8 +29,9 @@ const fakeApi = (rows: Municipality[]) => {
   const range = vi.fn((from: number, to: number) =>
     Promise.resolve({ data: rows.slice(from, Math.min(to + 1, from + API_MAX_ROWS)), error: null })
   );
-  const query = { select: vi.fn(), order: vi.fn(), range };
+  const query = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), range };
   query.select.mockReturnValue(query);
+  query.eq.mockReturnValue(query);
   query.order.mockReturnValue(query);
   vi.mocked(createSupabaseBrowserClient).mockReturnValue({ from: () => query } as never);
   return query;
@@ -58,6 +60,14 @@ describe('fetchMunicipalities', () => {
 
     expect(await fetchMunicipalities()).toHaveLength(1000);
     expect(query.range).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks only for the municipalities that issue plates (spec 023, CA-07)', async () => {
+    const query = fakeApi(municipalities(3));
+
+    await fetchMunicipalities();
+
+    expect(query.eq).toHaveBeenCalledWith('issues_plates', true);
   });
 
   it('fails loudly when the API refuses, instead of returning a partial list', async () => {

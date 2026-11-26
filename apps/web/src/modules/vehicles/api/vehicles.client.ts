@@ -51,9 +51,10 @@ export const fetchLines = async (brandId: string): Promise<CatalogItem[]> => {
 const API_PAGE = 1000;
 
 /**
- * Every municipality a car plate can be issued in (spec 005, RF-07): 1,104 rows, more than the API
- * returns at once, so they are read page by page in a stable order (DANE code) until a page comes
- * back incomplete. A refusal fails the whole read: never a partial list.
+ * Every municipality a car plate can be issued in (spec 005, RF-07): only those with a transit
+ * authority (spec 023, CA-07, RN-04). They are read page by page in a stable order (DANE code) until
+ * a page comes back incomplete, since the API caps each answer at 1,000 rows. A refusal fails the
+ * whole read: never a partial list.
  */
 export const fetchMunicipalities = async (): Promise<Municipality[]> => {
   const supabase = createSupabaseBrowserClient();
@@ -62,6 +63,7 @@ export const fetchMunicipalities = async (): Promise<Municipality[]> => {
     const { data, error } = await supabase
       .from('municipalities')
       .select('code, name, department')
+      .eq('issues_plates', true)
       .order('code')
       .range(from, from + API_PAGE - 1);
     if (error) throw new Error(`Could not load the municipalities: ${error.message}`);

@@ -6,7 +6,8 @@
  * says whose vehicle it is):
  * - staff: "Ya hay un vehículo registrado con esta placa." (CA-08);
  * - a customer: the same, plus "Si es tuyo, acércate al punto de atención." (CA-25).
- * A car without plate city, or with one outside the list, has its own messages (CA-31, RN-11).
+ * A car without plate city, or with one outside the list, has its own messages (CA-31, RN-11); a city
+ * that issues no plates is one outside the list too: «Elige una ciudad de la lista.» (spec 023, CA-08).
  */
 import { fromVehicleError } from '@web/modules/vehicles/utils/vehicles-errors.utils';
 
@@ -35,6 +36,7 @@ describe('fromVehicleError', () => {
     ['vehicle_displacement_invalid', 'displacementInvalid'],
     ['vehicle_plate_city_required', 'plateCityRequired'],
     ['vehicle_plate_city_invalid', 'plateCityInvalid'],
+    ['vehicle_plate_city_not_issuing', 'plateCityInvalid'],
     ['vehicle_retired', 'retired'],
     ['vehicle_not_found', 'notFound'],
   ])('maps the hint %s to %s', (hint, key) => {

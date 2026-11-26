@@ -31,6 +31,7 @@ import CatalogMergeDialog, {
 import CatalogNameDialog, {
   type CatalogNameTarget,
 } from '@web/modules/vehicles/components/molecules/catalog-name-dialog.component';
+import VehicleCatalogTabs from '@web/modules/vehicles/components/molecules/vehicle-catalog-tabs.component';
 import { VEHICLE_TYPES } from '@web/modules/vehicles/constants/vehicle-options.constants';
 import { vehicleCatalogHref } from '@web/modules/vehicles/schemas/vehicle-catalog.schema';
 import type {
@@ -237,6 +238,8 @@ const VehicleCatalogScreen = ({ filters, brands }: VehicleCatalogScreenProps) =>
 
   return (
     <section className="flex flex-col gap-6">
+      {/* Spec 023: the plate cities are another tab of this section. */}
+      <VehicleCatalogTabs current="catalog" />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-semibold tracking-tight">{t('catalog.title')}</h1>

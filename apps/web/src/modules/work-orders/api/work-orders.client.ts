@@ -32,7 +32,7 @@ export const searchCustomers = async (q: string): Promise<PickerCustomer[]> => {
   if (!query || !data.length) return data;
   const { data: vehicles, error: plateError } = await supabase
     .from('vehicles')
-    .select('customer_id, plate, plate_city:municipalities(name)')
+    .select('customer_id, plate, plate_city:municipalities(name, plate_legend)')
     .in(
       'customer_id',
       data.map(({ id }) => id)

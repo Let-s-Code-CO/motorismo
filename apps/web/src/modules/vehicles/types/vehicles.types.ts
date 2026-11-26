@@ -18,3 +18,6 @@ export type CatalogItem = { id: string; name: string; aliases?: string[] };
 
 /** A municipality a car plate can be issued in (spec 005, RF-07): DANE code, name, department. */
 export type Municipality = Pick<Tables<'municipalities'>, 'code' | 'name' | 'department'>;
+
+/** A municipality that issues plates, with its own legend if the admin gave it one (spec 023). */
+export type PlateCity = Municipality & Pick<Tables<'municipalities'>, 'plate_legend'>;

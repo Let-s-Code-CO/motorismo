@@ -183,7 +183,7 @@ test.describe('titles, dashboard figures, cards and buttons', () => {
     expect(await css(phone, 'font-family')).toContain('Geist Mono');
   });
 
-  test('a line that mixes words and figures, and the plate, keep Geist with aligned digits (CA-04, CA-12)', async ({
+  test('a line that mixes words and figures keeps Geist with aligned digits, and the plate uses no font (CA-04, CA-12)', async ({
     page,
   }) => {
     await toStaffHome(page);
@@ -193,7 +193,8 @@ test.describe('titles, dashboard figures, cards and buttons', () => {
     expect(await css(count, 'font-family')).not.toContain('Geist Mono');
     expect(await css(count, 'font-variant-numeric')).toBe('tabular-nums');
 
-    // The plate reproduces the real one (spec 005, HU-07): its characters stay in Geist.
+    // The plate reproduces the real one (spec 023, CA-04): its characters are the norm's tracing,
+    // drawn as strokes, never a font.
     await page.goto('/customers');
     await page
       .getByRole('link', { name: new RegExp(SEED_CUSTOMERS.customer.name) })
@@ -201,9 +202,8 @@ test.describe('titles, dashboard figures, cards and buttons', () => {
       .click();
     const plate = page.locator('[data-plate]').first();
     await expect(plate).toBeVisible();
-    expect(await css(plate.locator('.font-bold').first(), 'font-family')).not.toContain(
-      'Geist Mono'
-    );
+    await expect(plate.locator('svg [data-characters] path')).toHaveCount(6);
+    await expect(plate.locator('svg text')).toHaveCount(0);
   });
 
   test('cards have the larger radius and a lit edge, a light follows the cursor, and a pressable one lights its border with the accent (CA-05)', async ({
@@ -298,14 +298,36 @@ test.describe('the metal plate (CA-12, CA-13)', () => {
     return plate;
   };
 
-  test('keeps its yellow and ink, and gains embossed characters and two glints (CA-12)', async ({
+  test('keeps its yellow and ink, and gains an embossed frame and characters and two glints (CA-12)', async ({
     page,
   }) => {
     const plate = await toCamila(page);
     expect(await css(plate, 'background-image')).toContain('rgb(247, 198, 0)');
-    expect(await css(plate, 'text-shadow')).not.toBe('none');
+    expect(await css(plate, 'color')).toBe('rgb(17, 17, 17)');
+    // Spec 023: the emboss is a light-and-shadow filter on the frame, characters and circle.
+    const embossed = plate.locator('svg g[filter]');
+    await expect(embossed).toHaveCount(1);
+    await expect(embossed.locator('[data-characters]')).toHaveCount(1);
     expect(await css(plate, 'content', '::before')).not.toBe('none');
     expect(await css(plate, 'content', '::after')).not.toBe('none');
+  });
+
+  test('two plates of the same kind measure exactly the same, whatever their letters (spec 023, CA-03)', async ({
+    page,
+  }) => {
+    await toStaffHome(page);
+    // Gabriel's UIH-58E and Camila's UIH-03D, matched by the search, in the same list.
+    await page.goto('/customers?q=uih');
+    const plates = page.getByRole('grid').locator('[data-plate]');
+    await expect(plates).toHaveCount(2);
+    const [first, second] = await Promise.all([
+      plates.nth(0).boundingBox(),
+      plates.nth(1).boundingBox(),
+    ]);
+    expect(first!.width).toBe(second!.width);
+    expect(first!.height).toBe(second!.height);
+    // The norm's proportions: a motorcycle plate, 235 × 105 mm.
+    expect(first!.width / first!.height).toBeCloseTo(235 / 105, 1);
   });
 
   test('a glint crosses it once on hover (CA-13)', async ({ page }) => {

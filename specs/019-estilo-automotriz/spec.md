@@ -95,7 +95,9 @@ de un vistazo.
 
 - **CA-12** — Dada una placa de vehículo (spec 005, HU-07), cuando se muestra, entonces conserva su
   amarillo y su tinta negra, y además se ve como metal reflectivo: brillo arriba y sombra abajo, una
-  veta fina, letras en relieve y un destello quieto.
+  veta fina, letras en relieve y un destello quieto. *Enmendado por la spec 023:* el relieve (luz
+  arriba, sombra abajo) es del marco, los caracteres y el círculo, dibujados en vectores; la leyenda va
+  sin relieve para que se lea.
 - **CA-13** — Dada una placa, cuando el ratón pasa sobre ella o sobre la fila o tarjeta que la
   contiene, entonces un destello la cruza una sola vez; si el dispositivo pide reducir el
   movimiento, no la cruza.
@@ -171,3 +173,4 @@ Ninguna.
 | 2026-11-25 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-25 | Verificada. Enmienda de CA-04 (cifra sola en mono; en una línea mixta, cifras alineadas en la letra normal), tal como se decidió en la implementación. `style.spec.ts` se completó: la trama, el resplandor y el grano del fondo (CA-02); el tamaño y el espaciado de los títulos y el área del cliente (CA-03); el foco de luz pintado donde está el puntero y el canto de luz (CA-05); el encabezado translúcido (CA-07); el destello al pasar por la fila de la placa (CA-13). Cada comprobación se vio fallar con una mutación. |
 | 2026-11-25 | Implementada. La regresión completa (E2E en claro y oscuro, axe, teléfono, capturas de 30 pantallas en 1280, 360 y 440 px) llevó a tres ajustes, dentro de lo especificado: texto secundario del claro más oscuro (RN-01: zinc-500 no daba AA sobre el gris de exposición), la mono solo en cifras solas (las líneas que mezclan palabras y la placa conservan Geist con cifras alineadas, CA-04 y CA-12) y «Reintentar» de «Sin conexión» en píldora (CA-06). |
+| 2026-11-25 | Enmendada por la spec 023 (CA-12): la placa es un dibujo vectorial de la norma; el relieve pasa del sombreado del texto a un filtro sobre marco, caracteres y círculo. |

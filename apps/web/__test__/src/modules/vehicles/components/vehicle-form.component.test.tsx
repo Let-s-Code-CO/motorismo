@@ -17,6 +17,8 @@
  *   coming back to Carro brings Bogotá, D.C. again (CA-09); a car without city shows the error
  *   next to the field (CA-07). The list shows at most 50 cities at a time (not virtualised, so
  *   it stays keyboard-accessible) and asks to type to find the rest.
+ * - Spec 023, CA-08: a car registered with a city that issues no plates (not offered any more) is
+ *   asked for its city again when corrected.
  */
 import type { ReactNode } from 'react';
 
@@ -322,7 +324,7 @@ describe('VehicleForm', () => {
         displacement_cc: null,
         plate: 'KDM482',
         plate_city_code: '05001',
-        plate_city: { name: 'Medellín' },
+        plate_city: { name: 'Medellín', plate_legend: null },
       })
     );
     await waitFor(() => expect(cityInput()).toHaveValue('Medellín'));
@@ -348,11 +350,37 @@ describe('VehicleForm', () => {
         line: { name: 'CX-30' },
         plate: 'KDM482',
         plate_city_code: '05001',
-        plate_city: { name: 'Medellín' },
+        plate_city: { name: 'Medellín', plate_legend: null },
       })
     );
 
     await waitFor(() => expect(cityInput()).toHaveValue('Medellín'));
+  });
+
+  it('asks again for the city of a car registered with one that issues no plates (spec 023, CA-08)', async () => {
+    // San Antonio del Tequendama is not among the cities offered: it has no transit authority.
+    setup(
+      vi.fn(),
+      buildVehicle({
+        vehicle_type: 'car',
+        vehicle_class: 'utility',
+        displacement_cc: null,
+        brand: { name: 'Mazda' },
+        line: { name: 'CX-30' },
+        plate: 'KDM482',
+        plate_city_code: '25645',
+        plate_city: { name: 'San Antonio del Tequendama', plate_legend: null },
+      })
+    );
+    // Once the cities that issue plates have loaded, the field is empty.
+    await waitFor(() => expect(fetchMunicipalities).toHaveBeenCalled());
+    await act(async () => {});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(await screen.findByText('Elige la ciudad de la placa.')).toBeInTheDocument();
+    expect(cityInput()).toHaveValue('');
+    expect(saveVehicle).not.toHaveBeenCalled();
   });
 
   it('drops the city when the type changes and brings Bogotá, D.C. back with Carro (CA-09)', async () => {

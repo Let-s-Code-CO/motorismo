@@ -7,6 +7,11 @@
  *   that customer to the screen, which runs the same action as the record (CA-29, CA-30). The menu
  *   mirrors «Usuarios» and will grow with more actions.
  * - the menu exists only where an action can run: without a handler there is no actions column.
+ * - Spec 023, CA-12: a customer found by plate shows that plate whole, drawn to scale with its city
+ *   (its own legend if the admin gave one) or «COLOMBIA», without the word «Placa» in sight; a screen
+ *   reader still hears «Placa» before its characters.
+ * - CA-33: each name opens the record carrying the list's filter, search and page, so «Volver a
+ *   clientes» returns to the same list.
  */
 import { fireEvent, screen } from '@testing-library/react';
 
@@ -29,6 +34,7 @@ const row = (overrides: Partial<CustomerListRow> = {}): CustomerListRow => ({
   created_at: '2026-11-01T15:00:00.000Z',
   vehicle_plates: '',
   erased_at: null,
+  matched_plate: null,
   ...overrides,
 });
 
@@ -36,7 +42,6 @@ const renderTable = (customers: CustomerListRow[], onToggleAccess?: (c: Customer
   renderWithProviders(
     <CustomersTable
       customers={customers}
-      query=""
       emptyLabel="Sin clientes"
       onToggleAccess={onToggleAccess}
     />
@@ -107,5 +112,54 @@ describe('CustomersTable — row actions', () => {
     renderTable([row()]);
 
     expect(screen.queryByRole('button', { name: /^Acciones de/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('CustomersTable — the plate a search matched (spec 023, CA-12)', () => {
+  it('draws the whole plate with its city, without «Placa» in sight but read aloud', () => {
+    const { container } = renderTable([
+      row({
+        full_name: 'Valentina Vásquez',
+        matched_plate: { plate: 'KDM482', city: 'Bogotá, D.C.', legend: 'STFE DE BOGOTA' },
+      }),
+    ]);
+
+    const plate = container.querySelector<HTMLElement>('[data-plate]')!;
+    expect(plate).toHaveTextContent('KDM-482');
+    // The city's own legend, set by the admin, rather than its name.
+    expect(plate.dataset.legend).toBe('STFE DE BOGOTA');
+    expect(screen.getByText('Placa')).toHaveClass('sr-only');
+  });
+
+  it('draws no plate for a customer found by name', () => {
+    const { container } = renderTable([row()]);
+
+    expect(container.querySelector('[data-plate]')).toBeNull();
+  });
+});
+
+describe('CustomersTable — the way back to the list (spec 004, CA-33)', () => {
+  it('opens the record carrying the filter, search and page of the list', () => {
+    renderWithProviders(
+      <CustomersTable
+        customers={[row()]}
+        emptyLabel="Sin clientes"
+        listFilters={{ q: 'uih', status: 'active', page: 2 }}
+      />
+    );
+
+    expect(screen.getByRole('link', { name: /Camila Cliente/ })).toHaveAttribute(
+      'href',
+      '/customers/10000000-0000-4000-8000-000000000001?list=q%3Duih%26status%3Dactive%26page%3D2'
+    );
+  });
+
+  it('opens the record plainly from the whole list', () => {
+    renderTable([row()]);
+
+    expect(screen.getByRole('link', { name: /Camila Cliente/ })).toHaveAttribute(
+      'href',
+      '/customers/10000000-0000-4000-8000-000000000001'
+    );
   });
 });

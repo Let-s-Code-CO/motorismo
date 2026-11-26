@@ -177,12 +177,16 @@ vistazo, igual que en la calle.
   fondo amarillo, caracteres negros en mayúsculas y un filete negro junto al borde. Carro y moto se
   ven igual: los caracteres en una fila, con guion (`ABC-123`, `UIH-03D`, `JWJ-07`), y debajo la
   ciudad de expedición en la de carro (`BOGOTÁ, D.C.`) o «COLOMBIA» en la de moto.
+  *Enmendado por la spec 023:* la placa se dibuja con las proporciones, los caracteres, el marco y la
+  leyenda de la norma (carro 330 × 160 mm, moto 235 × 105 mm), y la ciudad va sin tildes
+  (`BOGOTA, D.C.`) o con la leyenda propia del municipio.
 - **CA-28** — Dada una placa dibujada, cuando se recorre con un lector de pantalla, entonces se
   oye como texto con guion (`UIH-03D`) y, en un carro, también su ciudad; la placa nunca se
   comunica solo con el dibujo, y sus caracteres cumplen el contraste de la auditoría del proyecto.
 - **CA-29** — Dado un cliente encontrado por placa en «Clientes» (CA-19), cuando se mira la fila,
   entonces la placa que coincidió se ve con los mismos colores, en una sola línea (`UIH-03D`) y
-  sin ciudad ni «COLOMBIA», para que quepa en la fila.
+  sin ciudad ni «COLOMBIA», para que quepa en la fila. *Reemplazado por la spec 023, CA-12:* la placa
+  completa a escala, con su ciudad o «COLOMBIA», un poco más pequeña y a la derecha del nombre.
 - **CA-30** — Dado el formulario de vehículo, cuando el tipo es Carro, entonces aparece «Ciudad de
   la placa» con «Bogotá, D.C.» ya elegida (al editar, la que tiene el carro); al abrir la lista,
   las tres primeras opciones son Bogotá, D.C., La Calera y Funza, y después el resto de municipios
@@ -214,7 +218,9 @@ vistazo, igual que en la calle.
   retirados con su fecha de retiro.
 - **RF-07** — La lista de municipios de Colombia para la ciudad de la placa se entrega precargada
   con los nombres oficiales (fuente en el plan) y es fija en esta versión: a diferencia de las
-  marcas y líneas, nadie la amplía al registrar un vehículo.
+  marcas y líneas, nadie la amplía al registrar un vehículo. *Enmendado por la spec 023 (RF-02):* la
+  ciudad de la placa se elige entre los municipios con organismo de tránsito (294); los 1.104 siguen
+  existiendo.
 
 ## Reglas de negocio
 
@@ -245,7 +251,8 @@ vistazo, igual que en la calle.
 - **RN-11** — La ciudad de expedición de la placa solo aplica a los carros, y en ellos es
   obligatoria: es un municipio de Colombia de la lista de RF-07, y por defecto Bogotá, D.C. Las
   motocicletas no tienen ciudad (su placa muestra siempre «COLOMBIA») y las bicicletas no tienen
-  placa.
+  placa. *Enmendado por la spec 023 (RN-04):* el municipio debe expedir placas; un carro registrado
+  antes con otro conserva su ciudad mientras no la cambie.
 
 ## Datos (vista conceptual)
 
@@ -365,3 +372,4 @@ alfabético; las motos no tienen el campo (ni en el formulario) y su placa dice 
 | 2026-11-19 | Cambio HU-07 implementado en local: 262 pgTAP, 462 unitarias, 30 sandbox y 69 E2E en verde; lint, tipos y build en verde. Pendiente: `/verificar` del bloque C y el despliegue (T064). |
 | 2026-11-19 | `/verificar` del bloque C: CA-27 a CA-31, RF-07, RN-11 y los criterios ajustados ✅. Se precisa CA-30 (como máximo 50 ciudades a la vez, con «Escribe para ver más ciudades.») y se alinean plan y tareas con el código (`plate_city_code`, lista sin virtualizar). Verificada en local. Pendiente: el despliegue (T064). |
 | 2026-11-24 | Spec 018: el catálogo de marcas y líneas ya se administra (renombrar, unir, pasar líneas, registrar y revisar); lo que se escribe al registrar un vehículo entra «Por revisar», y un nombre unido o renombrado lleva a la marca o línea que quedó. |
+| 2026-11-25 | Enmendada por la spec 023: placa según la norma (CA-27), placa completa en «Clientes» (CA-29 reemplazado por la 023, CA-12) y ciudad de la placa solo entre los municipios que expiden placas (RF-07, RN-11). |

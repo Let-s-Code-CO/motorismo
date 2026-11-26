@@ -27,6 +27,8 @@ const BY_HINT: Partial<Record<string, VehiclesErrorKey>> = {
   vehicle_displacement_invalid: 'displacementInvalid',
   vehicle_plate_city_required: 'plateCityRequired',
   vehicle_plate_city_invalid: 'plateCityInvalid',
+  // Spec 023, CA-08: a city that issues no plates is not in the list either.
+  vehicle_plate_city_not_issuing: 'plateCityInvalid',
   vehicle_retired: 'retired',
   vehicle_not_found: 'notFound',
 };

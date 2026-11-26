@@ -194,10 +194,10 @@ const CustomersScreen = ({ filters, rows, matching, counts }: CustomersScreenPro
         <div aria-busy={isPending} className={isPending ? 'opacity-60 transition-opacity' : ''}>
           <CustomersTable
             customers={rows}
-            query={filters.q}
             emptyLabel={emptyLabel}
             onToggleAccess={toggleAccess}
             isBusy={isToggling}
+            listFilters={filters}
           />
         </div>
         {pageCount(matching) > 1 && (

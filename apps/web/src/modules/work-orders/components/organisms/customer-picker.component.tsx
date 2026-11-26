@@ -165,6 +165,8 @@ const CustomerPicker = ({
                     <PlateLabel
                       plate={found.matchedPlate.plate}
                       city={found.matchedPlate.city ?? undefined}
+                      legend={found.matchedPlate.legend}
+                      size="sm"
                       className="shrink-0"
                     />
                   )}

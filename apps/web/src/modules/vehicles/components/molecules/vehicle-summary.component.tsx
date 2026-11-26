@@ -52,7 +52,11 @@ const VehicleSummary = ({ vehicle }: VehicleSummaryProps) => {
         </span>
       </div>
       {vehicle.plate ? (
-        <PlateLabel plate={vehicle.plate} city={vehicle.plate_city?.name} />
+        <PlateLabel
+          plate={vehicle.plate}
+          city={vehicle.plate_city?.name}
+          legend={vehicle.plate_city?.plate_legend}
+        />
       ) : (
         <span className="text-sm whitespace-nowrap text-default-500">{t('summary.noPlate')}</span>
       )}

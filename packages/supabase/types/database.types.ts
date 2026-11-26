@@ -312,17 +312,23 @@ export type Database = {
         Row: {
           code: string
           department: string
+          issues_plates: boolean
           name: string
+          plate_legend: string | null
         }
         Insert: {
           code: string
           department: string
+          issues_plates?: boolean
           name: string
+          plate_legend?: string | null
         }
         Update: {
           code?: string
           department?: string
+          issues_plates?: boolean
           name?: string
+          plate_legend?: string | null
         }
         Relationships: []
       }
@@ -1455,6 +1461,7 @@ export type Database = {
           opened_at: string | null
           opened_by_name: string | null
           plate: string | null
+          plate_city_legend: string | null
           plate_city_name: string | null
           reservation_id: string | null
           reserved_start: string | null
@@ -1841,6 +1848,10 @@ export type Database = {
           subtotal: number
           total: number
         }[]
+      }
+      set_plate_legend: {
+        Args: { p_code: string; p_legend: string }
+        Returns: undefined
       }
       set_reservation_tolerance: {
         Args: { p_id: string; p_minutes: number }

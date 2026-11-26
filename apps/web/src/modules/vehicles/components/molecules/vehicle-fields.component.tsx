@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, type DefaultValues, type UseFormReturn, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
@@ -82,6 +82,13 @@ const VehicleFields = ({ form }: VehicleFieldsProps) => {
   const lines = useQuery({ ...linesQueryOptions(brand?.id ?? ''), enabled: !!brand });
   // RN-11: only cars have a plate city; the list is loaded the first time one is needed.
   const cities = useQuery({ ...municipalitiesQueryOptions(), enabled: type === 'car' });
+  // Spec 023, CA-08: a car registered with a city that issues no plates (not offered any more) is
+  // asked for its city again: the field starts empty and the form requires one.
+  const cityCode = useWatch({ control, name: 'plate_city_code' });
+  useEffect(() => {
+    if (!cities.data || !cityCode) return;
+    if (!cities.data.some(({ code }) => code === cityCode)) setValue('plate_city_code', null);
+  }, [cities.data, cityCode, setValue]);
   const classes = CLASSES_BY_TYPE[type];
 
   const changeType = (next: VehicleType) => {

@@ -14,7 +14,7 @@ const spanish = new Intl.Collator('es', { sensitivity: 'base' });
  * the rest alphabetically in Spanish (an accented initial sorts with its letter), a repeated name
  * ordered by its department. Returns a new list.
  */
-export const sortPlateCities = (cities: readonly Municipality[]): Municipality[] =>
+export const sortPlateCities = <City extends Municipality>(cities: readonly City[]): City[] =>
   [...cities].sort(
     (a, b) =>
       pinnedRank(a.code) - pinnedRank(b.code) ||
@@ -27,10 +27,10 @@ export const sortPlateCities = (cities: readonly Municipality[]): Municipality[]
  * same key as the catalog); those that start with it first, each group in the given order. Nothing
  * typed → the whole list.
  */
-export const filterPlateCities = (
-  cities: readonly Municipality[],
+export const filterPlateCities = <City extends Municipality>(
+  cities: readonly City[],
   query: string
-): Municipality[] => {
+): City[] => {
   const key = catalogKey(query);
   if (!key) return [...cities];
 
