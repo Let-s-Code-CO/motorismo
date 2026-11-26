@@ -12,33 +12,11 @@
  * its close and void dialogs. Serious and
  * critical findings fail the test.
  */
-import AxeBuilder from '@axe-core/playwright';
 import { type Locator, type Page, expect, test } from '@playwright/test';
 
+import { audit } from './support/audit';
 import { SEED, SEED_CUSTOMERS, adminClient, signIn } from './support/sandbox';
 import { refuseNoShow, saveAgendaSettings } from './support/toasts';
-
-const audit = async (page: Page) => {
-  // Every screen enters with a short fade (spec 011, `page-in`), and so do a floating notice
-  // (spec 013) and «Ver todos» (filter bar): mid-fade, colours are blended and axe would measure a
-  // contrast nobody sees (on the showroom grey of spec 019 such a blend dips below AA). Wait for
-  // every animation that ends to do so first (none should run forever, WCAG 2.2.2 and spec 019
-  // RN-02, which `ui.spec.ts` checks; one that did would otherwise stall the audit).
-  await page.evaluate(() =>
-    Promise.allSettled(
-      document
-        .getAnimations()
-        .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
-        .map((animation) => animation.finished)
-    )
-  );
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-    .analyze();
-  return violations
-    .filter(({ impact }) => impact === 'serious' || impact === 'critical')
-    .map(({ id, nodes }) => `${id}: ${nodes.map(({ target }) => target.join(' ')).join(', ')}`);
-};
 
 /**
  * Waits until an overlay (a dialog, a list of suggestions) finished its opening animation:
@@ -469,34 +447,6 @@ test('the agenda, a new reservation with errors, a reservation with its dialogs 
   await page.goto('/agenda/schedule');
   await expect(page.getByRole('heading', { name: 'Horario', level: 1 })).toBeVisible();
   await untilSettled(page.locator('[data-page]'));
-  expect(await audit(page)).toEqual([]);
-});
-
-test('a screen still loading, with its skeleton, has no serious accessibility issues (spec 011, CA-03)', async ({
-  page,
-}) => {
-  await signIn(page, SEED.operator.email);
-  await expect(page).toHaveURL('/');
-  // A bad signal, so the skeleton stays on screen while it is audited.
-  // Fully loaded first, as for a real user (a tap before hydration is a plain page load).
-  await page.waitForLoadState('networkidle');
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Network.enable');
-  await cdp.send('Network.emulateNetworkConditions', {
-    offline: false,
-    latency: 800,
-    downloadThroughput: 30 * 1024,
-    uploadThroughput: -1,
-  });
-
-  await page
-    .getByRole('navigation', { name: 'Navegación principal' })
-    .getByRole('link', { name: 'Clientes', exact: true })
-    .click();
-  await expect(page.getByRole('status').filter({ hasText: 'Cargando…' })).toBeVisible();
-  // Past its 300 ms appearance, fully drawn.
-  await page.waitForTimeout(500);
-
   expect(await audit(page)).toEqual([]);
 });
 

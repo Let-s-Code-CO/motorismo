@@ -176,6 +176,21 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
 - Supabase: `@supabase/ssr` con clientes tipados (`createClient<Database>`).
 - Entorno validado con `@t3-oss/env-nextjs` en `src/modules/core/config/env.config.ts`.
 - Pruebas: Vitest 4 + Testing Library (unitarias) y Playwright (E2E).
+- **E2E en local:** corren contra el servidor de desarrollo, que compila cada pantalla la primera vez
+  y atiende a todos los navegadores en un solo proceso.
+  - **Calentamiento:** `e2e/global-setup.ts` visita antes cada pantalla (visitante, admin y
+    cliente); fuera de CI.
+  - **Límites locales:** 4 *workers* y 60 s por prueba; CI conserva los suyos, contra el build.
+  - **Red lenta aparte:** `loading.spec` (la auditoría del esqueleto incluida) es el proyecto
+    `loading` y corre al final, cuando el resto terminó; mide tiempos que otra carga altera.
+  - **Ayudantes:**
+    - `untilHydrated(locator)` (`e2e/support/hydration.ts`) antes de tocar algo recién cargado:
+      `networkidle` no garantiza que React haya hidratado, y un clic antes recarga la página o se
+      pierde;
+    - `chooseRowAction` (`e2e/support/menus.ts`) para menús de fila que una lista redibujada cierra;
+    - `audit` (`e2e/support/audit.ts`) para axe.
+  - **Nombres únicos:** un dato creado por una prueba lleva un nombre que no choque con otra copia
+    que arranque en el mismo milisegundo.
 - Next 16 tiene cambios incompatibles con versiones anteriores: consulta la documentación incluida
   en `apps/web/node_modules/next/dist/docs/` (lo recuerda `apps/web/AGENTS.md`, que genera
   `next dev`; versiónalo, se recrea si se borra) y la skill `next-best-practices`.
