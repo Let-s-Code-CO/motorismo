@@ -132,6 +132,7 @@
       "back": "Volver a «Órdenes»",
       "customer": "Cliente",
       "vehicle": "Vehículo",
+      "category": "Categoría de la moto",
       "openedBy": "Recibido el {date} a las {time} por {name}",
       "closedBy": "Entregado el {date} a las {time} por {name}",
       "voidedBy": "Anulada el {date} a las {time} por {name}: {reason}",

@@ -5,6 +5,7 @@ import {
   fetchActiveServices,
   fetchCustomerOrders,
   fetchCustomerVehicles,
+  fetchVehicleCategory,
   searchCustomers,
 } from '@web/modules/work-orders/api/work-orders.client';
 import { orderKeys } from '@web/modules/work-orders/queries/work-orders.keys';
@@ -23,6 +24,13 @@ export const customerVehiclesQueryOptions = (customerId: string) =>
   queryOptions({
     queryKey: orderKeys.vehicles(customerId),
     queryFn: () => fetchCustomerVehicles(customerId),
+  });
+
+/** The category that counts for a motorcycle (spec 024, RN-04): its own or its line's. */
+export const vehicleCategoryQueryOptions = (vehicleId: string) =>
+  queryOptions({
+    queryKey: orderKeys.category(vehicleId),
+    queryFn: () => fetchVehicleCategory(vehicleId),
   });
 
 export const activeServicesQueryOptions = () =>

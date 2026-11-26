@@ -21,13 +21,13 @@ import VehicleCategoryDialog from '@web/modules/vehicles/components/molecules/ve
 import type { MotorcycleCategory } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import { saveWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
-import { fetchVehicleCategory } from '@web/modules/work-orders/api/work-orders.client';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
 import OrderLine from '@web/modules/work-orders/components/molecules/order-line.component';
 import OrderSummary from '@web/modules/work-orders/components/molecules/order-summary.component';
 import {
   activeEmployeesQueryOptions,
   activeServicesQueryOptions,
+  vehicleCategoryQueryOptions,
 } from '@web/modules/work-orders/queries/work-orders.queries';
 import {
   type LineInput,
@@ -153,12 +153,8 @@ const OrderEditor = ({
   // the order asks for it first (CA-06).
   const queryClient = useQueryClient();
   const isMotorcycle = vehicle.vehicle_type === 'motorcycle';
-  const categoryKey = ['vehicle-category', vehicle.id];
-  const vehicleCategory = useQuery({
-    queryKey: categoryKey,
-    queryFn: () => fetchVehicleCategory(vehicle.id),
-    enabled: isMotorcycle,
-  });
+  const categoryQuery = vehicleCategoryQueryOptions(vehicle.id);
+  const vehicleCategory = useQuery({ ...categoryQuery, enabled: isMotorcycle });
   const category = vehicleCategory.data ?? null;
   // The services waiting for the category the dialog asks for (a reservation may bring several).
   const [askingCategory, setAskingCategory] = useState<ServiceOption[]>([]);
@@ -382,7 +378,7 @@ const OrderEditor = ({
           vehicleId={vehicle.id}
           onClose={() => setAskingCategory([])}
           onSaved={(chosen) => {
-            queryClient.setQueryData(categoryKey, chosen);
+            queryClient.setQueryData(categoryQuery.queryKey, chosen);
             askingCategory.forEach((service) => addService(service, chosen));
             setAskingCategory([]);
           }}
