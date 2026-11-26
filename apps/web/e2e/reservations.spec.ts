@@ -201,6 +201,17 @@ test.describe('the agenda (spec 012)', () => {
     await expect(page.getByRole('radio', { name: /UIH-03D/ })).toBeChecked();
     await page.getByRole('radio', { name: /^10:00 a\. m\./ }).check({ force: true });
     await page.getByRole('checkbox', { name: 'Lavado Pro Wash' }).check({ force: true });
+    // Spec 024, CA-23 / CA-28: one package, in its group; Premium includes Pro Wash.
+    await expect(
+      page
+        .getByRole('group', { name: 'Paquetes' })
+        .getByRole('checkbox', { name: /^Paquete de lavado Premium/ })
+    ).toBeDisabled();
+    await expect(
+      page
+        .getByRole('group', { name: 'Servicios adicionales' })
+        .getByRole('checkbox', { name: 'Sellador' })
+    ).toBeEnabled();
     // Spec 024, CA-14: PPF asks for its time, and the estimate counts it.
     await page.getByRole('checkbox', { name: 'PPF' }).check({ force: true });
     await page.getByRole('button', { name: 'Guardar reserva' }).click();

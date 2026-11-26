@@ -13,6 +13,7 @@
  * - HU-07: an order in the queue offers «Empezar» and shows only its duration; once started it says
  *   by whom and when, and its ready time counts from then (CA-33, CA-34).
  * - Spec 024, CA-04: a motorcycle's card says its category (or «Sin categoría»); other vehicles none.
+ * - Spec 024, CA-27: a package's line says what it includes.
  */
 import type { ReactNode } from 'react';
 
@@ -82,6 +83,7 @@ const detail = (overrides: Partial<WorkOrderDetail['summary']> = {}): WorkOrderD
       name: 'Lavado sencillo',
       price: 25000,
       estimated_minutes: 30,
+      includes: [],
       employees: [{ employee_id: 'e2', full_name: 'Paula Pineda', share_pct: 100 }],
     },
     {
@@ -91,6 +93,7 @@ const detail = (overrides: Partial<WorkOrderDetail['summary']> = {}): WorkOrderD
       name: 'Micropulido',
       price: 120000,
       estimated_minutes: 120,
+      includes: ['Lavado Pro Wash', 'Sellador'],
       employees: [
         { employee_id: 'e1', full_name: 'Elkin Estrada', share_pct: 80 },
         { employee_id: 'e2', full_name: 'Paula Pineda', share_pct: 20 },
@@ -358,5 +361,12 @@ describe('OrderDetail', () => {
       expect(within(vehicleCard()).queryByText('Sin categoría')).not.toBeInTheDocument();
       expect(fetchVehicleCategory).not.toHaveBeenCalled();
     });
+  });
+
+  it('says on a line what its service includes, and nothing on one that includes nothing (spec 024, CA-27)', () => {
+    renderDetail(detail());
+
+    expect(screen.getByText('Incluye: Lavado Pro Wash, Sellador')).toBeVisible();
+    expect(screen.getAllByText(/^Incluye:/)).toHaveLength(1);
   });
 });

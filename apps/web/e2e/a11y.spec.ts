@@ -384,6 +384,20 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
+  // Spec 024, CA-23 / CA-28 / CA-29: a package added, the others disabled with their reason.
+  await page.goto('/orders/new');
+  await page.getByLabel('Buscar cliente').fill('UIH58E');
+  await page
+    .getByRole('button', { name: /Gabriel/ })
+    .first()
+    .click();
+  await page.getByRole('radio', { name: /UIH-58E/ }).check({ force: true });
+  await page.getByRole('button', { name: /Añadir Combo de lavado Deluxe/ }).click();
+  await expect(
+    page.getByRole('button', { name: 'Quitar Combo de lavado Deluxe de la orden' })
+  ).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
   await page.goto(`/orders/${open!.id}`);
   await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toBeVisible();
   expect(await audit(page)).toEqual([]);
@@ -518,10 +532,9 @@ test('the customer area, its booking form with the estimated time and the dialog
     if (path === '/my/reservations/new') {
       // Spec 021, CA-06, CA-07: with the estimated time in sight, a service without a time named.
       await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
-      await page
-        .getByRole('checkbox', { name: 'Paquete de lavado Premium' })
-        .check({ force: true });
-      await page.getByRole('checkbox', { name: 'Combo de lavado Supreme' }).check({ force: true });
+      // Spec 024, CA-23: with a package ticked, the others disabled with their reason.
+      await page.getByRole('checkbox', { name: 'Combo de lavado Deluxe' }).check({ force: true });
+      await page.getByRole('checkbox', { name: 'Limpieza de asientos' }).check({ force: true });
       await expect(page.locator('[data-booking-estimate]')).toContainText('Sin estimar');
     }
     expect(await audit(page), path).toEqual([]);

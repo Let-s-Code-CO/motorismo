@@ -1,7 +1,7 @@
 /**
  * «Reportes» → «Servicios» (spec 015), in a real browser against the local database, on the
- * closed orders of the seeds: Valentina's #1 (10 days ago) and Camila's #2 (3 days ago, «Lavado
- * Pro Wash» and «Combo de lavado Deluxe» on her Suzuki UIH-03D).
+ * closed orders of the seeds: Valentina's #1 (10 days ago) and Camila's #2 (3 days ago, «Combo de
+ * lavado Deluxe» and «Limpieza de asientos» on her Suzuki UIH-03D).
  *
  * - CA-01: the admin opens «Reportes» from the menu and lands on the report.
  * - CA-04 / CA-05: filtering by Camila's plate, typed in lower case with a dash, leaves only her
@@ -54,7 +54,7 @@ test.describe('the admin', () => {
     await page.getByRole('textbox', { name: 'Placa' }).fill('uih-03d');
     await expect(page).toHaveURL(/plate=UIH03D/);
     await expect(table.getByRole('row', { name: /Valentina/ })).toHaveCount(0);
-    await expect(table.getByRole('row', { name: /Lavado Pro Wash/ }).first()).toBeVisible();
+    await expect(table.getByRole('row', { name: /Limpieza de asientos/ }).first()).toBeVisible();
 
     await page.reload();
     await expect(page.getByRole('textbox', { name: 'Placa' })).toHaveValue('UIH-03D');
@@ -91,7 +91,7 @@ test.describe('the admin', () => {
     // Valentina's #1 was Elkin's alone; Camila's #2 had Paula on both services.
     await expect(table.getByRole('row', { name: /Valentina/ })).toHaveCount(0);
     await expect(
-      table.getByRole('row', { name: /Lavado Pro Wash.*Paula Pineda 100 %/ }).first()
+      table.getByRole('row', { name: /Limpieza de asientos.*Paula Pineda 100 %/ }).first()
     ).toBeVisible();
     await expect(
       table.getByRole('row', { name: /Combo de lavado Deluxe.*Paula Pineda 20 %/ }).first()

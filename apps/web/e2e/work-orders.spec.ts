@@ -98,11 +98,23 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   // CA-03, CA-04: two services, one tap each, at the price of its category (spec 024, CA-10: the
   // GSX-R600 line is SBK/SSP).
   await expect(page.getByText('Categoría de la moto: SBK/SSP')).toBeVisible();
-  await page.getByRole('button', { name: 'Añadir Lavado Pro Wash' }).click();
   await page.getByRole('button', { name: 'Añadir Combo de lavado Deluxe' }).click();
+  // Spec 024, CA-23 / CA-24: Deluxe already includes Pro Wash, and is the order's package.
+  await expect(page.getByRole('button', { name: /Añadir Lavado Pro Wash/ })).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: /Añadir Paquete de lavado Premium/ })
+  ).toContainText('Ya hay un paquete: Combo de lavado Deluxe');
+  await expect(page.getByRole('group', { name: 'Combo de lavado Deluxe' })).toContainText(
+    'Incluye: '
+  );
+  // CA-29: an added service is not added twice; its button takes it out.
+  await expect(
+    page.getByRole('button', { name: 'Quitar Combo de lavado Deluxe de la orden' })
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Añadir Limpieza de asientos' }).click();
   const summary = page.getByRole('region', { name: 'Resumen de la orden' });
-  // 46.000 + 182.000 = 228.000.
-  await expect(summary).toContainText('$ 228.000');
+  // 182.000 + 16.000 = 198.000.
+  await expect(summary).toContainText('$ 198.000');
 
   // CA-06: the Deluxe combo shared by two employees, 80/20.
   const deluxe = page.getByRole('group', { name: 'Combo de lavado Deluxe' });
@@ -112,7 +124,7 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   await deluxe.getByLabel('Participación de Elkin Estrada').fill('80');
   await deluxe.getByLabel('Participación de Paula Pineda').fill('20');
   await page
-    .getByRole('group', { name: 'Lavado Pro Wash' })
+    .getByRole('group', { name: 'Limpieza de asientos' })
     .getByRole('button', { name: 'Paula Pineda' })
     .click();
 
@@ -132,9 +144,9 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   await page.getByRole('button', { name: 'Cerrar y cobrar' }).click();
   const close = page.getByRole('dialog', { name: /Cerrar y cobrar la orden/ });
   await close.getByLabel('Monto').fill('100.000');
-  await expect(close.getByText('Falta $ 128.000')).toBeVisible();
+  await expect(close.getByText('Falta $ 98.000')).toBeVisible();
   await close.getByRole('button', { name: 'Añadir otro medio' }).click();
-  await expect(close.getByLabel('Monto').nth(1)).toHaveValue('128.000');
+  await expect(close.getByLabel('Monto').nth(1)).toHaveValue('98.000');
   await close.getByRole('button', { name: 'Cerrar orden' }).click();
 
   await expect(page.getByText('Orden cerrada.')).toBeVisible();
@@ -236,7 +248,7 @@ test("staff see a customer's history (her retired vehicle not offered), what is 
   await page.getByLabel('Buscar cliente').fill(SEED_CUSTOMERS.customer.name);
   await page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
   await expect(page.getByText('1 visita')).toBeVisible();
-  await expect(page.getByText('Lavado Pro Wash · Combo de lavado Deluxe')).toBeVisible();
+  await expect(page.getByText('Combo de lavado Deluxe · Limpieza de asientos')).toBeVisible();
   // Her motorcycle already has the open order #4: it is offered instead.
   await expect(page.getByText('Ya tiene una orden abierta:')).toBeVisible();
   // CA-10: her retired motorcycle (JWJ-07) is not offered for an order.

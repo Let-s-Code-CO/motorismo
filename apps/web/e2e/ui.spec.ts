@@ -347,6 +347,20 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
     await page.getByLabel('Tiempo de PPF (minutos)').fill('180');
     await expect(page.locator('[data-booking-estimate]')).toContainText('≈ 3 h');
     await expect.poll(() => horizontalOverflow(page)).toBe(0);
+
+    // A package added to an order: the disabled ones say why, in several lines (CA-23, CA-28).
+    await page.goto('/orders/new');
+    await page.getByLabel('Buscar cliente').fill('UIH58E');
+    await page
+      .getByRole('button', { name: /Gabriel/ })
+      .first()
+      .click();
+    await page.getByRole('radio', { name: /UIH-58E/ }).check({ force: true });
+    await page.getByRole('button', { name: /Añadir Combo de lavado Deluxe/ }).click();
+    await expect(
+      page.getByRole('button', { name: 'Quitar Combo de lavado Deluxe de la orden' })
+    ).toBeVisible();
+    await expect.poll(() => horizontalOverflow(page)).toBe(0);
   });
 
   test('the customer area has no horizontal scroll, the booking form with its estimated time too (specs 014, 017 and 021)', async ({
@@ -370,7 +384,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
         // Spec 021: the estimated time of the services ticked, with one not estimated named.
         await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
         // With the keyboard: the install notice of this iPhone (spec 006) may lie over the list.
-        for (const name of ['Paquete de lavado Premium', 'Combo de lavado Supreme']) {
+        for (const name of ['Combo de lavado Deluxe', 'Limpieza de asientos']) {
           await page.getByRole('checkbox', { name }).focus();
           await page.keyboard.press('Space');
         }

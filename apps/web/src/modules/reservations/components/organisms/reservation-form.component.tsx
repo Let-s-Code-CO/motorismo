@@ -27,6 +27,13 @@ import type {
 } from '@web/modules/reservations/types/reservations.types';
 import { isAgendaDate } from '@web/modules/reservations/utils/agenda-date.utils';
 import type { ReservationsErrorKey } from '@web/modules/reservations/utils/reservations-errors.utils';
+import ServiceGroups from '@web/modules/services/components/molecules/service-groups.component';
+import useUnavailableReason from '@web/modules/services/hooks/combination.hook';
+import {
+  byLowestPrice,
+  combinableOf,
+  unavailableServices,
+} from '@web/modules/services/utils/service-combination.utils';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import CustomerPicker from '@web/modules/work-orders/components/organisms/customer-picker.component';
 import { activeServicesQueryOptions } from '@web/modules/work-orders/queries/work-orders.queries';
@@ -67,7 +74,8 @@ const quotedMinutesOf = (reservation?: ReservationSummary) =>
  * CA-02), which vehicle if known (CA-01), the day and its slot with free seats (CA-03), the services
  * they want (CA-04) and notes. Saving books the seat (CA-05); a slot that filled up meanwhile is
  * said, and the slots come back up to date (CA-06). A service «a convenir» ticked asks for its time,
- * and the total estimate counts it (spec 024, CA-14).
+ * and the total estimate counts it (spec 024, CA-14). One package at most, and nothing a ticked service
+ * already includes (CA-23 to CA-25): those are disabled, saying why.
  */
 const ReservationForm = ({
   day,
@@ -185,6 +193,9 @@ const ReservationForm = ({
     return [{ ...service, estimated_minutes: /^\d+$/.test(typed) ? Number(typed) : null }];
   });
   const quotedTicked = tickedServices.filter((service) => service.on_quote);
+  // Spec 024, CA-23 to CA-25: what cannot go with the ticked services, and why.
+  const unavailableReason = useUnavailableReason();
+  const unavailable = unavailableServices(offered.map(combinableOf), ticked ?? []);
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
@@ -246,11 +257,23 @@ const ReservationForm = ({
               value={field.value ?? []}
               onValueChange={field.onChange}
             >
-              {offered.map((service) => (
-                <Checkbox key={service.id} value={service.id}>
-                  {service.name}
-                </Checkbox>
-              ))}
+              <ServiceGroups
+                services={offered}
+                isPackage={(service) => service.motorcycle_prices != null}
+                packageOrder={byLowestPrice}
+                render={(service) => {
+                  const reason = unavailableReason(unavailable.get(service.id));
+                  return (
+                    <Checkbox key={service.id} value={service.id} isDisabled={!!reason}>
+                      <span className="flex flex-col">
+                        {service.name}
+                        {/* Spec 024, CA-23 to CA-25: why it cannot be chosen, read with its name. */}
+                        {reason && <span className="text-xs text-default-500">{reason}</span>}
+                      </span>
+                    </Checkbox>
+                  );
+                }}
+              />
               {services.data && offered.length === 0 && (
                 <p className="text-sm text-default-500">{t('form.noServices')}</p>
               )}

@@ -113,7 +113,9 @@
       "slotInvalid": "Esa no es una hora del día.",
       "slotStarted": "Esa hora ya empezó: elige otra.",
       "slotFull": "Esa hora se llenó mientras elegías: elige otra.",
-      "generic": "No se pudo guardar. Inténtalo de nuevo."
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "onePackage": "Solo se puede elegir un paquete.",
+      "servicesOverlap": "Hay servicios que ya vienen incluidos en otro elegido."
     }
   }
 }

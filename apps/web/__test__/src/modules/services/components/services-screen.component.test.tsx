@@ -35,6 +35,7 @@ const service = (overrides: Partial<ServiceRow> = {}): ServiceRow => ({
   price_bicycle: 15000,
   estimated_minutes: null,
   disabled_at: null,
+  includes: [],
   ...overrides,
 });
 

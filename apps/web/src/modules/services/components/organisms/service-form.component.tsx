@@ -5,7 +5,17 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
-import { Alert, Button, Input, Radio, RadioGroup, Switch, Textarea } from '@heroui/react';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  CheckboxGroup,
+  Input,
+  Radio,
+  RadioGroup,
+  Switch,
+  Textarea,
+} from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Clock, Tag } from 'lucide-react';
 
@@ -18,12 +28,15 @@ import {
   type ServiceValues,
   serviceSchema,
 } from '@web/modules/services/schemas/service.schema';
+import { closureOf } from '@web/modules/services/utils/service-combination.utils';
 import type { ServicesErrorKey } from '@web/modules/services/utils/services-errors.utils';
 import { MOTORCYCLE_CATEGORIES } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 
 type ServiceFormProps = {
   /** The service to correct; without it the form registers a new one. */
   service?: ServiceRow;
+  /** The catalog, to choose what the service includes (spec 024, CA-20). */
+  catalog?: ServiceRow[];
   onSaved: () => void;
   onCancel: () => void;
 };
@@ -42,7 +55,7 @@ const asText = (value: number | null | undefined) => (value == null ? '' : forma
  * (CA-12). Every problem shows next to its field (CA-03, CA-08); a name already taken is refused,
  * suggesting to reactivate a disabled one (CA-04).
  */
-const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
+const ServiceForm = ({ service, catalog = [], onSaved, onCancel }: ServiceFormProps) => {
   const t = useTranslations('services');
   const tv = useTranslations('vehicles');
   const [serverError, setServerError] = useState<ServicesErrorKey>();
@@ -71,9 +84,22 @@ const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
       price_bicycle: asText(service?.price_bicycle),
       estimated_minutes:
         service?.estimated_minutes == null ? '' : String(service.estimated_minutes),
+      includes: service?.includes.map(({ id }) => id) ?? [],
     },
   });
   const onQuote = useWatch({ control, name: 'on_quote' });
+  const combinable = catalog.map((option) => ({
+    id: option.id,
+    name: option.name,
+    package: !!option.motorcycle_prices,
+    includes: option.includes.map(({ id }) => id),
+  }));
+  const includable = catalog.filter(
+    (option) =>
+      !option.disabled_at &&
+      option.id !== service?.id &&
+      !(service && closureOf(option.id, combinable).has(service.id))
+  );
   const motorcycleMode = useWatch({ control, name: 'motorcycle_mode' });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -230,6 +256,28 @@ const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
           startContent={<Clock aria-hidden className="size-4 shrink-0 text-default-400" />}
           isInvalid={!!errors.estimated_minutes}
           errorMessage={fieldError(errors.estimated_minutes?.message)}
+        />
+      )}
+      {/* Spec 024, CA-20: the other active services, never one that already includes this one. */}
+      {!onQuote && includable.length > 0 && (
+        <Controller
+          control={control}
+          name="includes"
+          render={({ field }) => (
+            <CheckboxGroup
+              label={t('form.includes')}
+              description={t('form.includesHint')}
+              value={field.value ?? []}
+              onValueChange={field.onChange}
+              classNames={{ wrapper: 'grid gap-x-4 gap-y-2 sm:grid-cols-2' }}
+            >
+              {includable.map((option) => (
+                <Checkbox key={option.id} value={option.id}>
+                  {option.name}
+                </Checkbox>
+              ))}
+            </CheckboxGroup>
+          )}
         />
       )}
       <div className="flex justify-end gap-2">

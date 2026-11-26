@@ -31,6 +31,9 @@ import type { CustomerAreaErrorKey } from '@web/modules/customer-area/utils/cust
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import SlotPicker from '@web/modules/reservations/components/molecules/slot-picker.component';
 import { isAgendaDate } from '@web/modules/reservations/utils/agenda-date.utils';
+import ServiceGroups from '@web/modules/services/components/molecules/service-groups.component';
+import useUnavailableReason from '@web/modules/services/hooks/combination.hook';
+import { unavailableServices } from '@web/modules/services/utils/service-combination.utils';
 import { vehicleLabel } from '@web/modules/work-orders/utils/vehicle-label.utils';
 
 /** The radio value of «Sin vehículo». */
@@ -92,6 +95,9 @@ const MyReservationForm = ({ day, vehicles, services, reservation }: MyReservati
   // Spec 021, CA-06: the time of what would be sent (the ticked services offered for the vehicle).
   const serviceIds = useWatch({ control, name: 'service_ids' });
   const ticked = offered.filter((service) => serviceIds.includes(service.id));
+  // Spec 024, CA-23 to CA-25: one package, nothing a ticked service already includes.
+  const unavailableReason = useUnavailableReason();
+  const unavailable = unavailableServices(offered, serviceIds);
 
   const goToDay = (date: string) => {
     if (!isAgendaDate(date) || date === day.date) return;
@@ -202,11 +208,22 @@ const MyReservationForm = ({ day, vehicles, services, reservation }: MyReservati
               value={field.value}
               onValueChange={field.onChange}
             >
-              {offered.map((service) => (
-                <Checkbox key={service.id} value={service.id}>
-                  {service.name}
-                </Checkbox>
-              ))}
+              <ServiceGroups
+                services={offered}
+                isPackage={(service) => service.package}
+                render={(service) => {
+                  const reason = unavailableReason(unavailable.get(service.id));
+                  return (
+                    <Checkbox key={service.id} value={service.id} isDisabled={!!reason}>
+                      <span className="flex flex-col">
+                        {service.name}
+                        {/* Spec 024, CA-23 to CA-25: why it cannot be chosen, read with its name. */}
+                        {reason && <span className="text-xs text-default-500">{reason}</span>}
+                      </span>
+                    </Checkbox>
+                  );
+                }}
+              />
             </CheckboxGroup>
           )}
         />

@@ -38,7 +38,9 @@
       "submitEdit": "Guardar cambios",
       "cancel": "Cancelar",
       "minutes": "Tiempo estimado (min)",
-      "minutesHint": "Opcional. Cuánto suele tardar; se usa para estimar cuándo estará lista una orden."
+      "minutesHint": "Opcional. Cuánto suele tardar; se usa para estimar cuándo estará lista una orden.",
+      "includes": "Incluye",
+      "includesHint": "Los servicios que trae: al elegirlo no se piden aparte. P. ej. un paquete incluye el lavado."
     },
     "validation": {
       "nameRequired": "Escribe el nombre del servicio.",
@@ -55,7 +57,8 @@
       "nameTaken": "Ya existe un servicio con ese nombre.",
       "nameTakenDisabled": "Ya existe un servicio desactivado con ese nombre: reactívalo desde «Desactivados».",
       "notFound": "Este servicio ya no existe.",
-      "generic": "No se pudo guardar. Inténtalo de nuevo."
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "inclusionCycle": "No puede incluir un servicio que ya lo incluye a él."
     },
     "cards": {
       "label": "Servicios activos",
@@ -84,7 +87,15 @@
         "motorcycle": "Moto",
         "car": "Carro",
         "bicycle": "Bicicleta"
-      }
+      },
+      "includes": "Incluye:"
+    },
+    "combination": {
+      "included": "Incluido en {name}",
+      "package": "Ya hay un paquete: {name}",
+      "overlap": "Se cruza con {name}",
+      "packages": "Paquetes",
+      "extras": "Servicios adicionales"
     }
   }
 }

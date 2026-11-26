@@ -31,12 +31,29 @@ export const createService = async (input: unknown): Promise<ActionResult<Servic
     return { ok: false, error: 'invalidInput', fieldErrors: fieldErrorsOf(parsed.error) };
   }
 
+  const { includes, ...service } = parsed.data;
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from('services').insert(parsed.data);
+  const { data, error } = await supabase.from('services').insert(service).select('id').single();
   if (error) return { ok: false, error: fromServicesGuardError(error) };
+
+  const included = await saveInclusions(supabase, data.id, includes);
+  if (included) return { ok: false, error: included };
 
   revalidatePath(SERVICES_PATH);
   return { ok: true };
+};
+
+/** Spec 024, CA-20: what a service includes, replaced after the service is saved. */
+const saveInclusions = async (
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  serviceId: string,
+  includes: string[]
+): Promise<ServicesErrorKey | null> => {
+  const { error } = await supabase.rpc('set_service_inclusions', {
+    p_service_id: serviceId,
+    p_included: includes,
+  });
+  return error ? fromServicesGuardError(error) : null;
 };
 
 const idSchema = z.object({ id: z.uuid() });
@@ -56,15 +73,19 @@ export const updateService = async (input: unknown): Promise<ActionResult<Servic
     };
   }
 
+  const { includes, ...service } = parsed.data;
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('services')
-    .update(parsed.data)
+    .update(service)
     .eq('id', id.data.id)
     .select('id')
     .maybeSingle();
   if (error) return { ok: false, error: fromServicesGuardError(error) };
   if (!data) return { ok: false, error: 'notFound' };
+
+  const included = await saveInclusions(supabase, id.data.id, includes);
+  if (included) return { ok: false, error: included };
 
   revalidatePath(SERVICES_PATH);
   return { ok: true };

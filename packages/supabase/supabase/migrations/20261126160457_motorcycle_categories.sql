@@ -9,8 +9,12 @@
 --   it (CA-06); a service on quote needs its value written (CA-13, RN-02).
 -- * A reservation keeps the time staff give a service on quote (CA-14); a customer cannot book one
 --   (CA-16).
+-- * Packages and what they include (HU-05): a service may include others, inherited (RF-04); a
+--   reservation or an order carries one package at most (RN-05) and no two services that share what
+--   they include (RN-06, CA-26).
 -- * Data for every environment: the categories of the 173 initial motorcycle lines (CA-18) and the
---   business's price list (CA-17), loaded once; the admin changes them later.
+--   business's price list (CA-17) with what its packages include (CA-22), loaded once; the admin
+--   changes them later.
 --
 -- seeds: changed — 04_catalogs no longer inserts example services (the list comes here); 05 and 06 use
 -- the new names.
@@ -419,6 +423,94 @@ revoke all on function private.valid_category_prices(jsonb),
 grant execute on function private.valid_category_prices(jsonb) to authenticated, service_role;
 
 
+-- What a service includes (HU-05: RF-04, CA-20) -----------------------------------------------------------------
+create table public.service_inclusions (
+  service_id uuid not null references public.services (id) on delete cascade,
+  included_id uuid not null references public.services (id) on delete cascade,
+  primary key (service_id, included_id),
+  constraint service_inclusions_not_itself check (service_id <> included_id)
+);
+comment on table public.service_inclusions is
+  'The services a service includes (spec 024, HU-05): what is included is not chosen apart (RN-06).';
+create index service_inclusions_included_idx on public.service_inclusions (included_id);
+alter table public.service_inclusions enable row level security;
+create policy service_inclusions_select_staff
+  on public.service_inclusions for select to authenticated
+  using ((select public.is_staff()));
+revoke all on table public.service_inclusions from anon, authenticated;
+grant select on table public.service_inclusions to authenticated;
+
+-- A service and everything it includes, inherited (RF-04): a combo → its kit → the chain → its grease.
+create function private.service_closure(p_service_id uuid)
+returns setof uuid
+language sql
+stable
+set search_path = ''
+as $$
+  with recursive closure (id) as (
+    select p_service_id
+    union
+    select si.included_id from public.service_inclusions si join closure c on si.service_id = c.id
+  )
+  select id from closure;
+$$;
+revoke all on function private.service_closure(uuid) from public;
+
+-- The admin replaces what a service includes (CA-20): never itself, nor one that already includes it.
+create function public.set_service_inclusions(p_service_id uuid, p_included uuid[])
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not (select public.is_admin()) then
+    raise exception 'only an admin sets what a service includes'
+      using errcode = '42501', hint = 'service_admin_only';
+  end if;
+  if not exists (select 1 from public.services where id = p_service_id) then
+    raise exception 'service not found' using errcode = 'P0002', hint = 'service_not_found';
+  end if;
+  delete from public.service_inclusions where service_id = p_service_id;
+  if exists (select 1 from unnest(coalesce(p_included, '{}')) i
+             where i = p_service_id or p_service_id in (select private.service_closure(i))) then
+    raise exception 'a service cannot include itself, nor one that includes it'
+      using errcode = '23514', hint = 'service_inclusion_cycle';
+  end if;
+  insert into public.service_inclusions (service_id, included_id)
+  select p_service_id, i from unnest(coalesce(p_included, '{}')) i
+  on conflict do nothing;
+end;
+$$;
+revoke execute on function public.set_service_inclusions(uuid, uuid[]) from public, anon;
+grant execute on function public.set_service_inclusions(uuid, uuid[]) to authenticated, service_role;
+
+-- The services of a reservation or an order: one package at most (RN-05: a package has values by
+-- category) and no two that share what they include, each counting as including itself (RN-06). A
+-- service chosen twice shares itself.
+create function private.check_service_combination(p_service_ids uuid[])
+returns void
+language plpgsql
+stable
+set search_path = ''
+as $$
+begin
+  if (select count(*) from public.services
+      where id = any (coalesce(p_service_ids, '{}')) and motorcycle_prices is not null) > 1 then
+    raise exception 'one package at most' using errcode = '23514', hint = 'services_one_package';
+  end if;
+  if exists (
+    select 1
+    from unnest(coalesce(p_service_ids, '{}')) with ordinality a (id, i)
+    join unnest(coalesce(p_service_ids, '{}')) with ordinality b (id, j) on a.i < b.j
+    where exists (select private.service_closure(a.id) intersect select private.service_closure(b.id))
+  ) then
+    raise exception 'two services share what they include' using errcode = '23514', hint = 'services_overlap';
+  end if;
+end;
+$$;
+revoke all on function private.check_service_combination(uuid[]) from public;
+
 -- Orders (CA-06, CA-10, CA-13, RN-01, RN-02) ----------------------------------------------------------------
 -- work_order_write_lines, from its version of spec 008, with the value by category and on quote. Its
 -- signature does not change: save_work_order and correct_work_order keep calling it.
@@ -536,6 +628,11 @@ begin
   end loop;
 
   delete from public.work_order_lines where work_order_id = p_order_id and not (id = any (v_keep));
+
+  -- Spec 024, RN-05 / RN-06: the services of the order, «Otro» apart.
+  perform private.check_service_combination(
+    (select array_agg(service_id) from public.work_order_lines
+     where work_order_id = p_order_id and service_id is not null));
 end;
 $$;
 
@@ -647,6 +744,8 @@ begin
       end if;
     end if;
   end loop;
+  -- Spec 024, RN-05 / RN-06: one package at most, nothing chosen twice.
+  perform private.check_service_combination(p_service_ids);
 
   -- Spec 021: the day is always known, and locked in both branches below, so that the customer's
   -- one-a-day rule is checked with that day's bookings serialized.
@@ -739,20 +838,29 @@ grant execute on function public.save_reservation(uuid, uuid, timestamptz, uuid[
   to authenticated, service_role;
 
 -- bookable_services: never the services on quote (CA-16); a value by category offers it to motorcycles.
-create or replace function public.bookable_services()
-returns table (id uuid, name text, motorcycle boolean, car boolean, bicycle boolean, estimated_minutes smallint)
+-- Each one says whether it is a package and everything it includes, inherited (HU-05, CA-23 to
+-- CA-25): the customer cannot read the catalog. Its columns grow: dropped and created again.
+drop function public.bookable_services();
+create function public.bookable_services()
+returns table (id uuid, name text, motorcycle boolean, car boolean, bicycle boolean, estimated_minutes smallint,
+               package boolean, includes uuid[])
 language sql
 stable
 security definer
 set search_path = ''
 as $$
   select s.id, s.name, s.price_motorcycle is not null or s.motorcycle_prices is not null,
-         s.price_car is not null, s.price_bicycle is not null, s.estimated_minutes
+         s.price_car is not null, s.price_bicycle is not null, s.estimated_minutes,
+         s.motorcycle_prices is not null,
+         coalesce((select array_agg(c order by c) from private.service_closure(s.id) c where c <> s.id), '{}')
   from public.services s
   where s.disabled_at is null and not s.on_quote
     and ((select public.is_staff()) or private.active_customer_id() is not null)
-  order by s.name;
+  -- CA-28: the packages from the cheapest up (their price is never sent), then the rest by name.
+  order by (select min(e.value::int) from jsonb_each_text(s.motorcycle_prices) e) nulls last, s.name;
 $$;
+revoke execute on function public.bookable_services() from public, anon;
+grant execute on function public.bookable_services() to authenticated, service_role;
 
 -- reservation_summaries, from its version of spec 014, with the time of its services (CA-14).
 create or replace view public.reservation_summaries
@@ -1068,3 +1176,27 @@ values
    'Película de protección de pintura: valor y tiempo según el vehículo, acordados al recibirlo.')
 ) as l(name, prices, single, on_quote, minutes, description)
 where not exists (select 1 from public.services s where s.name_key = private.service_name_key(l.name));
+
+-- What the packages of the list include (CA-22), by name; a pair already there is kept. «Kit» is the
+-- chain kit: cleaning it includes degreasing and lubricating the chain. What is not sold apart
+-- (micropulido, recubrimiento cerámico) stays in the description.
+insert into public.service_inclusions (service_id, included_id)
+select s.id, i.id
+from (values
+  ('Paquete de lavado Premium', 'Lavado Pro Wash'),
+  ('Paquete de lavado Premium', 'Limpieza completa de kit con tapa piñón'),
+  ('Paquete de lavado Premium', 'Sellador'),
+  ('Paquete de lavado Premium', 'Limpieza de asientos'),
+  ('Combo de lavado Deluxe', 'Lavado Pro Wash'),
+  ('Combo de lavado Deluxe', 'Desengrasado y lubricado de cadena'),
+  ('Combo de lavado Supreme', 'Lavado Pro Wash'),
+  ('Combo de lavado Supreme', 'Limpieza completa de kit con tapa piñón'),
+  ('Combo de lavado Supreme', 'Limpieza de asientos'),
+  ('Limpieza completa de kit con tapa piñón', 'Desengrasado y lubricado de cadena'),
+  ('Limpieza completa de kit con tapa piñón y cubrecadena', 'Limpieza completa de kit con tapa piñón'),
+  ('Desengrasado y lubricado de cadena', 'Desengrasado de cadena'),
+  ('Desengrasado y lubricado de cadena', 'Lubricado de cadena')
+) as l (service, included)
+join public.services s on s.name_key = private.service_name_key(l.service)
+join public.services i on i.name_key = private.service_name_key(l.included)
+on conflict do nothing;

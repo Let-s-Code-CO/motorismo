@@ -17,7 +17,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(44);
+select plan(63);
 
 create or replace function private.agenda_now()
 returns timestamptz language sql stable set search_path = '' as $$
@@ -247,27 +247,26 @@ select lives_ok(format($$ select public.set_vehicle_category(%L, 'maxi_trail') $
 reset role;
 select is(private.vehicle_category(pg_temp.id_of('moto_new'))::text, 'maxi_trail',
   'CA-06: and it is kept on the motorcycle');
-set local role authenticated;
-select pg_temp.act_as('00000000-0000-0000-0000-0000000024b1');
-select public.save_work_order(pg_temp.id_of('camilo'), pg_temp.id_of('moto'),
-  (select jsonb_agg(jsonb_build_object('id', id) order by position) from public.work_order_lines
-   where work_order_id = pg_temp.id_of('o_moto'))
-  || jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'PC Lavado'))),
-  p_id => pg_temp.id_of('o_moto'));
-reset role;
 update public.vehicles set motorcycle_category = 'maxi_cruiser' where id = pg_temp.id_of('moto');
 set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000024b1');
+-- Saved again with its lines as they were: they keep their value.
 select public.save_work_order(pg_temp.id_of('camilo'), pg_temp.id_of('moto'),
   (select jsonb_agg(jsonb_build_object('id', id) order by position) from public.work_order_lines
-   where work_order_id = pg_temp.id_of('o_moto'))
-  || jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'PC Lavado'))),
+   where work_order_id = pg_temp.id_of('o_moto')),
   p_id => pg_temp.id_of('o_moto'));
 select results_eq(
-  $$ select price from public.work_order_lines where work_order_id = pg_temp.id_of('o_moto') and name = 'PC Lavado'
-     order by position $$,
-  $$ values (14000), (14000), (17000) $$,
-  'CA-11, RN-01: lines already added keep their value; the one added after the change takes Maxi Cruiser''s');
+  $$ select name, price from public.work_order_lines where work_order_id = pg_temp.id_of('o_moto') order by position $$,
+  $$ values ('PC Lavado'::text, 14000), ('PC Asientos'::text, 16000) $$,
+  'CA-11, RN-01: lines already added keep their value after the category changes');
+-- «PC Lavado» taken out and added again: it takes Maxi Cruiser's.
+select public.save_work_order(pg_temp.id_of('camilo'), pg_temp.id_of('moto'),
+  (select jsonb_agg(jsonb_build_object('id', id) order by position) from public.work_order_lines
+   where work_order_id = pg_temp.id_of('o_moto') and name = 'PC Asientos')
+  || jsonb_build_array(jsonb_build_object('service_id', pg_temp.id_of('PC Lavado'))),
+  p_id => pg_temp.id_of('o_moto'));
+select is((select price from public.work_order_lines where work_order_id = pg_temp.id_of('o_moto') and name = 'PC Lavado'),
+  17000, 'CA-11: a line added after the change takes the new category''s value (Maxi Cruiser, $ 17.000)');
 
 -- A reservation (CA-14, CA-16) ------------------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-0000000024a1');
@@ -295,6 +294,100 @@ select is((select count(*)::int from public.bookable_services() where name in ('
   'CA-16: nor is offered one');
 select is((select motorcycle from public.bookable_services() where name = 'PC Lavado'), true,
   'CA-16: a service by category is offered for motorcycles');
+reset role;
+
+-- Packages and what they include (HU-05: CA-20, CA-22, CA-26, RF-04, RN-05, RN-06) -------------------------
+select has_table('public', 'service_inclusions', 'CA-20: what a service includes');
+select is((select relrowsecurity from pg_class where oid = 'public.service_inclusions'::regclass), true,
+  'CA-20: with RLS');
+select table_privs_are('public', 'service_inclusions', 'authenticated', array['SELECT'],
+  'CA-20: written only through set_service_inclusions');
+
+insert into public.services (name, price_motorcycle) values
+  ('PC Grasa', 7000), ('PC Cadena', 16000), ('PC Kit', 26000), ('PC Kit Plus', 46000);
+insert into public.services (name, motorcycle_prices) values
+  ('PC Combo', pg_temp.prices(20000, 21000, 22000, 23000, 24000, 25000, 26000, 27000)),
+  ('PC Otro Combo', pg_temp.prices(30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000));
+select pg_temp.remember(name, id) from public.services
+where name in ('PC Grasa', 'PC Cadena', 'PC Kit', 'PC Kit Plus', 'PC Combo', 'PC Otro Combo');
+
+set local role authenticated;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000024b1');
+select is(pg_temp.error_hint(format($$ select public.set_service_inclusions(%L, %L) $$,
+       pg_temp.id_of('PC Kit'), array[pg_temp.id_of('PC Cadena')])),
+  'service_admin_only', 'CA-20: an operator does not set what a service includes');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000024a1');
+select lives_ok(format($$ select public.set_service_inclusions(%L, %L) $$,
+       pg_temp.id_of('PC Combo'), array[pg_temp.id_of('PC Lavado'), pg_temp.id_of('PC Kit')]),
+  'CA-20: an admin does');
+select public.set_service_inclusions(pg_temp.id_of('PC Kit'), array[pg_temp.id_of('PC Cadena')]);
+select public.set_service_inclusions(pg_temp.id_of('PC Cadena'), array[pg_temp.id_of('PC Grasa')]);
+select public.set_service_inclusions(pg_temp.id_of('PC Kit Plus'), array[pg_temp.id_of('PC Kit')]);
+select is(pg_temp.error_hint(format($$ select public.set_service_inclusions(%L, %L) $$,
+       pg_temp.id_of('PC Grasa'), array[pg_temp.id_of('PC Combo')])),
+  'service_inclusion_cycle', 'CA-20: a service never includes one that already includes it');
+select is(pg_temp.error_hint(format($$ select public.set_service_inclusions(%L, %L) $$,
+       pg_temp.id_of('PC Kit'), array[pg_temp.id_of('PC Kit')])),
+  'service_inclusion_cycle', 'CA-20: nor itself');
+reset role;
+select set_eq(
+  format($$ select * from private.service_closure(%L) $$, pg_temp.id_of('PC Combo')),
+  format($$ values (%L::uuid), (%L), (%L), (%L), (%L) $$, pg_temp.id_of('PC Combo'), pg_temp.id_of('PC Lavado'),
+         pg_temp.id_of('PC Kit'), pg_temp.id_of('PC Cadena'), pg_temp.id_of('PC Grasa')),
+  'RF-04: what a service includes is inherited (combo → kit → cadena → grasa)');
+
+select results_eq(
+  $$ select i.name from public.service_inclusions si
+       join public.services s on s.id = si.service_id join public.services i on i.id = si.included_id
+     where s.name = 'Paquete de lavado Premium' order by i.name $$,
+  $$ values ('Lavado Pro Wash'::text), ('Limpieza completa de kit con tapa piñón'), ('Limpieza de asientos'),
+            ('Sellador') $$,
+  'CA-22: Premium includes Pro Wash, the kit with its pinion cover, the sealant and the seats');
+select is((select count(*)::int from private.service_closure(
+           (select id from public.services where name = 'Limpieza completa de kit con tapa piñón y cubrecadena')) c
+         join public.services s on s.id = c where s.name in ('Desengrasado de cadena', 'Lubricado de cadena')), 2,
+  'CA-22: the kit with its chain cover includes degreasing and lubricating the chain, through the kit');
+
+set local role authenticated;
+select pg_temp.act_as('00000000-0000-0000-0000-0000000024b1');
+select is(pg_temp.error_hint(format($$ select public.save_reservation(%L, %L, '2030-06-13 11:00-05', %L) $$,
+       pg_temp.id_of('camilo'), pg_temp.id_of('moto'), array[pg_temp.id_of('PC Lavado'), pg_temp.id_of('PC Otro Combo')])),
+  'services_one_package', 'CA-26, RN-05: a staff reservation with two packages is refused');
+select is(pg_temp.error_hint(format($$ select public.save_reservation(%L, %L, '2030-06-13 11:00-05', %L) $$,
+       pg_temp.id_of('camilo'), pg_temp.id_of('moto'), array[pg_temp.id_of('PC Combo'), pg_temp.id_of('PC Grasa')])),
+  'services_overlap', 'CA-26, RN-06: nor one with a service its package already includes');
+select lives_ok(format($$ select public.save_reservation(%L, %L, '2030-06-13 11:00-05', %L) $$,
+       pg_temp.id_of('camilo'), pg_temp.id_of('moto'), array[pg_temp.id_of('PC Combo'), pg_temp.id_of('PC Asientos')]),
+  'RN-06: a package and an extra it does not include are booked');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000024c1');
+select is(pg_temp.error_hint(format($$ select public.save_reservation(%L, %L, '2030-06-15 10:00-05', %L) $$,
+       pg_temp.id_of('camilo'), pg_temp.id_of('moto'), array[pg_temp.id_of('PC Combo'), pg_temp.id_of('PC Kit Plus')])),
+  'services_overlap', 'CA-26, RN-06: a customer neither books two services that share what they include');
+select set_eq(
+  $$ select unnest(includes) from public.bookable_services() where name = 'PC Combo' $$,
+  format($$ values (%L::uuid), (%L), (%L), (%L) $$, pg_temp.id_of('PC Lavado'), pg_temp.id_of('PC Kit'),
+         pg_temp.id_of('PC Cadena'), pg_temp.id_of('PC Grasa')),
+  'CA-24: the customer''s form knows everything a service includes, inherited');
+select results_eq(
+  $$ select b.name from public.bookable_services() with ordinality as b
+     where b.name in ('Combo de lavado Supreme', 'Lavado Pro Wash', 'Combo de lavado Deluxe', 'Paquete de lavado Premium')
+     order by b.ordinality $$,
+  $$ values ('Lavado Pro Wash'::text), ('Paquete de lavado Premium'), ('Combo de lavado Deluxe'), ('Combo de lavado Supreme') $$,
+  'CA-28: the packages come from the cheapest up, without saying their price');
+select pg_temp.act_as('00000000-0000-0000-0000-0000000024b1');
+select is(pg_temp.error_hint(format($$ select public.save_work_order(%L, %L, %L, p_id => %L) $$,
+       pg_temp.id_of('camilo'), pg_temp.id_of('moto'),
+       jsonb_build_array(jsonb_build_object('service_id', pg_temp.id_of('PC Kit')),
+                         jsonb_build_object('service_id', pg_temp.id_of('PC Kit Plus'))),
+       pg_temp.id_of('o_moto'))),
+  'services_overlap', 'CA-26, RN-06: an order with two services that share what they include is refused');
+select lives_ok(format($$ select public.save_work_order(%L, %L, %L, p_id => %L) $$,
+       pg_temp.id_of('camilo'), pg_temp.id_of('moto'),
+       jsonb_build_array(jsonb_build_object('service_id', pg_temp.id_of('PC Kit')),
+                         jsonb_build_object('name', 'Kit', 'price', 5000),
+                         jsonb_build_object('name', 'Kit', 'price', 5000)),
+       pg_temp.id_of('o_moto')),
+  'CA-26: «Otro» lines do not count');
 reset role;
 
 -- Who may (RN-03) -----------------------------------------------------------------------------------------

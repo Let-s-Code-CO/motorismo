@@ -27,6 +27,8 @@ type OrderLineProps = {
   /** The line's title: the service name, or «Otro». */
   title: string;
   isOther: boolean;
+  /** What its service includes, by name (spec 024, CA-27). */
+  includes?: string[];
   /** Who can be assigned: the active employees, plus anyone already on the line. */
   employees: EmployeeOption[];
   onRemove: () => void;
@@ -43,6 +45,7 @@ const OrderLine = ({
   errors,
   title,
   isOther,
+  includes = [],
   employees,
   onRemove,
 }: OrderLineProps) => {
@@ -74,7 +77,14 @@ const OrderLine = ({
       className="flex flex-col gap-3 rounded-large border border-divider bg-content1 p-4"
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="pt-1 font-medium">{title}</span>
+        <span className="flex flex-col gap-0.5 pt-1">
+          <span className="font-medium">{title}</span>
+          {includes.length > 0 && (
+            <span className="text-xs text-default-500">
+              {t('editor.includes', { names: includes.join(', ') })}
+            </span>
+          )}
+        </span>
         <Button
           isIconOnly
           size="sm"

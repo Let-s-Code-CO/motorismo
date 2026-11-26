@@ -13,6 +13,9 @@ describe('fromCustomerAreaError', () => {
     ['reservation_customer_limit', 'customerLimit'],
     ['reservation_customer_only', 'customerOnly'],
     ['reservation_slot_full', 'slotFull'],
+    // Spec 024, CA-26.
+    ['services_one_package', 'onePackage'],
+    ['services_overlap', 'servicesOverlap'],
     ['reservation_slot_started', 'slotStarted'],
     ['reservation_slot_invalid', 'slotInvalid'],
     ['reservation_day_closed', 'dayClosed'],

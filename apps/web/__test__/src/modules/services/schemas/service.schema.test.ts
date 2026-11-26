@@ -42,6 +42,7 @@ describe('serviceSchema', () => {
       estimated_minutes: null,
       on_quote: false,
       description: null,
+      includes: [],
     });
   });
 
@@ -200,6 +201,21 @@ describe('serviceSchema', () => {
       expect(issuesOf(input({ description: 'a'.repeat(301) }))).toEqual({
         description: 'descriptionTooLong',
       });
+    });
+  });
+
+  describe('what it includes (spec 024, CA-20)', () => {
+    const PRO_WASH = '7a1c0d2e-8a4b-4c3d-9e5f-0a1b2c3d4e5f';
+
+    it('keeps the services it includes, none by default', () => {
+      expect(serviceSchema.parse(input({ includes: [PRO_WASH] })).includes).toEqual([PRO_WASH]);
+      expect(serviceSchema.parse(input()).includes).toEqual([]);
+    });
+
+    it('includes nothing when it is «a convenir»', () => {
+      expect(
+        serviceSchema.parse(input({ name: 'PPF', on_quote: true, includes: [PRO_WASH] })).includes
+      ).toEqual([]);
     });
   });
 });

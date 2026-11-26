@@ -357,6 +357,12 @@ const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
               <li key={line.id} className="flex flex-wrap items-start justify-between gap-2 p-4">
                 <span className="flex flex-col gap-0.5">
                   <span className="font-medium">{line.name}</span>
+                  {/* Spec 024, CA-27: what a package includes. */}
+                  {line.includes.length > 0 && (
+                    <span className="text-xs text-default-500">
+                      {t('detail.includes', { names: line.includes.join(', ') })}
+                    </span>
+                  )}
                   <span className="text-xs text-default-500">
                     {line.employees.length
                       ? line.employees

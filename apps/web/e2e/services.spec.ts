@@ -119,6 +119,9 @@ test('the price list shows Pro Wash by category and PPF «a convenir», with wha
     proWash.getByRole('list', { name: 'Valores por categoría de Lavado Pro Wash' })
   ).toContainText('Maxi Trail');
   await expect(cardOf(page, 'Limpieza de asientos')).toContainText('$ 16.000');
+  // Spec 024, CA-21 / CA-22: what a package includes.
+  await expect(cardOf(page, 'Paquete de lavado Premium')).toContainText('Incluye:');
+  await expect(cardOf(page, 'Paquete de lavado Premium')).toContainText('Sellador');
   await expect(cardOf(page, 'PPF')).toContainText('A convenir');
 });
 

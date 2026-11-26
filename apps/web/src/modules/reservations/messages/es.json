@@ -180,7 +180,9 @@
       "generic": "No se pudo guardar. Inténtalo de nuevo.",
       "toleranceMax": "Ya tiene el máximo de 60 minutos de espera.",
       "tolerancePassed": "Ya pasó su tolerancia: no se le puede dar más tiempo.",
-      "quotedMinutesRequired": "Escribe el tiempo de cada servicio a convenir."
+      "quotedMinutesRequired": "Escribe el tiempo de cada servicio a convenir.",
+      "onePackage": "Solo se puede elegir un paquete.",
+      "servicesOverlap": "Hay servicios que ya vienen incluidos en otro elegido."
     }
   }
 }

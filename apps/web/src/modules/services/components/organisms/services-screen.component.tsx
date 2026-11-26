@@ -148,6 +148,7 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
               <ModalBody className="pb-6">
                 <ServiceForm
                   service={editing?.mode === 'edit' ? editing.service : undefined}
+                  catalog={services}
                   onCancel={onClose}
                   onSaved={() => {
                     const wasEditing = editing?.mode === 'edit';

@@ -94,6 +94,11 @@ export const serviceSchema = z
     estimated_minutes: minutesField,
     on_quote: z.boolean().default(false),
     description: descriptionField,
+    // Spec 024, CA-20: the services it includes (the database refuses a loop).
+    includes: z
+      .array(z.uuid())
+      .optional()
+      .transform((value) => value ?? []),
   })
   // Checked even when other fields fail, so the form shows every problem at once (CA-03).
   .superRefine(
@@ -136,6 +141,7 @@ export const serviceSchema = z
       estimated_minutes: data.on_quote ? null : data.estimated_minutes,
       on_quote: data.on_quote,
       description: data.description,
+      includes: data.on_quote ? [] : data.includes,
     };
   });
 

@@ -10,6 +10,8 @@
  * - CA-04: the guard's "name taken" becomes its own message, and says when the existing service is
  *   disabled (the form then suggests reactivating it).
  * - CA-12 / CA-13: disabling writes the date, reactivating clears it.
+ * - Spec 024, CA-20: what the service includes is saved after it, through set_service_inclusions
+ *   (the database refuses a loop, said as its own message).
  */
 import { revalidatePath } from 'next/cache';
 
@@ -43,17 +45,30 @@ const form = (overrides: Record<string, unknown> = {}) => ({
 
 type DbError = { code?: string; hint?: string; message: string } | null;
 
-/** The admin's own session: services insert and update … select … maybeSingle. */
+/**
+ * The admin's own session: services insert … select … single, update … select … maybeSingle, and
+ * the rpc that saves what a service includes.
+ */
 const fakeSession = ({
   insertError = null,
   updated = { data: { id: ID }, error: null },
-}: { insertError?: DbError; updated?: { data: unknown; error: DbError } } = {}) => {
-  const insert = vi.fn().mockResolvedValue({ error: insertError });
+  rpcError = null,
+}: {
+  insertError?: DbError;
+  updated?: { data: unknown; error: DbError };
+  rpcError?: DbError;
+} = {}) => {
+  const insert = vi.fn(() => ({
+    select: () => ({
+      single: () => Promise.resolve({ data: insertError ? null : { id: ID }, error: insertError }),
+    }),
+  }));
   const eq = vi.fn(() => ({ select: () => ({ maybeSingle: () => Promise.resolve(updated) }) }));
   const update = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ insert, update }));
-  vi.mocked(createSupabaseServerClient).mockResolvedValue({ from } as never);
-  return { from, insert, update, eq };
+  const rpc = vi.fn().mockResolvedValue({ data: null, error: rpcError });
+  vi.mocked(createSupabaseServerClient).mockResolvedValue({ from, rpc } as never);
+  return { from, insert, update, eq, rpc };
 };
 
 describe('services.actions', () => {
@@ -158,5 +173,48 @@ describe('services.actions', () => {
 
     expect(update).toHaveBeenNthCalledWith(1, { disabled_at: NOW.toISOString() });
     expect(update).toHaveBeenNthCalledWith(2, { disabled_at: null });
+  });
+
+  describe('what a service includes (spec 024, CA-20)', () => {
+    const PRO_WASH = '7a1c0d2e-8a4b-4c3d-9e5f-0a1b2c3d4e5f';
+    const SELLADOR = '8b1c0d2e-8a4b-4c3d-9e5f-0a1b2c3d4e5f';
+
+    it('saves it after registering the service, by its new id, and never in the service row', async () => {
+      const { insert, rpc } = fakeSession();
+
+      await expect(createService(form({ includes: [PRO_WASH, SELLADOR] }))).resolves.toEqual({
+        ok: true,
+      });
+
+      expect(insert).toHaveBeenCalledWith(
+        expect.not.objectContaining({ includes: expect.anything() })
+      );
+      expect(rpc).toHaveBeenCalledWith('set_service_inclusions', {
+        p_service_id: ID,
+        p_included: [PRO_WASH, SELLADOR],
+      });
+    });
+
+    it('saves it after correcting the service, also when it now includes nothing', async () => {
+      const { rpc } = fakeSession();
+
+      await updateService({ id: ID, ...form({ includes: [] }) });
+
+      expect(rpc).toHaveBeenCalledWith('set_service_inclusions', {
+        p_service_id: ID,
+        p_included: [],
+      });
+    });
+
+    it('says when it would include a service that already includes it', async () => {
+      fakeSession({
+        rpcError: { code: '23514', hint: 'service_inclusion_cycle', message: 'cycle' },
+      });
+
+      await expect(updateService({ id: ID, ...form({ includes: [PRO_WASH] }) })).resolves.toEqual({
+        ok: false,
+        error: 'inclusionCycle',
+      });
+    });
   });
 });

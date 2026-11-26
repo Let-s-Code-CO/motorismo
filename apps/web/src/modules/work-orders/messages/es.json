@@ -92,7 +92,10 @@
       "category": "Categoría de la moto: {category}",
       "noCategory": "Sin categoría",
       "onQuote": "A convenir",
-      "byCategory": "Según categoría"
+      "byCategory": "Según categoría",
+      "includes": "Incluye: {names}",
+      "removeService": "Quitar",
+      "fromOrder": "de la orden"
     },
     "summary": {
       "subtotal": "Subtotal",
@@ -148,7 +151,8 @@
       "startedBy": "Empezada el {date} a las {time} por {name}",
       "start": "Empezar",
       "started": "Orden en proceso.",
-      "reservation": "Viene de la reserva de las {time}"
+      "reservation": "Viene de la reserva de las {time}",
+      "includes": "Incluye: {names}"
     },
     "history": {
       "title": "Historial",
@@ -220,7 +224,9 @@
       "reservationNotToday": "Esa reserva no es de hoy.",
       "reservationMismatch": "La reserva es de otro cliente.",
       "reservationOrderStarted": "Esta orden ya empezó: no se le puede enlazar la reserva.",
-      "reservationOrderHasReservation": "Esta orden ya tiene una reserva."
+      "reservationOrderHasReservation": "Esta orden ya tiene una reserva.",
+      "onePackage": "Solo puede llevar un paquete.",
+      "servicesOverlap": "Hay servicios que ya vienen incluidos en otro de la orden."
     }
   }
 }

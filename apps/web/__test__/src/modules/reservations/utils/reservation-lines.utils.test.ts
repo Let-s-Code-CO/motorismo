@@ -5,7 +5,8 @@
  * The services of a reservation are an intention: on arrival, each one is offered as a line with
  * the catalog's value and time of that moment for the vehicle's type, in the order they were
  * booked. A service no longer active, or not offered for that type, is not copied: it is named so
- * staff can tell the customer.
+ * staff can tell the customer. Spec 024, RN-06: nor one that no longer goes with the services brought
+ * before it (the admin changed what a service includes after the booking).
  */
 import { linesFromReservation } from '@web/modules/reservations/utils/reservation-lines.utils';
 import type { ServiceOption } from '@web/modules/work-orders/types/work-orders.types';
@@ -23,6 +24,7 @@ const service = (
   price_bicycle: null,
   estimated_minutes: 30,
   on_quote: false,
+  includes: [],
   ...overrides,
 });
 
@@ -113,6 +115,22 @@ describe('linesFromReservation', () => {
 
       expect(services).toEqual([PRO_WASH]);
       expect(skipped).toEqual([]);
+    });
+  });
+
+  describe('services that no longer go together (spec 024, RN-06)', () => {
+    it('leaves out, named, a service that a service already brought now includes', () => {
+      // Booked before the admin made Pro Wash include the sealant.
+      const proWash = service('pro', 'Lavado Pro Wash', { includes: ['sellador'] });
+      const sellador = service('sellador', 'Sellador');
+
+      expect(
+        linesFromReservation(
+          { service_ids: ['pro', 'sellador'], services: ['Lavado Pro Wash', 'Sellador'] },
+          [proWash, sellador],
+          'motorcycle'
+        )
+      ).toEqual({ services: [proWash], skipped: ['Sellador'] });
     });
   });
 });

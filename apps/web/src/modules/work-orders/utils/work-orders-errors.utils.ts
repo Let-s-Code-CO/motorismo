@@ -26,6 +26,8 @@ export type WorkOrdersErrorKey =
   | 'reservationMismatch'
   | 'reservationOrderStarted'
   | 'reservationOrderHasReservation'
+  | 'onePackage'
+  | 'servicesOverlap'
   | 'generic';
 
 const BY_HINT: Record<string, WorkOrdersErrorKey> = {
@@ -58,6 +60,9 @@ const BY_HINT: Record<string, WorkOrdersErrorKey> = {
   reservation_customer_mismatch: 'reservationMismatch',
   reservation_order_started: 'reservationOrderStarted',
   reservation_order_has_reservation: 'reservationOrderHasReservation',
+  // Spec 024, CA-26: one package, nothing included twice.
+  services_one_package: 'onePackage',
+  services_overlap: 'servicesOverlap',
 };
 
 /** Database refusals (hints set by the work order functions, spec 008) → message keys. */

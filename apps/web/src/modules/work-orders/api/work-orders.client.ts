@@ -91,12 +91,16 @@ export const fetchActiveServices = async (): Promise<ServiceOption[]> => {
   const { data, error } = await createSupabaseBrowserClient()
     .from('services')
     .select(
-      'id, name, price_motorcycle, motorcycle_prices, price_car, price_bicycle, estimated_minutes, on_quote'
+      'id, name, price_motorcycle, motorcycle_prices, price_car, price_bicycle, estimated_minutes, on_quote, includes:service_inclusions!service_inclusions_service_id_fkey(included_id)'
     )
     .is('disabled_at', null)
     .order('name');
   if (error) throw new Error(`Could not load the services: ${error.message}`);
-  return data as ServiceOption[];
+  // Spec 024, HU-05: what each one includes, by id.
+  return data.map(({ includes, ...service }) => ({
+    ...(service as Omit<ServiceOption, 'includes'>),
+    includes: includes.map(({ included_id }) => included_id),
+  }));
 };
 
 /**

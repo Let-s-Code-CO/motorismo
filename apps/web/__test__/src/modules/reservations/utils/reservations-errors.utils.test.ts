@@ -31,6 +31,9 @@ describe('fromReservationError', () => {
     // Spec 024, CA-14 / CA-16.
     ['reservation_quoted_minutes_required', 'quotedMinutesRequired'],
     ['reservation_service_quoted', 'serviceUnavailable'],
+    // Spec 024, CA-26: one package, nothing included twice.
+    ['services_one_package', 'onePackage'],
+    ['services_overlap', 'servicesOverlap'],
     ['reservation_not_pending', 'notPending'],
     ['reservation_no_show_too_early', 'noShowTooEarly'],
     ['reservation_tolerance_out_of_range', 'toleranceOutOfRange'],

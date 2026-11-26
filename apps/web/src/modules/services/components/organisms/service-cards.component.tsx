@@ -225,7 +225,14 @@ const ServiceCard = ({ service, variant, actions }: ServiceCardProps) => {
           <h3 id={nameId} className="text-base font-semibold tracking-tight break-words">
             {service.name}
           </h3>
-          {/* Spec 024, CA-19: what it includes, in two lines at most. */}
+          {/* Spec 024, CA-21: the services it includes. */}
+          {service.includes.length > 0 && (
+            <p className="text-sm">
+              <span className="font-medium">{t('includes')}</span>{' '}
+              {service.includes.map(({ name }) => name).join(', ')}
+            </p>
+          )}
+          {/* Spec 024, CA-19: what else it includes, in two lines at most. */}
           {service.description && (
             <p className="line-clamp-2 text-sm text-default-500" title={service.description}>
               {service.description}

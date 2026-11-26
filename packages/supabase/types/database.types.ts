@@ -797,6 +797,36 @@ export type Database = {
           },
         ]
       }
+      service_inclusions: {
+        Row: {
+          included_id: string
+          service_id: string
+        }
+        Insert: {
+          included_id: string
+          service_id: string
+        }
+        Update: {
+          included_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_inclusions_included_id_fkey"
+            columns: ["included_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_inclusions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           created_at: string
@@ -1572,8 +1602,10 @@ export type Database = {
           car: boolean
           estimated_minutes: number
           id: string
+          includes: string[]
           motorcycle: boolean
           name: string
+          package: boolean
         }[]
       }
       cancel_reservation: {
@@ -1927,6 +1959,10 @@ export type Database = {
       }
       set_reservation_tolerance: {
         Args: { p_id: string; p_minutes: number }
+        Returns: undefined
+      }
+      set_service_inclusions: {
+        Args: { p_included: string[]; p_service_id: string }
         Returns: undefined
       }
       set_vehicle_category: {

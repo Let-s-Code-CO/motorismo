@@ -39,6 +39,7 @@ const lavado: ServiceRow = {
   on_quote: false,
   description: null,
   disabled_at: null,
+  includes: [],
 };
 
 /** The categories in the order of the list, with the Pro Wash values. */
@@ -65,7 +66,7 @@ const KEYS = [
 const proWashPrices = Object.fromEntries(
   KEYS.map((key, index) => [key, PRO_WASH[index]![2]])
 ) as Record<(typeof KEYS)[number], number>;
-const NEW_FIELDS = { motorcycle_prices: null, on_quote: false, description: null };
+const NEW_FIELDS = { motorcycle_prices: null, on_quote: false, description: null, includes: [] };
 
 describe('ServiceForm', () => {
   afterEach(() => vi.clearAllMocks());
@@ -176,6 +177,7 @@ describe('ServiceForm', () => {
         estimated_minutes: null,
         on_quote: false,
         description: 'Shampoo alcalino y de pH neutro.',
+        includes: [],
       });
     });
 
@@ -224,6 +226,73 @@ describe('ServiceForm', () => {
           })
         )
       );
+    });
+  });
+
+  describe('what it includes (spec 024, CA-20)', () => {
+    const kit: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000010',
+      name: 'Limpieza de kit',
+      price_car: null,
+    };
+    const sellador: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000011',
+      name: 'Sellador',
+      price_car: null,
+    };
+    const premium: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000012',
+      name: 'Premium',
+      includes: [{ id: kit.id, name: kit.name }],
+    };
+    const retired: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000013',
+      name: 'Polichado',
+      disabled_at: '2026-10-21T15:00:00Z',
+    };
+    const catalog = [kit, sellador, premium, retired];
+    const included = () => screen.getByRole('group', { name: 'Incluye' });
+
+    it('offers the other active services, never itself nor one that already includes it, and sends the chosen', async () => {
+      vi.mocked(updateService).mockResolvedValue({ ok: true });
+      renderWithProviders(
+        <ServiceForm service={kit} catalog={catalog} onSaved={vi.fn()} onCancel={vi.fn()} />
+      );
+
+      const offered = screen
+        .getAllByRole('checkbox')
+        .filter((box) => included().contains(box))
+        .map((box) => box.closest('label')!.textContent);
+      expect(offered).toEqual(['Sellador']);
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Sellador' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+      await vi.waitFor(() =>
+        expect(updateService).toHaveBeenCalledWith(
+          expect.objectContaining({ id: kit.id, includes: [sellador.id] })
+        )
+      );
+    });
+
+    it('opens with what it includes already checked', () => {
+      renderWithProviders(
+        <ServiceForm service={premium} catalog={catalog} onSaved={vi.fn()} onCancel={vi.fn()} />
+      );
+
+      expect(screen.getByRole('checkbox', { name: 'Limpieza de kit' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Sellador' })).not.toBeChecked();
+    });
+
+    it('asks nothing of it for a service «a convenir»', () => {
+      renderWithProviders(<ServiceForm catalog={catalog} onSaved={vi.fn()} onCancel={vi.fn()} />);
+
+      fireEvent.click(screen.getByRole('switch', { name: /A convenir/ }));
+
+      expect(screen.queryByRole('group', { name: 'Incluye' })).not.toBeInTheDocument();
     });
   });
 });

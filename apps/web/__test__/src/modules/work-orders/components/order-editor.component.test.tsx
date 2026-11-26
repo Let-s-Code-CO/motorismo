@@ -10,6 +10,8 @@
  * - CA-06 / RN-03: the employees of a line share it in equal parts, editable; with only one active
  *   employee, each new line already has them at 100 % (RN-10).
  * - CA-09: problems show next to their field and nothing is sent.
+ * - Spec 024, CA-23 to CA-25, CA-27: «Añadir» is disabled for what cannot go with the services already
+ *   added, saying why; a package's line says what it includes.
  * - CA-07: saving opens the order and hands its id over.
  * - CA-27 / CA-28: a line takes the service's time, which can be changed for this order only; a
  *   line without one is «Sin estimar» and can be filled in.
@@ -76,6 +78,7 @@ const service = (overrides: Partial<ServiceOption>): ServiceOption => ({
   price_bicycle: null,
   estimated_minutes: 30,
   on_quote: false,
+  includes: [],
   ...overrides,
 });
 const SERVICES = [
@@ -438,11 +441,10 @@ describe('OrderEditor — categories and services «a convenir» (spec 024)', ()
   });
 
   describe('from a reservation', () => {
-    const LUBE = service({
+    const SEATS = service({
       id: '30000000-0000-4000-8000-000000000012',
-      name: 'Paquete de lavado Premium',
-      price_motorcycle: null,
-      motorcycle_prices: { ...PRO_WASH.motorcycle_prices!, trail: 95000 },
+      name: 'Limpieza de asientos',
+      price_motorcycle: 16000,
       price_car: null,
     });
 
@@ -454,7 +456,7 @@ describe('OrderEditor — categories and services «a convenir» (spec 024)', ()
       },
       category: string | null
     ) => {
-      vi.mocked(fetchActiveServices).mockResolvedValue([PRO_WASH, PPF, LUBE]);
+      vi.mocked(fetchActiveServices).mockResolvedValue([PRO_WASH, PPF, SEATS]);
       vi.mocked(fetchActiveEmployees).mockResolvedValue([ELKIN]);
       vi.mocked(fetchVehicleCategory).mockResolvedValue(category as never);
       renderWithProviders(
@@ -481,12 +483,12 @@ describe('OrderEditor — categories and services «a convenir» (spec 024)', ()
       expect(within(ppf).getByRole('textbox', { name: /Tiempo/ })).toHaveValue('240');
     });
 
-    it('asks once for the category of a motorcycle without one, and adds every service by category with its value (CA-06)', async () => {
+    it('asks once for the category of a motorcycle without one, then adds the package with its value and the extra (CA-06)', async () => {
       vi.mocked(setVehicleCategory).mockResolvedValue({ ok: true });
       renderFrom(
         {
-          service_ids: [PRO_WASH.id, LUBE.id],
-          services: ['Lavado Pro Wash', 'Paquete de lavado Premium'],
+          service_ids: [PRO_WASH.id, SEATS.id],
+          services: ['Lavado Pro Wash', 'Limpieza de asientos'],
           service_minutes: [null, null],
         },
         null
@@ -500,8 +502,165 @@ describe('OrderEditor — categories and services «a convenir» (spec 024)', ()
       const value = async (name: string) =>
         within(await screen.findByRole('group', { name })).getByRole('textbox', { name: /Valor/ });
       expect(await value('Lavado Pro Wash')).toHaveValue('48.000');
-      expect(await value('Paquete de lavado Premium')).toHaveValue('95.000');
+      expect(await value('Limpieza de asientos')).toHaveValue('16.000');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('OrderEditor — packages and what they include (spec 024, HU-05)', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  const BY_CATEGORY = {
+    street: 90000,
+    sbk: 90000,
+    scooter: 90000,
+    maxi_scooter: 90000,
+    trail: 90000,
+    maxi_trail: 90000,
+    cruiser: 90000,
+    maxi_cruiser: 90000,
+  };
+  const SELLADOR = service({
+    id: '30000000-0000-4000-8000-000000000021',
+    name: 'Sellador',
+    price_car: null,
+  });
+  const PREMIUM = service({
+    id: '30000000-0000-4000-8000-000000000020',
+    name: 'Premium',
+    price_motorcycle: null,
+    motorcycle_prices: BY_CATEGORY,
+    price_car: null,
+    includes: [SELLADOR.id],
+  });
+  const DELUXE = service({
+    id: '30000000-0000-4000-8000-000000000022',
+    name: 'Deluxe',
+    price_motorcycle: null,
+    motorcycle_prices: BY_CATEGORY,
+    price_car: null,
+  });
+
+  const render = () => {
+    vi.mocked(fetchActiveServices).mockResolvedValue([PREMIUM, DELUXE, SELLADOR]);
+    vi.mocked(fetchActiveEmployees).mockResolvedValue([ELKIN]);
+    vi.mocked(fetchVehicleCategory).mockResolvedValue('sbk');
+    renderWithProviders(
+      <QueryClientProvider client={new QueryClient()}>
+        <OrderEditor customer={CUSTOMER} vehicle={MOTO} onSaved={vi.fn()} />
+      </QueryClientProvider>
+    );
+  };
+
+  it('disables adding what a package includes and another package, saying why (CA-23, CA-24)', async () => {
+    render();
+
+    await addService(/Añadir Premium/);
+
+    const sellador = screen.getByRole('button', { name: /Añadir Sellador/ });
+    expect(sellador).toBeDisabled();
+    expect(sellador).toHaveAccessibleName(expect.stringContaining('Incluido en Premium'));
+    expect(screen.getByRole('button', { name: /Añadir Deluxe/ })).toHaveAccessibleName(
+      expect.stringContaining('Ya hay un paquete: Premium')
+    );
+  });
+
+  it('allows them again once the package line is removed', async () => {
+    render();
+
+    await addService(/Añadir Premium/);
+    fireEvent.click(within(line('Premium')).getByRole('button', { name: /Quitar/ }));
+
+    expect(screen.getByRole('button', { name: /Añadir Sellador/ })).toBeEnabled();
+  });
+
+  it('says on the package line what it includes (CA-27)', async () => {
+    render();
+
+    await addService(/Añadir Premium/);
+
+    expect(line('Premium')).toHaveTextContent('Incluye: Sellador');
+  });
+
+  it('groups what can be added: «Paquetes» apart from «Servicios adicionales», «Otro» with them (CA-28)', async () => {
+    render();
+
+    const packages = await screen.findByRole('group', { name: 'Paquetes' });
+    expect(
+      within(packages)
+        .getAllByRole('button')
+        .map((button) => button.textContent)
+    ).toEqual([expect.stringContaining('Premium'), expect.stringContaining('Deluxe')]);
+    const extras = within(screen.getByRole('group', { name: 'Servicios adicionales' }));
+    expect(extras.getByRole('button', { name: /Añadir Sellador/ })).toBeVisible();
+    expect(extras.getByRole('button', { name: /Añadir Otro/ })).toBeVisible();
+  });
+
+  it('turns the button of an added service into «Quitar», which removes its line: never added twice (CA-29)', async () => {
+    render();
+
+    await addService(/Añadir Premium/);
+    expect(screen.queryByRole('button', { name: /Añadir Premium/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar Premium de la orden' }));
+
+    expect(screen.queryByRole('group', { name: 'Premium' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Añadir Premium/ })).toBeEnabled();
+  });
+
+  it('adds «Otro» as many times as needed (CA-29)', async () => {
+    render();
+
+    await addService(/Añadir Otro/);
+    await addService(/Añadir Otro/);
+
+    expect(screen.getAllByRole('group', { name: 'Otro' })).toHaveLength(2);
+  });
+
+  it('orders the packages from the cheapest up: Pro Wash, Premium, Deluxe, Supreme (CA-28)', async () => {
+    const ladder = (lowest: number) => ({
+      street: lowest + 2000,
+      sbk: lowest + 4000,
+      scooter: lowest,
+      maxi_scooter: lowest + 4000,
+      trail: lowest + 6000,
+      maxi_trail: lowest + 10000,
+      cruiser: lowest + 2000,
+      maxi_cruiser: lowest + 6000,
+    });
+    const pkg = (id: string, name: string, lowest: number) =>
+      service({
+        id,
+        name,
+        price_motorcycle: null,
+        motorcycle_prices: ladder(lowest),
+        price_car: null,
+      });
+    // As the catalog comes: by name.
+    vi.mocked(fetchActiveServices).mockResolvedValue([
+      pkg('30000000-0000-4000-8000-000000000031', 'Combo de lavado Deluxe', 170000),
+      pkg('30000000-0000-4000-8000-000000000032', 'Combo de lavado Supreme', 700000),
+      pkg('30000000-0000-4000-8000-000000000033', 'Lavado Pro Wash', 42000),
+      pkg('30000000-0000-4000-8000-000000000034', 'Paquete de lavado Premium', 97000),
+    ]);
+    vi.mocked(fetchActiveEmployees).mockResolvedValue([ELKIN]);
+    vi.mocked(fetchVehicleCategory).mockResolvedValue('sbk');
+    renderWithProviders(
+      <QueryClientProvider client={new QueryClient()}>
+        <OrderEditor customer={CUSTOMER} vehicle={MOTO} onSaved={vi.fn()} />
+      </QueryClientProvider>
+    );
+
+    const packages = await screen.findByRole('group', { name: 'Paquetes' });
+    expect(
+      within(packages)
+        .getAllByRole('button')
+        .map((button) => button.textContent?.replace(/^Añadir |\$.*$/g, '').trim())
+    ).toEqual([
+      'Lavado Pro Wash',
+      'Paquete de lavado Premium',
+      'Combo de lavado Deluxe',
+      'Combo de lavado Supreme',
+    ]);
   });
 });

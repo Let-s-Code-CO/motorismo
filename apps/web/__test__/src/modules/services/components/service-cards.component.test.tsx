@@ -15,6 +15,7 @@
  * - CA-12 / CA-13: an active service offers «Editar» and «Desactivar»; a disabled one shows the date
  *   it was disabled and offers «Reactivar»; the disabled ones are one list, without groups.
  * - CA-06: with no services, the empty text.
+ * - Spec 024, CA-21: a service that includes others says «Incluye: …».
  */
 import { fireEvent, screen, within } from '@testing-library/react';
 
@@ -34,6 +35,7 @@ const service = (overrides: Partial<ServiceRow> = {}): ServiceRow => ({
   price_bicycle: null,
   estimated_minutes: null,
   disabled_at: null,
+  includes: [],
   ...overrides,
 });
 
@@ -179,6 +181,31 @@ describe('ServiceCards', () => {
     expect(card('Lavado sencillo')).toHaveTextContent('Incluye sellador.');
     expect(card('Lavado sencillo')).toHaveTextContent('≈ 2 h 30 min');
     expect(card('Cera')).not.toHaveTextContent('≈');
+  });
+
+  it('says what a service includes, by name (spec 024, CA-21)', () => {
+    renderWithProviders(
+      <ServiceCards
+        services={[
+          {
+            ...proWash,
+            name: 'Paquete de lavado Premium',
+            includes: [
+              { id: 'i1', name: 'Lavado Pro Wash' },
+              { id: 'i2', name: 'Sellador' },
+            ],
+          },
+          service(),
+        ]}
+        variant="active"
+        label="Servicios"
+      />
+    );
+
+    expect(card('Paquete de lavado Premium')).toHaveTextContent(
+      'Incluye: Lavado Pro Wash, Sellador'
+    );
+    expect(card('Lavado sencillo')).not.toHaveTextContent('Incluye');
   });
 
   it('has no actions menu for someone who only reads (CA-15)', () => {

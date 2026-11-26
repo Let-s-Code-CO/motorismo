@@ -38,6 +38,8 @@ export type ServiceOption = Pick<
 > & {
   /** The motorcycle value per category (spec 024, CA-07), or null. */
   motorcycle_prices: Record<MotorcycleCategory, number> | null;
+  /** The services it includes directly (spec 024, HU-05). */
+  includes: string[];
 };
 
 /** An active employee. */
@@ -54,6 +56,8 @@ export type WorkOrderLine = {
   name: string;
   price: number;
   estimated_minutes: number | null;
+  /** What its service includes, by name (spec 024, CA-27); empty for «Otro». */
+  includes: string[];
   employees: { employee_id: string; full_name: string; share_pct: number }[];
 };
 
