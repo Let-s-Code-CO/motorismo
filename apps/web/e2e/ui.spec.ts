@@ -10,7 +10,8 @@
  * when the device asks for less (CA-10 to CA-12); the desktop as before (CA-05, CA-09, CA-13).
  * Spec 012: the agenda, a new reservation, a reservation and «Horario» fit a phone too.
  * Spec 015: the services report fits an iPhone, a card per service.
- * Spec 016: the payroll and an employee's detail fit an iPhone, a card per employee.
+ * Spec 016: the payroll and an employee's detail fit an iPhone, a card per employee; spec 020 its
+ *   period bar (fortnight or range, dates and method) too.
  * Spec 023: «Ciudades de placa» and the plates of «Clientes» fit an iPhone.
  * Spec 018: «Marcas y líneas» fits a phone, its lines open; the desktop bar never overflows and,
  * with today's sections, needs no «Más» for an admin or an operator (CA-22, CA-25).
@@ -159,6 +160,21 @@ test.describe('on a 360 px phone', () => {
     expect(await horizontalOverflow(page)).toBe(0);
   });
 
+  test('the payroll of a fortnight and of a range, with dates and method, has no horizontal scroll (spec 020)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    for (const path of [
+      '/reports/payroll',
+      '/reports/payroll?from=2026-11-03&to=2026-11-20&base=actual',
+    ]) {
+      await page.goto(path);
+      await expect(page.getByRole('radio', { name: /Días reales/ })).toBeVisible();
+      await expect.poll(() => horizontalOverflow(page), { message: path }).toBe(0);
+    }
+  });
+
   test('sign-up and "Mi perfil" have no horizontal scroll (spec 004)', async ({ page }) => {
     await page.goto('/auth/sign-up');
     expect(await horizontalOverflow(page)).toBe(0);
@@ -239,8 +255,9 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
       '/agenda/schedule',
       // Spec 015: the services report, on the seeds' closed orders (a card per service).
       `/reports/services?from=${bogotaDay(15)}&to=${bogotaDay(0)}`,
-      // Spec 016: the payroll of the month and an employee's detail.
+      // Spec 016 / 020: the payroll of the fortnight, a range, and an employee's detail.
       '/reports/payroll',
+      `/reports/payroll?from=${bogotaDay(15)}&to=${bogotaDay(0)}&base=actual`,
       `/reports/payroll/${elkin!.id}`,
       // Spec 017: the data requests and one of them (Camila's, from the seeds).
       '/admin/data-requests',

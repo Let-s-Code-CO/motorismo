@@ -8,6 +8,7 @@ import { Input, Select, SelectItem, SelectSection } from '@heroui/react';
 import { Search } from 'lucide-react';
 
 import useUrlFilters from '@web/modules/core/hooks/url-filters.hook';
+import DateRangeFields from '@web/modules/reports/components/molecules/date-range-fields.component';
 import { reportPlate } from '@web/modules/reports/schemas/reports.schema';
 import type {
   ReportFilters as Filters,
@@ -63,42 +64,14 @@ const ReportFilters = ({ filters, employees }: ReportFiltersProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only typing triggers a search
   }, [plate]);
 
-  // CA-02: the period is never upside down: the other end moves with the one chosen.
-  const changeFrom = (from: string) => {
-    if (!from) return;
-    const { to: current } = latest();
-    navigate({ from, to: from > current ? from : current });
-  };
-  const changeTo = (to: string) => {
-    if (!to) return;
-    const { from: current } = latest();
-    navigate({ from: to < current ? to : current, to });
-  };
-
   return (
     <div
       role="group"
       aria-label={t('label')}
       className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(2,minmax(0,10rem))_minmax(0,16rem)_minmax(0,12rem)]"
     >
-      <Input
-        type="date"
-        label={t('from')}
-        labelPlacement="outside"
-        placeholder=" "
-        variant="bordered"
-        value={filters.from}
-        onChange={(event) => changeFrom(event.target.value)}
-      />
-      <Input
-        type="date"
-        label={t('to')}
-        labelPlacement="outside"
-        placeholder=" "
-        variant="bordered"
-        value={filters.to}
-        onChange={(event) => changeTo(event.target.value)}
-      />
+      {/* CA-02: the period is never upside down: the other end moves with the one chosen. */}
+      <DateRangeFields value={filters} latest={latest} onChange={navigate} />
       <Select
         // A fixed id: this Select is drawn on the server, and React Aria's own ids for its hidden
         // <select> differ between server and browser (a hydration mismatch).

@@ -392,7 +392,7 @@ e2e/                         # Playwright
 - Un enlace con aspecto de botón (descargar, «Quitar filtros») es un `<a>`/`Link` con
   `button(…)` de `@heroui/theme`: `Button as={Link}` conserva el rol «button».
 
-## Liquidación de empleados (spec 016)
+## Liquidación de empleados (specs 016 y 020)
 
 - **Salario base:** `employee_details.base_salary` (privado como la comisión: solo el admin lo lee
   y lo escribe). `save_employee(…, p_base_salary)` lo recibe al final y opcional: nulo registra 0 y,
@@ -401,17 +401,36 @@ e2e/                         # Playwright
   reactivar un empleado (nadie la escribe directamente). Un día cuenta si estuvo activo en algún
   momento de ese día, en hora de Colombia. Para vaciar `employees` en una prueba, borra antes sus
   periodos.
-- **Cálculo:** `private.payroll_lines_live` / `payroll_items_live`: valor × participación × comisión
-  (sin restar el descuento) de las órdenes cerradas en el mes; base × días activos ÷ días del mes;
-  se redondea una vez por empleado. Comisión y salario: los de ahora (RN-09).
-- **Cierre:** `close_payroll` (solo un mes terminado) guarda una copia fija en `payrolls`,
-  `payroll_lines` y `payroll_items`; `regenerate_payroll` la reescribe y guarda el total anterior.
-  `payroll_month` dice si «hubo cambios» comparando la copia con el cálculo de ahora. Todo
-  `security definer`, solo admin (`payroll_admin_only`); el reloj es `private.agenda_now()`.
-- **App:** «Reportes» tiene pestañas (`reports-tabs`): «Servicios» y «Liquidación»
-  (`/reports/payroll?month=AAAA-MM`, el detalle en `/reports/payroll/{empleado}` y el Excel en
-  `…/export`, con hojas «Resumen» y «Detalle»). Cerrar y regenerar van con `ConfirmDialog`,
-  `callAction` y `notify`.
+- **Periodo (spec 020):** una quincena (del 1 al 15, del 16 al último día) o un rango de dos fechas,
+  ambas incluidas; un rango igual a una quincena es esa quincena. Todas las funciones reciben
+  `(p_from, p_to, p_method)`.
+- **Cálculo:** comisiones = valor × participación × comisión (sin restar el descuento) de las órdenes
+  cerradas en el periodo (`private.payroll_items_live`). El salario base va por trozos de quincena
+  (`private.payroll_base_parts_live`) con el método:
+  - `commercial` («Mes comercial», por defecto): quincena completa y activo todos sus días = 15 de 30;
+    si no, ÷ 30 por día activo, como mucho 15;
+  - `actual` («Días reales»): × días activos ÷ días del mes.
+
+  Se redondea una vez por empleado (`private.payroll_lines_live`). Comisión y salario: los de ahora.
+- **Cierre:** solo quincenas terminadas. `close_payroll(p_start, p_method)` guarda una copia fija con
+  su método, y cada línea guarda días pagados y divisor (`payrolls`, `payroll_lines`,
+  `payroll_items`). `regenerate_payroll(p_start, p_method)` la reescribe con el método de ese momento
+  y guarda el total anterior.
+- **Lectura:** `payroll_period` dice tipo, estado (provisional, cerrada o consulta), método, total y si
+  «hubo cambios» (con el método del cierre). `payroll_lines`, `payroll_items` y `payroll_base_parts`
+  dan la copia de una quincena cerrada o el cálculo de ahora. Todo es `security definer`, solo admin
+  (`payroll_admin_only`); el reloj es `private.agenda_now()`.
+- **App:** «Reportes» tiene pestañas (`reports-tabs`): «Servicios» y «Liquidación».
+  - **Dirección:** `/reports/payroll?fortnight=AAAA-MM-1|2`, o `?from=&to=`, y `&base=actual|commercial`
+    solo si se eligió. Se lee con `payrollQuerySchema`; lo inválido es la quincena en curso. Una
+    quincena cerrada sin método elegido muestra el del cierre.
+  - **Utilidades:** `payroll-period.utils` (quincenas, enlaces) y `usePeriodName` (nombres).
+  - **Pantalla:** `payroll-period-bar` (navegación, `DateRangeFields` compartido con el reporte de
+    servicios y el método).
+  - **Detalle:** `/reports/payroll/{empleado}` explica el salario base trozo por trozo.
+  - **Excel:** en `…/export`, con el periodo en el nombre y, arriba del «Resumen», el periodo, el
+    estado y el método.
+  - Cerrar y regenerar van con `ConfirmDialog`, `callAction` y `notify`.
 
 ## Placa según la norma (spec 023)
 

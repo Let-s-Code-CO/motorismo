@@ -1,15 +1,18 @@
 /**
- * payroll-workbook.lib — the Excel file of a month's payroll (spec 016, HU-04): what goes in each
- * cell of its two sheets. Writing the .xlsx is the library's job; the route only hands it these.
+ * payroll-workbook.lib — the Excel file of a period's payroll (spec 020, CA-17; spec 016, HU-04):
+ * what goes in each cell of its two sheets. Writing the .xlsx is the library's job; the route only
+ * hands it these.
  *
  * Guards:
- * - CA-18: a «Resumen» sheet (each employee with active days, base salary, base of the month,
- *   commission %, commissions and total, and the total of the month at the end) and a «Detalle»
- *   sheet (each service of each employee). The file is named by its month, and says so when the
- *   month is still provisional.
- * - CA-19: values are numbers and dates are dates, each with its format (Excel adds and sorts
- *   them); a date is the closing day in Colombia (an order closed at 11:30 p. m. on the 30th is on
- *   the 30th, though in UTC it is already the 1st).
+ * - CA-17: «Resumen» opens with the period, whether it is provisional, closed or a query, and the
+ *   method of the base salary; then each employee with active days, days of the period, monthly base
+ *   salary, base salary of the period, commission %, commissions and total, and the total at the end.
+ *   «Detalle» has each service of each employee. The file is named by its period
+ *   («liquidacion-2026-11-1a-quincena.xlsx», «liquidacion-2026-11-03-a-2026-11-20.xlsx») and says
+ *   when a fortnight is still provisional.
+ * - spec 016, CA-19: values are numbers and dates are dates, each with its format (Excel adds and
+ *   sorts them); a date is the closing day in Colombia (an order closed at 11:30 p. m. on the 30th is
+ *   on the 30th, though in UTC it is already the 1st).
  */
 import type { PayrollItem, PayrollLine } from '@web/modules/reports/types/reports.types';
 import {
@@ -22,13 +25,13 @@ const LABELS: PayrollWorkbookLabels = {
   summary: {
     employee: 'Empleado',
     activeDays: 'Días activos',
-    monthDays: 'Días del mes',
-    baseSalary: 'Salario base',
-    basePay: 'Salario del mes',
+    periodDays: 'Días del periodo',
+    baseSalary: 'Salario base mensual',
+    basePay: 'Salario base del periodo',
     commissionPct: 'Comisión (%)',
     commissions: 'Comisiones',
     total: 'Total',
-    monthTotal: 'Total del mes',
+    periodTotal: 'Total del periodo',
   },
   detail: {
     employee: 'Empleado',
@@ -45,7 +48,7 @@ const line = (overrides: Partial<PayrollLine> = {}): PayrollLine => ({
   employee_id: 'e1',
   employee_name: 'Paula Pineda',
   active_days: 15,
-  month_days: 30,
+  period_days: 15,
   base_salary: 1300000,
   base_pay: 650000,
   commission_pct: 40,
@@ -72,58 +75,67 @@ const valueOf = (cell: unknown) =>
   cell !== null && typeof cell === 'object' && 'value' in cell ? cell.value : cell;
 const valuesOf = (row: unknown[] | undefined) => (row ?? []).map(valueOf);
 
-describe('buildPayrollWorkbook — «Resumen»', () => {
-  it('starts with its columns (CA-18)', () => {
-    const { summary } = buildPayrollWorkbook([line()], [item()], LABELS);
+const HEADING = [
+  'Liquidación de empleados · 1.ª quincena de noviembre de 2026',
+  'Provisional: se calcula con los datos de ahora',
+  'Salario base por «Mes comercial»',
+];
+const build = (lines: PayrollLine[], items: ReturnType<typeof item>[]) =>
+  buildPayrollWorkbook(lines, items, LABELS, HEADING);
+/** The heading takes three rows and a blank one: the table starts on the fifth. */
+const TABLE = 4;
 
-    expect(valuesOf(summary[0])).toEqual([
+describe('buildPayrollWorkbook — «Resumen»', () => {
+  it('opens with the period, its state and the method of the base salary (CA-17)', () => {
+    const { summary } = build([line()], [item()]);
+
+    expect(summary.slice(0, 3).map((row) => valueOf(row[0]))).toEqual(HEADING);
+    expect(summary[0]![0]).toMatchObject({ fontWeight: 'bold' });
+    expect(summary[3]).toEqual([null]);
+  });
+
+  it('then its columns (CA-17)', () => {
+    const { summary } = build([line()], [item()]);
+
+    expect(valuesOf(summary[TABLE])).toEqual([
       'Empleado',
       'Días activos',
-      'Días del mes',
-      'Salario base',
-      'Salario del mes',
+      'Días del periodo',
+      'Salario base mensual',
+      'Salario base del periodo',
       'Comisión (%)',
       'Comisiones',
       'Total',
     ]);
   });
 
-  it('writes one row per employee, values as numbers in pesos (CA-18, CA-19)', () => {
-    const { summary } = buildPayrollWorkbook([line()], [item()], LABELS);
+  it('writes one row per employee, values as numbers in pesos (CA-17, spec 016 CA-19)', () => {
+    const { summary } = build([line()], [item()]);
+    const row = summary[TABLE + 1];
 
-    expect(valuesOf(summary[1])).toEqual([
-      'Paula Pineda',
-      15,
-      30,
-      1300000,
-      650000,
-      40,
-      48000,
-      698000,
-    ]);
-    expect(summary[1]![3]).toMatchObject({ type: Number, format: '"$" #,##0' });
-    expect(summary[1]![7]).toMatchObject({ type: Number, format: '"$" #,##0' });
-    expect(summary[1]![1]).toMatchObject({ type: Number });
+    expect(valuesOf(row)).toEqual(['Paula Pineda', 15, 15, 1300000, 650000, 40, 48000, 698000]);
+    expect(row![3]).toMatchObject({ type: Number, format: '"$" #,##0' });
+    expect(row![7]).toMatchObject({ type: Number, format: '"$" #,##0' });
+    expect(row![1]).toMatchObject({ type: Number });
   });
 
-  it('ends with the total of the month under «Total»: 698 000 + 1 528 002 = 2 226 002 (CA-18)', () => {
-    const { summary } = buildPayrollWorkbook(
+  it('ends with the total of the period under «Total»: 698 000 + 1 528 002 = 2 226 002 (CA-17)', () => {
+    const { summary } = build(
       [line(), line({ employee_id: 'e2', employee_name: 'Elkin Estrada', total: 1528002 })],
-      [],
-      LABELS
+      []
     );
 
-    // header + 2 employees + blank + total
-    expect(summary).toHaveLength(5);
-    const last = summary[4]!;
-    expect(valueOf(last[6])).toBe('Total del mes');
+    // heading (3) + blank + header + 2 employees + blank + total
+    expect(summary).toHaveLength(TABLE + 5);
+    const last = summary.at(-1)!;
+    expect(valueOf(last[6])).toBe('Total del periodo');
     expect(last[7]).toMatchObject({ value: 2226002, type: Number, format: '"$" #,##0' });
   });
 });
 
 describe('buildPayrollWorkbook — «Detalle»', () => {
-  it('writes each service of each employee, the date as the closing day in Colombia (CA-18, CA-19)', () => {
-    const { detail } = buildPayrollWorkbook([line()], [item()], LABELS);
+  it('writes each service of each employee, the date as the closing day in Colombia (spec 016, CA-19)', () => {
+    const { detail } = build([line()], [item()]);
 
     expect(valuesOf(detail[0])).toEqual([
       'Empleado',
@@ -146,23 +158,32 @@ describe('buildPayrollWorkbook — «Detalle»', () => {
     expect(detail[1]![1]).toMatchObject({ type: Date, format: 'dd/mm/yyyy' });
   });
 
-  it('keeps a commission with its cents, as it was computed (CA-19)', () => {
-    const { detail } = buildPayrollWorkbook(
-      [line()],
-      [item({ commission: 10000.5, price: 33335 })],
-      LABELS
-    );
+  it('keeps a commission with its cents, as it was computed (spec 016, CA-19)', () => {
+    const { detail } = build([line()], [item({ commission: 10000.5, price: 33335 })]);
 
     expect(detail[1]![6]).toMatchObject({ value: 10000.5, type: Number, format: '"$" #,##0.00' });
   });
 });
 
 describe('payrollFileName', () => {
-  it('names the file by its month (CA-18)', () => {
-    expect(payrollFileName('2026-11', 'closed')).toBe('liquidacion-2026-11.xlsx');
+  it('names a closed fortnight by its month and half (CA-17)', () => {
+    expect(payrollFileName({ kind: 'fortnight', start: '2026-11-01' }, 'closed')).toBe(
+      'liquidacion-2026-11-1a-quincena.xlsx'
+    );
+    expect(payrollFileName({ kind: 'fortnight', start: '2026-11-16' }, 'closed')).toBe(
+      'liquidacion-2026-11-2a-quincena.xlsx'
+    );
   });
 
-  it('says when the month is still provisional (CA-18)', () => {
-    expect(payrollFileName('2026-11', 'provisional')).toBe('liquidacion-2026-11-provisional.xlsx');
+  it('says when a fortnight is still provisional (CA-17)', () => {
+    expect(payrollFileName({ kind: 'fortnight', start: '2026-11-16' }, 'provisional')).toBe(
+      'liquidacion-2026-11-2a-quincena-provisional.xlsx'
+    );
+  });
+
+  it('names a range by its two days (CA-17)', () => {
+    expect(payrollFileName({ kind: 'range', from: '2026-11-03', to: '2026-11-20' }, 'query')).toBe(
+      'liquidacion-2026-11-03-a-2026-11-20.xlsx'
+    );
   });
 });

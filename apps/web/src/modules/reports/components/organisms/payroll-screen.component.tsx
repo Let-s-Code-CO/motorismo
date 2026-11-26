@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@heroui/react';
 import { button } from '@heroui/theme';
-import { ChevronLeft, ChevronRight, FileSpreadsheet, TriangleAlert } from 'lucide-react';
+import { ChevronRight, FileSpreadsheet, TriangleAlert } from 'lucide-react';
 
 import ConfirmDialog from '@web/modules/core/components/confirm-dialog.component';
 import useClock from '@web/modules/core/hooks/clock.hook';
@@ -16,47 +16,50 @@ import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatPesos } from '@web/modules/core/utils/money.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { closePayroll, regeneratePayroll } from '@web/modules/reports/actions/payroll.actions';
+import PayrollPeriodBar from '@web/modules/reports/components/molecules/payroll-period-bar.component';
 import ReportsTabs from '@web/modules/reports/components/molecules/reports-tabs.component';
-import type { PayrollLine, PayrollMonth } from '@web/modules/reports/types/reports.types';
+import usePeriodName from '@web/modules/reports/hooks/payroll-period-name.hook';
+import type {
+  PayrollLine,
+  PayrollQuery,
+  PayrollState,
+} from '@web/modules/reports/types/reports.types';
 import {
-  monthLabel,
-  nextMonth,
   payrollEmployeeHref,
   payrollExportHref,
-  payrollHref,
-  previousMonth,
-} from '@web/modules/reports/utils/payroll-month.utils';
+} from '@web/modules/reports/utils/payroll-period.utils';
 
 type PayrollScreenProps = {
-  /** `YYYY-MM`. */
-  month: string;
-  /** The month in progress, `YYYY-MM`: «Mes siguiente» stops there. */
-  currentMonth: string;
-  state: PayrollMonth;
+  query: PayrollQuery;
+  /** The first day of the fortnight in progress: «Quincena siguiente» stops there. */
+  currentFortnight: string;
+  state: PayrollState;
   lines: PayrollLine[];
 };
 
 const CELL = 'px-4 py-3 align-top';
-const NAV_LINK =
-  'inline-flex items-center gap-1 rounded-small text-sm text-default-600 underline-offset-4 hover:text-foreground hover:underline';
+const CHIP =
+  'rounded-full border border-default-300 px-2 py-0.5 text-xs font-medium text-foreground';
 
 /**
- * «Reportes» → «Liquidación» (spec 016): what each employee earns in a month. The month and how
- * to move between months (CA-05); whether it is provisional or closed, by whom and when, and
- * whether something changed since (CA-12, CA-15 to CA-17); a table on the desktop and a card per
- * employee on a phone, each opening the detail (CA-11); the total of the month; «Cerrar
- * liquidación» or «Regenerar», asked first (CA-14, CA-16); «Exportar a Excel» (CA-18).
+ * «Reportes» → «Liquidación» (spec 020; by month in spec 016): what each employee earns in a
+ * fortnight or between two dates. The period, its method and how to change them (CA-01, CA-06,
+ * CA-13); whether it is provisional, closed (by whom and when, with which method, whether something
+ * changed since) or a query (CA-05, CA-08, CA-12, CA-16); a table on the desktop and a card per
+ * employee on a phone, each opening the detail (CA-04); the total; «Cerrar liquidación» or
+ * «Regenerar», asked first, with the method in sight (CA-11, CA-16); «Exportar a Excel» (CA-17).
  */
-const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps) => {
+const PayrollScreen = ({ query, currentFortnight, state, lines }: PayrollScreenProps) => {
   const t = useTranslations('reports.payroll');
   const format = useFormatter();
   const clock = useClock();
   const router = useRouter();
+  const periodName = usePeriodName();
   const [asking, setAsking] = useState<'close' | 'regenerate' | null>(null);
   const [isPending, startTransition] = useTransition();
-  const label = monthLabel(month);
-  const inSentence = label.toLowerCase();
-  const next = nextMonth(month, `${currentMonth}-01`);
+  const name = periodName(query.period);
+  // CA-16: a closed fortnight shows the method it was closed with, unless another is chosen.
+  const selectedMethod = query.method ?? state.method;
 
   const when = (iso: string) => ({
     date: format.dateTime(new Date(iso), { dateStyle: 'long' }),
@@ -65,8 +68,11 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
 
   const run = (action: 'close' | 'regenerate') =>
     startTransition(async () => {
+      // Only a fortnight is closed or regenerated (RF-02): the buttons are there only for one.
+      if (query.period.kind !== 'fortnight') return;
+      const input = { start: query.period.start, method: selectedMethod };
       const result = await callAction(() =>
-        action === 'close' ? closePayroll({ month }) : regeneratePayroll({ month })
+        action === 'close' ? closePayroll(input) : regeneratePayroll(input)
       );
       setAsking(null);
       if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
@@ -75,9 +81,7 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
         result.ok
           ? {
               tone: 'success',
-              text: t(action === 'close' ? 'closedNotice' : 'regeneratedNotice', {
-                month: inSentence,
-              }),
+              text: t(action === 'close' ? 'closedNotice' : 'regeneratedNotice', { period: name }),
             }
           : { tone: 'danger', text: t(`errors.${result.error}`) }
       );
@@ -96,30 +100,67 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
         </div>
       </div>
 
-      {/* The month and its neighbours (CA-05). */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* On a phone the month on top and its neighbours under it, one on each side; from `sm`,
-            all in a row («‹ Mes anterior  Octubre de 2026  Mes siguiente ›»). */}
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-          <h2 className="text-xl font-semibold tracking-tight sm:order-2">{label}</h2>
-          <div className="flex items-center justify-between sm:contents">
-            <Link href={payrollHref(previousMonth(month))} className={`${NAV_LINK} sm:order-1`}>
-              <ChevronLeft aria-hidden className="size-4" />
-              {t('previousMonth')}
-            </Link>
-            {next && (
-              <Link href={payrollHref(next)} className={`${NAV_LINK} sm:order-3`}>
-                {t('nextMonth')}
-                <ChevronRight aria-hidden className="size-4" />
-              </Link>
-            )}
-          </div>
+      {/* The period, its method and how to change them (CA-01, CA-06, CA-13). */}
+      <PayrollPeriodBar
+        query={query}
+        currentFortnight={currentFortnight}
+        selectedMethod={selectedMethod}
+      />
+
+      {/* Its state on the left, what can be done with it on the right (a column on a phone). */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        {/* Its state (CA-05, CA-08, CA-12, CA-16). */}
+        <div className="flex flex-col gap-2 text-sm">
+          {isClosed && (
+            <>
+              {state.closed_at && (
+                <p className="text-default-600">
+                  {t('closedBy', { ...when(state.closed_at), name: state.closed_by_name ?? '' })}
+                </p>
+              )}
+              {state.regenerated_at && (
+                <p className="text-default-600">
+                  {t('regeneratedBy', {
+                    ...when(state.regenerated_at),
+                    name: state.regenerated_by_name ?? '',
+                    total: formatPesos(state.previous_total ?? 0),
+                  })}
+                </p>
+              )}
+              <p className="text-default-600">
+                {t('calculatedWith', { method: t(`methods.${state.method}`) })}
+              </p>
+              {selectedMethod !== state.method && (
+                <p className="text-default-600">
+                  {t('regenerateWith', { method: t(`methods.${selectedMethod}`) })}
+                </p>
+              )}
+              {state.changed_since_close && (
+                <p className="flex items-start gap-2 rounded-medium border border-warning-300 bg-warning-50 px-3 py-2 text-foreground dark:border-warning-200/40 dark:bg-warning-50/10">
+                  <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+                  {t('changed')}
+                </p>
+              )}
+            </>
+          )}
+          {state.status === 'provisional' && (
+            <p className="flex flex-wrap items-center gap-2 text-default-600">
+              <span className={CHIP}>{t('provisional')}</span>
+              {t('provisionalText')}
+            </p>
+          )}
+          {state.status === 'query' && (
+            <p className="flex flex-wrap items-center gap-2 text-default-600">
+              <span className={CHIP}>{t('query')}</span>
+              {t('queryText')}
+            </p>
+          )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {lines.length > 0 && (
             // A file, not a page: a real link that downloads it.
             <a
-              href={payrollExportHref(month)}
+              href={payrollExportHref(query)}
               download
               className={button({ variant: 'bordered', className: 'font-medium' })}
             >
@@ -142,41 +183,6 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
             </Button>
           )}
         </div>
-      </div>
-
-      {/* Its state (CA-12, CA-15 to CA-17). */}
-      <div className="flex flex-col gap-2 text-sm">
-        {isClosed ? (
-          <>
-            {state.closed_at && (
-              <p className="text-default-600">
-                {t('closedBy', { ...when(state.closed_at), name: state.closed_by_name ?? '' })}
-              </p>
-            )}
-            {state.regenerated_at && (
-              <p className="text-default-600">
-                {t('regeneratedBy', {
-                  ...when(state.regenerated_at),
-                  name: state.regenerated_by_name ?? '',
-                  total: formatPesos(state.previous_total ?? 0),
-                })}
-              </p>
-            )}
-            {state.changed_since_close && (
-              <p className="flex items-start gap-2 rounded-medium border border-warning-300 bg-warning-50 px-3 py-2 text-foreground dark:border-warning-200/40 dark:bg-warning-50/10">
-                <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
-                {t('changed')}
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="flex flex-wrap items-center gap-2 text-default-600">
-            <span className="rounded-full border border-default-300 px-2 py-0.5 text-xs font-medium text-foreground">
-              {t('provisional')}
-            </span>
-            {t('provisionalText')}
-          </p>
-        )}
       </div>
 
       {lines.length === 0 ? (
@@ -208,7 +214,7 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
                   <tr key={line.employee_id} className="relative hover:bg-default-50">
                     <td className={CELL}>
                       <Link
-                        href={payrollEmployeeHref(month, line.employee_id)}
+                        href={payrollEmployeeHref(query, line.employee_id)}
                         // The whole row opens it: the link stretches over the row (after:inset-0).
                         className="font-medium underline-offset-4 outline-none after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:underline"
                       >
@@ -216,7 +222,7 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
                       </Link>
                     </td>
                     <td className={`${CELL} text-right tabular-nums`}>
-                      {t('days', { active: line.active_days, month: line.month_days })}
+                      {t('days', { active: line.active_days, period: line.period_days })}
                     </td>
                     <td className={`${CELL} text-right tabular-nums`}>
                       {formatPesos(line.base_pay)}
@@ -241,14 +247,14 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
             {lines.map((line) => (
               <li key={line.employee_id}>
                 <Link
-                  href={payrollEmployeeHref(month, line.employee_id)}
+                  href={payrollEmployeeHref(query, line.employee_id)}
                   className="flex items-start justify-between gap-3 p-4 outline-none hover:bg-default-50 focus-visible:bg-default-50"
                 >
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="font-medium">{line.employee_name}</span>
                     <span className="text-xs text-default-500">
                       {t('columns.activeDays')}:{' '}
-                      {t('days', { active: line.active_days, month: line.month_days })}
+                      {t('days', { active: line.active_days, period: line.period_days })}
                     </span>
                     <span className="text-xs text-default-500">
                       {t('columns.basePay')}: {formatPesos(line.base_pay)} ·{' '}
@@ -267,7 +273,7 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
           </ul>
 
           <dl className="ml-auto grid w-full max-w-xs grid-cols-[1fr_auto] gap-x-6 text-sm">
-            <dt className="font-semibold">{t('monthTotal')}</dt>
+            <dt className="font-semibold">{t('total', { kind: query.period.kind })}</dt>
             <dd className="text-right font-semibold tabular-nums">{formatPesos(state.total)}</dd>
           </dl>
         </>
@@ -275,7 +281,7 @@ const PayrollScreen = ({ month, currentMonth, state, lines }: PayrollScreenProps
 
       <ConfirmDialog
         isOpen={asking !== null}
-        title={t(asking === 'regenerate' ? 'regenerateTitle' : 'closeTitle', { month: inSentence })}
+        title={t(asking === 'regenerate' ? 'regenerateTitle' : 'closeTitle', { period: name })}
         description={t(asking === 'regenerate' ? 'regenerateText' : 'closeText')}
         confirmLabel={t(asking === 'regenerate' ? 'regenerate' : 'close')}
         isPending={isPending}

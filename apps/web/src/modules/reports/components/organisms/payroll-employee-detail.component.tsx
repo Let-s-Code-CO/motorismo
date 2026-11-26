@@ -4,39 +4,54 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 
 import { formatPesos } from '@web/modules/core/utils/money.utils';
+import usePeriodName from '@web/modules/reports/hooks/payroll-period-name.hook';
 import type {
+  PayrollBasePart,
   PayrollItem,
   PayrollLine,
-  PayrollStatus,
+  PayrollQuery,
+  PayrollState,
 } from '@web/modules/reports/types/reports.types';
-import { monthLabel, payrollHref } from '@web/modules/reports/utils/payroll-month.utils';
+import { payrollHref, rangeEnds } from '@web/modules/reports/utils/payroll-period.utils';
 import { closingDay } from '@web/modules/reports/utils/report-format.utils';
 
 type PayrollEmployeeDetailProps = {
-  /** `YYYY-MM`. */
-  month: string;
+  query: PayrollQuery;
   line: PayrollLine;
+  /** How the base salary was reached: a fortnight (or part of one) each (CA-04). */
+  parts: PayrollBasePart[];
   items: PayrollItem[];
-  status: PayrollStatus;
+  /** Provisional, closed or a query, and the method of its figures. */
+  state: Pick<PayrollState, 'status' | 'method'>;
 };
+
+const STATUS_LABEL = { provisional: 'provisional', closed: 'closed', query: 'query' } as const;
 
 /** A commission keeps its cents, as it was computed: «$ 10.000,5» (RN-05 rounds only the sum). */
 const exact = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2, useGrouping: true });
 const formatExact = (value: number) => `$ ${exact.format(value)}`;
 
 /**
- * How an employee's payroll of a month was reached (spec 016, CA-11): the base salary for the days
- * active, with its count (CA-09); each service with its order, day in Colombia, value, share and
- * commission, with its count (CA-06); and the totals, as in the payroll (RN-05).
+ * How an employee's payroll of a period was reached (spec 020, CA-04; spec 016, CA-11): the base
+ * salary piece by piece, a fortnight or part of one each, with its days and count (RN-02); each
+ * service with its order, day in Colombia, value, share and commission, with its count; and the
+ * totals, as in the payroll (spec 016, RN-05).
  */
-const PayrollEmployeeDetail = ({ month, line, items, status }: PayrollEmployeeDetailProps) => {
+const PayrollEmployeeDetail = ({
+  query,
+  line,
+  parts,
+  items,
+  state,
+}: PayrollEmployeeDetailProps) => {
   const t = useTranslations('reports.payroll');
+  const periodName = usePeriodName();
 
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         <Link
-          href={payrollHref(month)}
+          href={payrollHref(query)}
           className="inline-flex w-max items-center gap-1 text-sm text-default-600 underline-offset-4 hover:text-foreground hover:underline"
         >
           <ChevronLeft aria-hidden className="size-4" />
@@ -45,24 +60,44 @@ const PayrollEmployeeDetail = ({ month, line, items, status }: PayrollEmployeeDe
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-semibold tracking-tight">{line.employee_name}</h1>
           <p className="flex flex-wrap items-center gap-2 text-default-500">
-            {t('detail.subtitle', { month: monthLabel(month).toLowerCase() })}
+            {t('detail.subtitle', { period: periodName(query.period) })}
             <span className="rounded-full border border-default-300 px-2 py-0.5 text-xs font-medium text-foreground">
-              {status === 'closed' ? t('closed') : t('provisional')}
+              {t(STATUS_LABEL[state.status])}
             </span>
+          </p>
+          <p className="text-sm text-default-500">
+            {t('calculatedWith', { method: t(`methods.${state.method}`) })}
           </p>
         </div>
       </div>
 
       <div className="flex flex-col gap-2 rounded-large border border-divider bg-content1 p-4 shadow-small">
         <h2 className="text-base font-semibold tracking-tight">{t('detail.baseTitle')}</h2>
-        <p className="text-sm text-default-600 tabular-figures">
-          {t('detail.base', {
-            active: line.active_days,
-            month: line.month_days,
-            salary: formatPesos(line.base_salary),
-            pay: formatPesos(line.base_pay),
-          })}
-        </p>
+        <ul aria-label={t('detail.baseTitle')} className="flex flex-col gap-3">
+          {parts.map((part) => (
+            <li key={part.part_from} className="flex flex-col gap-0.5 text-sm tabular-figures">
+              <span className="text-default-500">
+                {t('detail.partDays', {
+                  days: t('range', rangeEnds(part.part_from, part.part_to)),
+                  active: part.active_days,
+                  total: part.part_days,
+                })}
+              </span>
+              <span className="text-default-700">
+                {t('detail.partAmount', {
+                  paid: part.paid_days,
+                  divisor: part.divisor,
+                  salary: formatPesos(line.base_salary),
+                  amount: formatExact(part.amount),
+                })}
+              </span>
+              {/* CA-14: by «Mes comercial» a whole fortnight is 15 days, whatever its length. */}
+              {state.method === 'commercial' && part.paid_days !== part.active_days && (
+                <span className="text-xs text-default-500">{t('detail.wholeFortnight')}</span>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="flex flex-col gap-3">

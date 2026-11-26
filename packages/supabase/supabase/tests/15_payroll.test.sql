@@ -1,23 +1,31 @@
--- Payroll — what each employee earns in a month: base salary for the days they were active plus the
--- commissions of the services they took part in (spec 016).
+-- Payroll — what each employee earns in a fortnight or between two dates: base salary for the days
+-- they were active plus the commissions of the services they took part in (spec 016; by fortnight,
+-- spec 020).
 --
--- * Base salary (HU-01): a private column of the employee, 0 by default, never negative; only an
---   admin reads or writes it (CA-01 to CA-04).
--- * Active periods (RN-04): registering, disabling and reactivating an employee keep their periods;
---   only an admin reads them and nobody writes them directly.
--- * A month (HU-02): commission = value × share × commission %, discount ignored, closed orders of
---   the month in Colombia only (CA-06 to CA-08); base salary × active days ÷ days of the month
---   (CA-09); who appears (CA-10); rounded once per employee (RN-05).
--- * Closing (HU-03): only an ended month; a closed month stays as it was, says when something
---   changed after, and is regenerated on request, keeping the total before (CA-14 to CA-17).
--- * Admin only, in the database (CA-20, RN-08).
+-- * Base salary (spec 016, HU-01): a private column of the employee, 0 by default, never negative;
+--   only an admin reads or writes it.
+-- * Active periods (spec 016, RN-04): registering, disabling and reactivating an employee keep their
+--   periods; only an admin reads them and nobody writes them directly.
+-- * A period (spec 020, HU-01, HU-02): a fortnight (1st to 15th, 16th to the last day) or any two
+--   dates, both included; the services of the orders closed in it, by their day in Colombia (CA-02,
+--   CA-07); commission = value × share × commission %, discount ignored, rounded once per employee
+--   (RN-01); who appears (CA-04). A range exactly a fortnight is that fortnight (CA-08).
+-- * Base salary of a period (RN-02), cut by fortnight, each piece with the chosen method:
+--   - «Mes comercial» (commercial): a whole fortnight, active all of it, is 15 days of 30 (half the
+--     salary, also in February or a 31-day month); otherwise salary ÷ 30 per active day, at most 15
+--     (CA-14, CA-15);
+--   - «Días reales» (actual): salary × active days ÷ days of the month.
+-- * Closing (HU-03): only a fortnight that has ended, never a range (CA-08, CA-11, RN-04); it keeps
+--   its method (CA-16); a closed fortnight stays as it was, says when something changed after (with
+--   the method it was closed with) and is regenerated with the method chosen then (CA-12, CA-16).
+-- * Admin only, in the database (spec 016, RN-08).
 --
 -- The clock: everything that looks at the time asks private.agenda_now(); here it reads `test.now`,
 -- so «today» is Thursday 5 December 2030 in Bogotá unless a step says otherwise.
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(44);
+select plan(69);
 
 -- Clock and helpers ---------------------------------------------------------------------------------------
 create or replace function private.agenda_now()
@@ -95,13 +103,15 @@ end $$;
 -- Elkin: all November. Paula: from 16 Nov at 8:30 p. m. (15 of 30 days: still the 16th in Colombia, the
 -- 17th in UTC). Diego: until 10 Nov at 8 p. m. (10 days; the 11th in UTC).
 -- Rita: until 5 Nov, back on 25 Nov, a pause on 27 Nov (5 + 6 = 11 days; the 27th once).
--- Olga: disabled in October, but took part in a service in November. Gael: registered in December.
+-- Olga: disabled in October, but took part in a service in November. Gael: registered on 2 December.
+-- Hugo: registered on 17 December (15 of the 16 days of its second fortnight).
 select pg_temp.employee('PY Elkin', '2030-10-01 08:00-05', null, 1500000, 30, '1001');
 select pg_temp.employee('PY Paula', '2030-11-16 20:30-05', null, 1200000, 40, '1002');
 select pg_temp.employee('PY Diego', '2030-10-01 08:00-05', '2030-11-10 20:00-05', 900000, 25, '1003');
 select pg_temp.employee('PY Rita', '2030-10-01 08:00-05', null, 600000, 10, '1004');
 select pg_temp.employee('PY Olga', '2030-01-01 08:00-05', '2030-10-15 12:00-05', 500000, 20, '1005');
 select pg_temp.employee('PY Gael', '2030-12-02 08:00-05', null, 700000, 30, '1006');
+select pg_temp.employee('PY Hugo', '2030-12-17 08:00-05', null, 900000, 20, '1008');
 update public.employees set disabled_at = '2030-11-05 12:00-05' where id = pg_temp.id_of('PY Rita');
 select pg_temp.at('2030-11-25 09:00');
 update public.employees set disabled_at = null where id = pg_temp.id_of('PY Rita');
@@ -143,10 +153,14 @@ begin
   select v_line, pg_temp.id_of(e.key), e.value::int from jsonb_each_text(p_employees) e;
 end $$;
 
--- November 2030: the first minute (with a $ 10.000 discount), the last minutes, one just after; one
--- voided, one open.
+-- November 2030: the first minute (with a $ 10.000 discount); the last minute of the first fortnight and
+-- the first of the second (CA-02); the last minutes of the month, one just after; one voided, one open.
 select pg_temp.order('o_first', 'closed', '2030-11-01 00:05-05', 10000);
 select pg_temp.line('o_first', 1, 'Lavado', 100000, '{"PY Elkin": 50, "PY Diego": 50}');
+select pg_temp.order('o_q1_end', 'closed', '2030-11-15 23:59-05', 0);
+select pg_temp.line('o_q1_end', 1, 'Lavado', 20000, '{"PY Elkin": 100}');
+select pg_temp.order('o_q2_start', 'closed', '2030-11-16 00:00-05', 0);
+select pg_temp.line('o_q2_start', 1, 'Lavado', 30000, '{"PY Elkin": 100}');
 select pg_temp.order('o_mid', 'closed', '2030-11-18 12:00-05', 0);
 select pg_temp.line('o_mid', 1, 'Cadena', 33335, '{"PY Elkin": 100}');
 select pg_temp.line('o_mid', 2, 'Pulido', 10005, '{"PY Elkin": 100}');
@@ -161,8 +175,8 @@ select pg_temp.line('o_void', 1, 'Lavado', 80000, '{"PY Elkin": 100}');
 select pg_temp.order('o_open', 'open', null, 0);
 select pg_temp.line('o_open', 1, 'Lavado', 70000, '{"PY Elkin": 100}');
 
--- Base salary (HU-01) --------------------------------------------------------------------------------------
-select col_type_is('public', 'employee_details', 'base_salary', 'integer', 'CA-01: a base salary in whole pesos');
+-- Base salary (spec 016, HU-01) --------------------------------------------------------------------------------------
+select col_type_is('public', 'employee_details', 'base_salary', 'integer', 'spec 016, CA-01: a base salary in whole pesos');
 select col_default_is('public', 'employee_details', 'base_salary', '0', 'CA-03: 0 until the admin sets it');
 select throws_ok(
   $$ update public.employee_details set base_salary = -1 where employee_id = pg_temp.id_of('PY Elkin') $$,
@@ -189,7 +203,7 @@ delete from public.employee_active_periods where employee_id = pg_temp.id_of('ni
 delete from public.employee_details where employee_id = pg_temp.id_of('nina');
 delete from public.employees where id = pg_temp.id_of('nina');
 
--- Active periods (RN-04) ------------------------------------------------------------------------------------
+-- Active periods (spec 016, RN-04) ------------------------------------------------------------------------------------
 select results_eq(
   $$ select started_at, ended_at from public.employee_active_periods where employee_id = pg_temp.id_of('PY Diego') $$,
   $$ values ('2030-10-01 08:00-05'::timestamptz, '2030-11-10 20:00-05'::timestamptz) $$,
@@ -207,58 +221,169 @@ set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016b1');
 select is((select count(*)::int from public.employee_active_periods), 0, 'an operator reads no period');
 
--- A month (HU-02) ----------------------------------------------------------------------------------------------
+-- The closed payrolls, by fortnight (RF-02, CA-16) ------------------------------------------------------------
+select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
+reset role;
+select has_column('public', 'payrolls', 'period_start', 'RF-02: a closed payroll is a fortnight, by its first day');
+select has_column('public', 'payrolls', 'base_method', 'CA-16: and keeps the method it was closed with');
+select hasnt_column('public', 'payrolls', 'month', 'RF-02: no closed months any more');
+select has_column('public', 'payroll_lines', 'paid_days', 'CA-04: each line keeps the days its base salary paid');
+select has_column('public', 'payroll_lines', 'divisor', 'CA-04: and what they were divided by');
+select hasnt_function('public', 'payroll_month', array['date'], 'RF-01: no payroll by month any more');
+select throws_ok(
+  $$ insert into public.payrolls (period_start, period_end, base_method, closed_by, closed_at)
+     values ('2030-11-02', '2030-11-15', 'commercial', '00000000-0000-0000-0000-0000000016a1', now()) $$,
+  '23514', null, 'RF-01: a fortnight starts on the 1st or the 16th');
+select throws_ok(
+  $$ insert into public.payrolls (period_start, period_end, base_method, closed_by, closed_at)
+     values ('2030-11-16', '2030-11-29', 'commercial', '00000000-0000-0000-0000-0000000016a1', now()) $$,
+  '23514', null, 'RF-01: and ends on the 15th or the last day of its month');
+select throws_ok(
+  $$ insert into public.payrolls (period_start, period_end, base_method, closed_by, closed_at)
+     values ('2030-11-16', '2030-11-30', 'weekly', '00000000-0000-0000-0000-0000000016a1', now()) $$,
+  '23514', null, 'RN-02: with one of the two methods');
+
+-- A fortnight (HU-01) ----------------------------------------------------------------------------------------------
+set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
 select results_eq(
-  $$ select employee_name, active_days, month_days, base_salary, base_pay, commission_pct, commissions, total
-     from public.payroll_lines('2030-11-01') $$,
+  $$ select employee_name, active_days, period_days, base_salary, base_pay, commission_pct, commissions, total
+     from public.payroll_lines('2030-11-01', '2030-11-15', 'commercial') $$,
   $$ values
-     ('PY Diego'::text, 10, 30, 900000, 300000, 25, 12500, 312500),
-     ('PY Elkin'::text, 30, 30, 1500000, 1500000, 30, 28002, 1528002),
-     ('PY Olga'::text, 0, 30, 500000, 0, 20, 8000, 8000),
-     ('PY Paula'::text, 15, 30, 1200000, 600000, 40, 48000, 648000),
-     ('PY Rita'::text, 11, 30, 600000, 220000, 10, 0, 220000) $$,
-  'CA-05, CA-09, CA-10: each employee of November with days, base for those days, commissions and total; Gael (registered in December) is not there');
+     ('PY Diego'::text, 10, 15, 900000, 300000, 25, 12500, 312500),
+     ('PY Elkin'::text, 15, 15, 1500000, 750000, 30, 21000, 771000),
+     ('PY Rita'::text, 5, 15, 600000, 100000, 10, 0, 100000) $$,
+  'CA-01, CA-03, CA-15: the first fortnight of November: Elkin all of it (15 of 30 days, half), Diego 10 days (900 000 ÷ 30 × 10), Rita 5; Paula (from the 16th) and Olga (nothing in it) are not there');
 select results_eq(
-  $$ select service_name, price, share_pct, commission from public.payroll_items('2030-11-01', pg_temp.id_of('PY Elkin')) $$,
-  $$ values ('Lavado'::text, 100000, 50, 15000.0000::numeric), ('Cadena'::text, 33335, 100, 10000.5000::numeric),
+  $$ select employee_name, active_days, period_days, base_salary, base_pay, commission_pct, commissions, total
+     from public.payroll_lines('2030-11-16', '2030-11-30', 'commercial') $$,
+  $$ values
+     ('PY Elkin'::text, 15, 15, 1500000, 750000, 30, 22002, 772002),
+     ('PY Olga'::text, 0, 15, 500000, 0, 20, 8000, 8000),
+     ('PY Paula'::text, 15, 15, 1200000, 600000, 40, 48000, 648000),
+     ('PY Rita'::text, 6, 15, 600000, 120000, 10, 0, 120000) $$,
+  'CA-03, CA-04: the second: Paula from 8:30 p. m. of the 16th (all 15 days), Rita 6 days after coming back (the 27th once), Olga only for her commission; Diego (gone on the 10th) is not there');
+select results_eq(
+  $$ select service_name, closed_at from public.payroll_items('2030-11-01', '2030-11-15', pg_temp.id_of('PY Elkin')) $$,
+  $$ values ('Lavado'::text, '2030-11-01 00:05-05'::timestamptz), ('Lavado'::text, '2030-11-15 23:59-05'::timestamptz) $$,
+  'CA-02: 11:59 p. m. of the 15th in Colombia is the first fortnight (already the 16th in UTC)');
+select results_eq(
+  $$ select service_name, price, share_pct, commission from public.payroll_items('2030-11-16', '2030-11-30', pg_temp.id_of('PY Elkin')) $$,
+  $$ values ('Lavado'::text, 30000, 100, 9000.0000::numeric), ('Cadena'::text, 33335, 100, 10000.5000::numeric),
             ('Pulido'::text, 10005, 100, 3001.5000::numeric) $$,
-  'CA-06, CA-07, CA-08: 100 000 × 50 % × 30 % = 15 000 though the order had a discount; 1 Dec, voided and open orders left out');
+  'CA-02, RN-01: midnight of the 16th is the second; 1 Dec, voided and open orders left out');
 select is(
-  (select commissions from public.payroll_lines('2030-11-01') where employee_name = 'PY Elkin'),
-  28002, 'RN-05: 15 000 + 10 000.5 + 3 001.5 = 28 002, rounded once (per service it would be 28 003)');
+  (select commissions from public.payroll_lines('2030-11-16', '2030-11-30', 'commercial') where employee_name = 'PY Elkin'),
+  22002, 'RN-01: 9 000 + 10 000.5 + 3 001.5 = 22 002, rounded once (per service it would be 22 003)');
+
+-- The method (HU-04) ---------------------------------------------------------------------------------------------
+select results_eq(
+  $$ select employee_name, active_days, period_days, base_pay
+     from public.payroll_lines('2030-12-16', '2030-12-31', 'commercial') $$,
+  $$ values ('PY Elkin'::text, 16, 16, 750000), ('PY Gael'::text, 16, 16, 350000), ('PY Hugo'::text, 15, 16, 450000),
+            ('PY Paula'::text, 16, 16, 600000), ('PY Rita'::text, 16, 16, 300000) $$,
+  'CA-14, CA-15: second fortnight of December (16 days), commercial: whole, half (1 500 000 ÷ 2); Hugo 15 of 16 days, 15 at most (900 000 ÷ 30 × 15)');
+select results_eq(
+  $$ select employee_name, base_pay from public.payroll_lines('2030-12-16', '2030-12-31', 'actual') $$,
+  $$ values ('PY Elkin'::text, 774194), ('PY Gael'::text, 361290), ('PY Hugo'::text, 435484),
+            ('PY Paula'::text, 619355), ('PY Rita'::text, 309677) $$,
+  'CA-14, CA-15: the same in actual days: 1 500 000 × 16 ÷ 31 = 774 193.5; 700 000 × 16 ÷ 31 = 361 290.3; 900 000 × 15 ÷ 31 = 435 483.9');
+select results_eq(
+  $$ select active_days, period_days, base_pay from public.payroll_lines('2031-02-16', '2031-02-28', 'commercial')
+     where employee_name = 'PY Elkin' $$,
+  $$ values (13, 13, 750000) $$,
+  'CA-14: the whole second fortnight of February (13 days) is half the salary too');
 select is(
-  (select commissions from public.payroll_lines('2030-11-01') where employee_name = 'PY Paula'),
-  48000, 'CA-08: an order closed at 11:50 p. m. on the 30th counts in November (120 000 × 40 %)');
+  (select base_pay from public.payroll_lines('2031-02-16', '2031-02-28', 'actual') where employee_name = 'PY Elkin'),
+  696429, 'CA-14: in actual days, 1 500 000 × 13 ÷ 28 = 696 428.6');
 select results_eq(
-  $$ select active_days, month_days, base_pay from public.payroll_lines('2031-02-01') where employee_name = 'PY Elkin' $$,
-  $$ values (28, 28, 1500000) $$,
-  'CA-09: February has 28 days; all of them, the whole base salary');
+  $$ select active_days, base_pay from public.payroll_lines('2030-12-01', '2030-12-15', 'commercial')
+     where employee_name = 'PY Gael' $$,
+  $$ values (14, 326667) $$,
+  'CA-15: Gael from the 2nd, 14 days of the first fortnight: 700 000 ÷ 30 × 14 = 326 666.7');
+select is(
+  (select base_pay from public.payroll_lines('2030-12-01', '2030-12-15', 'actual') where employee_name = 'PY Gael'),
+  316129, 'CA-15: in actual days, 700 000 × 14 ÷ 31 = 316 129');
+
+-- A range (HU-02) --------------------------------------------------------------------------------------------------
 select results_eq(
-  $$ select active_days, month_days from public.payroll_lines('2030-12-01') where employee_name = 'PY Gael' $$,
-  $$ values (30, 31) $$,
-  'CA-09: December has 31 days; registered on the 2nd, 30 of them');
+  $$ select employee_name, active_days, period_days, base_pay, commissions, total
+     from public.payroll_lines('2030-11-03', '2030-11-20', 'commercial') $$,
+  $$ values
+     ('PY Diego'::text, 8, 18, 240000, 0, 240000),
+     ('PY Elkin'::text, 18, 18, 900000, 28002, 928002),
+     ('PY Olga'::text, 0, 18, 0, 8000, 8000),
+     ('PY Paula'::text, 5, 18, 200000, 0, 200000),
+     ('PY Rita'::text, 3, 18, 60000, 0, 60000) $$,
+  'CA-06, CA-07: 3 to 20 November, both included: Elkin 13 + 5 days of two fortnights, neither whole (1 500 000 ÷ 30 × 18); the orders of the 15th, the 16th, the 18th and the 20th; not the 1st nor the 30th');
 select results_eq(
-  $$ select status, total, can_close, changed_since_close from public.payroll_month('2030-11-01') $$,
-  $$ values ('provisional'::text, 2716502, true, false) $$,
-  'CA-12: an ended month not closed is provisional and may be closed; its total for everyone');
+  $$ select part_from, part_to, part_days, active_days, paid_days, divisor, amount
+     from public.payroll_base_parts('2030-11-03', '2030-11-20', 'commercial', pg_temp.id_of('PY Elkin')) $$,
+  $$ values ('2030-11-03'::date, '2030-11-15'::date, 13, 13, 13, 30, 650000::numeric),
+            ('2030-11-16'::date, '2030-11-20'::date, 5, 5, 5, 30, 250000::numeric) $$,
+  'CA-04, RN-02: how it was reached, a piece per fortnight it touches');
 select results_eq(
-  $$ select status, can_close from public.payroll_month('2030-12-15') $$,
+  $$ select part_from, part_to, paid_days, divisor, round(amount, 2)
+     from public.payroll_base_parts('2030-11-25', '2030-12-05', 'actual', pg_temp.id_of('PY Elkin')) $$,
+  $$ values ('2030-11-25'::date, '2030-11-30'::date, 6, 30, 300000.00::numeric),
+            ('2030-12-01'::date, '2030-12-05'::date, 5, 31, 241935.48::numeric) $$,
+  'RN-02: a range across two months divides each piece by the days of its own month');
+select is(
+  (select base_pay from public.payroll_lines('2030-11-25', '2030-12-05', 'actual') where employee_name = 'PY Elkin'),
+  541935, 'RN-01: 300 000 + 241 935.48, rounded once');
+select results_eq(
+  $$ select kind, status, method, total, can_close from public.payroll_period('2030-11-03', '2030-11-20', 'commercial') $$,
+  $$ values ('range'::text, 'query'::text, 'commercial'::text, 1436002, false) $$,
+  'CA-08: a range is a query and is never closed');
+select results_eq(
+  $$ select kind, status, total, can_close from public.payroll_period('2030-11-01', '2030-11-15', 'commercial') $$,
+  $$ values ('fortnight'::text, 'provisional'::text, 1183500, true) $$,
+  'CA-05, CA-08: from the 1st to the 15th is that fortnight: provisional, ended, it may be closed');
+select is(pg_temp.error_hint($$ select public.payroll_period('2030-11-20', '2030-11-03', 'commercial') $$),
+  'payroll_period_invalid', 'CA-09: never a range upside down');
+select is(pg_temp.error_hint($$ select public.payroll_lines('2030-11-01', '2030-11-15', 'weekly') $$),
+  'payroll_method_invalid', 'RN-02: only the two methods');
+
+-- Closing (HU-03) ----------------------------------------------------------------------------------------------------
+select results_eq(
+  $$ select status, can_close from public.payroll_period('2030-12-01', '2030-12-15', 'commercial') $$,
   $$ values ('provisional'::text, false) $$,
-  'RN-06: the month in progress cannot be closed (any day of it names the month)');
+  'RN-04: the fortnight in progress cannot be closed');
+select is(pg_temp.error_hint($$ select public.close_payroll('2030-12-01', 'commercial') $$), 'payroll_period_open',
+  'CA-11, RN-04: nor when asked');
+select is(pg_temp.error_hint($$ select public.close_payroll('2030-11-02', 'commercial') $$), 'payroll_not_fortnight',
+  'RF-02: only a fortnight is closed');
+select is(pg_temp.error_hint($$ select public.close_payroll('2030-11-01', 'weekly') $$), 'payroll_method_invalid',
+  'RN-02: with one of the two methods');
 
--- Closing (HU-03) -----------------------------------------------------------------------------------------------
-select is(pg_temp.error_hint($$ select public.close_payroll('2030-12-01') $$), 'payroll_month_open',
-  'CA-14, RN-06: a month that has not ended is not closed');
-select lives_ok($$ select public.close_payroll('2030-11-01') $$, 'CA-14: an ended month is closed');
+-- October, second fortnight (16 days), closed in actual days: 774 194 + 464 516 + 309 677.
+select lives_ok($$ select public.close_payroll('2030-10-16', 'actual') $$, 'CA-11: an ended fortnight is closed');
 select results_eq(
-  $$ select status, total, closed_by_name, closed_at, changed_since_close, can_close from public.payroll_month('2030-11-01') $$,
-  $$ values ('closed'::text, 2716502, 'Pia Admin'::text, '2030-12-05 10:00-05'::timestamptz, false, false) $$,
-  'CA-14: closed by whom and when, with its total');
-select is(pg_temp.error_hint($$ select public.close_payroll('2030-11-01') $$), 'payroll_already_closed',
-  'CA-14: a month is closed once');
+  $$ select status, method, total, changed_since_close from public.payroll_period('2030-10-16', '2030-10-31', 'commercial') $$,
+  $$ values ('closed'::text, 'actual'::text, 1548387, false) $$,
+  'CA-16: it keeps and says the method it was closed with, whichever is chosen to look at it');
+select results_eq(
+  $$ select part_from, part_to, part_days, active_days, paid_days, divisor, amount
+     from public.payroll_base_parts('2030-10-16', '2030-10-31', 'commercial', pg_temp.id_of('PY Elkin')) $$,
+  $$ values ('2030-10-16'::date, '2030-10-31'::date, 16, 16, 16, 31, 774194::numeric) $$,
+  'CA-04, CA-12: its detail explains the base salary with what was kept (× 16 ÷ 31)');
+select lives_ok($$ select public.regenerate_payroll('2030-10-16', 'commercial') $$,
+  'CA-16: it is regenerated with the method chosen then');
+select results_eq(
+  $$ select method, total, previous_total from public.payroll_period('2030-10-16', '2030-10-31', 'actual') $$,
+  $$ values ('commercial'::text, 1500000, 1548387) $$,
+  'CA-16: 750 000 + 450 000 + 300 000 by commercial month, the total before kept');
 
--- Something changes after closing: an order of November corrected, Paula's base salary, Elkin's commission.
+select lives_ok($$ select public.close_payroll('2030-11-16', 'commercial') $$, 'CA-11: the second of November');
+select results_eq(
+  $$ select status, total, closed_by_name, closed_at, changed_since_close, can_close
+     from public.payroll_period('2030-11-16', '2030-11-30', 'commercial') $$,
+  $$ values ('closed'::text, 1548002, 'Pia Admin'::text, '2030-12-05 10:00-05'::timestamptz, false, false) $$,
+  'CA-12: closed by whom and when, with its total');
+select is(pg_temp.error_hint($$ select public.close_payroll('2030-11-16', 'commercial') $$), 'payroll_already_closed',
+  'CA-11: a fortnight is closed once');
+
+-- Something changes after closing: an order of the fortnight corrected, Paula's base salary, Elkin's commission.
 reset role;
 update public.work_order_lines set price = 150000 where work_order_id = pg_temp.id_of('o_last');
 update public.employee_details set base_salary = 1300000 where employee_id = pg_temp.id_of('PY Paula');
@@ -266,35 +391,32 @@ update public.employee_details set commission_pct = 35 where employee_id = pg_te
 set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
 select results_eq(
-  $$ select employee_name, base_pay, commission_pct, commissions, total from public.payroll_lines('2030-11-01')
-     where employee_name in ('PY Elkin', 'PY Paula') $$,
-  $$ values ('PY Elkin'::text, 1500000, 30, 28002, 1528002), ('PY Paula'::text, 600000, 40, 48000, 648000) $$,
-  'CA-15, RN-07: a closed month stays as it was closed');
+  $$ select employee_name, base_pay, commission_pct, commissions, total
+     from public.payroll_lines('2030-11-16', '2030-11-30', 'commercial') where employee_name in ('PY Elkin', 'PY Paula') $$,
+  $$ values ('PY Elkin'::text, 750000, 30, 22002, 772002), ('PY Paula'::text, 600000, 40, 48000, 648000) $$,
+  'CA-12: a closed fortnight stays as it was closed');
 select is(
-  (select sum(commission) from public.payroll_items('2030-11-01', pg_temp.id_of('PY Elkin'))),
-  28002.0000::numeric, 'CA-15: its detail too');
-select is((select changed_since_close from public.payroll_month('2030-11-01')), true,
-  'CA-17: it says something changed after closing');
+  (select sum(commission) from public.payroll_items('2030-11-16', '2030-11-30', pg_temp.id_of('PY Elkin'))),
+  22002.0000::numeric, 'CA-12: its detail too');
+select is((select changed_since_close from public.payroll_period('2030-11-16', '2030-11-30', 'commercial')), true,
+  'CA-12: it says something changed after closing');
 
-select is(pg_temp.error_hint($$ select public.regenerate_payroll('2030-10-01') $$), 'payroll_not_closed',
-  'CA-16: only a closed month is regenerated');
+select is(pg_temp.error_hint($$ select public.regenerate_payroll('2030-11-01', 'commercial') $$), 'payroll_not_closed',
+  'CA-12: only a closed fortnight is regenerated');
 select pg_temp.at('2030-12-06 09:00');
-select lives_ok($$ select public.regenerate_payroll('2030-11-01') $$, 'CA-16: a closed month is regenerated');
--- Paula: 1 300 000 × 15 ÷ 30 = 650 000 + 150 000 × 40 % = 60 000. Elkin at 35 %: 17 500 + 11 667.25 + 3 501.75.
+select lives_ok($$ select public.regenerate_payroll('2030-11-16', 'commercial') $$, 'CA-12: a closed fortnight is regenerated');
+-- Paula: 1 300 000 ÷ 2 = 650 000 + 150 000 × 40 % = 60 000. Elkin at 35 %: 10 500 + 11 667.25 + 3 501.75.
 select results_eq(
-  $$ select employee_name, base_pay, commission_pct, commissions, total from public.payroll_lines('2030-11-01')
-     where employee_name in ('PY Elkin', 'PY Paula') $$,
-  $$ values ('PY Elkin'::text, 1500000, 35, 32669, 1532669), ('PY Paula'::text, 650000, 40, 60000, 710000) $$,
-  'CA-16: regenerating computes it again with the data of now');
+  $$ select employee_name, base_pay, commission_pct, commissions, total
+     from public.payroll_lines('2030-11-16', '2030-11-30', 'commercial') where employee_name in ('PY Elkin', 'PY Paula') $$,
+  $$ values ('PY Elkin'::text, 750000, 35, 25669, 775669), ('PY Paula'::text, 650000, 40, 60000, 710000) $$,
+  'CA-12: regenerating computes it again with the data of now');
 select results_eq(
   $$ select status, total, previous_total, regenerated_by_name, regenerated_at, closed_at, changed_since_close
-     from public.payroll_month('2030-11-01') $$,
-  $$ values ('closed'::text, 2783169, 2716502, 'Pia Admin'::text, '2030-12-06 09:00-05'::timestamptz,
+     from public.payroll_period('2030-11-16', '2030-11-30', 'commercial') $$,
+  $$ values ('closed'::text, 1613669, 1548002, 'Pia Admin'::text, '2030-12-06 09:00-05'::timestamptz,
              '2030-12-05 10:00-05'::timestamptz, false) $$,
-  'CA-16: who regenerated it and when, and the total before; nothing changed since');
-select is(
-  (select sum(commission) from public.payroll_items('2030-11-01', pg_temp.id_of('PY Elkin'))),
-  32669.0000::numeric, 'CA-16: its detail is the new one');
+  'CA-12: who regenerated it and when, and the total before; nothing changed since');
 
 -- Only the detail changes: Elkin's two services of o_mid swap their values (same sum, same total).
 reset role;
@@ -302,13 +424,9 @@ update public.work_order_lines set price = case name when 'Cadena' then 10005 el
  where work_order_id = pg_temp.id_of('o_mid');
 set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
-select is((select changed_since_close from public.payroll_month('2030-11-01')), true,
-  'CA-17: a change in the detail alone is a change too');
-
--- An order of November voided after closing (regenerated first, so nothing else is pending).
-select public.regenerate_payroll('2030-11-01');
-select is((select changed_since_close from public.payroll_month('2030-11-01')), false,
-  'CA-17: regenerated, nothing is pending');
+select is((select changed_since_close from public.payroll_period('2030-11-16', '2030-11-30', 'commercial')), true,
+  'CA-12: a change in the detail alone is a change too');
+select public.regenerate_payroll('2030-11-16', 'commercial');
 reset role;
 update public.work_orders
    set status = 'voided', voided_at = '2030-12-06 10:00-05', voided_by = '00000000-0000-0000-0000-0000000016a1',
@@ -316,29 +434,28 @@ update public.work_orders
  where id = pg_temp.id_of('o_olga');
 set local role authenticated;
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016a1');
-select is((select changed_since_close from public.payroll_month('2030-11-01')), true,
-  'CA-17: an order of the month voided after closing is a change');
+select is((select changed_since_close from public.payroll_period('2030-11-16', '2030-11-30', 'commercial')), true,
+  'CA-12: an order of the fortnight voided after closing is a change');
 
--- Who may (CA-20, RN-08) ----------------------------------------------------------------------------------------
+-- Who may (spec 016, RN-08) ------------------------------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016b1');
-select is(pg_temp.error_hint($$ select public.payroll_month('2030-11-01') $$), 'payroll_admin_only',
-  'CA-20: an operator gets no payroll');
-select is(pg_temp.error_hint($$ select public.close_payroll('2030-10-01') $$), 'payroll_admin_only',
-  'CA-20: nor closes one');
-select is(pg_temp.error_hint($$ select public.regenerate_payroll('2030-11-01') $$), 'payroll_admin_only',
-  'CA-20: nor regenerates one');
-select is((select count(*)::int from public.payrolls), 0, 'CA-20: nor reads the closed ones');
+select is(pg_temp.error_hint($$ select public.payroll_period('2030-11-16', '2030-11-30', 'commercial') $$),
+  'payroll_admin_only', 'RN-08: an operator gets no payroll');
+select is(pg_temp.error_hint($$ select public.close_payroll('2030-11-01', 'commercial') $$), 'payroll_admin_only',
+  'RN-08: nor closes one');
+select is(pg_temp.error_hint($$ select public.regenerate_payroll('2030-11-16', 'commercial') $$), 'payroll_admin_only',
+  'RN-08: nor regenerates one');
+select is((select count(*)::int from public.payrolls), 0, 'RN-08: nor reads the closed ones');
 select pg_temp.act_as('00000000-0000-0000-0000-0000000016c1');
-select is(pg_temp.error_hint($$ select public.payroll_lines('2030-11-01') $$), 'payroll_admin_only',
-  'CA-20: nor a customer');
-select is(pg_temp.error_hint($$ select public.payroll_items('2030-11-01', pg_temp.id_of('PY Elkin')) $$),
-  'payroll_admin_only', 'CA-20: nor its detail');
+select is(pg_temp.error_hint($$ select public.payroll_lines('2030-11-16', '2030-11-30', 'commercial') $$),
+  'payroll_admin_only', 'RN-08: nor a customer');
+select is(pg_temp.error_hint($$ select public.payroll_base_parts('2030-11-16', '2030-11-30', 'commercial', pg_temp.id_of('PY Elkin')) $$),
+  'payroll_admin_only', 'RN-08: nor how a base salary was reached');
 reset role;
 
-select table_privs_are('public', 'payrolls', 'authenticated', array['SELECT'], 'RN-07: nobody writes a payroll directly');
-select table_privs_are('public', 'payroll_lines', 'authenticated', array['SELECT'], 'RN-07: nor its lines');
-select table_privs_are('public', 'payroll_items', 'authenticated', array['SELECT'], 'RN-07: nor its detail');
-select function_privs_are('public', 'close_payroll', array['date'], 'anon', array[]::text[], 'anon cannot close');
+select table_privs_are('public', 'payrolls', 'authenticated', array['SELECT'], 'RN-04: nobody writes a payroll directly');
+select table_privs_are('public', 'payroll_lines', 'authenticated', array['SELECT'], 'RN-04: nor its lines');
+select function_privs_are('public', 'close_payroll', array['date', 'text'], 'anon', array[]::text[], 'anon cannot close');
 
 select * from finish();
 rollback;

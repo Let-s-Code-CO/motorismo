@@ -3,8 +3,10 @@ import type { Cell, Row, SheetData } from 'write-excel-file/node';
 import type {
   PayrollItem,
   PayrollLine,
+  PayrollPeriod,
   PayrollStatus,
 } from '@web/modules/reports/types/reports.types';
+import { fortnightHalf } from '@web/modules/reports/utils/payroll-period.utils';
 import { closingDay } from '@web/modules/reports/utils/report-format.utils';
 
 /** The texts of the file, from `reports.payroll.export` (the route translates them). */
@@ -12,13 +14,13 @@ export type PayrollWorkbookLabels = {
   summary: Record<
     | 'employee'
     | 'activeDays'
-    | 'monthDays'
+    | 'periodDays'
     | 'baseSalary'
     | 'basePay'
     | 'commissionPct'
     | 'commissions'
     | 'total'
-    | 'monthTotal',
+    | 'periodTotal',
     string
   >;
   detail: Record<
@@ -46,24 +48,28 @@ const day = (closedAt: string): Cell => ({
 });
 
 /**
- * The cells of a month's payroll in Excel (spec 016, HU-04): «Resumen», one row per employee and
- * the total of the month; «Detalle», each service of each employee. Dates as dates and values as
- * numbers (CA-19).
+ * The cells of a period's payroll in Excel (spec 020, CA-17; spec 016, HU-04): «Resumen» opens with
+ * the heading (the period, its state and the method of the base salary), then one row per employee
+ * and the total; «Detalle», each service of each employee. Dates as dates and values as numbers
+ * (spec 016, CA-19).
  */
 export const buildPayrollWorkbook = (
   lines: PayrollLine[],
   items: PayrollWorkbookItem[],
-  { summary: s, detail: d }: PayrollWorkbookLabels
+  { summary: s, detail: d }: PayrollWorkbookLabels,
+  heading: string[]
 ): { summary: SheetData; detail: SheetData } => {
-  const monthTotal: Row = Array.from({ length: SUMMARY_COLUMNS }, () => null);
-  monthTotal[SUMMARY_COLUMNS - 2] = bold(s.monthTotal);
-  monthTotal[SUMMARY_COLUMNS - 1] = money(lines.reduce((sum, line) => sum + line.total, 0));
+  const periodTotal: Row = Array.from({ length: SUMMARY_COLUMNS }, () => null);
+  periodTotal[SUMMARY_COLUMNS - 2] = bold(s.periodTotal);
+  periodTotal[SUMMARY_COLUMNS - 1] = money(lines.reduce((sum, line) => sum + line.total, 0));
 
   const summary: SheetData = [
+    ...heading.map((text, index): Row => [index === 0 ? bold(text) : text]),
+    [null],
     [
       s.employee,
       s.activeDays,
-      s.monthDays,
+      s.periodDays,
       s.baseSalary,
       s.basePay,
       s.commissionPct,
@@ -73,7 +79,7 @@ export const buildPayrollWorkbook = (
     ...lines.map((line): Row => [
       line.employee_name,
       number(line.active_days),
-      number(line.month_days),
+      number(line.period_days),
       money(line.base_salary),
       money(line.base_pay),
       number(line.commission_pct),
@@ -81,7 +87,7 @@ export const buildPayrollWorkbook = (
       money(line.total),
     ]),
     Array.from({ length: SUMMARY_COLUMNS }, () => null),
-    monthTotal,
+    periodTotal,
   ];
 
   const detail: SheetData = [
@@ -104,6 +110,13 @@ export const buildPayrollWorkbook = (
 export const PAYROLL_SUMMARY_COLUMNS = [28, 12, 12, 14, 14, 14, 14, 14].map((width) => ({ width }));
 export const PAYROLL_DETAIL_COLUMNS = [28, 12, 8, 26, 12, 16, 14].map((width) => ({ width }));
 
-/** «liquidacion-2026-11.xlsx», or «…-provisional.xlsx» while the month is not closed (CA-18). */
-export const payrollFileName = (month: string, status: PayrollStatus) =>
-  `liquidacion-${month}${status === 'provisional' ? '-provisional' : ''}.xlsx`;
+/**
+ * «liquidacion-2026-11-1a-quincena.xlsx» (and «…-provisional» while not closed) or
+ * «liquidacion-2026-11-03-a-2026-11-20.xlsx» for a range (CA-17).
+ */
+export const payrollFileName = (period: PayrollPeriod, status: PayrollStatus) =>
+  period.kind === 'fortnight'
+    ? `liquidacion-${period.start.slice(0, 7)}-${fortnightHalf(period.start)}a-quincena${
+        status === 'provisional' ? '-provisional' : ''
+      }.xlsx`
+    : `liquidacion-${period.from}-a-${period.to}.xlsx`;
