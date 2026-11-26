@@ -34,7 +34,7 @@ describe('VehicleSummary', () => {
           vehicle_class: 'utility',
           displacement_cc: null,
           brand: { name: 'Mazda' },
-          line: { name: 'CX-30' },
+          line: { name: 'CX-30', motorcycle_category: null },
           plate: 'ABC123',
         })}
       />
@@ -54,7 +54,7 @@ describe('VehicleSummary', () => {
           vehicle_class: 'automobile',
           displacement_cc: null,
           brand: { name: 'Renault' },
-          line: { name: 'Logan' },
+          line: { name: 'Logan', motorcycle_category: null },
           plate: 'FUN123',
           plate_city: { name: 'Funza', plate_legend: null },
         })}
@@ -97,5 +97,49 @@ describe('VehicleSummary', () => {
       'aria-hidden',
       'true'
     );
+  });
+
+  describe('the category (spec 024)', () => {
+    it('shows staff the category of the line (CA-02, CA-04)', () => {
+      renderWithProviders(
+        <VehicleSummary
+          vehicle={buildVehicle({ line: { name: 'GSX-R600', motorcycle_category: 'sbk' } })}
+          showCategory
+        />
+      );
+
+      expect(screen.getByText('SBK/SSP')).toBeInTheDocument();
+    });
+
+    it('shows the motorcycle’s own category over its line’s (CA-03)', () => {
+      renderWithProviders(
+        <VehicleSummary
+          vehicle={buildVehicle({
+            motorcycle_category: 'trail',
+            line: { name: 'GSX-R600', motorcycle_category: 'sbk' },
+          })}
+          showCategory
+        />
+      );
+
+      expect(screen.getByText('Trail')).toBeInTheDocument();
+      expect(screen.queryByText('SBK/SSP')).not.toBeInTheDocument();
+    });
+
+    it('says when a motorcycle has no category (CA-06)', () => {
+      renderWithProviders(<VehicleSummary vehicle={buildVehicle()} showCategory />);
+
+      expect(screen.getByText('Sin categoría')).toBeInTheDocument();
+    });
+
+    it('shows a customer no category (CA-05)', () => {
+      renderWithProviders(
+        <VehicleSummary
+          vehicle={buildVehicle({ line: { name: 'GSX-R600', motorcycle_category: 'sbk' } })}
+        />
+      );
+
+      expect(screen.queryByText('SBK/SSP')).not.toBeInTheDocument();
+    });
   });
 });

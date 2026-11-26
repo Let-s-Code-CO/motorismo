@@ -3,11 +3,11 @@
 -- acting as the first admin.
 --
 --   #1  Valentina, KDM-482   Lavado detallado (Elkin)                closed 10 days ago, card
---   #2  Camila, UIH-03D       Lavado sencillo + Micropulido, $ 5.000 off  closed 3 days ago,
---                                                                    cash + transfer
---   #3  Camila, UIH-03D       Lavado sencillo                        voided (duplicated)
---   #4  Camila, UIH-03D       Lavado detallado + Otro «Limpieza de cadena», no time   in progress
---                             (arrived 40 min ago, started 20 min ago)
+--   #2  Camila, UIH-03D (SBK/SSP)  Combo de lavado Deluxe + Limpieza de asientos, $ 5.000 off
+--                                  (182.000 + 16.000 − 5.000)    closed 3 days ago, cash + transfer
+--   #3  Camila, UIH-03D       Lavado Pro Wash                        voided (duplicated)
+--   #4  Camila, UIH-03D       Paquete de lavado Premium + Otro «Limpieza de cadena», no time
+--                             in progress (arrived 40 min ago, started 20 min ago)
 --   #5  Andrés, bicycle       Lavado sencillo                       in the queue, arrived 10 min ago
 
 select set_config('request.jwt.claims',
@@ -37,27 +37,27 @@ select public.close_work_order(pg_temp.sid('o1'), '[{"method":"card","amount":95
 insert into seed_ids select 'o2', public.save_work_order(
   (select customer_id from public.vehicles where id = pg_temp.sid('camila_moto')), pg_temp.sid('camila_moto'),
   jsonb_build_array(
-    jsonb_build_object('service_id', pg_temp.sid('Lavado sencillo'),
-      'employees', jsonb_build_array(jsonb_build_object('employee_id', pg_temp.sid('paula'), 'share_pct', 100))),
-    jsonb_build_object('service_id', pg_temp.sid('Micropulido'),
+    jsonb_build_object('service_id', pg_temp.sid('Combo de lavado Deluxe'),
       'employees', jsonb_build_array(
         jsonb_build_object('employee_id', pg_temp.sid('elkin'), 'share_pct', 80),
-        jsonb_build_object('employee_id', pg_temp.sid('paula'), 'share_pct', 20)))),
+        jsonb_build_object('employee_id', pg_temp.sid('paula'), 'share_pct', 20))),
+    jsonb_build_object('service_id', pg_temp.sid('Limpieza de asientos'),
+      'employees', jsonb_build_array(jsonb_build_object('employee_id', pg_temp.sid('paula'), 'share_pct', 100)))),
   p_discount => 5000);
 select public.close_work_order(pg_temp.sid('o2'),
-  '[{"method":"cash","amount":100000},{"method":"transfer","amount":40000}]');
+  '[{"method":"cash","amount":150000},{"method":"transfer","amount":43000}]');
 
 -- #3
 insert into seed_ids select 'o3', public.save_work_order(
   (select customer_id from public.vehicles where id = pg_temp.sid('camila_moto')), pg_temp.sid('camila_moto'),
-  jsonb_build_array(jsonb_build_object('service_id', pg_temp.sid('Lavado sencillo'))));
+  jsonb_build_array(jsonb_build_object('service_id', pg_temp.sid('Lavado Pro Wash'))));
 select public.void_work_order(pg_temp.sid('o3'), 'Orden duplicada');
 
 -- #4
 insert into seed_ids select 'o4', public.save_work_order(
   (select customer_id from public.vehicles where id = pg_temp.sid('camila_moto')), pg_temp.sid('camila_moto'),
   jsonb_build_array(
-    jsonb_build_object('service_id', pg_temp.sid('Lavado detallado'),
+    jsonb_build_object('service_id', pg_temp.sid('Paquete de lavado Premium'),
       'employees', jsonb_build_array(jsonb_build_object('employee_id', pg_temp.sid('elkin'), 'share_pct', 100))),
     jsonb_build_object('name', 'Limpieza de cadena', 'price', 15000)),
   p_notes => 'Trae un rayón en el tanque');

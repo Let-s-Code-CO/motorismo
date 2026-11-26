@@ -12,13 +12,16 @@
  * - CA-10: another day reloads its slots through the URL, keeping the other parameters.
  * - CA-20: changing a reservation keeps its customer (the picker is locked) and sends its id.
  * - Spec 006, CA-10: without network nothing is reported and the form stays as it was.
+ * - Spec 024, CA-23 to CA-25: what cannot go with the ticked services is disabled, saying why.
+ * - Spec 024, CA-14: a service «a convenir» ticked asks for its time (5 to 1.440 minutes) and sends
+ *   it; the total estimate counts it; a reservation being changed keeps the time it had.
  * The customer picker has its own tests (spec 008 and 012): here it hands over a customer or a car.
  */
 import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 
 import { arrive } from '@web/modules/core/lib/toast.lib';
 import { saveReservation } from '@web/modules/reservations/actions/reservations.actions';
@@ -107,14 +110,35 @@ const day = (overrides: Partial<AgendaDay> = {}): AgendaDay => ({
   ...overrides,
 });
 
-const service = (id: string, name: string, price_car: number | null) => ({
+const PPF = '3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f';
+
+const service = (
+  id: string,
+  name: string,
+  price_car: number | null,
+  overrides: {
+    price_motorcycle?: number | null;
+    motorcycle_prices?: Record<string, number> | null;
+    estimated_minutes?: number | null;
+    on_quote?: boolean;
+    includes?: string[];
+  } = {}
+) => ({
   id,
   name,
   price_motorcycle: 25000,
+  motorcycle_prices: null,
   price_car,
   price_bicycle: null,
   estimated_minutes: null,
+  on_quote: false,
+  includes: [] as string[],
+  ...overrides,
 });
+
+/** PPF (spec 024): for any vehicle, its value and time agreed each time. */
+const ppf = () =>
+  service(PPF, 'PPF', null, { price_motorcycle: null, on_quote: true, estimated_minutes: null });
 
 const renderForm = (
   props: {
@@ -191,6 +215,7 @@ describe('ReservationForm', () => {
       vehicle_id: null,
       slot_start: NINE,
       service_ids: [CHAIN],
+      service_minutes: {},
       notes: 'Pidió por WhatsApp',
     });
   });
@@ -273,5 +298,202 @@ describe('ReservationForm', () => {
     expect(router.push).not.toHaveBeenCalled();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /9:00 a\. m\./ })).toBeChecked();
+  });
+
+  describe('a service «a convenir» (spec 024, CA-14)', () => {
+    beforeEach(() => {
+      vi.mocked(fetchActiveServices).mockResolvedValue([
+        service(WASH, 'Lavado detallado', 40000, { estimated_minutes: 90 }),
+        ppf(),
+      ]);
+    });
+
+    const minutesField = () => screen.getByLabelText('Tiempo de PPF (minutos)');
+
+    it('asks for its time only once it is ticked', async () => {
+      renderForm({ initialStart: NINE });
+
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      expect(minutesField()).toBeVisible();
+      fireEvent.click(screen.getByRole('checkbox', { name: 'PPF' }));
+      expect(screen.queryByLabelText('Tiempo de PPF (minutos)')).not.toBeInTheDocument();
+    });
+
+    it('sends nothing without its time, and says so under the field', async () => {
+      renderForm({ initialStart: NINE });
+      fireEvent.click(screen.getByRole('button', { name: 'Elegir cliente de prueba' }));
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      submit();
+
+      expect(await screen.findByText('Escribe cuánto tiempo tomará.')).toBeVisible();
+      expect(saveReservation).not.toHaveBeenCalled();
+    });
+
+    it('refuses a time outside 5 to 1.440 minutes (1.441 = more than a day)', async () => {
+      renderForm({ initialStart: NINE });
+      fireEvent.click(screen.getByRole('button', { name: 'Elegir cliente de prueba' }));
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      fireEvent.change(minutesField(), { target: { value: '1441' } });
+      submit();
+
+      expect(await screen.findByText('Escribe entre 5 y 1.440 minutos.')).toBeVisible();
+      expect(saveReservation).not.toHaveBeenCalled();
+    });
+
+    it('sends its time by service, as minutes', async () => {
+      vi.mocked(saveReservation).mockResolvedValue({ ok: true, id: 'r-new' });
+      renderForm({ initialStart: NINE });
+      fireEvent.click(screen.getByRole('button', { name: 'Elegir cliente de prueba' }));
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      fireEvent.change(minutesField(), { target: { value: '240' } });
+      submit();
+
+      await vi.waitFor(() =>
+        expect(saveReservation).toHaveBeenCalledWith(
+          expect.objectContaining({ service_ids: [PPF], service_minutes: { [PPF]: 240 } })
+        )
+      );
+    });
+
+    it('counts it in the estimate: 90 + 240 min = «≈ 5 h 30 min»', async () => {
+      renderForm({ initialStart: NINE });
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Lavado detallado' }));
+      fireEvent.click(screen.getByRole('checkbox', { name: 'PPF' }));
+
+      // Without its time yet, PPF is named as not estimated.
+      const estimate = () => document.querySelector<HTMLElement>('[data-booking-estimate]')!;
+      expect(estimate()).toHaveTextContent('Sin estimar: PPF');
+      fireEvent.change(minutesField(), { target: { value: '240' } });
+
+      expect(estimate()).toHaveTextContent('Tiempo estimado: ≈ 5 h 30 min');
+      expect(estimate()).not.toHaveTextContent('Sin estimar');
+    });
+
+    it('keeps the time it had in a reservation being changed (CA-20)', async () => {
+      renderForm({
+        reservation: {
+          id: 'r1',
+          customer_id: CUSTOMER,
+          customer_name: 'Camila',
+          customer_phone: null,
+          vehicle_id: null,
+          vehicle_type: null,
+          slot_start: NINE,
+          service_ids: [WASH, PPF],
+          service_minutes: [null, 180],
+          notes: null,
+        } as unknown as ReservationSummary,
+      });
+
+      expect(await screen.findByLabelText('Tiempo de PPF (minutos)')).toHaveValue('180');
+    });
+  });
+
+  describe('packages and what they include (spec 024, CA-23 to CA-25)', () => {
+    const PREMIUM = '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f80';
+    const DELUXE = '5e6f7a8b-9c0d-4e1f-8a2b-4c5d6e7f8091';
+    const SELLADOR = '6f7a8b9c-0d1e-4f2a-9b3c-5d6e7f809102';
+    const BY_CATEGORY = {
+      street: 1,
+      sbk: 1,
+      scooter: 1,
+      maxi_scooter: 1,
+      trail: 1,
+      maxi_trail: 1,
+      cruiser: 1,
+      maxi_cruiser: 1,
+    };
+
+    beforeEach(() => {
+      vi.mocked(fetchActiveServices).mockResolvedValue([
+        service(PREMIUM, 'Premium', null, {
+          price_motorcycle: null,
+          motorcycle_prices: BY_CATEGORY,
+          includes: [SELLADOR],
+        }),
+        service(DELUXE, 'Deluxe', null, { price_motorcycle: null, motorcycle_prices: BY_CATEGORY }),
+        service(SELLADOR, 'Sellador', null),
+      ] as never);
+    });
+
+    it('disables what the ticked package includes and any other package, saying why', async () => {
+      renderForm({ initialStart: NINE });
+
+      fireEvent.click(await screen.findByRole('checkbox', { name: /^Premium/ }));
+
+      expect(screen.getByRole('checkbox', { name: /^Sellador/ })).toBeDisabled();
+      expect(screen.getByRole('checkbox', { name: /^Sellador/ })).toHaveAccessibleName(
+        'Sellador Incluido en Premium'
+      );
+      expect(screen.getByRole('checkbox', { name: /^Deluxe/ })).toBeDisabled();
+      expect(screen.getByRole('checkbox', { name: /^Deluxe/ })).toHaveAccessibleName(
+        'Deluxe Ya hay un paquete: Premium'
+      );
+    });
+
+    it('makes them available again once the package is unticked', async () => {
+      renderForm({ initialStart: NINE });
+
+      fireEvent.click(await screen.findByRole('checkbox', { name: /^Premium/ }));
+      fireEvent.click(screen.getByRole('checkbox', { name: /^Premium/ }));
+
+      expect(screen.getByRole('checkbox', { name: /^Sellador/ })).toBeEnabled();
+      expect(screen.getByRole('checkbox', { name: /^Deluxe/ })).toBeEnabled();
+    });
+
+    it('groups the services: «Paquetes» apart from «Servicios adicionales» (CA-28)', async () => {
+      renderForm({ initialStart: NINE });
+
+      const packages = await screen.findByRole('group', { name: 'Paquetes' });
+      expect(
+        within(packages)
+          .getAllByRole('checkbox')
+          .map((box) => box.closest('label')!.textContent)
+      ).toEqual(['Premium', 'Deluxe']);
+      expect(
+        within(screen.getByRole('group', { name: 'Servicios adicionales' }))
+          .getAllByRole('checkbox')
+          .map((box) => box.closest('label')!.textContent)
+      ).toEqual(['Sellador']);
+    });
+
+    it('orders the packages from the cheapest up: Pro Wash, Premium, Deluxe, Supreme (CA-28)', async () => {
+      const ladder = (lowest: number) => ({
+        street: lowest + 2000,
+        sbk: lowest + 4000,
+        scooter: lowest,
+        maxi_scooter: lowest + 4000,
+        trail: lowest + 6000,
+        maxi_trail: lowest + 10000,
+        cruiser: lowest + 2000,
+        maxi_cruiser: lowest + 6000,
+      });
+      const pkg = (id: string, name: string, lowest: number) =>
+        service(id, name, null, { price_motorcycle: null, motorcycle_prices: ladder(lowest) });
+      // As the catalog comes: by name.
+      vi.mocked(fetchActiveServices).mockResolvedValue([
+        pkg(DELUXE, 'Combo de lavado Deluxe', 170000),
+        pkg('7a8b9c0d-1e2f-4a3b-8c4d-6e7f80910213', 'Combo de lavado Supreme', 700000),
+        pkg('8b9c0d1e-2f3a-4b4c-9d5e-7f8091021324', 'Lavado Pro Wash', 42000),
+        pkg(PREMIUM, 'Paquete de lavado Premium', 97000),
+      ] as never);
+      renderForm({ initialStart: NINE });
+
+      const packages = await screen.findByRole('group', { name: 'Paquetes' });
+      expect(
+        within(packages)
+          .getAllByRole('checkbox')
+          .map((box) => box.closest('label')!.textContent)
+      ).toEqual([
+        'Lavado Pro Wash',
+        'Paquete de lavado Premium',
+        'Combo de lavado Deluxe',
+        'Combo de lavado Supreme',
+      ]);
+    });
   });
 });

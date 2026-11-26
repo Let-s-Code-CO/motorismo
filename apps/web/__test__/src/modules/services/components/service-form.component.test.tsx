@@ -6,6 +6,11 @@
  * - CA-01 / CA-05: registering and correcting send the typed values (the action normalises them
  *   again); the screen is told once it is saved.
  * - CA-04: a name taken by a disabled service suggests reactivating it.
+ * - Spec 024, CA-07 / CA-08: the motorcycle value is «Único» or «Por categoría»: eight fields, each
+ *   labelled by its category, each missing one reported next to it; a service with values by category
+ *   opens with them.
+ * - Spec 024, CA-12: «A convenir» hides values and time, and sends none.
+ * - Spec 024, CA-19: an optional description.
  */
 import { fireEvent, screen } from '@testing-library/react';
 
@@ -27,11 +32,41 @@ const lavado: ServiceRow = {
   id: '20000000-0000-4000-8000-000000000001',
   name: 'Lavado sencillo',
   price_motorcycle: 25000,
+  motorcycle_prices: null,
   price_car: 40000,
   price_bicycle: null,
   estimated_minutes: 30,
+  on_quote: false,
+  description: null,
   disabled_at: null,
+  includes: [],
 };
+
+/** The categories in the order of the list, with the Pro Wash values. */
+const PRO_WASH: [string, string, number][] = [
+  ['Street/Roadster', '44.000', 44000],
+  ['SBK/SSP', '46.000', 46000],
+  ['Scooter', '42.000', 42000],
+  ['Maxi Scooter', '46.000', 46000],
+  ['Trail', '48.000', 48000],
+  ['Maxi Trail', '52.000', 52000],
+  ['Cruiser/Clásica', '44.000', 44000],
+  ['Maxi Cruiser', '48.000', 48000],
+];
+const KEYS = [
+  'street',
+  'sbk',
+  'scooter',
+  'maxi_scooter',
+  'trail',
+  'maxi_trail',
+  'cruiser',
+  'maxi_cruiser',
+] as const;
+const proWashPrices = Object.fromEntries(
+  KEYS.map((key, index) => [key, PRO_WASH[index]![2]])
+) as Record<(typeof KEYS)[number], number>;
+const NEW_FIELDS = { motorcycle_prices: null, on_quote: false, description: null, includes: [] };
 
 describe('ServiceForm', () => {
   afterEach(() => vi.clearAllMocks());
@@ -78,6 +113,7 @@ describe('ServiceForm', () => {
       price_car: 250000,
       price_bicycle: null,
       estimated_minutes: 120,
+      ...NEW_FIELDS,
     });
   });
 
@@ -99,6 +135,7 @@ describe('ServiceForm', () => {
       price_car: 40000,
       price_bicycle: 15000,
       estimated_minutes: 30,
+      ...NEW_FIELDS,
     });
   });
 
@@ -115,5 +152,147 @@ describe('ServiceForm', () => {
         'Ya existe un servicio desactivado con ese nombre: reactívalo desde «Desactivados».'
       )
     ).toBeVisible();
+  });
+
+  describe('spec 024', () => {
+    it('registers a value for each category, with its description (CA-07, CA-19)', async () => {
+      vi.mocked(createService).mockResolvedValue({ ok: true });
+      const onSaved = vi.fn();
+      renderWithProviders(<ServiceForm onSaved={onSaved} onCancel={vi.fn()} />);
+
+      type('Nombre del servicio', 'Lavado Pro Wash');
+      type('Descripción', 'Shampoo alcalino y de pH neutro.');
+      fireEvent.click(screen.getByRole('radio', { name: 'Por categoría' }));
+      expect(screen.queryByLabelText('Moto')).not.toBeInTheDocument();
+      for (const [label, typed] of PRO_WASH) type(label, typed);
+      fireEvent.click(screen.getByRole('button', { name: 'Registrar servicio' }));
+
+      await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(createService).toHaveBeenCalledWith({
+        name: 'Lavado Pro Wash',
+        price_motorcycle: null,
+        motorcycle_prices: proWashPrices,
+        price_car: null,
+        price_bicycle: null,
+        estimated_minutes: null,
+        on_quote: false,
+        description: 'Shampoo alcalino y de pH neutro.',
+        includes: [],
+      });
+    });
+
+    it('reports each category without a value next to it, and sends nothing (CA-08)', async () => {
+      renderWithProviders(<ServiceForm onSaved={vi.fn()} onCancel={vi.fn()} />);
+
+      type('Nombre del servicio', 'Lavado Pro Wash');
+      fireEvent.click(screen.getByRole('radio', { name: 'Por categoría' }));
+      for (const [label, typed] of PRO_WASH.slice(0, 6)) type(label, typed);
+      fireEvent.click(screen.getByRole('button', { name: 'Registrar servicio' }));
+
+      expect(await screen.findAllByText('Escribe el valor de esta categoría.')).toHaveLength(2);
+      expect(createService).not.toHaveBeenCalled();
+    });
+
+    it('opens a service with values by category on them (CA-07)', () => {
+      renderWithProviders(
+        <ServiceForm
+          service={{ ...lavado, price_motorcycle: null, motorcycle_prices: proWashPrices }}
+          onSaved={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      );
+
+      expect(screen.getByRole('radio', { name: 'Por categoría' })).toBeChecked();
+      expect(screen.getByLabelText('Maxi Trail')).toHaveValue('52.000');
+    });
+
+    it('registers a service «a convenir» without values nor time (CA-12)', async () => {
+      vi.mocked(createService).mockResolvedValue({ ok: true });
+      renderWithProviders(<ServiceForm onSaved={vi.fn()} onCancel={vi.fn()} />);
+
+      type('Nombre del servicio', 'PPF');
+      fireEvent.click(screen.getByRole('switch', { name: /A convenir/ }));
+      expect(screen.queryByLabelText('Carro')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Tiempo estimado (min)')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Registrar servicio' }));
+
+      await vi.waitFor(() =>
+        expect(createService).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'PPF',
+            on_quote: true,
+            price_car: null,
+            estimated_minutes: null,
+          })
+        )
+      );
+    });
+  });
+
+  describe('what it includes (spec 024, CA-20)', () => {
+    const kit: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000010',
+      name: 'Limpieza de kit',
+      price_car: null,
+    };
+    const sellador: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000011',
+      name: 'Sellador',
+      price_car: null,
+    };
+    const premium: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000012',
+      name: 'Premium',
+      includes: [{ id: kit.id, name: kit.name }],
+    };
+    const retired: ServiceRow = {
+      ...lavado,
+      id: '20000000-0000-4000-8000-000000000013',
+      name: 'Polichado',
+      disabled_at: '2026-10-21T15:00:00Z',
+    };
+    const catalog = [kit, sellador, premium, retired];
+    const included = () => screen.getByRole('group', { name: 'Incluye' });
+
+    it('offers the other active services, never itself nor one that already includes it, and sends the chosen', async () => {
+      vi.mocked(updateService).mockResolvedValue({ ok: true });
+      renderWithProviders(
+        <ServiceForm service={kit} catalog={catalog} onSaved={vi.fn()} onCancel={vi.fn()} />
+      );
+
+      const offered = screen
+        .getAllByRole('checkbox')
+        .filter((box) => included().contains(box))
+        .map((box) => box.closest('label')!.textContent);
+      expect(offered).toEqual(['Sellador']);
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Sellador' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+      await vi.waitFor(() =>
+        expect(updateService).toHaveBeenCalledWith(
+          expect.objectContaining({ id: kit.id, includes: [sellador.id] })
+        )
+      );
+    });
+
+    it('opens with what it includes already checked', () => {
+      renderWithProviders(
+        <ServiceForm service={premium} catalog={catalog} onSaved={vi.fn()} onCancel={vi.fn()} />
+      );
+
+      expect(screen.getByRole('checkbox', { name: 'Limpieza de kit' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Sellador' })).not.toBeChecked();
+    });
+
+    it('asks nothing of it for a service «a convenir»', () => {
+      renderWithProviders(<ServiceForm catalog={catalog} onSaved={vi.fn()} onCancel={vi.fn()} />);
+
+      fireEvent.click(screen.getByRole('switch', { name: /A convenir/ }));
+
+      expect(screen.queryByRole('group', { name: 'Incluye' })).not.toBeInTheDocument();
+    });
   });
 });

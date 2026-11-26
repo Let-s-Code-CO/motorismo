@@ -206,7 +206,9 @@ vistazo, igual que en la calle.
   cero o más vehículos.
 - **RF-02** — El tipo de vehículo es uno de: Motocicleta, Bicicleta o Carro. Un carro es además de
   una clase, Automóvil o Camioneta, y una bicicleta, Montaña o Ruta. Estas listas son fijas en
-  esta versión.
+  esta versión. *Enmendado por la spec 024:* una moto tiene una categoría (Street/Roadster, SBK/SSP,
+  Scooter, Maxi Scooter, Trail, Maxi Trail, Cruiser/Clásica o Maxi Cruiser), la de su línea o una
+  propia que solo el personal ve y elige.
 - **RF-03** — El catálogo se entrega precargado con, como mínimo, las marcas más vendidas en
   Colombia de cada tipo y las líneas más comunes de las marcas principales de motocicleta y carro
   (por ejemplo, Suzuki → GSX-R600). La lista concreta y su fuente quedan en el plan.
@@ -373,3 +375,4 @@ alfabético; las motos no tienen el campo (ni en el formulario) y su placa dice 
 | 2026-11-19 | `/verificar` del bloque C: CA-27 a CA-31, RF-07, RN-11 y los criterios ajustados ✅. Se precisa CA-30 (como máximo 50 ciudades a la vez, con «Escribe para ver más ciudades.») y se alinean plan y tareas con el código (`plate_city_code`, lista sin virtualizar). Verificada en local. Pendiente: el despliegue (T064). |
 | 2026-11-24 | Spec 018: el catálogo de marcas y líneas ya se administra (renombrar, unir, pasar líneas, registrar y revisar); lo que se escribe al registrar un vehículo entra «Por revisar», y un nombre unido o renombrado lleva a la marca o línea que quedó. |
 | 2026-11-25 | Enmendada por la spec 023: placa según la norma (CA-27), placa completa en «Clientes» (CA-29 reemplazado por la 023, CA-12) y ciudad de la placa solo entre los municipios que expiden placas (RF-07, RN-11). |
+| 2026-11-26 | Enmendada por la spec 024: categoría de la moto (RF-02), heredada de la línea o propia, solo para el personal. |

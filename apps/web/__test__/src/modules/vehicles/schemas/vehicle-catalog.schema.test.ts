@@ -8,8 +8,10 @@
  *   the default, so the plain one stays `/admin/vehicle-catalog`.
  * - CA-10: a name is required and has at most 60 characters (the catalog's limit, spec 005), counted
  *   after trimming.
+ * - Spec 024, CA-01: the lines as the database returns them keep their category (null if none).
  */
 import {
+  catalogLinesSchema,
   catalogNameSchema,
   parseVehicleCatalogFilters,
   vehicleCatalogHref,
@@ -67,5 +69,26 @@ describe('catalogNameSchema', () => {
     expect(catalogNameSchema.safeParse({ name: 'a'.repeat(61) }).error?.issues[0]?.message).toBe(
       'tooLong'
     );
+  });
+});
+
+describe('catalogLinesSchema', () => {
+  const line = (overrides: Record<string, unknown> = {}) => ({
+    id: 'line-1',
+    name: 'GSX-R600',
+    reviewed: true,
+    created_at: '2030-06-12T14:00:00Z',
+    vehicles: 2,
+    ...overrides,
+  });
+
+  it('keeps the category of each line as vehicle_catalog returns it (spec 024, CA-01)', () => {
+    expect(catalogLinesSchema.parse([line({ category: 'sbk' })])).toEqual([
+      line({ category: 'sbk' }),
+    ]);
+  });
+
+  it('reads a line without category as null (spec 024, CA-18)', () => {
+    expect(catalogLinesSchema.parse([line({ category: null })])[0]!.category).toBeNull();
   });
 });

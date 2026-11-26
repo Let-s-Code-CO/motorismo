@@ -44,6 +44,7 @@ vi.mock('@web/modules/vehicles/actions/vehicle-catalog.actions', () => ({
   mergeVehicleBrands: vi.fn(),
   mergeVehicleLines: vi.fn(),
   moveVehicleLine: vi.fn(),
+  setVehicleLineCategory: vi.fn(),
 }));
 
 const buildLine = (overrides: Partial<CatalogLine> = {}): CatalogLine => ({
@@ -71,7 +72,7 @@ const BRANDS: CatalogBrand[] = [
     name: 'Honda',
     vehicles: 3,
     lines: [
-      buildLine({ id: 'cb', name: 'CB 190R', vehicles: 2 }),
+      buildLine({ id: 'cb', name: 'CB 190R', vehicles: 2, category: 'street' }),
       buildLine({
         id: 'fz',
         name: 'Fz 2.0',
@@ -267,7 +268,14 @@ describe('VehicleCatalogScreen', () => {
       within(menu)
         .getAllByRole('menuitem')
         .map((item) => item.textContent)
-    ).toEqual(['Renombrar', 'Dar por revisada', 'Unir con otra línea', 'Pasar a otra marca']);
+    ).toEqual([
+      'Renombrar',
+      // Spec 024, CA-01: a motorcycle line's category.
+      'Categoría',
+      'Dar por revisada',
+      'Unir con otra línea',
+      'Pasar a otra marca',
+    ]);
   });
 
   it('offers on a reviewed brand no «Dar por revisada» (CA-29)', async () => {
@@ -303,5 +311,36 @@ describe('VehicleCatalogScreen', () => {
     expect(
       await screen.findByRole('dialog', { name: 'Registrar una marca de carro' })
     ).toBeInTheDocument();
+  });
+
+  describe('the category of a motorcycle line (spec 024)', () => {
+    it('shows it next to each line, or «Sin categoría» (CA-01, CA-18)', () => {
+      renderScreen();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Ver líneas de Honda' }));
+
+      const lines = within(brandItem('Honda')).getAllByRole('listitem');
+      expect(lines[0]).toHaveTextContent('Street/Roadster');
+      expect(lines[1]).toHaveTextContent('Sin categoría');
+    });
+
+    it('offers «Categoría» in a line’s menu, opening its dialog (CA-01)', async () => {
+      vi.useRealTimers(); // The menu opens with its own timers.
+      renderScreen();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Ver líneas de Honda' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Acciones de la línea CB 190R' }));
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Categoría' }));
+
+      expect(
+        await screen.findByRole('dialog', { name: 'Categoría de CB 190R' })
+      ).toBeInTheDocument();
+    });
+
+    it('has no category for the lines of cars or bicycles', () => {
+      renderScreen(buildFilters({ type: 'car' }));
+
+      expect(screen.queryByText('Sin categoría')).not.toBeInTheDocument();
+    });
   });
 });

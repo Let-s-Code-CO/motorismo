@@ -15,6 +15,8 @@ export type CustomerAreaErrorKey =
   | 'slotInvalid'
   | 'slotStarted'
   | 'slotFull'
+  | 'onePackage'
+  | 'servicesOverlap'
   | 'generic';
 
 const BY_HINT: Record<string, CustomerAreaErrorKey> = {
@@ -32,6 +34,9 @@ const BY_HINT: Record<string, CustomerAreaErrorKey> = {
   reservation_slot_invalid: 'slotInvalid',
   reservation_slot_started: 'slotStarted',
   reservation_slot_full: 'slotFull',
+  // Spec 024, CA-26: one package, nothing included twice.
+  services_one_package: 'onePackage',
+  services_overlap: 'servicesOverlap',
 };
 
 /**

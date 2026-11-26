@@ -41,6 +41,8 @@ cada tipo de vehículo, para que el personal los consulte y, luego, los elija en
   lista con sus valores en pesos («$ 25.000») y se anuncia el resultado.
 - **CA-02** — Dado un servicio sin valor para un tipo de vehículo, cuando se ve en la lista,
   entonces ese tipo aparece como «No disponible» (el servicio no se ofrece para ese tipo).
+  *Enmendado por la spec 024:* «Servicios» muestra una tarjeta por servicio con los tipos para los
+  que se ofrece; un tipo sin valor no se nombra.
 - **CA-03** — Dado el formulario de servicio, cuando falta el nombre, no hay ningún valor, o un
   valor no es un número entero de pesos mayor que cero y hasta $ 10.000.000, entonces se indica
   el problema junto a cada campo y no se guarda nada.
@@ -112,7 +114,9 @@ cambiarlos, para informar al cliente y armar las órdenes.
 ## Requisitos funcionales
 
 - **RF-01** — El sistema guarda un catálogo de servicios: nombre y valor de referencia para moto,
-  carro y bicicleta (cada uno opcional, al menos uno).
+  carro y bicicleta (cada uno opcional, al menos uno). *Enmendado por la spec 024:* el valor de moto
+  puede ser uno por categoría (los ocho), un servicio puede ser «a convenir» (sin valores ni tiempo)
+  y tiene una descripción opcional.
 - **RF-02** — El sistema guarda un catálogo de empleados: nombre completo, tipo y número de
   documento, celular (opcional) y porcentaje de comisión.
 - **RF-03** — Servicios y empleados se desactivan y reactivan; nunca se borran.
@@ -199,3 +203,4 @@ documento y % de comisión; lo que ya no se usa se desactiva, nunca se borra.
 | 2026-11-20 | Verificada: CA-01 a CA-19 cubiertos. Corrección al verificar: en el teléfono, el documento y el celular de cada empleado van bajo su nombre (antes el celular no se veía por debajo de 768 px). |
 | 2026-11-20 | La spec 008 (HU-06) añade al servicio un tiempo estimado opcional; se especifica, planifica y prueba allí. |
 | 2026-11-20 | Spec 009: en el teléfono, «Menú» abre un panel lateral en lugar del desplegable. |
+| 2026-11-26 | Enmendada por la spec 024: valor de moto por categoría, servicios «a convenir» y descripción (RF-01); «Servicios» pasa a tarjetas en tres grupos, sin nombrar los tipos a los que no se ofrece (CA-02). |

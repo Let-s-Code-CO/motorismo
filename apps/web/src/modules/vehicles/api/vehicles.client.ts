@@ -37,14 +37,18 @@ export const fetchBrands = async (type: VehicleType): Promise<CatalogItem[]> => 
   return data.map(withAliases);
 };
 
+/** The lines of a brand, a motorcycle line with its category (spec 024, CA-02). */
 export const fetchLines = async (brandId: string): Promise<CatalogItem[]> => {
   const { data, error } = await createSupabaseBrowserClient()
     .from('vehicle_lines')
-    .select('id, name, aliases:vehicle_line_aliases(name)')
+    .select('id, name, motorcycle_category, aliases:vehicle_line_aliases(name)')
     .eq('brand_id', brandId)
     .order('name');
   if (error) throw new Error(`Could not load the lines: ${error.message}`);
-  return data.map(withAliases);
+  return data.map(({ motorcycle_category, ...line }) => ({
+    ...withAliases(line),
+    category: motorcycle_category,
+  }));
 };
 
 /** The API answers at most this many rows per request (PostgREST max_rows, Supabase default). */

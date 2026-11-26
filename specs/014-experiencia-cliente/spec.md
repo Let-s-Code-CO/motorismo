@@ -138,7 +138,8 @@ llamar.
   puestos, y un vehículo no se repite en la misma franja.
 - **RN-03** — Desde la app, el cliente tiene como mucho una reserva pendiente por cada vehículo suyo
   **por día**, y una «Sin vehículo» por día (enmienda de la spec 021, RN-01). El personal puede
-  hacerle más (spec 012, RN-03).
+  hacerle más (spec 012, RN-03). Los servicios «a convenir» (PPF) solo los reserva el personal
+  (enmienda de la spec 024, CA-16).
 - **RN-04** — El cliente cambia o cancela una reserva suya solo mientras está pendiente.
 - **RN-05** — El cliente no cambia la tolerancia, no da «+5 min», no marca «No asistió» ni
   «Llegó»: eso sigue siendo del personal (spec 012).
@@ -226,3 +227,4 @@ Ninguna.
 | 2026-11-21 | CA-23 implementado (`ArriveBy`, en el inicio y en «Mis reservas»). Estado `implementada`. |
 | 2026-11-21 | Verificada: los 23 criterios con prueba vista fallar (pgTAP, unitarias, sandbox y E2E contra producción). Cierres de la verificación: el mensaje del límite nombra también «sin vehículo» (CA-15) y una comprobación pgTAP de que la reserva del cliente ocupa su puesto (CA-16). Estado `verificada`. |
 | 2026-11-25 | Enmienda de la spec 021: una reserva pendiente por vehículo y día (antes, una por vehículo), y el tiempo estimado de los servicios al reservar (RN-03, CA-15). |
+| 2026-11-26 | Enmienda de la spec 024: el cliente no ve ni reserva servicios «a convenir» (CA-16). |

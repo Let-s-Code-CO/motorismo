@@ -261,7 +261,7 @@ test('«Servicios», its form and the confirmation to disable have no serious ac
   await signIn(page, SEED.admin.email);
   await expect(page).toHaveURL('/');
   await page.goto('/services');
-  await expect(page.getByRole('grid', { name: 'Servicios activos' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Servicios activos' })).toBeVisible();
   await page.getByRole('button', { name: /^Desactivados/ }).click();
   expect(await audit(page)).toEqual([]);
 
@@ -270,11 +270,26 @@ test('«Servicios», its form and the confirmation to disable have no serious ac
   await page.getByRole('dialog').getByRole('button', { name: 'Registrar servicio' }).click();
   await expect(page.getByText('Escribe el nombre del servicio.')).toBeVisible();
   expect(await audit(page)).toEqual([]);
+  // Spec 024: the eight values of a motorcycle by category, with their errors in sight.
+  await page
+    .getByRole('dialog')
+    .getByRole('radio', { name: /Por categoría/ })
+    .check();
+  await page.getByRole('dialog').getByRole('button', { name: 'Registrar servicio' }).click();
+  await expect(page.getByText('Escribe el valor de esta categoría.')).toHaveCount(8);
+  expect(await audit(page)).toEqual([]);
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Acciones de Lavado sencillo' }).click();
-  await page.getByRole('menuitem', { name: 'Desactivar' }).click();
+  // The list is long (spec 024's price list): the row is scrolled to first, and the menu opened
+  // again if the scroll closed it.
+  await expect(async () => {
+    await page
+      .getByRole('button', { name: 'Acciones de Lavado sencillo' })
+      .scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: 'Acciones de Lavado sencillo' }).click();
+    await page.getByRole('menuitem', { name: 'Desactivar' }).click({ timeout: 2_000 });
+  }).toPass({ timeout: 15_000 });
   await untilDialogSettled(page);
   expect(await audit(page)).toEqual([]);
 });
@@ -358,6 +373,31 @@ test('«Órdenes», a new order with errors, an open order and its dialogs have 
   await page.getByRole('button', { name: 'Añadir Otro' }).click();
   expect(await audit(page)).toEqual([]);
 
+  // Spec 024, CA-06: Tomás's Kawasaki KLX 300 (seeds) has no category; the order asks for it.
+  await page.goto('/orders/new');
+  await page.getByLabel('Buscar cliente').fill('TMT78D');
+  await page.getByRole('button', { name: /Tomás Torres/ }).click();
+  await page.getByRole('button', { name: 'Añadir Lavado Pro Wash' }).click();
+  await expect(page.getByRole('dialog', { name: 'Categoría de la moto' })).toBeVisible();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // Spec 024, CA-23 / CA-28 / CA-29: a package added, the others disabled with their reason.
+  await page.goto('/orders/new');
+  await page.getByLabel('Buscar cliente').fill('UIH58E');
+  await page
+    .getByRole('button', { name: /Gabriel/ })
+    .first()
+    .click();
+  await page.getByRole('radio', { name: /UIH-58E/ }).check({ force: true });
+  await page.getByRole('button', { name: /Añadir Combo de lavado Deluxe/ }).click();
+  await expect(
+    page.getByRole('button', { name: 'Quitar Combo de lavado Deluxe de la orden' })
+  ).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
   await page.goto(`/orders/${open!.id}`);
   await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toBeVisible();
   expect(await audit(page)).toEqual([]);
@@ -401,8 +441,11 @@ test('the agenda, a new reservation with errors, a reservation with its dialogs 
   // Each screen enters with a short fade (spec 011): audited once it has settled.
   // Sent without a customer or a slot: the errors are in sight.
   await page.goto(`/agenda/new?date=${day}`);
+  // Spec 024, CA-14: PPF ticked, its time asked for next to it.
+  await page.getByRole('checkbox', { name: 'PPF' }).check({ force: true });
   await page.getByRole('button', { name: 'Guardar reserva' }).click();
   await expect(page.getByText('Elige el cliente.')).toBeVisible();
+  await expect(page.getByText('Escribe cuánto tiempo tomará.')).toBeVisible();
   await untilSettled(page.locator('[data-page]'));
   expect(await audit(page)).toEqual([]);
 
@@ -489,8 +532,9 @@ test('the customer area, its booking form with the estimated time and the dialog
     if (path === '/my/reservations/new') {
       // Spec 021, CA-06, CA-07: with the estimated time in sight, a service without a time named.
       await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
-      await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
-      await page.getByRole('checkbox', { name: 'Recubrimiento cerámico' }).check({ force: true });
+      // Spec 024, CA-23: with a package ticked, the others disabled with their reason.
+      await page.getByRole('checkbox', { name: 'Combo de lavado Deluxe' }).check({ force: true });
+      await page.getByRole('checkbox', { name: 'Limpieza de asientos' }).check({ force: true });
       await expect(page.locator('[data-booking-estimate]')).toContainText('Sin estimar');
     }
     expect(await audit(page), path).toEqual([]);
@@ -639,6 +683,15 @@ test('«Marcas y líneas», its rename dialog with an error and its merge dialog
   await expect(rename.getByText('Escribe el nombre.')).toBeVisible();
   expect(await audit(page)).toEqual([]);
   await rename.getByRole('button', { name: 'Cancelar' }).click();
+
+  // Spec 024, CA-01: the category of a motorcycle line.
+  await page.getByRole('button', { name: 'Acciones de la línea Fz 2.0' }).first().click();
+  await page.getByRole('menuitem', { name: 'Categoría' }).click();
+  await expect(page.getByRole('dialog', { name: 'Categoría de Fz 2.0' })).toBeVisible();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   // The merge, with the brand that stays chosen and what will happen in sight (not confirmed).
   await page.getByRole('button', { name: 'Acciones de Yamaja' }).click();

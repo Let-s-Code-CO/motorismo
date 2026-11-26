@@ -13,8 +13,8 @@ import { notify } from '@web/modules/core/lib/toast.lib';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { setServiceDisabled } from '@web/modules/services/actions/services.actions';
 import type { ServiceRow } from '@web/modules/services/api/services.server';
+import ServiceCards from '@web/modules/services/components/organisms/service-cards.component';
 import ServiceForm from '@web/modules/services/components/organisms/service-form.component';
-import ServicesTable from '@web/modules/services/components/organisms/services-table.component';
 
 type ServicesScreenProps = {
   /** The services this user may read: an admin gets the disabled ones too (RLS). */
@@ -90,10 +90,10 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
         )}
       </div>
 
-      <ServicesTable
+      <ServiceCards
         services={active}
         variant="active"
-        label={t('table.label')}
+        label={t('cards.label')}
         emptyLabel={isAdmin ? t('empty') : t('emptyReadOnly')}
         isBusy={isPending}
         {...adminActions}
@@ -119,10 +119,10 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
           </Button>
           {showDisabled && (
             <div id={disabledId}>
-              <ServicesTable
+              <ServiceCards
                 services={disabled}
                 variant="disabled"
-                label={t('table.disabledLabel')}
+                label={t('cards.disabledLabel')}
                 isBusy={isPending}
                 onReactivate={(service) => {
                   toggle(service, false);
@@ -148,6 +148,7 @@ const ServicesScreen = ({ services, isAdmin }: ServicesScreenProps) => {
               <ModalBody className="pb-6">
                 <ServiceForm
                   service={editing?.mode === 'edit' ? editing.service : undefined}
+                  catalog={services}
                   onCancel={onClose}
                   onSaved={() => {
                     const wasEditing = editing?.mode === 'edit';

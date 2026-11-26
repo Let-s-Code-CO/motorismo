@@ -155,6 +155,8 @@ test.describe('on a desktop', () => {
   test('signing in shows the brand while home loads, then home; signing out fades the sign-in page in (CA-12, CA-13)', async ({
     page,
   }) => {
+    // Two waits of up to 30 s on a 30 KB/s network: the test needs more than the default 30 s.
+    test.slow();
     await page.goto('/auth/login');
     await page.getByLabel('Correo').fill(SEED.operator.email);
     await page.getByLabel('Contraseña', { exact: true }).fill(SEED.password);

@@ -104,7 +104,7 @@ const VehiclesSection = ({
                 className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:gap-4"
               >
                 <div className="min-w-0 flex-1">
-                  <VehicleSummary vehicle={vehicle} />
+                  <VehicleSummary vehicle={vehicle} showCategory={!isOwn} />
                 </div>
                 {!readOnly && (
                   <div className="flex shrink-0 gap-1 self-end sm:self-auto">
@@ -184,7 +184,7 @@ const VehiclesSection = ({
             >
               {retired.map((vehicle) => (
                 <li key={vehicle.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
-                  <VehicleSummary vehicle={vehicle} />
+                  <VehicleSummary vehicle={vehicle} showCategory={!isOwn} />
                   <span className="pl-13 text-xs text-default-500">
                     {t('section.retiredOn', {
                       date: format.dateTime(new Date(vehicle.retired_at ?? ''), {
@@ -215,6 +215,7 @@ const VehiclesSection = ({
               </ModalHeader>
               <ModalBody className="pb-6">
                 <VehicleForm
+                  withCategory={!isOwn}
                   customerId={customerId}
                   vehicle={editing?.mode === 'edit' ? editing.vehicle : undefined}
                   onCancel={onClose}

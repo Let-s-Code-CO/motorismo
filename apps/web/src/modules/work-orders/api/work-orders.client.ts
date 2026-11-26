@@ -1,5 +1,6 @@
 import { createSupabaseBrowserClient } from '@web/modules/core/lib/supabase-browser.lib';
 import { toLikePattern } from '@web/modules/customers/utils/customers-filter.utils';
+import { vehicleCategory } from '@web/modules/vehicles/utils/vehicle-category.utils';
 import type {
   EmployeeOption,
   PickerCustomer,
@@ -53,7 +54,9 @@ export const fetchCustomerVehicles = async (customerId: string): Promise<PickerV
   const [vehicles, open] = await Promise.all([
     supabase
       .from('vehicles')
-      .select('id, vehicle_type, plate, vehicle_brands(name), vehicle_lines(name)')
+      .select(
+        'id, vehicle_type, plate, motorcycle_category, vehicle_brands(name), vehicle_lines(name, motorcycle_category)'
+      )
       .eq('customer_id', customerId)
       .is('retired_at', null)
       .order('created_at', { ascending: false }),
@@ -74,6 +77,10 @@ export const fetchCustomerVehicles = async (customerId: string): Promise<PickerV
       plate: vehicle.plate,
       brand_name: vehicle.vehicle_brands.name,
       line_name: vehicle.vehicle_lines?.name ?? null,
+      category: vehicleCategory({
+        motorcycle_category: vehicle.motorcycle_category,
+        line: vehicle.vehicle_lines,
+      }),
       openOrder: order?.id && order.number ? { id: order.id, number: order.number } : null,
     };
   });
@@ -83,11 +90,31 @@ export const fetchCustomerVehicles = async (customerId: string): Promise<PickerV
 export const fetchActiveServices = async (): Promise<ServiceOption[]> => {
   const { data, error } = await createSupabaseBrowserClient()
     .from('services')
-    .select('id, name, price_motorcycle, price_car, price_bicycle, estimated_minutes')
+    .select(
+      'id, name, price_motorcycle, motorcycle_prices, price_car, price_bicycle, estimated_minutes, on_quote, includes:service_inclusions!service_inclusions_service_id_fkey(included_id)'
+    )
     .is('disabled_at', null)
     .order('name');
   if (error) throw new Error(`Could not load the services: ${error.message}`);
-  return data;
+  // Spec 024, HU-05: what each one includes, by id.
+  return data.map(({ includes, ...service }) => ({
+    ...(service as Omit<ServiceOption, 'includes'>),
+    includes: includes.map(({ included_id }) => included_id),
+  }));
+};
+
+/**
+ * The category that counts for a motorcycle (spec 024, RN-04): its own or its line's; null when it
+ * has none (CA-06).
+ */
+export const fetchVehicleCategory = async (vehicleId: string) => {
+  const { data, error } = await createSupabaseBrowserClient()
+    .from('vehicles')
+    .select('motorcycle_category, line:vehicle_lines(motorcycle_category)')
+    .eq('id', vehicleId)
+    .single();
+  if (error) throw new Error(`Could not load the vehicle's category: ${error.message}`);
+  return vehicleCategory(data);
 };
 
 /** The employees that can be assigned to a line: active ones (RN-04). */

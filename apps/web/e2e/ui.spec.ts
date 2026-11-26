@@ -136,7 +136,7 @@ test.describe('on a 360 px phone', () => {
     await expect(page).toHaveURL('/services');
     // Measured once the panel has closed: it is not part of the page.
     await expect(panel).toHaveCount(0);
-    await expect(page.getByRole('grid', { name: 'Servicios activos' })).toContainText(longName);
+    await expect(page.getByRole('region', { name: 'Servicios activos' })).toContainText(longName);
     // The steady state: the panel may still be animating out for a moment under load.
     await expect.poll(() => horizontalOverflow(page)).toBe(0);
     await adminClient().from('services').delete().eq('name', longName);
@@ -323,6 +323,46 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
     await expect.poll(() => horizontalOverflow(page)).toBe(0);
   });
 
+  test('the category dialog of an order and the time of PPF in a reservation have no horizontal scroll (spec 024)', async ({
+    page,
+  }) => {
+    await signIn(page, SEED.operator.email);
+    await expect(page).toHaveURL('/');
+
+    // Tomás's Kawasaki KLX 300 (seeds) has no category: the order asks for it (CA-06).
+    await page.goto('/orders/new');
+    await page.getByLabel('Buscar cliente').fill('TMT78D');
+    await page.getByRole('button', { name: /Tomás Torres/ }).click();
+    await page.getByRole('button', { name: 'Añadir Lavado Pro Wash' }).click();
+    await expect(page.getByRole('dialog', { name: 'Categoría de la moto' })).toBeVisible();
+    await expect.poll(() => horizontalOverflow(page)).toBe(0);
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+
+    // PPF ticked in a new reservation: its time and the estimate in sight (CA-14).
+    await page.goto('/agenda/new');
+    // With the keyboard: the install notice of this iPhone (spec 006) may lie over the list.
+    await page.getByRole('checkbox', { name: 'PPF' }).focus();
+    await page.keyboard.press('Space');
+    await expect(page.getByLabel('Tiempo de PPF (minutos)')).toBeVisible();
+    await page.getByLabel('Tiempo de PPF (minutos)').fill('180');
+    await expect(page.locator('[data-booking-estimate]')).toContainText('≈ 3 h');
+    await expect.poll(() => horizontalOverflow(page)).toBe(0);
+
+    // A package added to an order: the disabled ones say why, in several lines (CA-23, CA-28).
+    await page.goto('/orders/new');
+    await page.getByLabel('Buscar cliente').fill('UIH58E');
+    await page
+      .getByRole('button', { name: /Gabriel/ })
+      .first()
+      .click();
+    await page.getByRole('radio', { name: /UIH-58E/ }).check({ force: true });
+    await page.getByRole('button', { name: /Añadir Combo de lavado Deluxe/ }).click();
+    await expect(
+      page.getByRole('button', { name: 'Quitar Combo de lavado Deluxe de la orden' })
+    ).toBeVisible();
+    await expect.poll(() => horizontalOverflow(page)).toBe(0);
+  });
+
   test('the customer area has no horizontal scroll, the booking form with its estimated time too (specs 014, 017 and 021)', async ({
     page,
   }) => {
@@ -344,7 +384,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
         // Spec 021: the estimated time of the services ticked, with one not estimated named.
         await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
         // With the keyboard: the install notice of this iPhone (spec 006) may lie over the list.
-        for (const name of ['Lavado detallado', 'Recubrimiento cerámico']) {
+        for (const name of ['Combo de lavado Deluxe', 'Limpieza de asientos']) {
           await page.getByRole('checkbox', { name }).focus();
           await page.keyboard.press('Space');
         }

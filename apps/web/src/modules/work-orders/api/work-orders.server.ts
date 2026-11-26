@@ -62,7 +62,7 @@ export const getOrder = async (id: string): Promise<WorkOrderDetail | null> => {
     supabase
       .from('work_order_lines')
       .select(
-        'id, position, service_id, name, price, estimated_minutes, work_order_line_employees(share_pct, employees(id, full_name))'
+        'id, position, service_id, name, price, estimated_minutes, work_order_line_employees(share_pct, employees(id, full_name)), service:services(includes:service_inclusions!service_inclusions_service_id_fkey(included:services!service_inclusions_included_id_fkey(name)))'
       )
       .eq('work_order_id', id)
       .order('position'),
@@ -75,8 +75,10 @@ export const getOrder = async (id: string): Promise<WorkOrderDetail | null> => {
 
   return {
     summary: summary.data,
-    lines: lines.data.map(({ work_order_line_employees, ...line }) => ({
+    lines: lines.data.map(({ work_order_line_employees, service, ...line }) => ({
       ...line,
+      // Spec 024, CA-27: what a package includes.
+      includes: (service?.includes ?? []).map(({ included }) => included.name),
       employees: work_order_line_employees.map(({ share_pct, employees }) => ({
         employee_id: employees.id,
         full_name: employees.full_name,

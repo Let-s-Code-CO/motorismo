@@ -49,7 +49,7 @@ test.beforeAll(async () => {
   const { data: service } = await admin
     .from('services')
     .select('id')
-    .eq('name', 'Lavado sencillo')
+    .eq('name', 'Limpieza de asientos')
     .single();
   const { data: elkin } = await admin
     .from('employees')
@@ -61,7 +61,7 @@ test.beforeAll(async () => {
     employees: [{ employee_id: elkin!.id, share_pct: 100 }],
   };
 
-  // A closed order (Lavado sencillo, $ 25.000 in cash), then an open one for the same motorcycle.
+  // A closed order (Limpieza de asientos, $ 16.000 in cash), then an open one for the same motorcycle.
   const closed = await operator.rpc('save_work_order', {
     p_customer_id: customerId,
     p_vehicle_id: vehicleId!,
@@ -70,7 +70,7 @@ test.beforeAll(async () => {
   closedOrder = closed.data!;
   await operator.rpc('close_work_order', {
     p_id: closedOrder,
-    p_payments: [{ method: 'cash', amount: 25000 }],
+    p_payments: [{ method: 'cash', amount: 16000 }],
   });
   const open = await operator.rpc('save_work_order', {
     p_customer_id: customerId,
@@ -138,7 +138,10 @@ test('an admin corrects a closed order with a reason, then voids it; it stops co
 
   // CA-22: correct the price; the payments follow the new total.
   await page.getByRole('button', { name: 'Corregir' }).click();
-  await page.getByRole('group', { name: 'Lavado sencillo' }).getByLabel('Valor').fill('20.000');
+  await page
+    .getByRole('group', { name: 'Limpieza de asientos' })
+    .getByLabel('Valor')
+    .fill('20.000');
   await page.getByRole('button', { name: 'Continuar: pagos y motivo' }).click();
   const dialog = page.getByRole('dialog', { name: /Corregir la orden/ });
   await expect(dialog.getByLabel('Monto')).toHaveValue('20.000');

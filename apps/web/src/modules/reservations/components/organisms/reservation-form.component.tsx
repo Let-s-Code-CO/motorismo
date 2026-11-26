@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Checkbox, CheckboxGroup, Input, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import BookingEstimate from '@web/modules/core/components/booking-estimate.component';
 import { notify } from '@web/modules/core/lib/toast.lib';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import { saveReservation } from '@web/modules/reservations/actions/reservations.actions';
@@ -26,6 +27,13 @@ import type {
 } from '@web/modules/reservations/types/reservations.types';
 import { isAgendaDate } from '@web/modules/reservations/utils/agenda-date.utils';
 import type { ReservationsErrorKey } from '@web/modules/reservations/utils/reservations-errors.utils';
+import ServiceGroups from '@web/modules/services/components/molecules/service-groups.component';
+import useUnavailableReason from '@web/modules/services/hooks/combination.hook';
+import {
+  byLowestPrice,
+  combinableOf,
+  unavailableServices,
+} from '@web/modules/services/utils/service-combination.utils';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import CustomerPicker from '@web/modules/work-orders/components/organisms/customer-picker.component';
 import { activeServicesQueryOptions } from '@web/modules/work-orders/queries/work-orders.queries';
@@ -34,7 +42,7 @@ import type {
   PickerVehicle,
   ServiceOption,
 } from '@web/modules/work-orders/types/work-orders.types';
-import { referencePrice } from '@web/modules/work-orders/utils/line-price.utils';
+import { isOffered } from '@web/modules/work-orders/utils/line-price.utils';
 
 type ReservationFormProps = {
   /** The chosen day, with its slots: changing the day reloads it from the server. */
@@ -50,13 +58,24 @@ type ReservationFormProps = {
 
 /** The services a reservation can intend (CA-04): active, and offered for the vehicle's type. */
 const servicesFor = (services: ServiceOption[], type: VehicleType | null) =>
-  type ? services.filter((service) => referencePrice(service, type) !== null) : services;
+  type ? services.filter((service) => isOffered(service, type)) : services;
+
+/** The time a reservation being changed gave each service «a convenir» (spec 024, CA-14). */
+const quotedMinutesOf = (reservation?: ReservationSummary) =>
+  Object.fromEntries(
+    (reservation?.service_ids ?? []).flatMap((id, index) => {
+      const minutes = reservation?.service_minutes?.[index];
+      return minutes == null ? [] : [[id, String(minutes)]];
+    })
+  );
 
 /**
  * «Nueva reserva» and changing one (spec 012, HU-01, CA-20): who (registered right there if new,
  * CA-02), which vehicle if known (CA-01), the day and its slot with free seats (CA-03), the services
  * they want (CA-04) and notes. Saving books the seat (CA-05); a slot that filled up meanwhile is
- * said, and the slots come back up to date (CA-06).
+ * said, and the slots come back up to date (CA-06). A service «a convenir» ticked asks for its time,
+ * and the total estimate counts it (spec 024, CA-14). One package at most, and nothing a ticked service
+ * already includes (CA-23 to CA-25): those are disabled, saying why.
  */
 const ReservationForm = ({
   day,
@@ -101,10 +120,13 @@ const ReservationForm = ({
         (day.slots.some((slot) => slot.slot_start === initialStart) ? initialStart : '') ??
         '',
       service_ids: reservation?.service_ids ?? [],
+      service_minutes: quotedMinutesOf(reservation),
       notes: reservation?.notes ?? '',
     },
   });
   const vehicleId = useWatch({ control, name: 'vehicle_id' });
+  const ticked = useWatch({ control, name: 'service_ids' });
+  const quotedMinutes = useWatch({ control, name: 'service_minutes' });
 
   const chooseCustomer = useCallback(
     (next: PickerCustomer | null) => {
@@ -162,6 +184,18 @@ const ReservationForm = ({
     ? (vehicle?.vehicle_type ?? null)
     : (reservation?.vehicle_type ?? null);
   const offered = servicesFor(services.data ?? [], vehicleType);
+  const tickedServices = (ticked ?? []).flatMap((id) => {
+    const service = offered.find((candidate) => candidate.id === id);
+    if (!service) return [];
+    if (!service.on_quote) return [service];
+    // Its time is the one typed for it, once it is a whole number.
+    const typed = String(quotedMinutes?.[id] ?? '').trim();
+    return [{ ...service, estimated_minutes: /^\d+$/.test(typed) ? Number(typed) : null }];
+  });
+  const quotedTicked = tickedServices.filter((service) => service.on_quote);
+  // Spec 024, CA-23 to CA-25: what cannot go with the ticked services, and why.
+  const unavailableReason = useUnavailableReason();
+  const unavailable = unavailableServices(offered.map(combinableOf), ticked ?? []);
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
@@ -223,17 +257,48 @@ const ReservationForm = ({
               value={field.value ?? []}
               onValueChange={field.onChange}
             >
-              {offered.map((service) => (
-                <Checkbox key={service.id} value={service.id}>
-                  {service.name}
-                </Checkbox>
-              ))}
+              <ServiceGroups
+                services={offered}
+                isPackage={(service) => service.motorcycle_prices != null}
+                packageOrder={byLowestPrice}
+                render={(service) => {
+                  const reason = unavailableReason(unavailable.get(service.id));
+                  return (
+                    <Checkbox key={service.id} value={service.id} isDisabled={!!reason}>
+                      <span className="flex flex-col">
+                        {service.name}
+                        {/* Spec 024, CA-23 to CA-25: why it cannot be chosen, read with its name. */}
+                        {reason && <span className="text-xs text-default-500">{reason}</span>}
+                      </span>
+                    </Checkbox>
+                  );
+                }}
+              />
               {services.data && offered.length === 0 && (
                 <p className="text-sm text-default-500">{t('form.noServices')}</p>
               )}
             </CheckboxGroup>
           )}
         />
+        {quotedTicked.map((service) => {
+          const error = errors.service_minutes?.[service.id]?.message;
+          return (
+            <Input
+              key={service.id}
+              {...register(`service_minutes.${service.id}`)}
+              label={t('form.quotedMinutes', { name: service.name })}
+              description={t('form.quotedMinutesHint')}
+              labelPlacement="outside"
+              variant="bordered"
+              inputMode="numeric"
+              className="sm:max-w-xs"
+              classNames={{ input: 'tabular-nums' }}
+              isInvalid={!!error}
+              errorMessage={fieldError(error)}
+            />
+          );
+        })}
+        <BookingEstimate services={tickedServices} />
         <Textarea
           {...register('notes')}
           label={t('form.notes')}

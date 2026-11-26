@@ -7,6 +7,10 @@ import { z } from 'zod';
 import { getActiveAdmin } from '@web/modules/auth/api/auth.server';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
+import {
+  MOTORCYCLE_CATEGORIES,
+  type MotorcycleCategory,
+} from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import { VEHICLE_TYPES } from '@web/modules/vehicles/constants/vehicle-options.constants';
 import { catalogNameSchema } from '@web/modules/vehicles/schemas/vehicle-catalog.schema';
 import {
@@ -26,6 +30,10 @@ const addBrandSchema = catalogNameSchema.extend({
 });
 const addLineSchema = catalogNameSchema.extend({ brandId: z.uuid() });
 const idSchema = z.object({ id: z.uuid() });
+const categorySchema = z.object({
+  id: z.uuid(),
+  category: z.enum(MOTORCYCLE_CATEGORIES as [MotorcycleCategory, ...MotorcycleCategory[]]),
+});
 
 const forbidden: Result = { ok: false, error: 'forbidden' };
 const invalid: Result = { ok: false, error: 'invalidInput' };
@@ -44,7 +52,8 @@ const call = async (
     | 'rename_vehicle_line'
     | 'merge_vehicle_brands'
     | 'merge_vehicle_lines'
-    | 'move_vehicle_line',
+    | 'move_vehicle_line'
+    | 'set_vehicle_line_category',
   args: Record<string, unknown>
 ): Promise<Result> => {
   if (!(await getActiveAdmin())) return forbidden;
@@ -119,4 +128,14 @@ export const markVehicleLineReviewed = async (input: unknown): Promise<Result> =
   const parsed = idSchema.safeParse(input);
   if (!parsed.success) return invalid;
   return call('mark_vehicle_line_reviewed', { p_line_id: parsed.data.id });
+};
+
+/** Spec 024, CA-01: the category of a motorcycle line; the line is reviewed (spec 018, RN-07). */
+export const setVehicleLineCategory = async (input: unknown): Promise<Result> => {
+  const parsed = categorySchema.safeParse(input);
+  if (!parsed.success) return invalid;
+  return call('set_vehicle_line_category', {
+    p_line_id: parsed.data.id,
+    p_category: parsed.data.category,
+  });
 };

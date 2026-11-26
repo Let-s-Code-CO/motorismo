@@ -88,7 +88,14 @@
       "add": "Añadir",
       "fromReservation": "Llegó con la reserva de las {time}",
       "skipped": "No se copiaron de la reserva (ya no se ofrecen para este vehículo): {names}.",
-      "linkReservation": "Al guardar, esta orden queda enlazada a la reserva de las {time}"
+      "linkReservation": "Al guardar, esta orden queda enlazada a la reserva de las {time}",
+      "category": "Categoría de la moto: {category}",
+      "noCategory": "Sin categoría",
+      "onQuote": "A convenir",
+      "byCategory": "Según categoría",
+      "includes": "Incluye: {names}",
+      "removeService": "Quitar",
+      "fromOrder": "de la orden"
     },
     "summary": {
       "subtotal": "Subtotal",
@@ -128,6 +135,7 @@
       "back": "Volver a «Órdenes»",
       "customer": "Cliente",
       "vehicle": "Vehículo",
+      "category": "Categoría de la moto",
       "openedBy": "Recibido el {date} a las {time} por {name}",
       "closedBy": "Entregado el {date} a las {time} por {name}",
       "voidedBy": "Anulada el {date} a las {time} por {name}: {reason}",
@@ -143,7 +151,8 @@
       "startedBy": "Empezada el {date} a las {time} por {name}",
       "start": "Empezar",
       "started": "Orden en proceso.",
-      "reservation": "Viene de la reserva de las {time}"
+      "reservation": "Viene de la reserva de las {time}",
+      "includes": "Incluye: {names}"
     },
     "history": {
       "title": "Historial",
@@ -215,7 +224,9 @@
       "reservationNotToday": "Esa reserva no es de hoy.",
       "reservationMismatch": "La reserva es de otro cliente.",
       "reservationOrderStarted": "Esta orden ya empezó: no se le puede enlazar la reserva.",
-      "reservationOrderHasReservation": "Esta orden ya tiene una reserva."
+      "reservationOrderHasReservation": "Esta orden ya tiene una reserva.",
+      "onePackage": "Solo puede llevar un paquete.",
+      "servicesOverlap": "Hay servicios que ya vienen incluidos en otro de la orden."
     }
   }
 }

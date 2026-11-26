@@ -23,6 +23,7 @@ import {
   vehicleFormSchema,
 } from '@web/modules/vehicles/schemas/vehicle.schema';
 import { formatPlate } from '@web/modules/vehicles/utils/plate.utils';
+import { vehicleCategory } from '@web/modules/vehicles/utils/vehicle-category.utils';
 import type { VehiclesErrorKey } from '@web/modules/vehicles/utils/vehicles-errors.utils';
 
 type VehicleFormProps = {
@@ -32,6 +33,8 @@ type VehicleFormProps = {
   /** Told the vehicle's id (a work order picks the vehicle just registered, spec 008 CA-02). */
   onSaved: (vehicleId: string) => void;
   onCancel: () => void;
+  /** Staff: the motorcycle's category is in sight and may be changed (spec 024, CA-03, CA-05). */
+  withCategory?: boolean;
 };
 
 const fromVehicle = (vehicle: VehicleView): VehicleFormInput => ({
@@ -43,6 +46,8 @@ const fromVehicle = (vehicle: VehicleView): VehicleFormInput => ({
   color: vehicle.color,
   plate: vehicle.plate ? formatPlate(vehicle.plate) : '',
   plate_city_code: vehicle.plate_city_code,
+  motorcycle_category: vehicleCategory(vehicle),
+  line_category: vehicle.line?.motorcycle_category ?? null,
 });
 
 /**
@@ -50,7 +55,13 @@ const fromVehicle = (vehicle: VehicleView): VehicleFormInput => ({
  * the database's refusal and saving. Used by staff in a customer's record and in «Nueva orden», and
  * by the customer in «Mis vehículos».
  */
-const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProps) => {
+const VehicleForm = ({
+  customerId,
+  vehicle,
+  onSaved,
+  onCancel,
+  withCategory = false,
+}: VehicleFormProps) => {
   const t = useTranslations('vehicles');
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<VehiclesErrorKey>();
@@ -66,8 +77,19 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
+    // Spec 024, CA-03: the category in sight is the motorcycle's own only when it is not its line's.
+    const own =
+      values.motorcycle_category && values.motorcycle_category !== values.line_category
+        ? values.motorcycle_category
+        : null;
     const result = await callAction(() =>
-      saveVehicle({ ...values, customer_id: customerId, vehicle_id: vehicle?.id ?? null })
+      saveVehicle({
+        ...values,
+        motorcycle_category: withCategory ? own : null,
+        set_category: withCategory,
+        customer_id: customerId,
+        vehicle_id: vehicle?.id ?? null,
+      })
     );
     if (!result) return; // No network (spec 006, CA-10): the app-wide notice speaks.
     if (!result.ok) {
@@ -83,7 +105,7 @@ const VehicleForm = ({ customerId, vehicle, onSaved, onCancel }: VehicleFormProp
     <form onSubmit={onSubmit} noValidate className="relative flex flex-col gap-5">
       {serverError && <Alert color="danger" variant="faded" title={t(`errors.${serverError}`)} />}
 
-      <VehicleFields form={form} />
+      <VehicleFields form={form} withCategory={withCategory} />
 
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="light" onPress={onCancel}>

@@ -47,6 +47,9 @@ describe('vehicleFormSchema — a valid vehicle of each type', () => {
       color: 'black',
       plate: 'UIH03D',
       plate_city_code: null,
+      // Spec 024: no category chosen, none from a line.
+      motorcycle_category: null,
+      line_category: null,
     });
   });
 

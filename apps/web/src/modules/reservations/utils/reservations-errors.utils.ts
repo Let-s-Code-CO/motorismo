@@ -10,6 +10,9 @@ export type ReservationsErrorKey =
   | 'vehicleRetired'
   | 'vehicleTaken'
   | 'serviceUnavailable'
+  | 'quotedMinutesRequired'
+  | 'onePackage'
+  | 'servicesOverlap'
   | 'weekDisabled'
   | 'dayClosed'
   | 'slotInvalid'
@@ -37,6 +40,12 @@ const BY_HINT: Record<string, ReservationsErrorKey> = {
   reservation_vehicle_taken: 'vehicleTaken',
   reservation_service_inactive: 'serviceUnavailable',
   reservation_service_unavailable: 'serviceUnavailable',
+  // Spec 024, CA-14 / CA-16: a service «a convenir» needs its time, and only staff book it.
+  reservation_quoted_minutes_required: 'quotedMinutesRequired',
+  reservation_service_quoted: 'serviceUnavailable',
+  // Spec 024, CA-26: one package, nothing included twice.
+  services_one_package: 'onePackage',
+  services_overlap: 'servicesOverlap',
   reservation_week_disabled: 'weekDisabled',
   reservation_day_closed: 'dayClosed',
   reservation_slot_invalid: 'slotInvalid',

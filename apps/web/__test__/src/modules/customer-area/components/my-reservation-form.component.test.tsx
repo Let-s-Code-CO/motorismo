@@ -14,7 +14,7 @@
  *   vehicle (the ones it would send), updated as they are ticked.
  * The customer is never chosen here: the server takes it from the session.
  */
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 
 import { arrive } from '@web/modules/core/lib/toast.lib';
 import { saveMyReservation } from '@web/modules/customer-area/actions/customer-area.actions';
@@ -68,6 +68,8 @@ const services: BookableService[] = [
     car: true,
     bicycle: false,
     estimated_minutes: 90,
+    package: false,
+    includes: [],
   },
   {
     id: CHAIN,
@@ -76,6 +78,8 @@ const services: BookableService[] = [
     car: false,
     bicycle: false,
     estimated_minutes: 15,
+    package: false,
+    includes: [],
   },
 ];
 
@@ -222,5 +226,62 @@ describe('MyReservationForm', () => {
         notes: 'Antes de las 11',
       })
     );
+  });
+
+  describe('packages and what they include (spec 024, CA-23, CA-24)', () => {
+    it('disables what a ticked package includes and any other package, saying why', () => {
+      const PREMIUM = '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f80';
+      const DELUXE = '5e6f7a8b-9c0d-4e1f-8a2b-4c5d6e7f8091';
+      const pkg = (id: string, name: string, includes: string[]): BookableService => ({
+        id,
+        name,
+        motorcycle: true,
+        car: false,
+        bicycle: false,
+        estimated_minutes: null,
+        package: true,
+        includes,
+      });
+      renderForm({
+        services: [pkg(PREMIUM, 'Premium', [CHAIN]), pkg(DELUXE, 'Deluxe', []), ...services],
+      });
+
+      fireEvent.click(screen.getByRole('checkbox', { name: /^Premium/ }));
+
+      expect(screen.getByRole('checkbox', { name: /^Limpieza de cadena/ })).toBeDisabled();
+      expect(screen.getByRole('checkbox', { name: /^Limpieza de cadena/ })).toHaveAccessibleName(
+        'Limpieza de cadena Incluido en Premium'
+      );
+      expect(screen.getByRole('checkbox', { name: /^Deluxe/ })).toHaveAccessibleName(
+        'Deluxe Ya hay un paquete: Premium'
+      );
+    });
+
+    it('groups the services: «Paquetes» apart from «Servicios adicionales» (CA-28)', () => {
+      renderForm({
+        services: [
+          {
+            id: '4d5e6f7a-8b9c-4d0e-9f1a-3b4c5d6e7f80',
+            name: 'Premium',
+            motorcycle: true,
+            car: false,
+            bicycle: false,
+            estimated_minutes: null,
+            package: true,
+            includes: [],
+          },
+          ...services,
+        ],
+      });
+
+      expect(
+        within(screen.getByRole('group', { name: 'Paquetes' })).getAllByRole('checkbox')
+      ).toHaveLength(1);
+      expect(
+        within(screen.getByRole('group', { name: 'Servicios adicionales' })).getAllByRole(
+          'checkbox'
+        )
+      ).toHaveLength(2);
+    });
   });
 });

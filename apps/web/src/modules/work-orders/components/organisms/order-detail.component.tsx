@@ -6,6 +6,8 @@ import { useFormatter, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { useQuery } from '@tanstack/react-query';
+
 import { Button } from '@heroui/react';
 import {
   ArrowLeft,
@@ -37,6 +39,7 @@ import OrderSummary from '@web/modules/work-orders/components/molecules/order-su
 import CloseOrderDialog from '@web/modules/work-orders/components/organisms/close-order-dialog.component';
 import OrderEditor from '@web/modules/work-orders/components/organisms/order-editor.component';
 import VoidOrderDialog from '@web/modules/work-orders/components/organisms/void-order-dialog.component';
+import { vehicleCategoryQueryOptions } from '@web/modules/work-orders/queries/work-orders.queries';
 import type { WorkOrderValues } from '@web/modules/work-orders/schemas/work-order.schema';
 import type { WorkOrderDetail } from '@web/modules/work-orders/types/work-orders.types';
 import { orderStage } from '@web/modules/work-orders/utils/order-status.utils';
@@ -71,7 +74,10 @@ type OrderDetailProps = {
    * Spec 012: the customer arrived for a reservation and this vehicle already had this order open:
    * it opens editing, and saving links the reservation to it.
    */
-  reservation?: Pick<ReservationSummary, 'id' | 'service_ids' | 'services' | 'slot_start'>;
+  reservation?: Pick<
+    ReservationSummary,
+    'id' | 'service_ids' | 'services' | 'service_minutes' | 'slot_start'
+  >;
 };
 
 /**
@@ -87,6 +93,12 @@ const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
   const format = useFormatter();
   const router = useRouter();
   const { summary } = order;
+  // Spec 024, CA-04: a motorcycle's category, shared with the editor.
+  const isMotorcycle = summary.vehicle_type === 'motorcycle';
+  const category = useQuery({
+    ...vehicleCategoryQueryOptions(summary.vehicle_id ?? ''),
+    enabled: isMotorcycle && !!summary.vehicle_id,
+  });
   const [editing, setEditing] = useState(
     !!reservation && order.summary.status === 'open' && !order.summary.started_at
   );
@@ -218,6 +230,17 @@ const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
             <dd className="truncate text-base font-medium">
               {[summary.brand_name, summary.line_name].filter(Boolean).join(' ')}
             </dd>
+            {/* Spec 024, CA-04: the category its values come from. */}
+            {isMotorcycle && category.isFetched && (
+              <>
+                <dt className="sr-only">{t('detail.category')}</dt>
+                <dd className="text-xs text-default-500">
+                  {category.data
+                    ? tVehicles(`categories.${category.data}`)
+                    : tVehicles('summary.noCategory')}
+                </dd>
+              </>
+            )}
             <dt className="sr-only">{t('detail.customer')}</dt>
             <dd className="flex min-w-0 items-center gap-1.5 text-default-500">
               <UserRound aria-hidden className="size-4 shrink-0" />
@@ -334,6 +357,12 @@ const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
               <li key={line.id} className="flex flex-wrap items-start justify-between gap-2 p-4">
                 <span className="flex flex-col gap-0.5">
                   <span className="font-medium">{line.name}</span>
+                  {/* Spec 024, CA-27: what a package includes. */}
+                  {line.includes.length > 0 && (
+                    <span className="text-xs text-default-500">
+                      {t('detail.includes', { names: line.includes.join(', ') })}
+                    </span>
+                  )}
                   <span className="text-xs text-default-500">
                     {line.employees.length
                       ? line.employees

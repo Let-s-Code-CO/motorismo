@@ -96,7 +96,7 @@ describe('VehiclesSection — staff on a customer record', () => {
       vehicles: [
         buildVehicle({
           brand: { name: 'Mazda' },
-          line: { name: 'CX-30' },
+          line: { name: 'CX-30', motorcycle_category: null },
           vehicle_type: 'car',
           vehicle_class: 'utility',
           plate: 'KDM482',
@@ -173,7 +173,7 @@ describe('VehiclesSection — correcting and retiring (HU-05)', () => {
       retired: [
         buildVehicle({
           brand: { name: 'Yamaha' },
-          line: { name: 'BWS FI' },
+          line: { name: 'BWS FI', motorcycle_category: null },
           plate: 'JWJ07',
           retired_at: '2026-11-10T15:00:00.000Z',
         }),

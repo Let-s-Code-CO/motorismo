@@ -1,7 +1,7 @@
 {
   "services": {
     "title": "Servicios",
-    "description": "Los servicios que ofrece el negocio y su valor de referencia por tipo de vehículo.",
+    "description": "Los servicios que ofrece el negocio y su valor de referencia por tipo de vehículo y, en las motos, por categoría.",
     "new": "Nuevo servicio",
     "empty": "Aún no hay servicios. Registra el primero con «Nuevo servicio».",
     "emptyReadOnly": "Aún no hay servicios registrados.",
@@ -15,28 +15,21 @@
       "description": "Dejará de ofrecerse en las órdenes nuevas. Puedes reactivarlo cuando quieras desde «Desactivados».",
       "confirm": "Desactivar"
     },
-    "table": {
-      "label": "Servicios activos",
-      "disabledLabel": "Servicios desactivados",
-      "name": "Servicio",
-      "motorcycle": "Moto",
-      "car": "Carro",
-      "bicycle": "Bicicleta",
-      "notOffered": "No disponible",
-      "disabledOn": "Desactivado el {date}",
-      "actionsColumn": "Acciones",
-      "actions": "Acciones de {name}",
-      "edit": "Editar",
-      "disable": "Desactivar",
-      "reactivate": "Reactivar"
-    },
     "form": {
       "titleNew": "Nuevo servicio",
       "titleEdit": "Editar servicio",
       "name": "Nombre del servicio",
       "namePlaceholder": "P. ej. Lavado sencillo",
+      "description": "Descripción",
+      "descriptionHint": "Opcional. P. ej. lo que incluye un paquete.",
+      "onQuote": "A convenir",
+      "onQuoteHint": "Sin valor ni tiempo de referencia: se escriben en cada orden. Se ofrece para cualquier vehículo.",
       "prices": "Valor de referencia",
       "pricesHint": "Déjalo vacío para el tipo de vehículo al que no se le ofrece.",
+      "motorcycleMode": "Valor para moto",
+      "single": "Único",
+      "byCategory": "Por categoría",
+      "byCategoryHint": "Un valor para cada categoría de moto.",
       "motorcycle": "Moto",
       "car": "Carro",
       "bicycle": "Bicicleta",
@@ -45,14 +38,18 @@
       "submitEdit": "Guardar cambios",
       "cancel": "Cancelar",
       "minutes": "Tiempo estimado (min)",
-      "minutesHint": "Opcional. Cuánto suele tardar; se usa para estimar cuándo estará lista una orden."
+      "minutesHint": "Opcional. Cuánto suele tardar; se usa para estimar cuándo estará lista una orden.",
+      "includes": "Incluye",
+      "includesHint": "Los servicios que trae: al elegirlo no se piden aparte. P. ej. un paquete incluye el lavado."
     },
     "validation": {
       "nameRequired": "Escribe el nombre del servicio.",
       "nameTooLong": "El nombre admite hasta 80 caracteres.",
       "priceInvalid": "Escribe un valor en pesos, sin decimales, entre $ 1 y $ 10.000.000.",
       "priceRequired": "Indica el valor de al menos un tipo de vehículo.",
-      "minutesInvalid": "Escribe minutos enteros, entre 5 y 1.440."
+      "minutesInvalid": "Escribe minutos enteros, entre 5 y 1.440.",
+      "categoryPriceRequired": "Escribe el valor de esta categoría.",
+      "descriptionTooLong": "La descripción admite hasta 300 caracteres."
     },
     "errors": {
       "forbidden": "Solo un administrador puede cambiar los servicios.",
@@ -60,7 +57,45 @@
       "nameTaken": "Ya existe un servicio con ese nombre.",
       "nameTakenDisabled": "Ya existe un servicio desactivado con ese nombre: reactívalo desde «Desactivados».",
       "notFound": "Este servicio ya no existe.",
-      "generic": "No se pudo guardar. Inténtalo de nuevo."
+      "generic": "No se pudo guardar. Inténtalo de nuevo.",
+      "inclusionCycle": "No puede incluir un servicio que ya lo incluye a él."
+    },
+    "cards": {
+      "label": "Servicios activos",
+      "disabledLabel": "Servicios desactivados",
+      "groups": {
+        "byCategory": "Paquetes por categoría",
+        "byCategoryHint": "El valor depende de la categoría de la moto.",
+        "single": "Valor único",
+        "singleHint": "Un mismo valor por tipo de vehículo.",
+        "onQuote": "A convenir",
+        "onQuoteHint": "Sin valor de referencia: se acuerda con el cliente."
+      },
+      "rangeLabel": "Moto · según categoría",
+      "range": "{from} a {to}",
+      "byCategory": "Valores por categoría de {name}",
+      "prices": "Valores de {name}",
+      "onQuote": "A convenir",
+      "onQuoteNote": "Valor y tiempo se acuerdan en cada orden.",
+      "duration": "≈ {duration}",
+      "disabledOn": "Desactivado el {date}",
+      "actions": "Acciones de {name}",
+      "edit": "Editar",
+      "disable": "Desactivar",
+      "reactivate": "Reactivar",
+      "types": {
+        "motorcycle": "Moto",
+        "car": "Carro",
+        "bicycle": "Bicicleta"
+      },
+      "includes": "Incluye:"
+    },
+    "combination": {
+      "included": "Incluido en {name}",
+      "package": "Ya hay un paquete: {name}",
+      "overlap": "Se cruza con {name}",
+      "packages": "Paquetes",
+      "extras": "Servicios adicionales"
     }
   }
 }

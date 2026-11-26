@@ -1,12 +1,13 @@
--- Local catalogs for development and E2E tests (spec 007). Real services, prices and employees
--- are entered by an admin in each environment: these never leave the sandbox.
+-- Local catalogs for development and E2E tests (spec 007). Employees are entered by an admin in each
+-- environment: these never leave the sandbox. The motorcycle services are the business's price list,
+-- loaded by migration in every environment (spec 024, CA-17); here only examples for the car and the
+-- bicycle of the seeds, which the list does not cover:
 --
---   Services                 Moto      Carro     Bicicleta
---   Lavado sencillo          25.000    40.000    15.000
---   Lavado detallado         60.000    95.000    —
---   Micropulido              120.000   250.000   —
---   Recubrimiento cerámico   450.000   —         —
---   Polichado (disabled)     80.000    150.000   —
+--   Services                 Carro     Bicicleta
+--   Lavado sencillo          40.000    15.000
+--   Lavado detallado         95.000    —
+--   Micropulido              250.000   —
+--   Polichado (disabled)     150.000   —
 --
 --   Employees                Document            Phone          Commission  Base salary (spec 016)
 --   Elkin Estrada            CC 1020304050       300 111 2233   35 %        1.423.500
@@ -16,12 +17,11 @@
 --   All registered 90 days ago; Diego disabled 20 days ago, so the month before has part of his
 --   base salary (spec 016, RN-04).
 
-insert into public.services (name, price_motorcycle, price_car, price_bicycle) values
-  ('Lavado sencillo', 25000, 40000, 15000),
-  ('Lavado detallado', 60000, 95000, null),
-  ('Micropulido', 120000, 250000, null),
-  ('Recubrimiento cerámico', 450000, null, null),
-  ('Polichado', 80000, 150000, null);
+insert into public.services (name, price_car, price_bicycle) values
+  ('Lavado sencillo', 40000, 15000),
+  ('Lavado detallado', 95000, null),
+  ('Micropulido', 250000, null),
+  ('Polichado', 150000, null);
 
 update public.services set disabled_at = now() - interval '30 days' where name = 'Polichado';
 
@@ -35,7 +35,7 @@ update public.employees set created_at = now() - interval '90 days' where create
 update public.employee_active_periods set started_at = now() - interval '90 days' where started_at > now() - interval '1 minute';
 update public.employees set disabled_at = now() - interval '20 days' where full_name = 'Diego Desactivado';
 
--- Estimated times (spec 008, HU-06): some services have one, «Recubrimiento cerámico» does not.
+-- Estimated times (spec 008, HU-06).
 update public.services set estimated_minutes = 30 where name = 'Lavado sencillo';
 update public.services set estimated_minutes = 90 where name = 'Lavado detallado';
 update public.services set estimated_minutes = 120 where name = 'Micropulido';

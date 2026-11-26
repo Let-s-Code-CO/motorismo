@@ -51,7 +51,9 @@ harán y quién los hace, para que quede registrado desde que entra al lavadero.
   ella.
 - **CA-03** — Dado un vehículo elegido, cuando el personal añade un servicio, entonces solo se le
   ofrecen los servicios activos con valor para ese tipo de vehículo, y la línea toma ese valor de
-  referencia, que se puede cambiar (descuento o recargo).
+  referencia, que se puede cambiar (descuento o recargo). *Enmendado por la spec 024:* en una moto,
+  el valor de su categoría (si no tiene, la orden la pide antes); un servicio «a convenir» se ofrece
+  para todo vehículo y llega sin valor, que se escribe.
 - **CA-04** — Dada una orden, cuando el personal añade varios servicios (p. ej. «Lavado detallado»
   y «PPF», o en una moto «Lavado detallado» y «Mantenimiento de cadena»), entonces cada uno es una
   línea con su valor, y la orden muestra **en todo momento** el subtotal (suma de las líneas), el
@@ -338,3 +340,4 @@ Ninguna. Resueltas con el usuario el 2026-11-20:
 | 2026-11-20 | Verificada: CA-29 alineado con RN-12/CA-34 (la entrega cuenta desde el inicio); se añadieron pruebas del contenido de cada fila de «Órdenes» (CA-18), del vehículo retirado que no se ofrece (CA-10) y la etiqueta CA-35 en pgTAP. |
 | 2026-11-21 | Enmienda de la spec 012: «En cola» se ordena por hora de turno (RN-04 de la 012) y muestra las reservas por llegar (CA-18). Sin reservas, el orden es el de llegada, como antes. |
 | 2026-11-25 | Enmienda de la spec 022: «Registrar cliente» desde «Nueva orden» (CA-01), con su primer vehículo opcional; ambos quedan elegidos. |
+| 2026-11-26 | Enmienda de la spec 024: el valor de referencia de una moto sale de su categoría, que la orden pide si falta; los servicios «a convenir» llegan sin valor y con el tiempo editable (CA-03). |

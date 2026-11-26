@@ -7,6 +7,10 @@ import { z } from 'zod';
 import { getActiveCustomer, getActiveStaff } from '@web/modules/auth/api/auth.server';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 import type { ActionResult } from '@web/modules/core/types/action-result.types';
+import {
+  MOTORCYCLE_CATEGORIES,
+  type MotorcycleCategory,
+} from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import { saveVehicleSchema } from '@web/modules/vehicles/schemas/vehicle.schema';
 import type { VehiclesAudience } from '@web/modules/vehicles/types/vehicles.types';
 import {
@@ -68,6 +72,10 @@ export const saveVehicle = async (
     p_vehicle_id: vehicle.vehicle_id ?? undefined,
     // RN-11: only a car has a plate city (the schema already drops it from other types).
     p_plate_city_code: vehicle.plate_city_code ?? undefined,
+    // Spec 024, CA-03: staff write the motorcycle's own category (null: it follows its line's). A
+    // customer never asks to (CA-05); the database refuses it anyway.
+    p_set_category: who.audience === 'staff' && vehicle.set_category,
+    p_motorcycle_category: vehicle.motorcycle_category ?? undefined,
   });
   if (error) return { ok: false, error: fromVehicleError(error, who.audience) };
 
@@ -101,5 +109,30 @@ export const retireVehicle = async (input: unknown): Promise<ActionResult<Vehicl
   if (!data) return { ok: false, error: 'notFound' };
 
   revalidateVehicles(data.customer_id);
+  return { ok: true };
+};
+
+const vehicleCategorySchema = z.object({
+  vehicle_id: z.uuid(),
+  category: z.enum(MOTORCYCLE_CATEGORIES as [MotorcycleCategory, ...MotorcycleCategory[]]),
+});
+
+/**
+ * Spec 024, CA-06: staff give a motorcycle without category its category from an order; it is kept
+ * on the motorcycle. Only active staff get this far, and the database checks again (CA-05).
+ */
+export const setVehicleCategory = async (
+  input: unknown
+): Promise<ActionResult<VehiclesErrorKey>> => {
+  if (!(await getActiveStaff())) return { ok: false, error: 'forbidden' };
+  const parsed = vehicleCategorySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: 'invalidInput' };
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc('set_vehicle_category', {
+    p_vehicle_id: parsed.data.vehicle_id,
+    p_category: parsed.data.category,
+  });
+  if (error) return { ok: false, error: fromVehicleError(error, 'staff') };
   return { ok: true };
 };

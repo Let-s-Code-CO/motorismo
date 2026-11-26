@@ -5,11 +5,11 @@ import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Alert, Button, Input, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 
 import useClock from '@web/modules/core/hooks/clock.hook';
 import { formatAmount, formatPesos } from '@web/modules/core/utils/money.utils';
@@ -17,6 +17,15 @@ import { singleOption } from '@web/modules/core/utils/selection.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import { linesFromReservation } from '@web/modules/reservations/utils/reservation-lines.utils';
+import ServiceGroups from '@web/modules/services/components/molecules/service-groups.component';
+import useUnavailableReason from '@web/modules/services/hooks/combination.hook';
+import {
+  byLowestPrice,
+  combinableOf,
+  unavailableServices,
+} from '@web/modules/services/utils/service-combination.utils';
+import VehicleCategoryDialog from '@web/modules/vehicles/components/molecules/vehicle-category-dialog.component';
+import type { MotorcycleCategory } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import { saveWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
@@ -25,6 +34,7 @@ import OrderSummary from '@web/modules/work-orders/components/molecules/order-su
 import {
   activeEmployeesQueryOptions,
   activeServicesQueryOptions,
+  vehicleCategoryQueryOptions,
 } from '@web/modules/work-orders/queries/work-orders.queries';
 import {
   type LineInput,
@@ -38,7 +48,12 @@ import type {
   ServiceOption,
   WorkOrderDetail,
 } from '@web/modules/work-orders/types/work-orders.types';
-import { referencePrice, typedPesos } from '@web/modules/work-orders/utils/line-price.utils';
+import {
+  isOffered,
+  needsCategory,
+  referencePrice,
+  typedPesos,
+} from '@web/modules/work-orders/utils/line-price.utils';
 import { orderTotals } from '@web/modules/work-orders/utils/order-totals.utils';
 import type { WorkOrdersErrorKey } from '@web/modules/work-orders/utils/work-orders-errors.utils';
 
@@ -63,7 +78,10 @@ type OrderEditorProps = {
    * The reservation the customer arrived with (spec 012, CA-12, CA-13): a new order starts with its
    * services as the catalog has them now (RN-07); saving turns it into this order.
    */
-  reservation?: Pick<ReservationSummary, 'id' | 'service_ids' | 'services' | 'slot_start'>;
+  reservation?: Pick<
+    ReservationSummary,
+    'id' | 'service_ids' | 'services' | 'service_minutes' | 'slot_start'
+  >;
 };
 
 const asText = (value: number | null | undefined) => (value == null ? '' : formatAmount(value));
@@ -98,8 +116,8 @@ const OrderEditor = ({
   reservation,
 }: OrderEditorProps) => {
   const t = useTranslations('orders');
+  const tv = useTranslations('vehicles');
   const clock = useClock();
-  const [skipped, setSkipped] = useState<string[]>([]);
   const reservationApplied = useRef(false);
   const [serverError, setServerError] = useState<WorkOrdersErrorKey>();
   const services = useQuery(activeServicesQueryOptions());
@@ -138,36 +156,73 @@ const OrderEditor = ({
       : null,
   }));
 
-  const offered = (services.data ?? []).filter(
-    (service) => referencePrice(service, vehicle.vehicle_type) !== null
+  // Spec 024: a motorcycle's category brings the value of services by category (CA-10); without one,
+  // the order asks for it first (CA-06).
+  const queryClient = useQueryClient();
+  const isMotorcycle = vehicle.vehicle_type === 'motorcycle';
+  const categoryQuery = vehicleCategoryQueryOptions(vehicle.id);
+  const vehicleCategory = useQuery({ ...categoryQuery, enabled: isMotorcycle });
+  const category = vehicleCategory.data ?? null;
+  // The services waiting for the category the dialog asks for (a reservation may bring several).
+  const [askingCategory, setAskingCategory] = useState<ServiceOption[]>([]);
+
+  const offered = (services.data ?? []).filter((service) =>
+    isOffered(service, vehicle.vehicle_type)
   );
+  // Spec 024, CA-23 to CA-25: what cannot go with the services already added, and why; CA-27: what
+  // a package includes, by name.
+  const unavailableReason = useUnavailableReason();
+  const unavailable = unavailableServices(
+    offered.map(combinableOf),
+    lines.flatMap((line) => (line.service_id ? [line.service_id] : []))
+  );
+  const includedNames = (serviceId: string | null) => {
+    const included = services.data?.find((option) => option.id === serviceId)?.includes ?? [];
+    return included.flatMap((id) => services.data?.find((option) => option.id === id)?.name ?? []);
+  };
   const active = employees.data ?? [];
   const defaultEmployees = () => {
     const only = singleOption(active);
     return only ? [{ employee_id: only.id, share_pct: '100' }] : [];
   };
 
-  const addService = (service: ServiceOption) =>
+  const addService = (service: ServiceOption, known: MotorcycleCategory | null = category) => {
+    if (needsCategory(service, vehicle.vehicle_type) && !known) {
+      setAskingCategory((waiting) => [...waiting, service]);
+      return;
+    }
     append({
       id: null,
       service_id: service.id,
       name: service.name,
-      price: asText(referencePrice(service, vehicle.vehicle_type)),
+      // CA-13: a service «a convenir» comes without value, to be written.
+      price: asText(referencePrice(service, vehicle.vehicle_type, known)),
       estimated_minutes: service.estimated_minutes == null ? '' : String(service.estimated_minutes),
       employees: defaultEmployees(),
     });
+  };
   // Spec 012, CA-12: a new order from a reservation starts with its services, once, as soon as the
   // catalog and the employees are known (RN-10: the only employee is already on each line).
   useEffect(() => {
     if (!reservation || order || reservationApplied.current || !services.data || !employees.data)
       return;
+    if (isMotorcycle && !vehicleCategory.isFetched) return;
     reservationApplied.current = true;
-    const fromReservation = linesFromReservation(reservation, services.data, vehicle.vehicle_type);
-    fromReservation.services.forEach(addService);
-    setSkipped(fromReservation.skipped);
+    linesFromReservation(reservation, services.data, vehicle.vehicle_type).services.forEach(
+      (service) => addService(service)
+    );
     // addService only reads the vehicle and the employees, both known here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reservation, order, services.data, employees.data]);
+  }, [reservation, order, services.data, employees.data, vehicleCategory.isFetched]);
+  // The services the reservation intended that this order cannot bring (RN-07), named once.
+  const skipped =
+    reservation && !order && services.data
+      ? linesFromReservation(reservation, services.data, vehicle.vehicle_type).skipped
+      : [];
+
+  /** Removes the lines of a catalog service (spec 024, CA-29). */
+  const removeService = (serviceId: string) =>
+    remove(lines.flatMap((line, index) => (line.service_id === serviceId ? [index] : [])));
 
   const addOther = () =>
     append({
@@ -228,33 +283,75 @@ const OrderEditor = ({
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold tracking-tight">{t('editor.services')}</h2>
-        <div className="flex flex-wrap gap-2">
-          {offered.map((service) => (
+        {/* Spec 024, CA-04: the category its values come from. */}
+        {isMotorcycle && vehicleCategory.isFetched && (
+          <p className="text-sm text-default-500">
+            {t('editor.category', {
+              category: category ? tv(`categories.${category}`) : t('editor.noCategory'),
+            })}
+          </p>
+        )}
+        <ServiceGroups
+          services={offered}
+          isPackage={(service) => service.motorcycle_prices != null}
+          packageOrder={byLowestPrice}
+          itemsClassName="flex flex-wrap gap-2"
+          render={(service) => {
+            // CA-29: an added service is never added twice: its button removes it.
+            if (lines.some((line) => line.service_id === service.id))
+              return (
+                <Button
+                  key={service.id}
+                  size="sm"
+                  variant="flat"
+                  startContent={<Minus aria-hidden className="size-3.5 shrink-0" />}
+                  className="h-auto min-h-8 max-w-full flex-wrap justify-start gap-x-1.5 py-1.5 text-start whitespace-normal"
+                  onPress={() => removeService(service.id)}
+                >
+                  <span className="sr-only">{t('editor.removeService')} </span>
+                  {service.name}
+                  <span className="sr-only"> {t('editor.fromOrder')}</span>
+                </Button>
+              );
+            const reason = unavailableReason(unavailable.get(service.id));
+            return (
+              <Button
+                key={service.id}
+                size="sm"
+                variant="bordered"
+                startContent={<Plus aria-hidden className="size-3.5 shrink-0" />}
+                isDisabled={!!reason}
+                // A long reason wraps instead of leaving the screen.
+                className="h-auto min-h-8 max-w-full flex-wrap justify-start gap-x-1.5 py-1.5 text-start whitespace-normal"
+                onPress={() => addService(service)}
+              >
+                {/* The name read aloud contains the visible text (WCAG 2.5.3): «Añadir Micropulido $ …». */}
+                <span className="sr-only">{t('editor.add')} </span>
+                {service.name}
+                <span className="text-default-500 tabular-nums">
+                  {service.on_quote
+                    ? t('editor.onQuote')
+                    : needsCategory(service, vehicle.vehicle_type) && !category
+                      ? t('editor.byCategory')
+                      : formatPesos(referencePrice(service, vehicle.vehicle_type, category) ?? 0)}
+                </span>
+                {/* Spec 024, CA-23 to CA-25: why it cannot be added, read with its name. */}
+                {reason && <span className="text-xs text-default-500">{reason}</span>}
+              </Button>
+            );
+          }}
+          extra={
             <Button
-              key={service.id}
               size="sm"
               variant="bordered"
               startContent={<Plus aria-hidden className="size-3.5" />}
-              onPress={() => addService(service)}
+              onPress={addOther}
             >
-              {/* The name read aloud contains the visible text (WCAG 2.5.3): «Añadir Micropulido $ …». */}
               <span className="sr-only">{t('editor.add')} </span>
-              {service.name}
-              <span className="text-default-500 tabular-nums">
-                {formatPesos(referencePrice(service, vehicle.vehicle_type) ?? 0)}
-              </span>
+              {t('editor.other')}
             </Button>
-          ))}
-          <Button
-            size="sm"
-            variant="bordered"
-            startContent={<Plus aria-hidden className="size-3.5" />}
-            onPress={addOther}
-          >
-            <span className="sr-only">{t('editor.add')} </span>
-            {t('editor.other')}
-          </Button>
-        </div>
+          }
+        />
         {linesError && (
           <p role="alert" className="text-sm text-danger">
             {fieldError(linesError)}
@@ -269,6 +366,7 @@ const OrderEditor = ({
             errors={errors}
             title={field.service_id ? field.name : lines[index]?.name?.trim() || t('editor.other')}
             isOther={!field.service_id}
+            includes={includedNames(field.service_id ?? null)}
             employees={employeesFor(index)}
             onRemove={() => remove(index)}
           />
@@ -327,6 +425,18 @@ const OrderEditor = ({
           </Button>
         </div>
       </div>
+      {/* Spec 024, CA-06: a motorcycle without category is asked for it, then the service is added. */}
+      {askingCategory.length > 0 && (
+        <VehicleCategoryDialog
+          vehicleId={vehicle.id}
+          onClose={() => setAskingCategory([])}
+          onSaved={(chosen) => {
+            queryClient.setQueryData(categoryQuery.queryKey, chosen);
+            askingCategory.forEach((service) => addService(service, chosen));
+            setAskingCategory([]);
+          }}
+        />
+      )}
     </form>
   );
 };

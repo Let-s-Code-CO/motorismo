@@ -11,7 +11,7 @@
  */
 import { screen } from '@testing-library/react';
 
-import BookingEstimate from '@web/modules/customer-area/components/molecules/booking-estimate.component';
+import BookingEstimate from '@web/modules/core/components/booking-estimate.component';
 
 import { renderWithProviders } from '@tests/test-utils/render';
 

@@ -28,10 +28,14 @@ const service = (overrides: Partial<ServiceRow> = {}): ServiceRow => ({
   id: '20000000-0000-4000-8000-000000000001',
   name: 'Lavado sencillo',
   price_motorcycle: 25000,
+  motorcycle_prices: null,
+  on_quote: false,
+  description: null,
   price_car: 40000,
   price_bicycle: 15000,
   estimated_minutes: null,
   disabled_at: null,
+  includes: [],
   ...overrides,
 });
 
@@ -113,7 +117,7 @@ describe('ServicesScreen', () => {
   it('lets an operator only read: no «Nuevo servicio», no actions (CA-15)', () => {
     renderWithProviders(<ServicesScreen services={[service()]} isAdmin={false} />);
 
-    expect(screen.getByRole('row', { name: /Lavado sencillo/ })).toBeVisible();
+    expect(screen.getByRole('article', { name: 'Lavado sencillo' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Nuevo servicio' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Acciones de/ })).not.toBeInTheDocument();
   });

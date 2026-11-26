@@ -52,7 +52,8 @@
     },
     "summary": {
       "displacement": "{value} cc",
-      "noPlate": "Sin placa"
+      "noPlate": "Sin placa",
+      "noCategory": "Sin categoría"
     },
     "form": {
       "titleNew": "Agregar vehículo",
@@ -78,7 +79,10 @@
       "plateCity": "Ciudad de la placa",
       "plateCityPlaceholder": "Escribe o elige la ciudad",
       "noCityMatches": "Ninguna ciudad coincide.",
-      "typeForMoreCities": "Escribe para ver más ciudades."
+      "typeForMoreCities": "Escribe para ver más ciudades.",
+      "category": "Categoría",
+      "categoryPlaceholder": "Elige la categoría",
+      "categoryHint": "La de su línea; cámbiala si esta moto es de otra."
     },
     "retire": {
       "title": "Retirar vehículo",
@@ -153,7 +157,8 @@
         "addLine": "Registrar línea",
         "mergeBrand": "Unir con otra marca",
         "mergeLine": "Unir con otra línea",
-        "moveLine": "Pasar a otra marca"
+        "moveLine": "Pasar a otra marca",
+        "category": "Categoría"
       },
       "rename": {
         "brandTitle": "Renombrar la marca «{name}»",
@@ -203,7 +208,11 @@
         "required": "Escribe el nombre.",
         "tooLong": "El nombre puede tener hasta 60 caracteres."
       },
-      "reviewed": "«{name}» quedó revisada."
+      "reviewed": "«{name}» quedó revisada.",
+      "categoryTitle": "Categoría de {name}",
+      "categoryText": "Sus motos la toman, salvo las que el personal haya cambiado una a una.",
+      "categorySaved": "{name}: {category}.",
+      "noCategory": "Sin categoría"
     },
     "catalogTabs": {
       "label": "Catálogo de vehículos",
@@ -244,6 +253,20 @@
         "notIssuing": "Esta ciudad no expide placas: no lleva leyenda.",
         "generic": "Algo salió mal. Inténtalo de nuevo."
       }
+    },
+    "categories": {
+      "street": "Street/Roadster",
+      "sbk": "SBK/SSP",
+      "scooter": "Scooter",
+      "maxi_scooter": "Maxi Scooter",
+      "trail": "Trail",
+      "maxi_trail": "Maxi Trail",
+      "cruiser": "Cruiser/Clásica",
+      "maxi_cruiser": "Maxi Cruiser"
+    },
+    "categoryDialog": {
+      "title": "Categoría de la moto",
+      "text": "Esta moto aún no tiene categoría: elígela para traer el valor del servicio. Queda guardada en la moto."
     }
   }
 }

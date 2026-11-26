@@ -12,6 +12,8 @@
  *   and «Anular orden» (in its own section at the end); a voided or corrected order says by whom, when and why.
  * - HU-07: an order in the queue offers «Empezar» and shows only its duration; once started it says
  *   by whom and when, and its ready time counts from then (CA-33, CA-34).
+ * - Spec 024, CA-04: a motorcycle's card says its category (or «Sin categoría»); other vehicles none.
+ * - Spec 024, CA-27: a package's line says what it includes.
  */
 import type { ReactNode } from 'react';
 
@@ -20,12 +22,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, screen, within } from '@testing-library/react';
 
 import { startWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
+import { fetchVehicleCategory } from '@web/modules/work-orders/api/work-orders.client';
 import OrderDetail from '@web/modules/work-orders/components/organisms/order-detail.component';
 import type { WorkOrderDetail } from '@web/modules/work-orders/types/work-orders.types';
 
 import { inToasts, renderWithProviders } from '@tests/test-utils/render';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
+vi.mock('@web/modules/work-orders/api/work-orders.client', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  fetchVehicleCategory: vi.fn().mockResolvedValue('sbk'),
+}));
 vi.mock('@web/modules/work-orders/actions/work-orders.actions', () => ({
   saveWorkOrder: vi.fn(),
   startWorkOrder: vi.fn(),
@@ -76,6 +83,7 @@ const detail = (overrides: Partial<WorkOrderDetail['summary']> = {}): WorkOrderD
       name: 'Lavado sencillo',
       price: 25000,
       estimated_minutes: 30,
+      includes: [],
       employees: [{ employee_id: 'e2', full_name: 'Paula Pineda', share_pct: 100 }],
     },
     {
@@ -85,6 +93,7 @@ const detail = (overrides: Partial<WorkOrderDetail['summary']> = {}): WorkOrderD
       name: 'Micropulido',
       price: 120000,
       estimated_minutes: 120,
+      includes: ['Lavado Pro Wash', 'Sellador'],
       employees: [
         { employee_id: 'e1', full_name: 'Elkin Estrada', share_pct: 80 },
         { employee_id: 'e2', full_name: 'Paula Pineda', share_pct: 20 },
@@ -306,6 +315,7 @@ describe('OrderDetail', () => {
               id: 'r9',
               service_ids: [],
               services: [],
+              service_minutes: [],
               slot_start: '2030-06-12T14:00:00Z',
             }}
           />
@@ -316,5 +326,47 @@ describe('OrderDetail', () => {
     expect(
       screen.getByText('Al guardar, esta orden queda enlazada a la reserva de las 9:00 a. m.')
     ).toBeVisible();
+  });
+
+  describe('the category of the motorcycle (spec 024, CA-04)', () => {
+    /** The card's description list: what came in and whose it is. */
+    const vehicleCard = () => screen.getByText('Suzuki GSX-R600').closest('dl')!;
+
+    it('says the category of a motorcycle', async () => {
+      vi.mocked(fetchVehicleCategory).mockResolvedValue('sbk');
+      renderDetail(detail());
+
+      expect(await within(vehicleCard()).findByText('SBK/SSP')).toBeVisible();
+      expect(fetchVehicleCategory).toHaveBeenCalledWith('v1');
+    });
+
+    it('says «Sin categoría» for a motorcycle without one', async () => {
+      vi.mocked(fetchVehicleCategory).mockResolvedValue(null);
+      renderDetail(detail());
+
+      expect(await within(vehicleCard()).findByText('Sin categoría')).toBeVisible();
+    });
+
+    it('says nothing of it for a car', () => {
+      vi.mocked(fetchVehicleCategory).mockClear();
+      renderDetail(
+        detail({
+          vehicle_type: 'car',
+          brand_name: 'Suzuki',
+          line_name: 'GSX-R600',
+          plate: 'KDM482',
+        })
+      );
+
+      expect(within(vehicleCard()).queryByText('Sin categoría')).not.toBeInTheDocument();
+      expect(fetchVehicleCategory).not.toHaveBeenCalled();
+    });
+  });
+
+  it('says on a line what its service includes, and nothing on one that includes nothing (spec 024, CA-27)', () => {
+    renderDetail(detail());
+
+    expect(screen.getByText('Incluye: Lavado Pro Wash, Sellador')).toBeVisible();
+    expect(screen.getAllByText(/^Incluye:/)).toHaveLength(1);
   });
 });

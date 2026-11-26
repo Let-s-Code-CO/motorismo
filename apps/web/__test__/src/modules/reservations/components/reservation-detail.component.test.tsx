@@ -95,6 +95,52 @@ describe('ReservationDetail', () => {
     ).toBeVisible();
   });
 
+  describe('its estimated time (spec 024, CA-14)', () => {
+    const estimateRow = () => screen.queryByText('Tiempo estimado')?.nextElementSibling;
+
+    it('adds the time staff gave a service «a convenir»: 90 + 240 min = «≈ 5 h 30 min»', () => {
+      renderDetail(
+        reservation({
+          services: ['Lavado detallado', 'PPF'],
+          estimated_minutes: 330,
+          unestimated: [],
+        })
+      );
+
+      expect(estimateRow()).toHaveTextContent(/^≈ 5 h 30 min$/);
+    });
+
+    it('names the services without a time', () => {
+      renderDetail(
+        reservation({
+          services: ['Lavado detallado', 'Micropulido'],
+          estimated_minutes: 90,
+          unestimated: ['Micropulido'],
+        })
+      );
+
+      expect(estimateRow()).toHaveTextContent('≈ 1 h 30 min · Sin estimar: Micropulido');
+    });
+
+    it('says «Sin tiempo estimado» when none has a time', () => {
+      renderDetail(
+        reservation({
+          services: ['Micropulido'],
+          estimated_minutes: 0,
+          unestimated: ['Micropulido'],
+        })
+      );
+
+      expect(estimateRow()).toHaveTextContent(/^Sin tiempo estimado$/);
+    });
+
+    it('shows no estimate without services', () => {
+      renderDetail(reservation({ services: [], estimated_minutes: 0, unestimated: [] }));
+
+      expect(estimateRow()).toBeUndefined();
+    });
+  });
+
   it('shows its own tolerance when it has one (CA-24)', () => {
     renderDetail(reservation({ tolerance_minutes: 30, effective_tolerance_minutes: 30 }));
 

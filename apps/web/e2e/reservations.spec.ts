@@ -12,6 +12,9 @@
  *   tolerance has passed is marked «No asistió» (CA-22); the admin gives one its own tolerance
  *   (CA-24).
  *
+ * - Spec 024: staff book a service «a convenir» (PPF) with its time, which the estimate and the
+ *   reservation show (CA-14); «Llegó» brings it to the order with that time and no value (CA-15).
+ *
  * Reservations that depend on the time are written with the secret key, relative to now, so the
  * tests do not depend on the hour they run at (at night there are no slots left to book).
  */
@@ -55,6 +58,7 @@ const reserve = async ({
   start,
   minutes = 60,
   services = [],
+  serviceMinutes = {},
 }: {
   customerEmail?: string;
   customerId?: string;
@@ -63,6 +67,8 @@ const reserve = async ({
   start: string;
   minutes?: number;
   services?: string[];
+  /** The time of a service «a convenir», by its name (spec 024, CA-14). */
+  serviceMinutes?: Record<string, number>;
 }) => {
   const admin = adminClient();
   const [{ data: customer }, { data: profile }, { data: vehicle }, { data: catalog }] =
@@ -95,6 +101,7 @@ const reserve = async ({
       reservation_id: data.id,
       service_id: catalog!.find((service) => service.name === name)!.id,
       position: index + 1,
+      estimated_minutes: serviceMinutes[name] ?? null,
     }))
   );
   created.push(data.id);
@@ -193,7 +200,24 @@ test.describe('the agenda (spec 012)', () => {
     await page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
     await expect(page.getByRole('radio', { name: /UIH-03D/ })).toBeChecked();
     await page.getByRole('radio', { name: /^10:00 a\. m\./ }).check({ force: true });
-    await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
+    await page.getByRole('checkbox', { name: 'Lavado Pro Wash' }).check({ force: true });
+    // Spec 024, CA-23 / CA-28: one package, in its group; Premium includes Pro Wash.
+    await expect(
+      page
+        .getByRole('group', { name: 'Paquetes' })
+        .getByRole('checkbox', { name: /^Paquete de lavado Premium/ })
+    ).toBeDisabled();
+    await expect(
+      page
+        .getByRole('group', { name: 'Servicios adicionales' })
+        .getByRole('checkbox', { name: 'Sellador' })
+    ).toBeEnabled();
+    // Spec 024, CA-14: PPF asks for its time, and the estimate counts it.
+    await page.getByRole('checkbox', { name: 'PPF' }).check({ force: true });
+    await page.getByRole('button', { name: 'Guardar reserva' }).click();
+    await expect(page.getByText('Escribe cuánto tiempo tomará.')).toBeVisible();
+    await page.getByLabel('Tiempo de PPF (minutos)').fill('180');
+    await expect(page.locator('[data-booking-estimate]')).toContainText('Tiempo estimado: ≈ 3 h');
     await page.getByRole('button', { name: 'Guardar reserva' }).click();
 
     await expect(page).toHaveURL(/\/agenda\/[0-9a-f-]{36}$/);
@@ -207,13 +231,15 @@ test.describe('the agenda (spec 012)', () => {
     await expect(page.getByRole('region', { name: 'Avisos' })).not.toContainText(
       'Reserva guardada.'
     );
+    // Pro Wash has no time of reference: PPF's 180 min, and Pro Wash named.
+    await expect(page.getByText('≈ 3 h · Sin estimar: Lavado Pro Wash')).toBeVisible();
 
     await page.goto(`/agenda?date=${monday}`);
     const ten = slot(page, '10:00 a. m. – 11:00 a. m.');
     await expect(ten.getByText('1 de 2 libres')).toBeVisible();
     await expect(
       ten.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.customer.name) })
-    ).toContainText('Lavado detallado');
+    ).toContainText('Lavado Pro Wash');
   });
 
   test('the day lives in the URL: the next day survives a reload (CA-10)', async ({ page }) => {
@@ -346,7 +372,8 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
       customerId,
       vehicleId: vehicleId!,
       start: minutesFromNow(-5),
-      services: ['Lavado sencillo'],
+      services: ['Lavado Pro Wash', 'PPF'],
+      serviceMinutes: { PPF: 240 },
     });
     await signIn(page, SEED.operator.email);
     await expect(page).toHaveURL('/');
@@ -364,12 +391,20 @@ test.describe('the customer arrives (spec 012, HU-03)', () => {
     await page.getByRole('button', { name: 'Llegó' }).click();
     await expect(page).toHaveURL(`/orders/new?reservation=${id}`);
     await expect(page.getByText(/^Llegó con la reserva de las/)).toBeVisible();
-    await expect(page.getByRole('group', { name: 'Lavado sencillo' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Lavado Pro Wash' })).toBeVisible();
+    // Spec 024, CA-15: PPF with the time given in the reservation, and its value to write.
+    const ppf = page.getByRole('group', { name: 'PPF' });
+    await expect(ppf.getByLabel('Tiempo (min)')).toHaveValue('240');
+    await expect(ppf.getByRole('textbox', { name: /Valor/ })).toHaveValue('');
     await page.goto(`/agenda/${id}`);
     await expect(page.getByText('Pendiente', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Llegó' }).click();
-    await expect(page.getByRole('group', { name: 'Lavado sencillo' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Lavado Pro Wash' })).toBeVisible();
+    await page
+      .getByRole('group', { name: 'PPF' })
+      .getByRole('textbox', { name: /Valor/ })
+      .fill('500.000');
     await page.getByRole('button', { name: 'Abrir orden' }).click();
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
     await expect(

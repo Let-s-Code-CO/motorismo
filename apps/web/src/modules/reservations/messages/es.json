@@ -57,6 +57,8 @@
       "services": "Servicios (opcional)",
       "servicesHint": "Lo que el cliente quiere hacerse; el valor se toma al llegar.",
       "noServices": "No hay servicios activos.",
+      "quotedMinutes": "Tiempo de {name} (minutos)",
+      "quotedMinutesHint": "Se acuerda con el cliente: cuánto ocupará.",
       "notes": "Observaciones (opcional)",
       "save": "Guardar reserva",
       "saveChanges": "Guardar cambios",
@@ -69,6 +71,10 @@
       "phone": "Celular",
       "vehicle": "Vehículo",
       "services": "Servicios",
+      "estimate": "Tiempo estimado",
+      "estimateValue": "≈ {duration}",
+      "estimateMissing": "Sin estimar: {names}",
+      "estimateNone": "Sin tiempo estimado",
       "slot": "Franja",
       "tolerance": "Tolerancia de llegada",
       "toleranceGeneral": "{minutes} min (la general)",
@@ -146,7 +152,9 @@
       "slotMinutesRange": "De 15 a 240 minutos, de 15 en 15.",
       "seatsRange": "De 1 a 20 puestos.",
       "toleranceRange": "De 0 a 60 minutos.",
-      "reasonTooLong": "Máximo 200 caracteres."
+      "reasonTooLong": "Máximo 200 caracteres.",
+      "quotedMinutesRequired": "Escribe cuánto tiempo tomará.",
+      "quotedMinutesRange": "Escribe entre 5 y 1.440 minutos."
     },
     "errors": {
       "forbidden": "No tienes permiso para gestionar reservas.",
@@ -171,7 +179,10 @@
       "dayInvalid": "Revisa el horario del día marcado.",
       "generic": "No se pudo guardar. Inténtalo de nuevo.",
       "toleranceMax": "Ya tiene el máximo de 60 minutos de espera.",
-      "tolerancePassed": "Ya pasó su tolerancia: no se le puede dar más tiempo."
+      "tolerancePassed": "Ya pasó su tolerancia: no se le puede dar más tiempo.",
+      "quotedMinutesRequired": "Escribe el tiempo de cada servicio a convenir.",
+      "onePackage": "Solo se puede elegir un paquete.",
+      "servicesOverlap": "Hay servicios que ya vienen incluidos en otro elegido."
     }
   }
 }

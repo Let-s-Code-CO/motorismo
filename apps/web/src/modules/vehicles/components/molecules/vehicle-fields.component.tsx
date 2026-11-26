@@ -1,17 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, type DefaultValues, type UseFormReturn, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
 import { useQuery } from '@tanstack/react-query';
 
-import { Input, NumberInput, Radio, RadioGroup } from '@heroui/react';
+import { Input, NumberInput, Radio, RadioGroup, Select, SelectItem } from '@heroui/react';
 
 import CatalogAutocomplete from '@web/modules/vehicles/components/molecules/catalog-autocomplete.component';
 import ColorSelect from '@web/modules/vehicles/components/molecules/color-select.component';
 import PlateCityAutocomplete from '@web/modules/vehicles/components/molecules/plate-city-autocomplete.component';
+import {
+  MOTORCYCLE_CATEGORIES,
+  type MotorcycleCategory,
+} from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import {
   CLASSES_BY_TYPE,
   DEFAULT_PLATE_CITY,
@@ -51,6 +55,11 @@ const FIELD = {
 type VehicleFieldsProps = {
   /** The form the fields belong to: «Mi vehículo» or the first vehicle of a new customer. */
   form: UseFormReturn<VehicleFormInput, unknown, VehicleFormValues>;
+  /**
+   * Staff: a motorcycle's category, taken from its line and changeable for this motorcycle (spec 024,
+   * CA-02, CA-03). Never for a customer (CA-05).
+   */
+  withCategory?: boolean;
 };
 
 /**
@@ -63,7 +72,7 @@ type VehicleFieldsProps = {
  * the same fields and rules wherever it is registered. Its drop-downs are drawn inside it, so inside a
  * modal they stay visible to screen readers.
  */
-const VehicleFields = ({ form }: VehicleFieldsProps) => {
+const VehicleFields = ({ form, withCategory = false }: VehicleFieldsProps) => {
   const t = useTranslations('vehicles');
   const [popoverRoot, setPopoverRoot] = useState<HTMLDivElement | null>(null);
   const portalContainer = popoverRoot ?? undefined;
@@ -90,6 +99,21 @@ const VehicleFields = ({ form }: VehicleFieldsProps) => {
     if (!cities.data.some(({ code }) => code === cityCode)) setValue('plate_city_code', null);
   }, [cities.data, cityCode, setValue]);
   const classes = CLASSES_BY_TYPE[type];
+
+  // Spec 024, CA-02: the line chosen brings its category; the one the form opened with is kept.
+  const lineName = useWatch({ control, name: 'line_name' }) ?? '';
+  const line = findInCatalog(lines.data ?? [], lineName);
+  const shownLine = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (type !== 'motorcycle' || !lines.data) return;
+    const lineCategory = line?.category ?? null;
+    setValue('line_category', lineCategory);
+    const changed = shownLine.current !== undefined && shownLine.current !== (line?.id ?? '');
+    if (changed || !getValues('motorcycle_category')) {
+      setValue('motorcycle_category', lineCategory);
+    }
+    shownLine.current = line?.id ?? '';
+  }, [type, lines.data, line?.id, line?.category, setValue, getValues]);
 
   const changeType = (next: VehicleType) => {
     setValue('vehicle_type', next);
@@ -227,6 +251,31 @@ const VehicleFields = ({ form }: VehicleFieldsProps) => {
                 isInvalid={!!errors.displacement_cc}
                 errorMessage={fieldError(errors.displacement_cc?.message)}
               />
+            )}
+          />
+        )}
+        {type === 'motorcycle' && withCategory && (
+          <Controller
+            control={control}
+            name="motorcycle_category"
+            render={({ field }) => (
+              <Select
+                {...FIELD}
+                label={t('form.category')}
+                placeholder={t('form.categoryPlaceholder')}
+                description={t('form.categoryHint')}
+                selectedKeys={field.value ? [field.value] : []}
+                onSelectionChange={(keys) => {
+                  const [key] = Array.from(keys);
+                  if (key) field.onChange(key as MotorcycleCategory);
+                }}
+                onBlur={field.onBlur}
+                popoverProps={{ portalContainer, shouldCloseOnScroll: false }}
+              >
+                {MOTORCYCLE_CATEGORIES.map((category) => (
+                  <SelectItem key={category}>{t(`categories.${category}`)}</SelectItem>
+                ))}
+              </Select>
             )}
           />
         )}
