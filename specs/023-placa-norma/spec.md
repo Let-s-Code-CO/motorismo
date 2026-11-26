@@ -1,7 +1,7 @@
 ---
 id: "023"
 titulo: "Placa según la norma colombiana"
-estado: implementada
+estado: verificada
 creada: 2026-11-25
 actualizada: 2026-11-25
 ---
@@ -166,6 +166,13 @@ reconocerla igual que en la ficha.
   toman de los planos de antiguos y clásicos, que tienen la misma caja; la posición vertical exacta de
   los caracteres de carro se ajusta para centrarlos, porque esos planos llevan además la palabra
   ANTIGUO o CLÁSICO arriba.
+- Lo que los planos no dejan claro se tomó así, coherente con el resto del dibujo:
+  - esquina de la placa de moto de radio 8 (el plano rotula «R30», que no cabe en la esquina);
+  - radios del marco concéntricos con la esquina: 8 y 4 en el carro, 5,5 y 3 en la moto (solo se rotula
+    R12);
+  - 8 mm entre la leyenda del carro y el marco (el escaneo parece decir «6», pero así no suma 160);
+  - círculo de la moto de 15 mm de diámetro, como está acotado (en el dibujo mide unos 17);
+  - alto de los caracteres de moto de 54 mm, el del plano de la placa (la hoja de letras dibuja 56).
 - El municipio de la placa es el de la sede del organismo de tránsito (la norma dice «el municipio
   donde está radicada la cuenta del vehículo»).
 - La leyenda por defecto quita las tildes (como en las placas reales) y conserva los demás signos
@@ -201,3 +208,4 @@ Ninguna.
 | 2026-11-25 | Decisión del usuario al implementar: «Ciudades de placa» es una pestaña de «Marcas y líneas», no una sección nueva. |
 | 2026-11-25 | Decisiones del usuario al verla en el navegador: la placa de las fichas con el alto de antes (unos 35–39 px), un poco más pequeña en las listas de clientes y, en «Clientes», a la derecha del nombre y el correo (CA-12); la leyenda crece en pantalla solo lo justo para leerse, como mucho 1,4×, sin quitarle el hueco a los caracteres, y la ciudad de un carro a su tamaño de norma (RN-06). Corregida la M del calco (la V llega en punta al centro de la base, como en el plano). |
 | 2026-11-25 | Implementada: estado `implementada`. |
+| 2026-11-25 | `/verificar`: CA-01 a CA-12, RF y RN ✅ tras cinco correcciones. Un carro corregido a una ciudad que no expide placas recibe «Elige una ciudad de la lista.» (CA-08). Se añaden pruebas del radio y el marco (CA-01, CA-02), del crecimiento de la leyenda y los trazos mínimos en el componente (RN-06) y de la placa a la derecha en «Clientes» (CA-12). Las medidas inferidas pasan a «Suposiciones». Estado `verificada`. |

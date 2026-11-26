@@ -10,6 +10,8 @@
  *   «COLOMBIA» on a motorcycle's;
  * - every plate of one size has the same width, whatever its letters (CA-03); in lists of customers,
  *   the same whole plate, a little smaller (CA-12): there is no one-line version any more.
+ * On a screen (RN-06), a legend too small to read grows, at most 1.4 times the norm's (COLOMBIA, 10.5 mm
+ * high, would be under 4 px), while a car's city keeps the norm's size; no line is thinner than 1 px.
  * The drawing is never the only way to read it (CA-06): assistive technologies hear the plate with its
  * hyphen and, for a car, its city; the drawing, the circle and «COLOMBIA» are hidden from them.
  */
@@ -145,5 +147,51 @@ describe('PlateLabel', () => {
 
     // 26 characters, 3 of them spaces: 23 letters drawn.
     expect(svg.querySelectorAll('[data-legend-glyphs] path')).toHaveLength(23);
+  });
+
+  describe('on a screen (RN-06)', () => {
+    const legendScale = (svg: SVGSVGElement) =>
+      Number(
+        /scale\(([\d.]+)\)/.exec(
+          svg.querySelector('[data-legend-glyphs]')!.getAttribute('transform')!
+        )![1]
+      );
+
+    it('grows COLOMBIA, at most 1.4 times: at 80 px it would be 10.5 × 80 / 235 = 3.6 px high', () => {
+      const { svg } = draw(<PlateLabel plate="UIH03D" />);
+
+      expect(legendScale(svg)).toBeGreaterThan(1);
+      expect(legendScale(svg)).toBeLessThanOrEqual(1.4);
+    });
+
+    it('stops COLOMBIA at 1.4 times when small: at 72 px it would need 5 / 3.2 = 1.56', () => {
+      const { svg } = draw(<PlateLabel plate="UIH03D" size="sm" />);
+
+      expect(legendScale(svg)).toBeCloseTo(1.4);
+    });
+
+    it('keeps a car’s city at the norm’s size: 22 × 80 / 330 = 5.3 px, readable already', () => {
+      const { svg } = draw(<PlateLabel plate="ABC123" city="Medellín" />);
+
+      expect(legendScale(svg)).toBe(1);
+    });
+
+    it.each([
+      ['md', 'UIH03D', 80, 235],
+      ['sm', 'UIH03D', 72, 235],
+      ['sm', 'ABC123', 72, 330],
+    ] as const)(
+      'draws no line thinner than 1 px (%s %s: %i px for %i mm)',
+      (size, plate, px, mm) => {
+        const { svg } = draw(<PlateLabel plate={plate} city="Cali" size={size} />);
+        const pxPerMm = px / mm;
+        const onScreen = (selector: string, scale = 1) =>
+          Number(svg.querySelector(selector)!.getAttribute('stroke-width')) * scale * pxPerMm;
+
+        expect(onScreen('rect')).toBeGreaterThanOrEqual(1);
+        expect(onScreen('circle')).toBeGreaterThanOrEqual(1);
+        expect(onScreen('[data-legend-glyphs]', legendScale(svg))).toBeGreaterThanOrEqual(1);
+      }
+    );
   });
 });

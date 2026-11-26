@@ -3,7 +3,8 @@
  *
  * Guards CA-17 (a whole or partial plate, with or without hyphen, in any case, finds the owner),
  * CA-18 (a retired plate no longer finds its former owner) and CA-19 (the row shows the plate that
- * matched, compact: one line without "COLOMBIA", CA-29). Uses the seeds: Camila has UIH-03D active
+ * matched; since spec 023, CA-12, the whole plate with «COLOMBIA», smaller, on the right of name and
+ * email, instead of CA-29's one line). Uses the seeds: Camila has UIH-03D active
  * and JWJ-07 retired.
  */
 import { expect, test } from '@playwright/test';
@@ -31,6 +32,10 @@ test('finds the owner by the plate written any way, and shows it (CA-17, CA-19)'
     await expect(camila).toContainText('UIH-03D');
     // Spec 023, CA-12 (amends CA-29): the whole plate, smaller, with COLOMBIA below.
     await expect(camila.locator('[data-plate]')).toHaveAttribute('data-legend', 'COLOMBIA');
+    // On the right of name and email, not under them (spec 023, CA-12).
+    const plateBox = (await camila.locator('[data-plate]').boundingBox())!;
+    const emailBox = (await camila.getByText(SEED_CUSTOMERS.customer.email).boundingBox())!;
+    expect(plateBox.x).toBeGreaterThanOrEqual(emailBox.x + emailBox.width);
     await expect(page.getByRole('grid').getByRole('row')).toHaveCount(2); // header + Camila
   }
 

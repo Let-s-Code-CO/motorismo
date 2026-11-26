@@ -46,7 +46,10 @@ describe('plateLayout', () => {
     expect(car.characters[0]!.y).toBe(25);
     expect(car.legend.y).toBe(113);
     expect(car.circle.cy).toBe(65);
+    // The frame: from 4 to 8 mm in from the edge, its centre line at 6, rounded with the plate's
+    // corner (R12): radii 8 outside and 4 inside, 6 on the centre line.
     expect(car.frame).toEqual({ inset: 6, width: 4, radius: 6 });
+    expect(car.radius).toBe(12);
   });
 
   it('lays a motorcycle plate out with the norm: 3 + 2.5 + 5 + (28 + 5) × 2 + 28 + 26 + … = 235 (CA-02)', () => {
@@ -59,6 +62,9 @@ describe('plateLayout', () => {
     // «COLOMBIA»: 8 letters of 5 and 7 gaps of 5 = 75 mm, centred: (235 − 75) / 2 = 80.
     expect(moto.legend).toMatchObject({ x: 80, y: 79, width: 75, scale: 1 });
     expect(moto.circle).toMatchObject({ cx: 117.5, cy: 42.5, r: 7.5 });
+    // The frame: 3 mm in, 2.5 thick (centre line at 4.25), with the corner R8: radii 5.5 and 3.
+    expect(moto.frame).toEqual({ inset: 4.25, width: 2.5, radius: 4.25 });
+    expect(moto.radius).toBe(8);
   });
 
   it('centres a car legend that fits at the norm size: BOGOTA, 6 × 12 + 5 × 5 = 97 mm (CA-01)', () => {

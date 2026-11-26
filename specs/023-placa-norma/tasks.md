@@ -198,3 +198,9 @@ limpio):
 | `sm` del mismo ancho que `md` | `plate-label.component.test` (CA-03) |
 | El ancho depende de las letras (`…E` a 6rem) | `style.spec.ts` (CA-03, en px) |
 | «Volver a clientes» lleva a `/customers` | `customers.spec.ts` (CA-33) |
+| Sin traducir `vehicle_plate_city_not_issuing` (escrita antes) | `vehicles-errors.utils.test` (CA-08) |
+| Radio 10 y marco de moto de 3 mm | `plate-layout.utils.test` (CA-01, CA-02) |
+| Tope de crecimiento 2 en vez de 1,4 | `plate-label.component.test` (72 px: se queda en 1,4) |
+| Objetivo de 8 px en vez de 5 | `plate-label.component.test` (la ciudad de un carro no crece) |
+| Trazo mínimo de 0 px | `plate-label.component.test` (3 pruebas: marco, círculo, leyenda ≥ 1 px) |
+| La placa de «Clientes» bajo el nombre | `vehicles-search.spec.ts` (a la derecha del correo, CA-12) |
