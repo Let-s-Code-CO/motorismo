@@ -5,23 +5,18 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 
 ## Pendientes de especificar
 
-### Operación
-
-
-1. **Confirmación por WhatsApp** (deseable), también como recordatorio de reservas (spec 012).
+Ninguno por ahora. (La confirmación por WhatsApp se descartó el 2026-11-26.)
 
 ## Deuda técnica y tareas de plataforma
 
 - Definir la rama de producción y su entorno en Vercel/Supabase (hoy solo existe `develop`).
 - Crear los proyectos de Vercel y Supabase y cargar variables y secrets (ver spec 001, plan).
-- Modo sin conexión y notificaciones push: descartados por ahora (spec 006); push se revisará
-  con la confirmación por WhatsApp o las reservas.
-- Estabilizar dos E2E intermitentes: cada una falló una vez en una corrida completa (2026-11-25)
-  y pasa aislada. `reservations.spec.ts` «a reservation moves to another slot…» falló porque
-  `check({ force: true })` del radio de las 4:00 p. m. no cambió su estado. `loading.spec.ts`
-  «going back finds the list where it was» no recuperó el desplazamiento al volver. También
-  `vehicle-catalog.spec.ts` «adds a really new brand and line to the catalog, once» (una vez, en la
-  corrida completa de la spec 021).
+- Modo sin conexión y notificaciones push: descartados por ahora (spec 006).
+- Accesibilidad (WCAG 2.4.2): al navegar entre pantallas con la red lenta, la pestaña queda
+  alrededor de un segundo sin `<title>`. Next 16 quita los metadatos de la pantalla anterior al
+  mostrar el esqueleto y pone los nuevos cuando llegan. Medido el 2026-11-26 con 800 ms de latencia y
+  30 KB/s; la auditoría del esqueleto (`loading.spec.ts`) espera a que vuelva el título. Decidir si se
+  corrige en la app.
 
 ## Especificadas
 
