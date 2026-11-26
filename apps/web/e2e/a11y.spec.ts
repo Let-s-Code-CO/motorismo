@@ -642,3 +642,25 @@ test('«Marcas y líneas», its rename dialog with an error and its merge dialog
   );
   expect(await audit(page)).toEqual([]);
 });
+
+test('«Ciudades de placa» and its legend dialog with an error have no serious accessibility issues (spec 023, CA-06, CA-10)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await signIn(page, SEED.admin.email);
+  await expect(page).toHaveURL('/');
+
+  await page.goto('/admin/vehicle-catalog/plate-cities');
+  await expect(page.getByRole('list', { name: 'Ciudades de placa' })).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  // With its error in sight (CLAUDE.md: forms are audited with their errors); nothing is saved.
+  await page.getByLabel('Buscar ciudad').fill('bogota');
+  await page.getByRole('button', { name: 'Cambiar leyenda de Bogotá, D.C.' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Leyenda de Bogotá, D.C.' });
+  await dialog.getByLabel('Leyenda en la placa').fill('BOGOTÁ');
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+  await expect(dialog.getByText('Escríbela sin tildes, como en la placa.')).toBeVisible();
+  await untilDialogSettled(page);
+  expect(await audit(page)).toEqual([]);
+});

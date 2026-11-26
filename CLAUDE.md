@@ -63,8 +63,8 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
     metálica (`[data-plate]`, destello que cruza una vez solo con movimiento permitido).
   - **Cifras:** una cifra sola (precio, celular, conteo, fecha en tabla) es `tabular-nums`, en
     Geist Mono; los `th` van en mono y mayúsculas espaciadas. Una línea que mezcla palabras y cifras
-    («2 vehículos», «CC … · Sin celular», una frase con un valor) y la placa usan `tabular-figures`
-    (cifras alineadas en Geist).
+    («2 vehículos», «CC … · Sin celular», una frase con un valor) usa `tabular-figures` (cifras
+    alineadas en Geist). La placa no usa fuente: es un dibujo (spec 023).
   - **Encabezado e inicio:** encabezado en píldora flotante, con la sección actual en el acento;
     inicio del personal en escritorio como bento de cuatro columnas con «Órdenes» de dos por dos (y
     su esqueleto igual). El teléfono conserva la forma de la spec 009.
@@ -131,6 +131,9 @@ pnpm 12 (workspaces, `nodeLinker: isolated`) + Turborepo. Node 24 (`.nvmrc`).
   + «Sin cuenta»), se dibuja como un panel que las contiene (`parts`) y cada una sigue filtrando
   sola. Componentes compartidos en `core`: `summary-filter-cards`,
   `filter-bar` y `status-filter.utils` (specs 003 CA-09 y 004 CA-17; los usan Usuarios y Clientes).
+  Una ficha abierta desde «Clientes» lleva el estado de la lista en `?list=` y «Volver a clientes»
+  vuelve a él (`customerRecordHref` / `customersListHref`, que solo admite los filtros de la lista;
+  spec 004, CA-33).
 - Accesibilidad: `e2e/a11y.spec.ts` audita con axe (WCAG 2.1 AA) y debe seguir en verde; las
   pantallas nuevas se añaden a esa auditoría.
   Audita también los formularios con sus errores a la vista.
@@ -409,6 +412,26 @@ e2e/                         # Playwright
   (`/reports/payroll?month=AAAA-MM`, el detalle en `/reports/payroll/{empleado}` y el Excel en
   `…/export`, con hojas «Resumen» y «Detalle»). Cerrar y regenerar van con `ConfirmDialog`,
   `callAction` y `notify`.
+
+## Placa según la norma (spec 023)
+
+- **Dibujo:** `PlateLabel` es un SVG en milímetros: carro 330 × 160, moto 235 × 105 (ficha MT 001;
+  Res. 3257 de 2018). Medidas en `plate-layout.utils` (`PLATE_SPECS`, `plateLayout`) y caracteres
+  trazados de los planos en `plate-glyphs.constants` (línea central, trazo de la norma, sin fuentes).
+  En el hueco central, un círculo discreto, nunca el logo del Ministerio. Relieve: filtro SVG sobre
+  marco, caracteres y círculo; la leyenda va sin él. El envoltorio conserva `data-plate` (metal y
+  destellos de la spec 019) y expone `data-legend` (lo que dice debajo), que usan las pruebas.
+- **Tamaños:** `md` (80 px, fichas, órdenes, «Ciudades de placa») y `sm` (72 px, «Clientes» y el
+  buscador de clientes); el mismo ancho para todas las de un tamaño y el alto por proporción.
+- **Pantalla (RN-06):** una leyenda por debajo de 5 px crece hasta 1,4× sin quitar el hueco; ningún
+  trazo baja de 1 px. El lector oye «UIH-03D» y, en un carro, su ciudad (`sr-only`).
+- **Leyenda:** `plateLegend(ciudad, leyenda)`: la propia del municipio o su nombre en mayúsculas, sin
+  tildes y con Ñ. El admin la cambia en «Marcas y líneas» → «Ciudades de placa»
+  (`/admin/vehicle-catalog/plate-cities`) con `set_plate_legend` (hasta 17 caracteres
+  `^[A-ZÑ0-9 .,-]$`).
+- **Ciudades:** solo los 294 municipios con organismo de tránsito del RUNT
+  (`municipalities.issues_plates`); `vehicles_guard` lo exige al registrar o al cambiar la ciudad
+  (`vehicle_plate_city_not_issuing`), y un carro antiguo conserva la suya.
 
 ## Marcas y líneas de vehículos (spec 018)
 

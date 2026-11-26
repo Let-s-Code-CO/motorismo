@@ -8,12 +8,17 @@
  * - CA-17: the filter is a status or "active" (with or without account, not disabled); anything
  *   else means "no filter" (never an empty list).
  * - RF-05: pages of 20; a missing, zero, negative or non-numeric page is page 1.
+ * - CA-33: a record opened from the list carries the list's state, so «Volver a clientes» returns to
+ *   the same filter, search and page; anything else in that state is ignored (it only ever leads back
+ *   to the list).
  * - spec 005, CA-17 / CA-19: a plate is found written any way ("UIH-03", "uih 03": the database
  *   keeps plates without separators), and the row shows which plate matched.
  */
 import {
   CUSTOMERS_PAGE_SIZE,
   activeCount,
+  customerRecordHref,
+  customersListHref,
   customersQueryString,
   matchingPlate,
   normalizeSearch,
@@ -142,5 +147,29 @@ describe('activeCount', () => {
   it('adds customers with and without account, leaving out the disabled ones (CA-17)', () => {
     // 3 with account + 2 without = 5 active; the disabled one does not count.
     expect(activeCount({ registered: 3, walk_in: 2, disabled: 1 })).toBe(5);
+  });
+});
+
+describe('customerRecordHref and customersListHref (CA-33)', () => {
+  it('opens a record carrying the list it came from, and goes back to that list', () => {
+    const href = customerRecordHref('c-1', { q: 'uih 03', status: 'active', page: 2 });
+
+    expect(href).toBe('/customers/c-1?list=q%3Duih%2B03%26status%3Dactive%26page%3D2');
+    const list = new URL(href, 'https://app.test').searchParams.get('list');
+    expect(customersListHref(list)).toBe('/customers?q=uih+03&status=active&page=2');
+  });
+
+  it('opens a record from the whole list without anything to carry', () => {
+    expect(customerRecordHref('c-1', { q: '', status: null, page: 1 })).toBe('/customers/c-1');
+  });
+
+  it.each([
+    [undefined, '/customers'],
+    ['', '/customers'],
+    // Only the list's own state comes back: never another address, never an invalid filter.
+    ['status=nope&page=-1&next=https://evil.test', '/customers'],
+    ['q=ana&admin=1', '/customers?q=ana'],
+  ])('goes back from %s to %s', (list, href) => {
+    expect(customersListHref(list)).toBe(href);
   });
 });

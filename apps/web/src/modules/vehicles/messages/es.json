@@ -204,6 +204,46 @@
         "tooLong": "El nombre puede tener hasta 60 caracteres."
       },
       "reviewed": "«{name}» quedó revisada."
+    },
+    "catalogTabs": {
+      "label": "Catálogo de vehículos",
+      "catalog": "Marcas y líneas",
+      "plateCities": "Ciudades de placa"
+    },
+    "plateCities": {
+      "title": "Ciudades de placa",
+      "description": "Los municipios que expiden placas y cómo se lee su nombre en la placa de los carros. Si una placa real lo abrevia, dale su leyenda.",
+      "searchLabel": "Buscar ciudad",
+      "searchPlaceholder": "Nombre del municipio",
+      "count": "{count, plural, one {# ciudad} other {# ciudades}}",
+      "listLabel": "Ciudades de placa",
+      "noMatch": "Ninguna ciudad coincide con la búsqueda.",
+      "ownLegend": "Leyenda propia",
+      "usesName": "Usa su nombre",
+      "change": "Cambiar leyenda",
+      "changeFor": "de {city}",
+      "dialog": {
+        "title": "Leyenda de {city}",
+        "preview": "Así se verá en la placa",
+        "label": "Leyenda en la placa",
+        "hint": "Hasta {max} caracteres, en mayúsculas y sin tildes. Vacía, la placa muestra el nombre del municipio.",
+        "save": "Guardar",
+        "clear": "Quitar leyenda",
+        "cancel": "Cancelar",
+        "saved": "Leyenda guardada.",
+        "cleared": "Leyenda quitada."
+      },
+      "validation": {
+        "legendAccents": "Escríbela sin tildes, como en la placa.",
+        "legendInvalid": "Solo letras, números, espacios y «. , -».",
+        "legendTooLong": "Como mucho 17 caracteres: no cabe en la placa."
+      },
+      "errors": {
+        "forbidden": "No tienes permiso para hacer esto.",
+        "invalidInput": "Revisa la leyenda.",
+        "notIssuing": "Esta ciudad no expide placas: no lleva leyenda.",
+        "generic": "Algo salió mal. Inténtalo de nuevo."
+      }
     }
   }
 }

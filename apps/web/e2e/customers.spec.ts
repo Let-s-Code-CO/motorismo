@@ -4,8 +4,8 @@
  * Guards CA-15 (newest first, with name, email, phone, status and date), CA-16 (search by part of
  * the name/email/phone, ignoring case and accents, with an explicit "no match"), CA-17 (summary
  * cards filter the list per the project standard, combined with the search, also when a card is
- * pressed while the search still waits), CA-18 (the record)
- * and CA-19 (an unconfirmed sign-up is not a customer). Seeds never change, so they anchor rows.
+ * pressed while the search still waits), CA-18 (the record), CA-33 (back from the record to the same
+ * list) and CA-19 (an unconfirmed sign-up is not a customer). Seeds never change, so they anchor rows.
  */
 import { expect, test } from '@playwright/test';
 
@@ -171,6 +171,25 @@ test('"Activos" shows customers with and without account, but not the disabled o
   await expect(row(SEED_CUSTOMERS.customer.name)).toBeVisible();
   await expect(row(SEED_CUSTOMERS.walkIn.name)).toBeVisible();
   await expect(row(SEED_CUSTOMERS.disabled.name)).toHaveCount(0);
+});
+
+test('«Volver a clientes» returns to the list with the filter and search it was opened from (CA-33)', async ({
+  page,
+}) => {
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/customers?q=andres&status=walk_in');
+
+  await page.getByRole('link', { name: new RegExp(SEED_CUSTOMERS.phoneOnly.name) }).click();
+  await expect(page.getByRole('heading', { name: SEED_CUSTOMERS.phoneOnly.name })).toBeVisible();
+  await page.getByRole('link', { name: 'Volver a clientes' }).click();
+
+  await expect(page).toHaveURL('/customers?q=andres&status=walk_in');
+  await expect(page.getByRole('searchbox', { name: 'Buscar clientes' })).toHaveValue('andres');
+  await expect(page.getByRole('button', { name: /^Sin cuenta \d+$/ })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
 });
 
 test('opens the record of a counter customer (CA-18)', async ({ page }) => {

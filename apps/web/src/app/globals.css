@@ -305,9 +305,7 @@ button.bg-content1:hover {
     ),
     repeating-linear-gradient(90deg, rgb(255 255 255 / 0.07) 0 1px, transparent 1px 3px),
     linear-gradient(180deg, var(--color-plate-light), var(--color-plate) 60%);
-  text-shadow:
-    0 1px 0 rgb(255 255 255 / 0.6),
-    0 -1px 0 rgb(0 0 0 / 0.28);
+  /* Spec 023: the emboss of the frame and characters is an SVG filter inside the plate. */
 }
 [data-plate]::before,
 [data-plate]::after {

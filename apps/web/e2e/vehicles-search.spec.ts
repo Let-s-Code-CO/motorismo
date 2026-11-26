@@ -29,8 +29,8 @@ test('finds the owner by the plate written any way, and shows it (CA-17, CA-19)'
     await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(typed);
     await expect(camila).toBeVisible();
     await expect(camila).toContainText('UIH-03D');
-    // CA-29: in the table the plate is compact — one line, no "COLOMBIA".
-    await expect(camila).not.toContainText('COLOMBIA');
+    // Spec 023, CA-12 (amends CA-29): the whole plate, smaller, with COLOMBIA below.
+    await expect(camila.locator('[data-plate]')).toHaveAttribute('data-legend', 'COLOMBIA');
     await expect(page.getByRole('grid').getByRole('row')).toHaveCount(2); // header + Camila
   }
 

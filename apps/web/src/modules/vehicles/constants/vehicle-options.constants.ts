@@ -62,3 +62,6 @@ export const COLOR_SWATCHES: Record<VehicleColor, string> = {
   pink: '#ec4899',
   multicolor: 'conic-gradient(#dc2626, #facc15, #16a34a, #2563eb, #7e22ce, #dc2626)',
 };
+
+/** The plate drawn as a sample of a city's legend in «Ciudades de placa» (spec 023, HU-03). */
+export const PLATE_SAMPLE = 'ABC123';

@@ -257,7 +257,8 @@ describe('OrderDetail', () => {
     expect(screen.getByRole('img', { name: 'Motocicleta' })).toBeVisible();
     expect(screen.getByText('Suzuki GSX-R600')).toBeVisible();
     expect(screen.getByText('UIH-03D')).toBeVisible();
-    expect(screen.getByText('COLOMBIA')).toBeVisible();
+    const legend = () => document.querySelector<HTMLElement>('[data-plate]')?.dataset.legend;
+    expect(legend()).toBe('COLOMBIA');
     unmount();
 
     renderDetail(
@@ -270,8 +271,9 @@ describe('OrderDetail', () => {
       })
     );
     // Read aloud with its city; drawn with the city below.
-    expect(screen.getByText('KDM-482, Bogotá, D.C.')).toBeInTheDocument();
-    expect(screen.getByText('BOGOTÁ, D.C.')).toBeVisible();
+    expect(screen.getByText('KDM-482')).toHaveTextContent('KDM-482, Bogotá, D.C.');
+    // Spec 023, RN-05: as plates are stamped, without accents.
+    expect(legend()).toBe('BOGOTA, D.C.');
     expect(screen.getByRole('img', { name: 'Carro' })).toBeVisible();
   });
 

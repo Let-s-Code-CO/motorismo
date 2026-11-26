@@ -141,7 +141,7 @@ describe('CustomerPicker', () => {
 
   it('shows, on the right, the plate a result matched by, and none when it matched by name (spec 022, CA-11)', async () => {
     vi.mocked(searchCustomers).mockResolvedValue([
-      { ...camila, matchedPlate: { plate: 'UIH03D', city: null } },
+      { ...camila, matchedPlate: { plate: 'UIH03D', city: null, legend: null } },
       {
         id: 'customer-2',
         full_name: 'Gabriel Gómez',
@@ -156,7 +156,9 @@ describe('CustomerPicker', () => {
 
     const camilaRow = await screen.findByRole('button', { name: /Camila Cliente/ });
     // The whole plate: a motorcycle's says COLOMBIA under its characters.
-    expect(camilaRow.querySelector('[data-plate]')).toHaveTextContent('UIH-03DCOLOMBIA');
+    const plate = camilaRow.querySelector<HTMLElement>('[data-plate]');
+    expect(plate).toHaveTextContent('UIH-03D');
+    expect(plate?.dataset.legend).toBe('COLOMBIA');
     expect(
       screen.getByRole('button', { name: /Gabriel Gómez/ }).querySelector('[data-plate]')
     ).toBeNull();

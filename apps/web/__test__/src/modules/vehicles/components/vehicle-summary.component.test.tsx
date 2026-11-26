@@ -56,13 +56,14 @@ describe('VehicleSummary', () => {
           brand: { name: 'Renault' },
           line: { name: 'Logan' },
           plate: 'FUN123',
-          plate_city: { name: 'Funza' },
+          plate_city: { name: 'Funza', plate_legend: null },
         })}
       />
     );
 
     expect(screen.getByText('FUN-123')).toBeInTheDocument();
-    expect(screen.getByText('FUNZA')).toBeInTheDocument();
+    // Spec 023: drawn under the characters (the legend of the SVG plate).
+    expect(document.querySelector<HTMLElement>('[data-plate]')?.dataset.legend).toBe('FUNZA');
   });
 
   it('shows a bicycle without line or plate, with its class (CA-06)', () => {

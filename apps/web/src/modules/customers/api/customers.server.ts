@@ -6,9 +6,11 @@ import type { CustomerStatus } from '@web/modules/auth/types/auth.types';
 import { createSupabaseServerClient } from '@web/modules/core/lib/supabase-server.lib';
 import {
   type CustomerFilters,
+  matchingPlate,
   pageRange,
   toLikePattern,
 } from '@web/modules/customers/utils/customers-filter.utils';
+import type { MatchedPlate } from '@web/modules/work-orders/utils/plate-search.utils';
 
 const LIST_COLUMNS =
   'id, full_name, email, phone, status, origin, avatar_url, created_at, vehicle_plates, erased_at';
@@ -36,7 +38,40 @@ export const listCustomers = async ({ q, status, page }: CustomerFilters) => {
   // Asking for a page past the end answers 416 (PGRST103): treat it as an empty page.
   if (error?.code === 'PGRST103') return { rows: [], total: count ?? 0 };
   if (error) throw new Error(`Could not list customers: ${error.message}`);
-  return { rows: data, total: count ?? 0 };
+  return { rows: await withMatchedPlates(supabase, data, q), total: count ?? 0 };
+};
+
+/**
+ * The active plate each customer was found by (spec 005, CA-19), with its city and that city's own
+ * legend, to draw it whole in the row (spec 023, CA-12). Null when the search matched something else.
+ */
+const withMatchedPlates = async <Row extends { vehicle_plates: string }>(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  rows: Row[],
+  q: string | undefined
+): Promise<(Row & { matched_plate: MatchedPlate | null })[]> => {
+  const matched = rows.map((row) => (q ? matchingPlate(row.vehicle_plates, q) : null));
+  const plates = matched.filter((plate): plate is string => !!plate);
+  const cities = new Map<string, { name: string; plate_legend: string | null } | null>();
+  if (plates.length) {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('plate, plate_city:municipalities(name, plate_legend)')
+      .in('plate', plates)
+      .is('retired_at', null);
+    if (error) throw new Error(`Could not read the plates' cities: ${error.message}`);
+    for (const { plate, plate_city } of data) if (plate) cities.set(plate, plate_city);
+  }
+  return rows.map((row, index) => {
+    const plate = matched[index];
+    const city = plate ? cities.get(plate) : null;
+    return {
+      ...row,
+      matched_plate: plate
+        ? { plate, city: city?.name ?? null, legend: city?.plate_legend ?? null }
+        : null,
+    };
+  });
 };
 
 export type CustomerListRow = Awaited<ReturnType<typeof listCustomers>>['rows'][number];

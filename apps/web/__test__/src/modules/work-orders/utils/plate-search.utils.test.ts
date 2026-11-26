@@ -32,33 +32,38 @@ describe('plateQuery', () => {
 });
 
 describe('matchedPlates', () => {
-  const vehicle = (customer_id: string, plate: string, city: string | null = null) => ({
+  const vehicle = (
+    customer_id: string,
+    plate: string,
+    city: string | null = null,
+    legend: string | null = null
+  ) => ({
     customer_id,
     plate,
-    plate_city: city ? { name: city } : null,
+    plate_city: city ? { name: city, plate_legend: legend } : null,
   });
   const vehicles = [
     vehicle('camila', 'UIH03D'),
     vehicle('gabriel', 'GGM45F'),
     vehicle('gabriel', 'UIH58E'),
-    vehicle('valentina', 'KDM482', 'Bogotá, D.C.'),
+    vehicle('valentina', 'KDM482', 'Bogotá, D.C.', 'STFE DE BOGOTA'),
     vehicle('gabriel', 'KDM917', 'Medellín'),
   ];
 
   it('gives each customer the plate that contains what was typed (CA-11)', () => {
     expect(matchedPlates(vehicles, 'UIH')).toEqual(
       new Map([
-        ['camila', { plate: 'UIH03D', city: null }],
-        ['gabriel', { plate: 'UIH58E', city: null }],
+        ['camila', { plate: 'UIH03D', city: null, legend: null }],
+        ['gabriel', { plate: 'UIH58E', city: null, legend: null }],
       ])
     );
   });
 
-  it("gives a car's plate with the city that issued it (CA-11)", () => {
+  it("gives a car's plate with the city that issued it and its own legend, if any (CA-11; spec 023, CA-10)", () => {
     expect(matchedPlates(vehicles, 'KDM')).toEqual(
       new Map([
-        ['valentina', { plate: 'KDM482', city: 'Bogotá, D.C.' }],
-        ['gabriel', { plate: 'KDM917', city: 'Medellín' }],
+        ['valentina', { plate: 'KDM482', city: 'Bogotá, D.C.', legend: 'STFE DE BOGOTA' }],
+        ['gabriel', { plate: 'KDM917', city: 'Medellín', legend: null }],
       ])
     );
   });

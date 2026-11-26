@@ -23,13 +23,14 @@ import UserAvatar from '@web/modules/auth/components/atoms/user-avatar.component
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import type { CustomerListRow } from '@web/modules/customers/api/customers.server';
 import CustomerStatusChip from '@web/modules/customers/components/atoms/customer-status-chip.component';
-import { matchingPlate } from '@web/modules/customers/utils/customers-filter.utils';
+import {
+  type CustomerFilters,
+  customerRecordHref,
+} from '@web/modules/customers/utils/customers-filter.utils';
 import PlateLabel from '@web/modules/vehicles/components/atoms/plate-label.component';
 
 type CustomersTableProps = {
   customers: CustomerListRow[];
-  /** The search, to show the plate it matched (spec 005, CA-19). */
-  query: string;
   /** Shown when the (possibly filtered or searched) list is empty. */
   emptyLabel: string;
   /**
@@ -39,7 +40,11 @@ type CustomersTableProps = {
   onToggleAccess?: (customer: CustomerListRow) => void;
   /** An action is running: the menus wait. */
   isBusy?: boolean;
+  /** The list's filter, search and page: each record carries them for its way back (CA-33). */
+  listFilters?: CustomerFilters;
 };
+
+const WHOLE_LIST: CustomerFilters = { q: '', status: null, page: 1 };
 
 const ICON = 'size-4';
 
@@ -51,10 +56,10 @@ const ICON = 'size-4';
  */
 const CustomersTable = ({
   customers,
-  query,
   emptyLabel,
   onToggleAccess,
   isBusy,
+  listFilters = WHOLE_LIST,
 }: CustomersTableProps) => {
   const t = useTranslations('customers');
   const format = useFormatter();
@@ -141,11 +146,11 @@ const CustomersTable = ({
       <TableHeader>{columns}</TableHeader>
       <TableBody emptyContent={emptyLabel}>
         {customers.map((customer) => {
-          const plate = matchingPlate(customer.vehicle_plates, query);
+          const plate = customer.matched_plate;
           const cells = [
             <TableCell key="customer">
               <Link
-                href={`/customers/${customer.id}`}
+                href={customerRecordHref(customer.id, listFilters)}
                 className="group flex items-center gap-3 rounded-medium outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <UserAvatar
@@ -169,13 +174,20 @@ const CustomersTable = ({
                       {formatMobile(customer.phone)}
                     </span>
                   )}
-                  {plate && (
-                    <span className="mt-1 flex items-center gap-1.5 text-xs text-default-500">
-                      {t('table.plate')}
-                      <PlateLabel plate={plate} size="sm" />
-                    </span>
-                  )}
                 </span>
+                {/* Spec 023, CA-12: the whole plate, on the right of name and email (as in the
+                    customer search of «Nueva orden»), without «Placa» in sight (read aloud). */}
+                {plate && (
+                  <span className="ml-auto flex shrink-0 items-center pl-2">
+                    <span className="sr-only">{t('table.plate')}</span>
+                    <PlateLabel
+                      plate={plate.plate}
+                      city={plate.city}
+                      legend={plate.legend}
+                      size="sm"
+                    />
+                  </span>
+                )}
               </Link>
               <div className="mt-2 pl-11 sm:hidden">
                 <CustomerStatusChip status={customer.status} />

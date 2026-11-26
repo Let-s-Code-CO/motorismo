@@ -82,7 +82,8 @@ test('registers a motorcycle, a car and a bicycle; the newest is listed first (C
   await expect(moto).toContainText('600 cc');
   await expect(moto).toContainText('Negro');
   await expect(moto).toContainText(shownPlate(motoPlate));
-  await expect(moto).toContainText('COLOMBIA'); // CA-27: a motorcycle plate says COLOMBIA
+  // CA-27: a motorcycle plate says COLOMBIA (drawn: spec 023 keeps it in the plate's legend).
+  await expect(moto.locator('[data-plate]')).toHaveAttribute('data-legend', 'COLOMBIA');
 
   // A car (CA-05): its class, no displacement, a plate of three letters and three digits.
   dialog = await openForm(page, section);
@@ -118,7 +119,8 @@ test('registers a motorcycle, a car and a bicycle; the newest is listed first (C
   await expect(items.nth(1)).toContainText('Mazda CX-30');
   await expect(items.nth(1)).toContainText('Camioneta');
   await expect(items.nth(1)).toContainText(shownPlate(carPlate));
-  await expect(items.nth(1)).toContainText('BOGOTÁ, D.C.'); // CA-27: the car plate shows its city
+  // CA-27: the car plate shows its city (drawn in capitals without accents, spec 023, RN-05).
+  await expect(items.nth(1).locator('[data-plate]')).toHaveAttribute('data-legend', 'BOGOTA, D.C.');
   await expect(items.nth(2)).toContainText('Suzuki GSX-R600');
 });
 
@@ -145,7 +147,9 @@ test('registers a car from Medellín typing "medellin", and corrects its plate c
 
   const car = section.getByRole('list', { name: 'Vehículos' }).getByRole('listitem').first();
   await expect(car).toContainText(shownPlate(plate));
-  await expect(car).toContainText('MEDELLÍN');
+  // Spec 023, RN-05: drawn without accents, read aloud with them.
+  await expect(car.locator('[data-plate]')).toHaveAttribute('data-legend', 'MEDELLIN');
+  await expect(car).toContainText('Medellín');
 
   // Correct the city (CA-20): the edit form shows the car's own city, and saves the new one.
   await section.getByRole('button', { name: /^Editar Renault Logan/ }).click();
@@ -156,7 +160,7 @@ test('registers a car from Medellín typing "medellin", and corrects its plate c
   await page.getByRole('option', { name: /Funza/ }).click();
   await edit.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText('Vehículo actualizado.')).toBeVisible();
-  await expect(car).toContainText('FUNZA');
+  await expect(car.locator('[data-plate]')).toHaveAttribute('data-legend', 'FUNZA');
 });
 
 test('refuses a plate that an active vehicle of another customer has (CA-08)', async ({ page }) => {

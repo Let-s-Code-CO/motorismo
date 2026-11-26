@@ -189,14 +189,17 @@ test('the search shows the plate a customer matched by, only when it matched by 
   await page.getByLabel('Buscar cliente').fill('uih');
   const camila = page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.customer.name) });
   const gabriel = page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.google.name) });
-  await expect(camila.locator('[data-plate]')).toHaveText(/UIH.?03D.*COLOMBIA/);
-  await expect(gabriel.locator('[data-plate]')).toHaveText(/UIH.?58E.*COLOMBIA/);
+  await expect(camila.locator('[data-plate]')).toHaveText('UIH-03D');
+  await expect(camila.locator('[data-plate]')).toHaveAttribute('data-legend', 'COLOMBIA');
+  await expect(gabriel.locator('[data-plate]')).toHaveText('UIH-58E');
+  await expect(gabriel.locator('[data-plate]')).toHaveAttribute('data-legend', 'COLOMBIA');
 
   // Car plates with the city that issued them: Valentina's in Bogotá, Gabriel's in Medellín.
   await page.getByLabel('Buscar cliente').fill('kdm');
   const valentina = page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.walkIn.name) });
-  await expect(valentina.locator('[data-plate]')).toContainText('BOGOTÁ, D.C.');
-  await expect(gabriel.locator('[data-plate]')).toContainText('MEDELLÍN');
+  // Spec 023, RN-05: drawn in capitals without accents.
+  await expect(valentina.locator('[data-plate]')).toHaveAttribute('data-legend', 'BOGOTA, D.C.');
+  await expect(gabriel.locator('[data-plate]')).toHaveAttribute('data-legend', 'MEDELLIN');
 
   await page.getByLabel('Buscar cliente').fill(SEED_CUSTOMERS.customer.name);
   await expect(camila).toBeVisible();

@@ -231,7 +231,12 @@ const OrderDetail = ({ order, isAdmin, reservation }: OrderDetailProps) => {
           </dl>
           {/* The plate drawn like a Colombian one, as on the customer record (spec 005). */}
           {summary.plate ? (
-            <PlateLabel plate={summary.plate} city={summary.plate_city_name} className="shrink-0" />
+            <PlateLabel
+              plate={summary.plate}
+              city={summary.plate_city_name}
+              legend={summary.plate_city_legend}
+              className="shrink-0"
+            />
           ) : (
             <span className="shrink-0 whitespace-nowrap text-default-500">
               {t('picker.noPlate')}
