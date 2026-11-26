@@ -50,3 +50,4 @@ con su ID. El orden sugerido tiene en cuenta dependencias.
 | [021](021-reservas-cliente-varias/spec.md) | Reservas del cliente: varias por vehículo y tiempo estimado | verificada (falta despliegue) |
 | [022](022-cliente-desde-orden/spec.md) | Registrar cliente y su primer vehículo desde «Nueva orden» | verificada (falta despliegue) |
 | [023](023-placa-norma/spec.md) | Placa según la norma colombiana | verificada |
+| [024](024-precios-por-categoria/spec.md) | Categoría de moto y precios por categoría | implementada |

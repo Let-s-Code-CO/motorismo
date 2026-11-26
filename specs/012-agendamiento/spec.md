@@ -52,6 +52,8 @@ solo lo que el lavadero puede atender.
   «Semana sin habilitar»; en ninguno de los dos se puede reservar.
 - **CA-04** — Dada una reserva, cuando el personal añade servicios, entonces solo se le ofrecen los
   servicios activos (para el tipo del vehículo, si lo eligió); los servicios son opcionales.
+  *Enmendado por la spec 024:* un servicio «a convenir» pide su tiempo (de 5 a 1.440 minutos), y el
+  formulario y la reserva muestran el tiempo estimado total.
 - **CA-05** — Dada una reserva con cliente y franja, cuando el personal la guarda, entonces queda
   **pendiente**, con quién y cuándo la creó, su franja ocupa un puesto, y se anuncia el resultado.
 - **CA-06** — Dada una franja con un solo puesto libre, cuando dos personas del personal la
@@ -91,7 +93,8 @@ pedirle los datos y para que pase delante de quien llegó sin reservar.
 - **CA-12** — Dada una reserva pendiente de hoy, cuando el personal pulsa «Llegó», entonces se abre
   una orden nueva con el cliente, el vehículo y los servicios de la reserva ya puestos. Los valores
   y tiempos estimados se toman del catálogo en ese momento (RN-01 de la spec 008). Si la reserva no
-  tenía vehículo, se elige o se registra en la misma orden.
+  tenía vehículo, se elige o se registra en la misma orden. *Enmendado por la spec 024:* un servicio
+  «a convenir» llega con el tiempo de la reserva y sin valor.
 - **CA-13** — Dada esa orden, cuando el personal la guarda, entonces entra **«En cola»** (spec 008)
   y la reserva queda **atendida**, enlazada a su orden. Si el personal sale sin guardar, la reserva
   sigue pendiente.
@@ -377,3 +380,4 @@ Ninguna. Resueltas con el usuario el 2026-11-21:
 | 2026-11-21 | Enmienda HU-07 implementada: «Agendar» en la ficha, en cada vehículo (con la placa en su nombre accesible, para distinguir dos motos iguales) y en el menú de la fila; la dirección de «Nueva reserva» ignora un cliente desactivado o inexistente. Solo el personal, como toda reserva. |
 | 2026-11-21 | Enmienda HU-07 verificada (CA-40 a CA-43): cada criterio con prueba de componente y E2E, vistas fallar; los roles no cambian (solo el personal reserva). Estado `verificada`. |
 | 2026-11-21 | Cambiado por la spec 014: el cliente con cuenta reserva, cambia y cancela sus reservas desde la app (RN-06); el rastro lo dice («Reservó el cliente desde la app», «Cancelada por el cliente»). |
+| 2026-11-26 | Enmienda de la spec 024: el personal reserva servicios «a convenir» con su tiempo, que «Llegó» lleva a la orden; el tiempo estimado se ve al reservar y en la reserva (CA-04, CA-12). |

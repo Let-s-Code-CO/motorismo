@@ -178,7 +178,8 @@ vacíe a medida que lo limpio.
   la línea de un vehículo: sugerencias, formulario y listas de vehículos, ficha del cliente, área
   del cliente, órdenes, reservas, reportes y sus archivos de Excel.
 - **RF-02** — El catálogo sabe si cada marca y línea está revisada o por revisar, y cuándo se
-  añadió.
+  añadió. *Enmendado por la spec 024:* cada línea de moto tiene su categoría, que el administrador
+  elige en «Marcas y líneas» (y la deja revisada).
 - **RF-03** — El catálogo recuerda los nombres unidos y los nombres anteriores a un renombre de
   cada marca y línea, para resolverlos como la que quedó (CA-16).
 - **RF-04** — «Marcas y líneas» es una sección del menú principal del administrador, en
@@ -275,3 +276,4 @@ Ninguna.
 | 2026-11-24 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-24 | Implementada: estado `implementada`. Las tarjetas-filtro del proyecto atenúan sin opacidad (la etiqueta bajaba de AA con una tarjeta elegida). |
 | 2026-11-24 | Verificada. Correcciones aprobadas por el usuario: E2E de punta a punta de las sugerencias con un nombre unido (CA-16); pgTAP de reservas e historial del cliente tras renombrar (CA-07, RF-01); E2E del cliente en «Marcas y líneas» (CA-05); historias en orden. |
+| 2026-11-26 | Enmienda de la spec 024: la categoría de cada línea de moto, en la lista y en su menú («Categoría»). |

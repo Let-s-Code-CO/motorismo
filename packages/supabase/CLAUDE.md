@@ -71,8 +71,9 @@ pnpm db:stop
 - `seeds/02_customers.sql`: `cliente@` (cuenta de prueba de cliente), `cliente.google@` (con
   foto), `cliente.desactivado@` y dos clientes sin cuenta del punto de atención.
 - `seeds/03_vehicles.sql`: vehículos de esos clientes (spec 005), guardados con `save_vehicle`.
-- `seeds/04_catalogs.sql`: servicios y empleados de ejemplo (spec 007), solo locales: los reales
-  los carga el administrador. Los empleados llevan salario base, se registran hace 90 días y Diego
+- `seeds/04_catalogs.sql`: servicios y empleados de ejemplo (spec 007), solo locales. La lista de
+  precios del negocio (spec 024) llega por migración a todos los entornos; el seed solo añade tres
+  servicios de carro y bicicleta y «Polichado» desactivado. Los empleados llevan salario base, se registran hace 90 días y Diego
   se desactiva hace 20 (spec 016): sus periodos activos los llena el *trigger*. Las pruebas pgTAP de catálogos vacían esas tablas en su transacción.
 - `seeds/05_work_orders.sql`: órdenes de ejemplo (spec 008), creadas con las mismas funciones que la
   app, como el primer admin. Las pruebas pgTAP de catálogos y órdenes vacían primero las órdenes.

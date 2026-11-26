@@ -222,15 +222,20 @@ Usuarios locales (seeds), todos con la contraseña `motorismo-local`:
 - Órdenes (spec 008, solo en local): Valentina #1 cerrada; Camila #2 cerrada (dos medios de pago y
   descuento), #3 anulada y #4 abierta («Limpieza de cadena» sin tiempo estimado).
 - Agenda (spec 012, solo en local): esta semana y la siguiente habilitadas de 9:00 a. m. a 6:00 p. m.
-  (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Lavado detallado»; la reservó ella desde la app, spec 014) y
+  (2 puestos, 15 min de tolerancia); mañana a las 10:00, Camila (Suzuki, «Paquete de lavado Premium»; la reservó ella desde la app, spec 014) y
   Valentina (sin vehículo) llenan la franja; mañana a las 11:00, Andrés, cancelada. Hoy, en la
   franja de la hora en que se hizo el reset (antes de abrir, la primera; después de cerrar, la
   última, la de las 5:00 p. m., y Camila ya pasó su tolerancia): Gabriel (su Yamaha `GGM-45F`, registrada por el seed)
   llegó con su reserva y su orden #6 espera en la cola con «Reserva …»; Camila está «por llegar»
   unos 25 minutos tras el reset (con «+5 min» disponible); Lina llegó tarde y Sofía antes (van por
   llegada), Mateo sin reserva y Valentina «No asistió».
-- Catálogos (spec 007, solo en local): servicios «Lavado sencillo», «Lavado detallado»,
-  «Micropulido» y «Recubrimiento cerámico» («Polichado» desactivado); empleados Elkin Estrada
+- Servicios (spec 024): la lista de precios del negocio llega por migración a todos los entornos
+  (Pro Wash, Premium, Deluxe y Supreme por categoría; adicionales con valor único; PPF «a
+  convenir»). Solo en local, de ejemplo para carro y bicicleta: «Lavado sencillo», «Lavado
+  detallado» y «Micropulido» («Polichado» desactivado). Tomás Torres (punto de atención) tiene una
+  Kawasaki KLX 300 `TMT78D` de una línea sin categoría; la Yamaha de Gabriel `UIH-58E` tiene
+  categoría propia (Trail).
+- Catálogos (spec 007, solo en local): empleados Elkin Estrada
   (CC 1020304050, 35 %, base $ 1.423.500), Paula Pineda (CC 52123456, 30 %, base $ 1.300.000) y Diego
   Desactivado (base $ 900.000, desactivado hace 20 días), registrados hace 90 días (spec 016). En cada entorno real
   los carga el administrador.
@@ -370,6 +375,32 @@ e2e/                         # Playwright
   órdenes de otros.
 - **Tipos:** el generador marca no nulas todas las columnas que devuelve una función;
   `customer-area.types.ts` dice cuáles pueden ser nulas (`WithNulls`, en `core/types`).
+
+## Categoría de moto y precios por categoría (spec 024)
+
+- **Categoría:** enum `motorcycle_category` (ocho). La línea la tiene (`vehicle_lines`, solo de
+  moto; las del catálogo inicial llegan clasificadas por migración) y una moto puede tener la suya
+  (`vehicles.motorcycle_category`); la que cuenta es la propia o la de la línea
+  (`private.vehicle_category`, `vehicleCategory` en `vehicles/utils`). Solo el personal la ve y la
+  elige: `set_vehicle_category` (personal), `set_vehicle_line_category` (admin, deja la línea
+  revisada) y `save_vehicle(…, p_motorcycle_category, p_set_category)`; `vehicles_guard` rechaza el
+  cambio de un cliente.
+- **Servicios:** `motorcycle_prices` (los ocho o nulo, `private.valid_category_prices`), `on_quote`
+  («a convenir»: sin valores ni tiempo, para todo vehículo) y `description`. El esquema del formulario
+  deduce «Único»/«Por categoría» de los valores cuando no viene el modo (la acción valida de nuevo lo
+  que envía el formulario).
+- **Órdenes:** `work_order_write_lines` toma el valor de la categoría de la moto de la orden
+  (`work_order_category_required`, `work_order_price_required` para un a convenir sin valor).
+  `line-price.utils`: `referencePrice(servicio, tipo, categoría)`, `isOffered`, `needsCategory`. El
+  editor muestra «Categoría de la moto» y, si falta, la pide con `VehicleCategoryDialog` antes de
+  añadir (en cola, si una reserva trae varios).
+- **Reservas:** el personal da el tiempo de cada servicio a convenir
+  (`save_reservation(…, p_service_minutes)`, `{id: minutos}`, de 5 a 1.440;
+  `reservation_services.estimated_minutes`); `reservation_summaries` trae `service_minutes`,
+  `estimated_minutes` y `unestimated`. «Llegó» lleva ese tiempo a la orden. `BookingEstimate` vive en
+  `core`. El cliente nunca ve los a convenir (`bookable_services`).
+- **«Servicios»:** tarjetas (`service-cards`) en tres grupos —«Paquetes por categoría» de menor a
+  mayor, «Valor único», «A convenir»—; un tipo al que no se ofrece no se nombra.
 
 ## Reporte de servicios (spec 015)
 
