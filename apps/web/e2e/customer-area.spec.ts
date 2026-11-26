@@ -92,7 +92,7 @@ test.describe('the customer area (spec 014)', () => {
     const { data: service } = await adminClient()
       .from('services')
       .select('id')
-      .eq('name', 'Lavado sencillo')
+      .eq('name', 'Limpieza de asientos')
       .single();
     const { data: orderId } = await operator.rpc('save_work_order', {
       p_customer_id: customerId,
@@ -106,7 +106,7 @@ test.describe('the customer area (spec 014)', () => {
     await expect(
       shop(page).getByText(/^(Van \d+ antes|Va 1 antes|Eres el siguiente)$/)
     ).toBeVisible();
-    await expect(shop(page).getByText('Lavado sencillo')).toBeVisible();
+    await expect(shop(page).getByText('Limpieza de asientos')).toBeVisible();
 
     await operator.rpc('start_work_order', { p_id: orderId! });
     // Refreshed every 15 s while on screen: no reload.
@@ -211,12 +211,14 @@ test.describe('the customer area (spec 014)', () => {
     // Tomorrow at 4:00 p. m., with the time of the services ticked (CA-06, CA-07).
     await page.goto(`/my/reservations/new?date=${day(1)}`);
     await page.getByRole('radio', { name: /^4:00 p\. m\./ }).check({ force: true });
-    await page.getByRole('checkbox', { name: 'Lavado sencillo' }).check({ force: true });
-    // 30 + 90 min.
-    await page.getByRole('checkbox', { name: 'Lavado detallado' }).check({ force: true });
-    await expect(estimate).toHaveText('Tiempo estimado: ≈ 2 h');
-    await page.getByRole('checkbox', { name: 'Recubrimiento cerámico' }).check({ force: true });
-    await expect(estimate).toContainText('Sin estimar: Recubrimiento cerámico');
+    await page.getByRole('checkbox', { name: 'Paquete de lavado Premium' }).check({ force: true });
+    // 120 + 210 min.
+    await page.getByRole('checkbox', { name: 'Combo de lavado Deluxe' }).check({ force: true });
+    await expect(estimate).toHaveText('Tiempo estimado: ≈ 5 h 30 min');
+    await page.getByRole('checkbox', { name: 'Combo de lavado Supreme' }).check({ force: true });
+    await expect(estimate).toContainText('Sin estimar: Combo de lavado Supreme');
+    // Spec 024, CA-16: PPF is booked only by staff.
+    await expect(page.getByRole('checkbox', { name: 'PPF' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Reservar', exact: true }).click();
     await expect(page).toHaveURL('/my/reservations');
 

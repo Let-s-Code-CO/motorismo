@@ -8,6 +8,7 @@ import type { VehicleView } from '@web/modules/vehicles/api/vehicles.server';
 import ColorSwatch from '@web/modules/vehicles/components/atoms/color-swatch.component';
 import PlateLabel from '@web/modules/vehicles/components/atoms/plate-label.component';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
+import { vehicleCategory } from '@web/modules/vehicles/utils/vehicle-category.utils';
 
 const ICONS: Record<VehicleType, typeof Bike> = {
   motorcycle: Motorbike,
@@ -15,7 +16,11 @@ const ICONS: Record<VehicleType, typeof Bike> = {
   car: CarFront,
 };
 
-type VehicleSummaryProps = { vehicle: VehicleView };
+type VehicleSummaryProps = {
+  vehicle: VehicleView;
+  /** Staff see a motorcycle's category (spec 024, CA-04); a customer does not (CA-05). */
+  showCategory?: boolean;
+};
 
 /** "Marca Línea" of a vehicle (the line is optional on a bicycle). */
 export const vehicleName = (vehicle: Pick<VehicleView, 'brand' | 'line'>) =>
@@ -26,12 +31,13 @@ export const vehicleName = (vehicle: Pick<VehicleView, 'brand' | 'line'>) =>
  * (car, bicycle), the colour by name with a swatch (CA-16) and the plate drawn like a Colombian one,
  * a car's with its issuing city (CA-03, CA-27), or "Sin placa" for a bicycle (CA-06).
  */
-const VehicleSummary = ({ vehicle }: VehicleSummaryProps) => {
+const VehicleSummary = ({ vehicle, showCategory = false }: VehicleSummaryProps) => {
   const t = useTranslations('vehicles');
   const Icon = ICONS[vehicle.vehicle_type];
   const kind = vehicle.vehicle_class
     ? t(`classes.${vehicle.vehicle_class}`)
     : t(`types.${vehicle.vehicle_type}`);
+  const category = vehicle.vehicle_type === 'motorcycle' ? vehicleCategory(vehicle) : null;
 
   return (
     <div className="flex items-center gap-3">
@@ -42,6 +48,9 @@ const VehicleSummary = ({ vehicle }: VehicleSummaryProps) => {
         <span className="truncate font-medium">{vehicleName(vehicle)}</span>
         <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-default-500">
           <span>{kind}</span>
+          {showCategory && vehicle.vehicle_type === 'motorcycle' && (
+            <span>{category ? t(`categories.${category}`) : t('summary.noCategory')}</span>
+          )}
           {vehicle.displacement_cc !== null && (
             <span>{t('summary.displacement', { value: vehicle.displacement_cc })}</span>
           )}

@@ -12,6 +12,8 @@
  * - CA-10: another day reloads its slots through the URL, keeping the other parameters.
  * - CA-20: changing a reservation keeps its customer (the picker is locked) and sends its id.
  * - Spec 006, CA-10: without network nothing is reported and the form stays as it was.
+ * - Spec 024, CA-14: a service «a convenir» ticked asks for its time (5 to 1.440 minutes) and sends
+ *   it; the total estimate counts it; a reservation being changed keeps the time it had.
  * The customer picker has its own tests (spec 008 and 012): here it hands over a customer or a car.
  */
 import type { ReactNode } from 'react';
@@ -107,14 +109,32 @@ const day = (overrides: Partial<AgendaDay> = {}): AgendaDay => ({
   ...overrides,
 });
 
-const service = (id: string, name: string, price_car: number | null) => ({
+const PPF = '3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f';
+
+const service = (
+  id: string,
+  name: string,
+  price_car: number | null,
+  overrides: {
+    price_motorcycle?: number | null;
+    estimated_minutes?: number | null;
+    on_quote?: boolean;
+  } = {}
+) => ({
   id,
   name,
   price_motorcycle: 25000,
+  motorcycle_prices: null,
   price_car,
   price_bicycle: null,
   estimated_minutes: null,
+  on_quote: false,
+  ...overrides,
 });
+
+/** PPF (spec 024): for any vehicle, its value and time agreed each time. */
+const ppf = () =>
+  service(PPF, 'PPF', null, { price_motorcycle: null, on_quote: true, estimated_minutes: null });
 
 const renderForm = (
   props: {
@@ -191,6 +211,7 @@ describe('ReservationForm', () => {
       vehicle_id: null,
       slot_start: NINE,
       service_ids: [CHAIN],
+      service_minutes: {},
       notes: 'Pidió por WhatsApp',
     });
   });
@@ -273,5 +294,98 @@ describe('ReservationForm', () => {
     expect(router.push).not.toHaveBeenCalled();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /9:00 a\. m\./ })).toBeChecked();
+  });
+
+  describe('a service «a convenir» (spec 024, CA-14)', () => {
+    beforeEach(() => {
+      vi.mocked(fetchActiveServices).mockResolvedValue([
+        service(WASH, 'Lavado detallado', 40000, { estimated_minutes: 90 }),
+        ppf(),
+      ]);
+    });
+
+    const minutesField = () => screen.getByLabelText('Tiempo de PPF (minutos)');
+
+    it('asks for its time only once it is ticked', async () => {
+      renderForm({ initialStart: NINE });
+
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      expect(minutesField()).toBeVisible();
+      fireEvent.click(screen.getByRole('checkbox', { name: 'PPF' }));
+      expect(screen.queryByLabelText('Tiempo de PPF (minutos)')).not.toBeInTheDocument();
+    });
+
+    it('sends nothing without its time, and says so under the field', async () => {
+      renderForm({ initialStart: NINE });
+      fireEvent.click(screen.getByRole('button', { name: 'Elegir cliente de prueba' }));
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      submit();
+
+      expect(await screen.findByText('Escribe cuánto tiempo tomará.')).toBeVisible();
+      expect(saveReservation).not.toHaveBeenCalled();
+    });
+
+    it('refuses a time outside 5 to 1.440 minutes (1.441 = more than a day)', async () => {
+      renderForm({ initialStart: NINE });
+      fireEvent.click(screen.getByRole('button', { name: 'Elegir cliente de prueba' }));
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      fireEvent.change(minutesField(), { target: { value: '1441' } });
+      submit();
+
+      expect(await screen.findByText('Escribe entre 5 y 1.440 minutos.')).toBeVisible();
+      expect(saveReservation).not.toHaveBeenCalled();
+    });
+
+    it('sends its time by service, as minutes', async () => {
+      vi.mocked(saveReservation).mockResolvedValue({ ok: true, id: 'r-new' });
+      renderForm({ initialStart: NINE });
+      fireEvent.click(screen.getByRole('button', { name: 'Elegir cliente de prueba' }));
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'PPF' }));
+
+      fireEvent.change(minutesField(), { target: { value: '240' } });
+      submit();
+
+      await vi.waitFor(() =>
+        expect(saveReservation).toHaveBeenCalledWith(
+          expect.objectContaining({ service_ids: [PPF], service_minutes: { [PPF]: 240 } })
+        )
+      );
+    });
+
+    it('counts it in the estimate: 90 + 240 min = «≈ 5 h 30 min»', async () => {
+      renderForm({ initialStart: NINE });
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Lavado detallado' }));
+      fireEvent.click(screen.getByRole('checkbox', { name: 'PPF' }));
+
+      // Without its time yet, PPF is named as not estimated.
+      const estimate = () => document.querySelector<HTMLElement>('[data-booking-estimate]')!;
+      expect(estimate()).toHaveTextContent('Sin estimar: PPF');
+      fireEvent.change(minutesField(), { target: { value: '240' } });
+
+      expect(estimate()).toHaveTextContent('Tiempo estimado: ≈ 5 h 30 min');
+      expect(estimate()).not.toHaveTextContent('Sin estimar');
+    });
+
+    it('keeps the time it had in a reservation being changed (CA-20)', async () => {
+      renderForm({
+        reservation: {
+          id: 'r1',
+          customer_id: CUSTOMER,
+          customer_name: 'Camila',
+          customer_phone: null,
+          vehicle_id: null,
+          vehicle_type: null,
+          slot_start: NINE,
+          service_ids: [WASH, PPF],
+          service_minutes: [null, 180],
+          notes: null,
+        } as unknown as ReservationSummary,
+      });
+
+      expect(await screen.findByLabelText('Tiempo de PPF (minutos)')).toHaveValue('180');
+    });
   });
 });

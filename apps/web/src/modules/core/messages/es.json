@@ -123,6 +123,11 @@
     "toast": {
       "region": "Avisos",
       "close": "Cerrar"
+    },
+    "estimate": {
+      "total": "Tiempo estimado: ≈ {duration}",
+      "missing": "Sin estimar: {names}",
+      "none": "Sin tiempo estimado"
     }
   }
 }

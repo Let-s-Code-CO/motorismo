@@ -306,6 +306,7 @@ describe('OrderDetail', () => {
               id: 'r9',
               service_ids: [],
               services: [],
+              service_minutes: [],
               slot_start: '2030-06-12T14:00:00Z',
             }}
           />

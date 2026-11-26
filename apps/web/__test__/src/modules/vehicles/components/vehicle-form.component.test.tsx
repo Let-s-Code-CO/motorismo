@@ -52,7 +52,11 @@ const withQueryClient = ({ children }: { children: ReactNode }) => (
   </QueryClientProvider>
 );
 
-const setup = (onSaved = vi.fn(), vehicle?: Parameters<typeof VehicleForm>[0]['vehicle']) => {
+const setup = (
+  onSaved = vi.fn(),
+  vehicle?: Parameters<typeof VehicleForm>[0]['vehicle'],
+  withCategory = false
+) => {
   const view = renderWithProviders(
     withQueryClient({
       children: (
@@ -61,6 +65,7 @@ const setup = (onSaved = vi.fn(), vehicle?: Parameters<typeof VehicleForm>[0]['v
           vehicle={vehicle}
           onSaved={onSaved}
           onCancel={vi.fn()}
+          withCategory={withCategory}
         />
       ),
     })
@@ -82,7 +87,9 @@ describe('VehicleForm', () => {
       { id: 'b-suzuki', name: 'Suzuki' },
       { id: 'b-yamaha', name: 'Yamaha' },
     ]);
-    vi.mocked(fetchLines).mockResolvedValue([{ id: 'l-gsxr600', name: 'GSX-R600' }]);
+    vi.mocked(fetchLines).mockResolvedValue([
+      { id: 'l-gsxr600', name: 'GSX-R600', category: 'sbk' },
+    ]);
     // Unsorted on purpose: the form puts Bogotá, D.C., La Calera and Funza first.
     vi.mocked(fetchMunicipalities).mockResolvedValue([
       { code: '05001', name: 'Medellín', department: 'Antioquia' },
@@ -347,7 +354,7 @@ describe('VehicleForm', () => {
         vehicle_class: 'utility',
         displacement_cc: null,
         brand: { name: 'Mazda' },
-        line: { name: 'CX-30' },
+        line: { name: 'CX-30', motorcycle_category: null },
         plate: 'KDM482',
         plate_city_code: '05001',
         plate_city: { name: 'Medellín', plate_legend: null },
@@ -366,7 +373,7 @@ describe('VehicleForm', () => {
         vehicle_class: 'utility',
         displacement_cc: null,
         brand: { name: 'Mazda' },
-        line: { name: 'CX-30' },
+        line: { name: 'CX-30', motorcycle_category: null },
         plate: 'KDM482',
         plate_city_code: '25645',
         plate_city: { name: 'San Antonio del Tequendama', plate_legend: null },
@@ -430,5 +437,57 @@ describe('VehicleForm', () => {
     expect(saveVehicle).toHaveBeenCalledWith(
       expect.objectContaining({ vehicle_type: 'car', plate: 'ABC123', plate_city_code: '11001' })
     );
+  });
+
+  describe('the category (spec 024)', () => {
+    const categoryButton = () => screen.getByRole('button', { name: /Categoría/ });
+    const fillMotorcycle = () => {
+      fireEvent.change(brandInput(), { target: { value: 'Suzuki' } });
+      fireEvent.change(lineInput(), { target: { value: 'GSX-R600' } });
+      fireEvent.change(screen.getByRole('textbox', { name: 'Placa' }), {
+        target: { value: 'uih 03d' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /Color/ }));
+      fireEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'Negro' }));
+    };
+
+    it('takes the category of the line chosen, and sends no category of its own (CA-02)', async () => {
+      const { onSaved } = setup(vi.fn(), undefined, true);
+
+      fillMotorcycle();
+      await waitFor(() => expect(categoryButton()).toHaveTextContent('SBK/SSP'));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(saveVehicle).toHaveBeenCalledWith(
+        expect.objectContaining({ motorcycle_category: null, set_category: true })
+      );
+    });
+
+    it('sends another category, chosen by staff, as the motorcycle’s own (CA-03)', async () => {
+      const { onSaved } = setup(vi.fn(), undefined, true);
+
+      fillMotorcycle();
+      await waitFor(() => expect(categoryButton()).toHaveTextContent('SBK/SSP'));
+      fireEvent.click(categoryButton());
+      fireEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'Trail' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(saveVehicle).toHaveBeenCalledWith(
+        expect.objectContaining({ motorcycle_category: 'trail', set_category: true })
+      );
+    });
+
+    it('has no category for a customer, and does not touch it (CA-05)', async () => {
+      const { onSaved } = setup();
+
+      fillMotorcycle();
+      expect(screen.queryByRole('button', { name: /Categoría/ })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(saveVehicle).toHaveBeenCalledWith(expect.objectContaining({ set_category: false }));
+    });
   });
 });

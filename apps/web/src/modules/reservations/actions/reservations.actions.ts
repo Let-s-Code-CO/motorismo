@@ -50,7 +50,7 @@ export const saveReservation = async (
       fieldErrors: parsed.success ? undefined : fieldErrorsOf(parsed.error),
     };
   }
-  const { customer_id, vehicle_id, slot_start, service_ids, notes } = parsed.data;
+  const { customer_id, vehicle_id, slot_start, service_ids, service_minutes, notes } = parsed.data;
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.rpc('save_reservation', {
@@ -59,6 +59,8 @@ export const saveReservation = async (
     p_vehicle_id: vehicle_id as string,
     p_slot_start: slot_start,
     p_service_ids: service_ids,
+    // Spec 024, CA-14: the time of each service «a convenir», by its id.
+    p_service_minutes: service_minutes,
     ...(notes ? { p_notes: notes } : {}),
     ...(id.data.id ? { p_id: id.data.id } : {}),
   });

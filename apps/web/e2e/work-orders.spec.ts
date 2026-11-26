@@ -21,6 +21,9 @@
  *   - «Órdenes» shows #4 in progress with a minimum ready time, Andrés's bicycle in the queue
  *     (1.º), and #2 and #3 closed (CA-18, CA-19, CA-30);
  *   - the detail of #4 names what is not estimated, and #2 its payments (CA-20, CA-30).
+ * - Spec 024: a motorcycle whose line has no category is asked for it before a service by category
+ *   brings its value, and keeps it (CA-06); PPF comes without value and with value and time to
+ *   write (CA-13).
  */
 import { type Locator, type Page, expect, test } from '@playwright/test';
 
@@ -29,12 +32,15 @@ import {
   SEED_CUSTOMERS,
   adminClient,
   createWalkInCustomer,
+  deleteCatalogBrands,
   deleteCustomers,
   signIn,
   uniquePlate,
 } from './support/sandbox';
 
 const created: string[] = [];
+/** Brands this file added (spec 024): removed once their vehicles and orders are gone. */
+const brands: string[] = [];
 
 /** Removes the orders of the customers this file created, then the customers (with vehicles). */
 test.afterAll(async () => {
@@ -55,6 +61,7 @@ test.afterAll(async () => {
     await admin.from('work_orders').delete().in('id', orderIds);
   }
   await deleteCustomers(created);
+  for (const brand of brands) await deleteCatalogBrands(brand);
 });
 
 const pick = async (page: Page, dialog: Locator, field: string, typed: string) => {
@@ -88,22 +95,24 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   await dialog.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(page.getByRole('radio', { name: /Suzuki GSX-R600/ })).toBeChecked();
 
-  // CA-03, CA-04: two services, one tap each, at their motorcycle price.
-  await page.getByRole('button', { name: 'Añadir Lavado sencillo' }).click();
-  await page.getByRole('button', { name: 'Añadir Micropulido' }).click();
+  // CA-03, CA-04: two services, one tap each, at the price of its category (spec 024, CA-10: the
+  // GSX-R600 line is SBK/SSP).
+  await expect(page.getByText('Categoría de la moto: SBK/SSP')).toBeVisible();
+  await page.getByRole('button', { name: 'Añadir Lavado Pro Wash' }).click();
+  await page.getByRole('button', { name: 'Añadir Combo de lavado Deluxe' }).click();
   const summary = page.getByRole('region', { name: 'Resumen de la orden' });
-  // 25.000 + 120.000 = 145.000.
-  await expect(summary).toContainText('$ 145.000');
+  // 46.000 + 182.000 = 228.000.
+  await expect(summary).toContainText('$ 228.000');
 
-  // CA-06: Micropulido shared by two employees, 80/20.
-  const micropulido = page.getByRole('group', { name: 'Micropulido' });
-  await micropulido.getByRole('button', { name: 'Elkin Estrada' }).click();
-  await micropulido.getByRole('button', { name: 'Paula Pineda' }).click();
-  await expect(micropulido.getByLabel('Participación de Elkin Estrada')).toHaveValue('50');
-  await micropulido.getByLabel('Participación de Elkin Estrada').fill('80');
-  await micropulido.getByLabel('Participación de Paula Pineda').fill('20');
+  // CA-06: the Deluxe combo shared by two employees, 80/20.
+  const deluxe = page.getByRole('group', { name: 'Combo de lavado Deluxe' });
+  await deluxe.getByRole('button', { name: 'Elkin Estrada' }).click();
+  await deluxe.getByRole('button', { name: 'Paula Pineda' }).click();
+  await expect(deluxe.getByLabel('Participación de Elkin Estrada')).toHaveValue('50');
+  await deluxe.getByLabel('Participación de Elkin Estrada').fill('80');
+  await deluxe.getByLabel('Participación de Paula Pineda').fill('20');
   await page
-    .getByRole('group', { name: 'Lavado sencillo' })
+    .getByRole('group', { name: 'Lavado Pro Wash' })
     .getByRole('button', { name: 'Paula Pineda' })
     .click();
 
@@ -123,9 +132,9 @@ test('an operator opens an order for a new customer, registering the motorcycle 
   await page.getByRole('button', { name: 'Cerrar y cobrar' }).click();
   const close = page.getByRole('dialog', { name: /Cerrar y cobrar la orden/ });
   await close.getByLabel('Monto').fill('100.000');
-  await expect(close.getByText('Falta $ 45.000')).toBeVisible();
+  await expect(close.getByText('Falta $ 128.000')).toBeVisible();
   await close.getByRole('button', { name: 'Añadir otro medio' }).click();
-  await expect(close.getByLabel('Monto').nth(1)).toHaveValue('45.000');
+  await expect(close.getByLabel('Monto').nth(1)).toHaveValue('128.000');
   await close.getByRole('button', { name: 'Cerrar orden' }).click();
 
   await expect(page.getByText('Orden cerrada.')).toBeVisible();
@@ -172,7 +181,7 @@ test('an operator registers the customer they did not find, with their motorcycl
   await expect(page.getByText(name)).toBeVisible();
   await expect(page.getByRole('radio', { name: /Suzuki GSX-R600/ })).toBeChecked();
 
-  await page.getByRole('button', { name: 'Añadir Lavado sencillo' }).click();
+  await page.getByRole('button', { name: 'Añadir Lavado Pro Wash' }).click();
   await page.getByRole('button', { name: 'Abrir orden' }).click();
   await expect(page.getByText('Orden abierta.')).toBeVisible();
   await expect(page.getByRole('heading', { name: /^Orden #\d+$/ })).toBeVisible();
@@ -227,7 +236,7 @@ test("staff see a customer's history (her retired vehicle not offered), what is 
   await page.getByLabel('Buscar cliente').fill(SEED_CUSTOMERS.customer.name);
   await page.getByRole('button', { name: new RegExp(SEED_CUSTOMERS.customer.name) }).click();
   await expect(page.getByText('1 visita')).toBeVisible();
-  await expect(page.getByText('Lavado sencillo · Micropulido')).toBeVisible();
+  await expect(page.getByText('Lavado Pro Wash · Combo de lavado Deluxe')).toBeVisible();
   // Her motorcycle already has the open order #4: it is offered instead.
   await expect(page.getByText('Ya tiene una orden abierta:')).toBeVisible();
   // CA-10: her retired motorcycle (JWJ-07) is not offered for an order.
@@ -270,4 +279,60 @@ test("staff see a customer's history (her retired vehicle not offered), what is 
   await expect(history).toContainText('En proceso');
   await expect(history).toContainText('Anulada');
   await expect(history).toContainText('Cerrada');
+});
+
+test('a motorcycle without category is asked for it, and PPF is written by hand (spec 024, CA-06, CA-13)', async ({
+  page,
+}) => {
+  // A brand and line of this test's own: the line has no category.
+  const brand = `E2E Cat ${Math.random().toString(36).slice(2, 8)}`;
+  brands.push(brand);
+  const name = `E2E Sin categoría ${Date.now()}`;
+  const customer = await createWalkInCustomer(name);
+  created.push(customer);
+  const { error } = await adminClient().rpc('save_vehicle', {
+    p_customer_id: customer,
+    p_vehicle_type: 'motorcycle',
+    p_brand_name: brand,
+    p_line_name: 'Nueva 300',
+    p_color: 'black',
+    p_plate: uniquePlate('motorcycle'),
+  });
+  expect(error).toBeNull();
+  await signIn(page, SEED.operator.email);
+  await expect(page).toHaveURL('/');
+  await page.goto('/orders/new');
+  await page.getByLabel('Buscar cliente').fill(name);
+  await page.getByRole('button', { name: new RegExp(name) }).click();
+  await expect(page.getByText('Categoría de la moto: Sin categoría')).toBeVisible();
+
+  // CA-06: the category first, then the line with its value (Trail: $ 48.000).
+  await page.getByRole('button', { name: 'Añadir Lavado Pro Wash' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Categoría de la moto' });
+  await dialog.getByRole('button', { name: /Categoría/ }).click();
+  await page.getByRole('option', { name: 'Trail', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+  await expect(page.getByText('Categoría de la moto: Trail')).toBeVisible();
+  const proWash = page.getByRole('group', { name: 'Lavado Pro Wash' });
+  await expect(proWash.getByRole('textbox', { name: /Valor/ })).toHaveValue('48.000');
+
+  // CA-13: PPF «a convenir», without value nor time until they are written.
+  await expect(page.getByRole('button', { name: 'Añadir PPF' })).toContainText('A convenir');
+  await page.getByRole('button', { name: 'Añadir PPF' }).click();
+  const ppf = page.getByRole('group', { name: 'PPF' });
+  await expect(ppf.getByRole('textbox', { name: /Valor/ })).toHaveValue('');
+  await ppf.getByRole('textbox', { name: /Valor/ }).fill('600.000');
+  await ppf.getByLabel('Tiempo (min)').fill('240');
+  // 48.000 + 600.000 = 648.000.
+  await expect(page.getByRole('region', { name: 'Resumen de la orden' })).toContainText(
+    '$ 648.000'
+  );
+
+  await page.getByRole('button', { name: 'Abrir orden' }).click();
+  await expect(page.getByText('Orden abierta.')).toBeVisible();
+  await expect(page.getByText('PPF')).toBeVisible();
+
+  // The motorcycle keeps the category it was given (CA-03).
+  await page.goto(`/customers/${customer}`);
+  await expect(page.getByText('Trail', { exact: true })).toBeVisible();
 });

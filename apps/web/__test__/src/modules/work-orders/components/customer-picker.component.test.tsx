@@ -95,6 +95,7 @@ const vehicle = (overrides: Partial<PickerVehicle> = {}): PickerVehicle => ({
   plate: 'UIH03D',
   brand_name: 'Suzuki',
   line_name: 'GSX-R600',
+  category: 'sbk',
   openOrder: null,
   ...overrides,
 });
@@ -170,6 +171,36 @@ describe('CustomerPicker', () => {
 
     expect(await screen.findByRole('radio', { name: /Suzuki GSX-R600 · UIH-03D/ })).toBeVisible();
     await vi.waitFor(() => expect(onVehicleChange).toHaveBeenCalledWith(vehicle()));
+  });
+
+  it('names the category of each motorcycle, or «Sin categoría», and none for a car (spec 024, CA-04)', async () => {
+    vi.mocked(fetchCustomerVehicles).mockResolvedValue([
+      vehicle(),
+      vehicle({
+        id: 'vehicle-2',
+        brand_name: 'Kawasaki',
+        line_name: 'KLX 300',
+        plate: 'TMT78D',
+        category: null,
+      }),
+      vehicle({
+        id: 'vehicle-3',
+        vehicle_type: 'car',
+        brand_name: 'Mazda',
+        line_name: 'CX-30',
+        plate: 'KDM482',
+        category: null,
+      }),
+    ]);
+    renderPicker(camila);
+
+    expect(
+      await screen.findByRole('radio', { name: /Suzuki GSX-R600/ })
+    ).toHaveAccessibleDescription('SBK/SSP');
+    expect(screen.getByRole('radio', { name: /Kawasaki KLX 300/ })).toHaveAccessibleDescription(
+      'Sin categoría'
+    );
+    expect(screen.getByRole('radio', { name: /Mazda CX-30/ })).toHaveAccessibleDescription('');
   });
 
   it('lets staff choose among several vehicles (nothing chosen for them)', async () => {

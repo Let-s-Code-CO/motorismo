@@ -1,3 +1,4 @@
+import type { MotorcycleCategory } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 
 /**
@@ -13,6 +14,8 @@ export type CatalogLine = {
   reviewed: boolean;
   created_at: string;
   vehicles: number;
+  /** A motorcycle line's category (spec 024, CA-01); null when it has none yet. */
+  category?: MotorcycleCategory | null;
 };
 
 /** A brand of a type as the admin reviews it (CA-01 to CA-03), with its lines (CA-02). */

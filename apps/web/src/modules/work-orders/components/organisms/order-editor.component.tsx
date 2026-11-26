@@ -5,7 +5,7 @@ import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Alert, Button, Input, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,8 +17,11 @@ import { singleOption } from '@web/modules/core/utils/selection.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
 import type { ReservationSummary } from '@web/modules/reservations/types/reservations.types';
 import { linesFromReservation } from '@web/modules/reservations/utils/reservation-lines.utils';
+import VehicleCategoryDialog from '@web/modules/vehicles/components/molecules/vehicle-category-dialog.component';
+import type { MotorcycleCategory } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import { saveWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
+import { fetchVehicleCategory } from '@web/modules/work-orders/api/work-orders.client';
 import OrderEstimate from '@web/modules/work-orders/components/molecules/order-estimate.component';
 import OrderLine from '@web/modules/work-orders/components/molecules/order-line.component';
 import OrderSummary from '@web/modules/work-orders/components/molecules/order-summary.component';
@@ -38,7 +41,12 @@ import type {
   ServiceOption,
   WorkOrderDetail,
 } from '@web/modules/work-orders/types/work-orders.types';
-import { referencePrice, typedPesos } from '@web/modules/work-orders/utils/line-price.utils';
+import {
+  isOffered,
+  needsCategory,
+  referencePrice,
+  typedPesos,
+} from '@web/modules/work-orders/utils/line-price.utils';
 import { orderTotals } from '@web/modules/work-orders/utils/order-totals.utils';
 import type { WorkOrdersErrorKey } from '@web/modules/work-orders/utils/work-orders-errors.utils';
 
@@ -63,7 +71,10 @@ type OrderEditorProps = {
    * The reservation the customer arrived with (spec 012, CA-12, CA-13): a new order starts with its
    * services as the catalog has them now (RN-07); saving turns it into this order.
    */
-  reservation?: Pick<ReservationSummary, 'id' | 'service_ids' | 'services' | 'slot_start'>;
+  reservation?: Pick<
+    ReservationSummary,
+    'id' | 'service_ids' | 'services' | 'service_minutes' | 'slot_start'
+  >;
 };
 
 const asText = (value: number | null | undefined) => (value == null ? '' : formatAmount(value));
@@ -98,8 +109,8 @@ const OrderEditor = ({
   reservation,
 }: OrderEditorProps) => {
   const t = useTranslations('orders');
+  const tv = useTranslations('vehicles');
   const clock = useClock();
-  const [skipped, setSkipped] = useState<string[]>([]);
   const reservationApplied = useRef(false);
   const [serverError, setServerError] = useState<WorkOrdersErrorKey>();
   const services = useQuery(activeServicesQueryOptions());
@@ -138,8 +149,22 @@ const OrderEditor = ({
       : null,
   }));
 
-  const offered = (services.data ?? []).filter(
-    (service) => referencePrice(service, vehicle.vehicle_type) !== null
+  // Spec 024: a motorcycle's category brings the value of services by category (CA-10); without one,
+  // the order asks for it first (CA-06).
+  const queryClient = useQueryClient();
+  const isMotorcycle = vehicle.vehicle_type === 'motorcycle';
+  const categoryKey = ['vehicle-category', vehicle.id];
+  const vehicleCategory = useQuery({
+    queryKey: categoryKey,
+    queryFn: () => fetchVehicleCategory(vehicle.id),
+    enabled: isMotorcycle,
+  });
+  const category = vehicleCategory.data ?? null;
+  // The services waiting for the category the dialog asks for (a reservation may bring several).
+  const [askingCategory, setAskingCategory] = useState<ServiceOption[]>([]);
+
+  const offered = (services.data ?? []).filter((service) =>
+    isOffered(service, vehicle.vehicle_type)
   );
   const active = employees.data ?? [];
   const defaultEmployees = () => {
@@ -147,27 +172,39 @@ const OrderEditor = ({
     return only ? [{ employee_id: only.id, share_pct: '100' }] : [];
   };
 
-  const addService = (service: ServiceOption) =>
+  const addService = (service: ServiceOption, known: MotorcycleCategory | null = category) => {
+    if (needsCategory(service, vehicle.vehicle_type) && !known) {
+      setAskingCategory((waiting) => [...waiting, service]);
+      return;
+    }
     append({
       id: null,
       service_id: service.id,
       name: service.name,
-      price: asText(referencePrice(service, vehicle.vehicle_type)),
+      // CA-13: a service «a convenir» comes without value, to be written.
+      price: asText(referencePrice(service, vehicle.vehicle_type, known)),
       estimated_minutes: service.estimated_minutes == null ? '' : String(service.estimated_minutes),
       employees: defaultEmployees(),
     });
+  };
   // Spec 012, CA-12: a new order from a reservation starts with its services, once, as soon as the
   // catalog and the employees are known (RN-10: the only employee is already on each line).
   useEffect(() => {
     if (!reservation || order || reservationApplied.current || !services.data || !employees.data)
       return;
+    if (isMotorcycle && !vehicleCategory.isFetched) return;
     reservationApplied.current = true;
-    const fromReservation = linesFromReservation(reservation, services.data, vehicle.vehicle_type);
-    fromReservation.services.forEach(addService);
-    setSkipped(fromReservation.skipped);
+    linesFromReservation(reservation, services.data, vehicle.vehicle_type).services.forEach(
+      (service) => addService(service)
+    );
     // addService only reads the vehicle and the employees, both known here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reservation, order, services.data, employees.data]);
+  }, [reservation, order, services.data, employees.data, vehicleCategory.isFetched]);
+  // The services the reservation intended that this order cannot bring (RN-07), named once.
+  const skipped =
+    reservation && !order && services.data
+      ? linesFromReservation(reservation, services.data, vehicle.vehicle_type).skipped
+      : [];
 
   const addOther = () =>
     append({
@@ -228,6 +265,14 @@ const OrderEditor = ({
 
       <section className="flex flex-col gap-3">
         <h2 className="text-base font-semibold tracking-tight">{t('editor.services')}</h2>
+        {/* Spec 024, CA-04: the category its values come from. */}
+        {isMotorcycle && vehicleCategory.isFetched && (
+          <p className="text-sm text-default-500">
+            {t('editor.category', {
+              category: category ? tv(`categories.${category}`) : t('editor.noCategory'),
+            })}
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
           {offered.map((service) => (
             <Button
@@ -241,7 +286,11 @@ const OrderEditor = ({
               <span className="sr-only">{t('editor.add')} </span>
               {service.name}
               <span className="text-default-500 tabular-nums">
-                {formatPesos(referencePrice(service, vehicle.vehicle_type) ?? 0)}
+                {service.on_quote
+                  ? t('editor.onQuote')
+                  : needsCategory(service, vehicle.vehicle_type) && !category
+                    ? t('editor.byCategory')
+                    : formatPesos(referencePrice(service, vehicle.vehicle_type, category) ?? 0)}
               </span>
             </Button>
           ))}
@@ -327,6 +376,18 @@ const OrderEditor = ({
           </Button>
         </div>
       </div>
+      {/* Spec 024, CA-06: a motorcycle without category is asked for it, then the service is added. */}
+      {askingCategory.length > 0 && (
+        <VehicleCategoryDialog
+          vehicleId={vehicle.id}
+          onClose={() => setAskingCategory([])}
+          onSaved={(chosen) => {
+            queryClient.setQueryData(categoryKey, chosen);
+            askingCategory.forEach((service) => addService(service, chosen));
+            setAskingCategory([]);
+          }}
+        />
+      )}
     </form>
   );
 };

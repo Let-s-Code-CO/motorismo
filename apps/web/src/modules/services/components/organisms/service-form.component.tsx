@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { useTranslations } from 'next-intl';
 
-import { Alert, Button, Input } from '@heroui/react';
+import { Alert, Button, Input, Radio, RadioGroup, Switch, Textarea } from '@heroui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Clock, Tag } from 'lucide-react';
 
@@ -19,6 +19,7 @@ import {
   serviceSchema,
 } from '@web/modules/services/schemas/service.schema';
 import type { ServicesErrorKey } from '@web/modules/services/utils/services-errors.utils';
+import { MOTORCYCLE_CATEGORIES } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 
 type ServiceFormProps = {
   /** The service to correct; without it the form registers a new one. */
@@ -27,8 +28,7 @@ type ServiceFormProps = {
   onCancel: () => void;
 };
 
-const PRICES = [
-  { name: 'price_motorcycle', label: 'motorcycle' },
+const OTHER_PRICES = [
   { name: 'price_car', label: 'car' },
   { name: 'price_bicycle', label: 'bicycle' },
 ] as const;
@@ -36,30 +36,45 @@ const PRICES = [
 const asText = (value: number | null | undefined) => (value == null ? '' : formatAmount(value));
 
 /**
- * An admin registers or corrects a service (spec 007, HU-01): a name and a reference price for
- * each vehicle type it is offered for (CA-01, CA-02). Every problem shows next to its field
- * (CA-03); a name already taken is refused, suggesting to reactivate a disabled one (CA-04).
+ * An admin registers or corrects a service (spec 007, HU-01; spec 024): a name, an optional
+ * description (CA-19), and a reference price for each vehicle type it is offered for (CA-01, CA-02),
+ * the motorcycle's single or one per category (CA-07); or «a convenir», without values nor time
+ * (CA-12). Every problem shows next to its field (CA-03, CA-08); a name already taken is refused,
+ * suggesting to reactivate a disabled one (CA-04).
  */
 const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
   const t = useTranslations('services');
+  const tv = useTranslations('vehicles');
   const [serverError, setServerError] = useState<ServicesErrorKey>();
 
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ServiceInput, unknown, ServiceValues>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       name: service?.name ?? '',
+      description: service?.description ?? '',
+      on_quote: service?.on_quote ?? false,
+      motorcycle_mode: service?.motorcycle_prices ? 'category' : 'single',
       price_motorcycle: asText(service?.price_motorcycle),
+      motorcycle_prices: Object.fromEntries(
+        MOTORCYCLE_CATEGORIES.map((category) => [
+          category,
+          asText(service?.motorcycle_prices?.[category]),
+        ])
+      ),
       price_car: asText(service?.price_car),
       price_bicycle: asText(service?.price_bicycle),
       estimated_minutes:
         service?.estimated_minutes == null ? '' : String(service.estimated_minutes),
     },
   });
+  const onQuote = useWatch({ control, name: 'on_quote' });
+  const motorcycleMode = useWatch({ control, name: 'motorcycle_mode' });
 
   const onSubmit = handleSubmit(async (values) => {
     setServerError(undefined);
@@ -74,7 +89,38 @@ const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
   const fieldError = (message?: string) => message && t(`validation.${message}`);
   // «At least one price» belongs to the group, not to one field.
   const pricesError = (errors as Record<string, { message?: string } | undefined>).prices?.message;
+  const categoryErrors = errors.motorcycle_prices as
+    Record<string, { message?: string } | undefined> | undefined;
   const pricesHintId = 'service-prices-hint';
+
+  /** A price field: shows thousands separators once the value is typed («25000» → «25.000»). */
+  const priceInput = (
+    name: 'price_motorcycle' | 'price_car' | 'price_bicycle' | `motorcycle_prices.${string}`,
+    label: string,
+    message?: string
+  ) => {
+    const field = register(name as 'price_motorcycle');
+    return (
+      <Input
+        key={name}
+        {...field}
+        onBlur={(event) => {
+          const amount = parsePesos(event.target.value);
+          if (amount !== null) setValue(name as 'price_motorcycle', formatAmount(amount));
+          return field.onBlur(event);
+        }}
+        label={label}
+        placeholder={t('form.pricePlaceholder')}
+        inputMode="numeric"
+        variant="bordered"
+        labelPlacement="outside"
+        validationBehavior="aria"
+        startContent={<span className="text-sm text-default-400">$</span>}
+        isInvalid={!!message}
+        errorMessage={fieldError(message)}
+      />
+    );
+  };
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
@@ -90,57 +136,102 @@ const ServiceForm = ({ service, onSaved, onCancel }: ServiceFormProps) => {
         isInvalid={!!errors.name}
         errorMessage={fieldError(errors.name?.message)}
       />
-      <fieldset className="flex flex-col gap-3" aria-describedby={pricesHintId}>
-        <legend className="text-sm font-medium text-foreground">{t('form.prices')}</legend>
-        <p id={pricesHintId} className="-mt-1 text-xs text-default-500">
-          {t('form.pricesHint')}
-        </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {PRICES.map(({ name, label }) => {
-            const field = register(name);
-            return (
-              <Input
-                key={name}
-                {...field}
-                // Show thousands separators once the value is typed: «25000» → «25.000».
-                onBlur={(event) => {
-                  const typed = event.target.value;
-                  const amount = parsePesos(typed);
-                  if (amount !== null) setValue(name, formatAmount(amount));
-                  return field.onBlur(event);
-                }}
-                label={t(`form.${label}`)}
-                placeholder={t('form.pricePlaceholder')}
-                inputMode="numeric"
-                variant="bordered"
-                labelPlacement="outside"
-                validationBehavior="aria"
-                startContent={<span className="text-sm text-default-400">$</span>}
-                isInvalid={!!errors[name]}
-                errorMessage={fieldError(errors[name]?.message)}
-              />
-            );
-          })}
-        </div>
-        {pricesError && (
-          <p role="alert" className="text-xs text-danger">
-            {fieldError(pricesError)}
-          </p>
-        )}
-      </fieldset>
-      <Input
-        {...register('estimated_minutes')}
-        label={t('form.minutes')}
-        description={t('form.minutesHint')}
-        inputMode="numeric"
+      <Textarea
+        {...register('description')}
+        label={t('form.description')}
+        description={t('form.descriptionHint')}
         variant="bordered"
         labelPlacement="outside"
         validationBehavior="aria"
-        className="sm:max-w-xs"
-        startContent={<Clock aria-hidden className="size-4 shrink-0 text-default-400" />}
-        isInvalid={!!errors.estimated_minutes}
-        errorMessage={fieldError(errors.estimated_minutes?.message)}
+        minRows={2}
+        isInvalid={!!errors.description}
+        errorMessage={fieldError(errors.description?.message)}
       />
+      {/* Spec 024, CA-12: «A convenir» hides the values and the time. */}
+      <Controller
+        control={control}
+        name="on_quote"
+        render={({ field }) => (
+          <Switch
+            isSelected={!!field.value}
+            onValueChange={field.onChange}
+            size="sm"
+            classNames={{ label: 'flex flex-col gap-0.5' }}
+          >
+            <span className="text-sm font-medium text-foreground">{t('form.onQuote')}</span>
+            <span className="text-xs text-default-500">{t('form.onQuoteHint')}</span>
+          </Switch>
+        )}
+      />
+      {!onQuote && (
+        <fieldset className="flex flex-col gap-3" aria-describedby={pricesHintId}>
+          <legend className="text-sm font-medium text-foreground">{t('form.prices')}</legend>
+          <p id={pricesHintId} className="-mt-1 text-xs text-default-500">
+            {t('form.pricesHint')}
+          </p>
+          {/* Spec 024, CA-07: the motorcycle's value, single or one per category. */}
+          <Controller
+            control={control}
+            name="motorcycle_mode"
+            render={({ field }) => (
+              <RadioGroup
+                label={t('form.motorcycleMode')}
+                orientation="horizontal"
+                value={field.value ?? 'single'}
+                onValueChange={field.onChange}
+                classNames={{ label: 'text-sm text-foreground', wrapper: 'gap-x-5' }}
+              >
+                <Radio value="single">{t('form.single')}</Radio>
+                <Radio value="category" description={t('form.byCategoryHint')}>
+                  {t('form.byCategory')}
+                </Radio>
+              </RadioGroup>
+            )}
+          />
+          {motorcycleMode === 'category' ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {MOTORCYCLE_CATEGORIES.map((category) =>
+                priceInput(
+                  `motorcycle_prices.${category}`,
+                  tv(`categories.${category}`),
+                  categoryErrors?.[category]?.message
+                )
+              )}
+            </div>
+          ) : null}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {motorcycleMode !== 'category' &&
+              priceInput(
+                'price_motorcycle',
+                t('form.motorcycle'),
+                errors.price_motorcycle?.message
+              )}
+            {OTHER_PRICES.map(({ name, label }) =>
+              priceInput(name, t(`form.${label}`), errors[name]?.message)
+            )}
+          </div>
+          {pricesError && (
+            <p role="alert" className="text-xs text-danger">
+              {fieldError(pricesError)}
+            </p>
+          )}
+        </fieldset>
+      )}
+      {!onQuote && (
+        <Input
+          {...register('estimated_minutes')}
+          label={t('form.minutes')}
+          description={t('form.minutesHint')}
+          inputMode="numeric"
+          variant="bordered"
+          labelPlacement="outside"
+          validationBehavior="aria"
+          className="sm:max-w-xs"
+          startContent={<Clock aria-hidden className="size-4 shrink-0 text-default-400" />}
+          isInvalid={!!errors.estimated_minutes}
+          errorMessage={fieldError(errors.estimated_minutes?.message)}
+        />
+      )}
       <div className="flex justify-end gap-2">
         <Button variant="light" onPress={onCancel}>
           {t('form.cancel')}

@@ -3,17 +3,17 @@
 -- Dates are relative to today (Bogotá), so every `db:reset` has an agenda:
 --
 --   this week and the next   enabled, every day from 9:00 a. m. to 6:00 p. m.
---   tomorrow 10:00 a. m.     Camila, UIH-03D, «Lavado detallado»        pending, booked by Camila herself
+--   tomorrow 10:00 a. m.     Camila, UIH-03D, «Paquete de lavado Premium»  pending, booked by Camila herself
 --                            from the app (spec 014): «Mis reservas» shows it
 --   tomorrow 10:00 a. m.     Valentina, no vehicle, no services          pending (the slot is full)
 --   tomorrow 11:00 a. m.     Andrés, his bicycle                         cancelled («Cambió de planes»)
---   today, this slot         Gabriel, his Yamaha (registered here), «Lavado sencillo», 60 min of own
+--   today, this slot         Gabriel, his Yamaha (registered here), «Lavado Pro Wash», 60 min of own
 --                            tolerance: he arrived, and his order waits in the queue by the reserved
 --                            time, «Reserva …»
 --   today, this slot         Camila, no vehicle, on her way: «Órdenes» shows «Reserva por llegar»
 --                            for about 25 minutes after the reset, with «+5 min» to give her more
 --   now, no reservation      Mateo Mostrador (counter customer, registered here) and his Honda,
---                            «Lavado detallado»: in the queue after the reserved order
+--                            «Combo de lavado Deluxe»: in the queue after the reserved order
 --   previous slot, late      Lina Tarde: arrived 6 minutes ago, past her 15 minutes → her turn is
 --                            her arrival (she keeps the «Reserva» tag)
 --   next slot, early         Sofía Temprano: arrived 8 minutes ago → her turn is her arrival
@@ -65,7 +65,7 @@ insert into seed_agenda select 'camila', public.save_reservation(
   (select customer_id from public.vehicles where plate = 'UIH03D'),
   (select id from public.vehicles where plate = 'UIH03D'),
   pg_temp.tomorrow_at('10:00'),
-  array[(select id from public.services where name = 'Lavado detallado')],
+  array[(select id from public.services where name = 'Paquete de lavado Premium')],
   'Llego en la moto');
 select set_config('request.jwt.claims',
   json_build_object('sub', (select id from auth.users where email = 'sebastian.pulido@motorismo.test'),
@@ -100,12 +100,12 @@ with booked as (
 insert into seed_agenda select 'gabriel', id from booked;
 
 insert into public.reservation_services (reservation_id, service_id, position)
-select (select id from seed_agenda where name = 'gabriel'), id, 1 from public.services where name = 'Lavado sencillo';
+select (select id from seed_agenda where name = 'gabriel'), id, 1 from public.services where name = 'Lavado Pro Wash';
 
 select public.save_work_order(
   (select id from public.customers where email = 'cliente.google@motorismo.test'),
   (select id from seed_agenda where name = 'gabriel_moto'),
-  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Lavado sencillo'))),
+  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Lavado Pro Wash'))),
   p_reservation_id => (select id from seed_agenda where name = 'gabriel'));
 -- He arrived now, or 10 minutes into his slot if the day already closed: on time either way.
 update public.work_orders o
@@ -126,7 +126,7 @@ insert into seed_agenda select 'mateo_moto', public.save_vehicle(
 select public.save_work_order(
   (select id from public.customers where full_name = 'Mateo Mostrador'),
   (select id from seed_agenda where name = 'mateo_moto'),
-  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Lavado detallado'))));
+  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Combo de lavado Deluxe'))));
 
 -- Two more who had reserved, to see both sides of the rule (RN-04). Their slots stay within the
 -- hours: at the first or the last slot of the day the example falls back to this slot.
@@ -169,12 +169,12 @@ insert into seed_agenda select 'sofia', id from booked;
 insert into seed_agenda select 'lina_order', public.save_work_order(
   (select id from public.customers where full_name = 'Lina Tarde'),
   (select id from seed_agenda where name = 'lina_moto'),
-  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Lavado sencillo'))),
+  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Lavado Pro Wash'))),
   p_reservation_id => (select id from seed_agenda where name = 'lina'));
 insert into seed_agenda select 'sofia_order', public.save_work_order(
   (select id from public.customers where full_name = 'Sofía Temprano'),
   (select id from seed_agenda where name = 'sofia_moto'),
-  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Micropulido'))),
+  jsonb_build_array(jsonb_build_object('service_id', (select id from public.services where name = 'Combo de lavado Deluxe'))),
   p_reservation_id => (select id from seed_agenda where name = 'sofia'));
 
 -- When they arrived, and the turn the rule gives each (RN-04), as if saved then: Lina 6 minutes ago
@@ -211,5 +211,17 @@ select c.id, pg_temp.today_slot(interval '0'), pg_temp.today_slot(interval '0') 
        'Avisó que va en camino',
        now() - interval '1 day', (select id from auth.users where email = 'sebastian.pulido@motorismo.test')
 from public.customers c where c.email = 'cliente@motorismo.test';
+
+-- Spec 024: Gabriel's AKT (UIH-58E) has its own category, other than its line's (Street/Roadster), and
+-- Tomás Torres, at the counter, has a motorcycle of a line people added (still to review, without
+-- category): an order for it asks for the category first (CA-06).
+update public.vehicles set motorcycle_category = 'trail' where plate = 'UIH58E';
+insert into public.customers (full_name, phone, origin, registered_by)
+values ('Tomás Torres', '3134445566', 'counter',
+        (select id from auth.users where email = 'sebastian.pulido@motorismo.test'));
+select public.save_vehicle(
+  p_customer_id => (select id from public.customers where full_name = 'Tomás Torres'),
+  p_vehicle_type => 'motorcycle', p_brand_name => 'Kawasaki', p_line_name => 'KLX 300',
+  p_color => 'green', p_plate => 'TMT78D');
 
 select set_config('request.jwt.claims', null, true);

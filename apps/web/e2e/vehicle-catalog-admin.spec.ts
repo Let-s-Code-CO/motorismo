@@ -12,6 +12,8 @@
  * - CA-06: a customer sees the brand of their vehicle, never whether it is to review.
  * - CA-26, CA-27, CA-29: the admin registers a brand and a line, reviewed, and marks reviewed one
  *   someone typed.
+ * - Spec 024, CA-01 / CA-02: the admin gives a motorcycle line its category, and the customer's
+ *   motorcycle of that line shows it on their record.
  */
 import { type Page, expect, test } from '@playwright/test';
 
@@ -237,6 +239,31 @@ test.describe('the admin', () => {
     await expect(
       page.getByRole('list', { name: `Líneas de ${prefix} Omega` }).getByText('Linea Movil')
     ).toBeVisible();
+  });
+
+  test('gives a line its category, and the motorcycles of that line show it (spec 024, CA-01, CA-02)', async ({
+    page,
+  }) => {
+    const customer = await createWalkInCustomer(`${prefix} Cliente`);
+    customers.push(customer);
+    await addMotorcycle(customer, `${prefix} Zeta`, 'Aventura 900');
+
+    await signIn(page, SEED.admin.email);
+    await expect(page).toHaveURL('/');
+    await openCatalogFor(page, prefix);
+    const lines = page.getByRole('list', { name: `Líneas de ${prefix} Zeta` });
+    await expect(lines).toContainText('Sin categoría');
+    await page.getByRole('button', { name: 'Acciones de la línea Aventura 900' }).click();
+    await page.getByRole('menuitem', { name: 'Categoría' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Categoría de Aventura 900' });
+    await dialog.getByRole('button', { name: /Categoría/ }).click();
+    await page.getByRole('option', { name: 'Maxi Trail', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Guardar' }).click();
+
+    await expect(page.getByText('Aventura 900: Maxi Trail.')).toBeVisible();
+    await expect(lines).toContainText('Maxi Trail');
+    await page.goto(`/customers/${customer}`);
+    await expect(page.getByText('Maxi Trail')).toBeVisible();
   });
 });
 

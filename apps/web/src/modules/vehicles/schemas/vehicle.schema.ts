@@ -60,6 +60,10 @@ export const vehicleFormSchema = z
     plate: z.string().nullish(),
     // DANE code of the municipality that issued a car plate (RN-11); the list is the database's.
     plate_city_code: z.string().nullish(),
+    // Spec 024: the category in sight (staff only, CA-05) and its line's, to tell whether it is the
+    // motorcycle's own (CA-03).
+    motorcycle_category: z.enum(Constants.public.Enums.motorcycle_category).nullish(),
+    line_category: z.enum(Constants.public.Enums.motorcycle_category).nullish(),
   })
   .refine(
     (data) => !isType(data.vehicle_type) || !hasPlate(data.vehicle_type) || isFilled(data.plate),
@@ -108,6 +112,9 @@ export const vehicleFormSchema = z
     color: data.color,
     plate: hasPlate(data.vehicle_type) && data.plate ? normalizePlate(data.plate) : null,
     plate_city_code: data.vehicle_type === 'car' ? (data.plate_city_code ?? null) : null,
+    motorcycle_category:
+      data.vehicle_type === 'motorcycle' ? (data.motorcycle_category ?? null) : null,
+    line_category: data.vehicle_type === 'motorcycle' ? (data.line_category ?? null) : null,
   }));
 
 export type VehicleFormInput = z.input<typeof vehicleFormSchema>;
@@ -116,5 +123,10 @@ export type VehicleFormValues = z.output<typeof vehicleFormSchema>;
 /** What the Server Action receives: the form values plus whose vehicle it is (and which one). */
 export const saveVehicleSchema = z.intersection(
   vehicleFormSchema,
-  z.object({ customer_id: z.uuid(), vehicle_id: z.uuid().nullish() })
+  z.object({
+    customer_id: z.uuid(),
+    vehicle_id: z.uuid().nullish(),
+    // Spec 024, CA-03: write the motorcycle's own category (staff); a customer never does (CA-05).
+    set_category: z.boolean().default(false),
+  })
 );

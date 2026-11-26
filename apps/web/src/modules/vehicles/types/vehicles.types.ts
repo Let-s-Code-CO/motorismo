@@ -1,5 +1,7 @@
 import type { Enums, Tables } from '@motorismo/supabase/types';
 
+import type { MotorcycleCategory } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
+
 export type VehicleType = Enums<'vehicle_type'>;
 export type VehicleClass = Enums<'vehicle_class'>;
 export type VehicleColor = Enums<'vehicle_color'>;
@@ -14,7 +16,13 @@ export type VehiclesAudience = 'staff' | 'customer';
  * A catalog entry (brand or line) as the form suggests it, with the names it remembers (merged into
  * it, or before a rename; spec 018, CA-16).
  */
-export type CatalogItem = { id: string; name: string; aliases?: string[] };
+/** A brand or line of the catalog; a motorcycle line has its category (spec 024, CA-01). */
+export type CatalogItem = {
+  id: string;
+  name: string;
+  aliases?: string[];
+  category?: MotorcycleCategory | null;
+};
 
 /** A municipality a car plate can be issued in (spec 005, RF-07): DANE code, name, department. */
 export type Municipality = Pick<Tables<'municipalities'>, 'code' | 'name' | 'department'>;

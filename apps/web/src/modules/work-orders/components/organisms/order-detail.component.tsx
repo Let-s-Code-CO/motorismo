@@ -71,7 +71,10 @@ type OrderDetailProps = {
    * Spec 012: the customer arrived for a reservation and this vehicle already had this order open:
    * it opens editing, and saving links the reservation to it.
    */
-  reservation?: Pick<ReservationSummary, 'id' | 'service_ids' | 'services' | 'slot_start'>;
+  reservation?: Pick<
+    ReservationSummary,
+    'id' | 'service_ids' | 'services' | 'service_minutes' | 'slot_start'
+  >;
 };
 
 /**

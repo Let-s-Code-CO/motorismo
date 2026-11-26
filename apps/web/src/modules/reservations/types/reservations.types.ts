@@ -2,8 +2,14 @@ import type { Database, Enums, Tables } from '@motorismo/supabase/types';
 
 export type ReservationStatus = Enums<'reservation_status'>;
 
-/** A row of the summary view: who, which vehicle, which services, its tolerance and flags. */
-export type ReservationSummary = Tables<'reservation_summaries'>;
+/**
+ * A row of the summary view: who, which vehicle, which services, its tolerance and flags. Spec 024:
+ * `service_minutes` goes with `service_ids`, one per service, null unless it is «a convenir» (the
+ * generator types its elements as never null).
+ */
+export type ReservationSummary = Omit<Tables<'reservation_summaries'>, 'service_minutes'> & {
+  service_minutes: (number | null)[] | null;
+};
 
 /** A slot of a day with its seats (spec 012, CA-03), as `agenda_slots` returns it. */
 export type AgendaSlot = Database['public']['Functions']['agenda_slots']['Returns'][number];

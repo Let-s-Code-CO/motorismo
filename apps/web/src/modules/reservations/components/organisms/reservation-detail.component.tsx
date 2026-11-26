@@ -10,6 +10,7 @@ import { Button, Chip } from '@heroui/react';
 import { ArrowLeft, DoorOpen, Pencil, Timer, UserX } from 'lucide-react';
 
 import useClock from '@web/modules/core/hooks/clock.hook';
+import useDuration from '@web/modules/core/hooks/duration.hook';
 import { notify } from '@web/modules/core/lib/toast.lib';
 import { formatMobile } from '@web/modules/core/utils/phone.utils';
 import { callAction } from '@web/modules/pwa/utils/call-action.utils';
@@ -42,7 +43,8 @@ type ReservationDetailProps = {
  * or its own), the notes, its state and who did what and when. While pending: «Llegó» on its day
  * (CA-12, CA-19), «Cambiar» (CA-20), «Cancelar reserva» (CA-21) and, once its tolerance has passed,
  * «No asistió» (CA-22); the admin also changes its tolerance (CA-24, CA-25). An attended one links
- * to its order (RF-04).
+ * to its order (RF-04). With services, its estimated time, counting the time staff gave a service
+ * «a convenir» (spec 024, CA-14).
  */
 const ReservationDetail = ({
   reservation,
@@ -55,6 +57,7 @@ const ReservationDetail = ({
   const t = useTranslations('reservations');
   const format = useFormatter();
   const clock = useClock();
+  const duration = useDuration();
   const dayTitle = useDayTitle();
   const vehicleOf = useReservationVehicle();
   const router = useRouter();
@@ -178,6 +181,21 @@ const ReservationDetail = ({
           <dt className="text-xs text-default-500">{t('detail.services')}</dt>
           <dd>{r.services?.length ? r.services.join(' · ') : t('row.noServices')}</dd>
         </div>
+        {!!r.services?.length && (
+          <div>
+            <dt className="text-xs text-default-500">{t('detail.estimate')}</dt>
+            <dd className="tabular-figures">
+              {r.estimated_minutes
+                ? [
+                    t('detail.estimateValue', { duration: duration(r.estimated_minutes) }),
+                    ...(r.unestimated?.length
+                      ? [t('detail.estimateMissing', { names: r.unestimated.join(', ') })]
+                      : []),
+                  ].join(' · ')
+                : t('detail.estimateNone')}
+            </dd>
+          </div>
+        )}
         <div>
           <dt className="text-xs text-default-500">{t('detail.tolerance')}</dt>
           <dd>

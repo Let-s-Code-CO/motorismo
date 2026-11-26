@@ -88,7 +88,11 @@
       "add": "Añadir",
       "fromReservation": "Llegó con la reserva de las {time}",
       "skipped": "No se copiaron de la reserva (ya no se ofrecen para este vehículo): {names}.",
-      "linkReservation": "Al guardar, esta orden queda enlazada a la reserva de las {time}"
+      "linkReservation": "Al guardar, esta orden queda enlazada a la reserva de las {time}",
+      "category": "Categoría de la moto: {category}",
+      "noCategory": "Sin categoría",
+      "onQuote": "A convenir",
+      "byCategory": "Según categoría"
     },
     "summary": {
       "subtotal": "Subtotal",

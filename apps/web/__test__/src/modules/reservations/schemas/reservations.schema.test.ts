@@ -5,7 +5,9 @@
  *
  * Guards:
  * - reservationSchema (HU-01): a customer and a slot are required; vehicle, services and notes
- *   (up to 500 characters) are optional (CA-01, CA-04).
+ *   (up to 500 characters) are optional (CA-01, CA-04). The time of a service «a convenir» ticked
+ *   (spec 024, CA-14) is required, a whole number from 5 to 1.440 minutes, next to its field; the
+ *   time of a service no longer ticked is dropped.
  * - agendaWeekSchema (HU-05): seven days, Monday first; an open day closes after it opens and
  *   holds at least one full slot of the current length, reported next to that day (CA-30); a
  *   closed day needs no hours.
@@ -48,6 +50,7 @@ describe('reservationSchema', () => {
       vehicle_id: VEHICLE,
       slot_start: '2030-06-12T09:00:00-05:00',
       service_ids: [SERVICE],
+      service_minutes: {},
       notes: 'Pidió por WhatsApp',
     });
   });
@@ -60,6 +63,7 @@ describe('reservationSchema', () => {
       vehicle_id: null,
       slot_start: '2030-06-12T09:00:00-05:00',
       service_ids: [],
+      service_minutes: {},
       notes: null,
     });
   });
@@ -78,6 +82,62 @@ describe('reservationSchema', () => {
       notes: 'notesTooLong',
     });
     expect(reservationSchema.safeParse(input({ notes: 'a'.repeat(500) })).success).toBe(true);
+  });
+
+  describe('the time of a service «a convenir» (spec 024, CA-14)', () => {
+    const PPF = '3c4d5e6f-7a8b-4c9d-8e0f-2a3b4c5d6e7f';
+
+    it('keeps it as minutes, typed as text or already a number', () => {
+      expect(
+        reservationSchema.parse(input({ service_ids: [PPF], service_minutes: { [PPF]: ' 240 ' } }))
+          .service_minutes
+      ).toEqual({ [PPF]: 240 });
+      expect(
+        reservationSchema.parse(input({ service_ids: [PPF], service_minutes: { [PPF]: 5 } }))
+          .service_minutes
+      ).toEqual({ [PPF]: 5 });
+    });
+
+    it('drops the time of a service no longer ticked', () => {
+      expect(
+        reservationSchema.parse(input({ service_ids: [SERVICE], service_minutes: { [PPF]: '' } }))
+          .service_minutes
+      ).toEqual({});
+    });
+
+    it('asks for it, next to its field, when blank', () => {
+      expect(
+        issuesOf(
+          reservationSchema.safeParse(input({ service_ids: [PPF], service_minutes: { [PPF]: '' } }))
+        )
+      ).toEqual({ [`service_minutes.${PPF}`]: 'quotedMinutesRequired' });
+    });
+
+    it.each(['4', '1441', '90.5', '-30', 'dos horas'])(
+      'refuses %s: whole minutes from 5 to 1.440 (a day)',
+      (minutes) => {
+        expect(
+          issuesOf(
+            reservationSchema.safeParse(
+              input({ service_ids: [PPF], service_minutes: { [PPF]: minutes } })
+            )
+          )
+        ).toEqual({ [`service_minutes.${PPF}`]: 'quotedMinutesRange' });
+      }
+    );
+
+    it('reports it together with the other fields', () => {
+      expect(
+        issuesOf(
+          reservationSchema.safeParse(
+            input({ customer_id: '', service_ids: [PPF], service_minutes: { [PPF]: '' } })
+          )
+        )
+      ).toEqual({
+        customer_id: 'customerRequired',
+        [`service_minutes.${PPF}`]: 'quotedMinutesRequired',
+      });
+    });
   });
 });
 

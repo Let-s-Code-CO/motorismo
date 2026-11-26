@@ -18,9 +18,11 @@ const service = (
   id,
   name,
   price_motorcycle: 25000,
+  motorcycle_prices: null,
   price_car: 40000,
   price_bicycle: null,
   estimated_minutes: 30,
+  on_quote: false,
   ...overrides,
 });
 
@@ -68,6 +70,49 @@ describe('linesFromReservation', () => {
     expect(linesFromReservation({ service_ids: [], services: [] }, CATALOG, 'car')).toEqual({
       services: [],
       skipped: [],
+    });
+  });
+
+  describe('spec 024', () => {
+    const PPF = service('ppf', 'PPF', {
+      price_motorcycle: null,
+      price_car: null,
+      estimated_minutes: null,
+      on_quote: true,
+    });
+    const PRO_WASH = service('pro', 'Lavado Pro Wash', {
+      price_motorcycle: null,
+      motorcycle_prices: {
+        street: 44000,
+        sbk: 46000,
+        scooter: 42000,
+        maxi_scooter: 46000,
+        trail: 48000,
+        maxi_trail: 52000,
+        cruiser: 44000,
+        maxi_cruiser: 48000,
+      },
+    });
+
+    it('brings a service «a convenir» with the time staff gave it in the reservation (CA-15)', () => {
+      const { services } = linesFromReservation(
+        { service_ids: ['ppf'], services: ['PPF'], service_minutes: [240] },
+        [PPF],
+        'motorcycle'
+      );
+
+      expect(services).toEqual([{ ...PPF, estimated_minutes: 240 }]);
+    });
+
+    it('brings a service by category for a motorcycle, whatever its category (CA-06, CA-10)', () => {
+      const { services, skipped } = linesFromReservation(
+        { service_ids: ['pro'], services: ['Lavado Pro Wash'], service_minutes: [null] },
+        [PRO_WASH],
+        'motorcycle'
+      );
+
+      expect(services).toEqual([PRO_WASH]);
+      expect(skipped).toEqual([]);
     });
   });
 });

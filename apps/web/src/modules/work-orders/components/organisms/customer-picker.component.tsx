@@ -75,6 +75,7 @@ const CustomerPicker = ({
   openOrderQuery = '',
 }: CustomerPickerProps) => {
   const t = useTranslations('orders.picker');
+  const tv = useTranslations('vehicles');
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [registering, setRegistering] = useState(false);
@@ -225,7 +226,18 @@ const CustomerPicker = ({
           {forReservation && <Radio value={NO_VEHICLE}>{t('noVehicleChoice')}</Radio>}
           {vehicles.data.map((vehicle) => (
             <div key={vehicle.id} className="flex flex-wrap items-center gap-x-3">
-              <Radio value={vehicle.id} isDisabled={isBusy(vehicle)}>
+              <Radio
+                value={vehicle.id}
+                isDisabled={isBusy(vehicle)}
+                // Spec 024, CA-04: the category a motorcycle's values come from.
+                description={
+                  vehicle.vehicle_type === 'motorcycle'
+                    ? vehicle.category
+                      ? tv(`categories.${vehicle.category}`)
+                      : tv('summary.noCategory')
+                    : undefined
+                }
+              >
                 {vehicleLabel(vehicle, t('noPlate'))}
               </Radio>
               {isBusy(vehicle) && vehicle.openOrder && (
@@ -265,6 +277,7 @@ const CustomerPicker = ({
               <ModalHeader>{t('registerVehicleTitle')}</ModalHeader>
               <ModalBody className="pb-6">
                 <VehicleForm
+                  withCategory
                   customerId={customer.id}
                   onCancel={onClose}
                   onSaved={async (id) => {

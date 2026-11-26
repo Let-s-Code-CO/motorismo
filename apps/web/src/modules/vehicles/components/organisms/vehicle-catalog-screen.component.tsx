@@ -25,6 +25,7 @@ import {
   markVehicleBrandReviewed,
   markVehicleLineReviewed,
 } from '@web/modules/vehicles/actions/vehicle-catalog.actions';
+import CatalogCategoryDialog from '@web/modules/vehicles/components/molecules/catalog-category-dialog.component';
 import CatalogMergeDialog, {
   type CatalogMergeTarget,
 } from '@web/modules/vehicles/components/molecules/catalog-merge-dialog.component';
@@ -54,6 +55,7 @@ type VehicleCatalogScreenProps = {
 type Dialog =
   | { kind: 'name'; target: CatalogNameTarget }
   | { kind: 'merge'; target: CatalogMergeTarget }
+  | { kind: 'category'; line: CatalogLine }
   | null;
 
 const SEARCH_DELAY_MS = 300;
@@ -215,6 +217,7 @@ const VehicleCatalogScreen = ({ filters, brands }: VehicleCatalogScreenProps) =>
         aria-label={t('catalog.lineActions', { name: line.name })}
         onAction={(key) => {
           if (key === 'markReviewed') return markReviewed('line', line);
+          if (key === 'category') return setDialog({ kind: 'category', line });
           setDialog(
             key === 'rename'
               ? { kind: 'name', target: { kind: 'renameLine', id: line.id, name: line.name } }
@@ -224,6 +227,10 @@ const VehicleCatalogScreen = ({ filters, brands }: VehicleCatalogScreenProps) =>
       >
         {[
           <DropdownItem key="rename">{t('catalog.actions.rename')}</DropdownItem>,
+          // Spec 024, CA-01: a motorcycle line's category.
+          ...(filters.type === 'motorcycle'
+            ? [<DropdownItem key="category">{t('catalog.actions.category')}</DropdownItem>]
+            : []),
           ...(line.reviewed
             ? []
             : [
@@ -378,6 +385,13 @@ const VehicleCatalogScreen = ({ filters, brands }: VehicleCatalogScreenProps) =>
                                 className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5"
                               >
                                 <span className="min-w-0 text-sm">{line.name}</span>
+                                {filters.type === 'motorcycle' && (
+                                  <span className="rounded-full border border-default-300 px-2 py-0.5 text-xs text-default-600">
+                                    {line.category
+                                      ? t(`categories.${line.category}`)
+                                      : t('catalog.noCategory')}
+                                  </span>
+                                )}
                                 {origin(line)}
                                 <span className="ml-auto flex items-center gap-2">
                                   {count(line)}
@@ -399,6 +413,12 @@ const VehicleCatalogScreen = ({ filters, brands }: VehicleCatalogScreenProps) =>
 
       {dialog?.kind === 'name' && (
         <CatalogNameDialog target={dialog.target} onClose={() => setDialog(null)} />
+      )}
+      {dialog?.kind === 'category' && (
+        <CatalogCategoryDialog
+          line={{ ...dialog.line, category: dialog.line.category ?? null }}
+          onClose={() => setDialog(null)}
+        />
       )}
       {dialog?.kind === 'merge' && (
         <CatalogMergeDialog

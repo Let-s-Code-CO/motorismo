@@ -24,12 +24,14 @@ import type { ReactNode } from 'react';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 
+import { setVehicleCategory } from '@web/modules/vehicles/actions/vehicles.actions';
 import { saveWorkOrder } from '@web/modules/work-orders/actions/work-orders.actions';
 import {
   fetchActiveEmployees,
   fetchActiveServices,
+  fetchVehicleCategory,
 } from '@web/modules/work-orders/api/work-orders.client';
 import OrderEditor from '@web/modules/work-orders/components/organisms/order-editor.component';
 import type {
@@ -44,7 +46,9 @@ import { renderWithProviders } from '@tests/test-utils/render';
 vi.mock('@web/modules/work-orders/api/work-orders.client', () => ({
   fetchActiveServices: vi.fn(),
   fetchActiveEmployees: vi.fn(),
+  fetchVehicleCategory: vi.fn(),
 }));
+vi.mock('@web/modules/vehicles/actions/vehicles.actions', () => ({ setVehicleCategory: vi.fn() }));
 vi.mock('@web/modules/work-orders/actions/work-orders.actions', () => ({ saveWorkOrder: vi.fn() }));
 
 const CUSTOMER: PickerCustomer = {
@@ -59,6 +63,7 @@ const MOTO: PickerVehicle = {
   plate: 'UIH03D',
   brand_name: 'Suzuki',
   line_name: 'GSX-R600',
+  category: null,
   openOrder: null,
 };
 
@@ -66,9 +71,11 @@ const service = (overrides: Partial<ServiceOption>): ServiceOption => ({
   id: '30000000-0000-4000-8000-000000000001',
   name: 'Lavado sencillo',
   price_motorcycle: 25000,
+  motorcycle_prices: null,
   price_car: 40000,
   price_bicycle: null,
   estimated_minutes: 30,
+  on_quote: false,
   ...overrides,
 });
 const SERVICES = [
@@ -103,6 +110,7 @@ const renderEditor = (
 ) => {
   vi.mocked(fetchActiveServices).mockResolvedValue(SERVICES);
   vi.mocked(fetchActiveEmployees).mockResolvedValue(employees);
+  vi.mocked(fetchVehicleCategory).mockResolvedValue('sbk');
   const onSaved = vi.fn();
   const wrap = (node: ReactNode) => (
     <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
@@ -288,6 +296,7 @@ describe('OrderEditor from a reservation (spec 012)', () => {
     id: '50000000-0000-4000-8000-000000000001',
     service_ids: [SERVICES[1]!.id, SERVICES[2]!.id],
     services: ['Lavado detallado', 'Solo carros'],
+    service_minutes: [null, null],
     // 9:00 a. m. in Bogotá.
     slot_start: '2030-06-12T14:00:00Z',
   };
@@ -334,6 +343,165 @@ describe('OrderEditor from a reservation (spec 012)', () => {
     expect(vi.mocked(saveWorkOrder).mock.calls[0]![0]).toMatchObject({
       // Only «Lavado detallado», at its current catalog price for a motorcycle (60.000).
       lines: [expect.objectContaining({ service_id: SERVICES[1]!.id, price: 60000 })],
+    });
+  });
+});
+
+describe('OrderEditor — categories and services «a convenir» (spec 024)', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  const PRO_WASH = service({
+    id: '30000000-0000-4000-8000-000000000010',
+    name: 'Lavado Pro Wash',
+    price_motorcycle: null,
+    motorcycle_prices: {
+      street: 44000,
+      sbk: 46000,
+      scooter: 42000,
+      maxi_scooter: 46000,
+      trail: 48000,
+      maxi_trail: 52000,
+      cruiser: 44000,
+      maxi_cruiser: 48000,
+    },
+    price_car: null,
+  });
+  const PPF = service({
+    id: '30000000-0000-4000-8000-000000000011',
+    name: 'PPF',
+    price_motorcycle: null,
+    price_car: null,
+    estimated_minutes: null,
+    on_quote: true,
+  });
+
+  const render = (category: string | null) => {
+    vi.mocked(fetchActiveServices).mockResolvedValue([PRO_WASH, PPF]);
+    vi.mocked(fetchActiveEmployees).mockResolvedValue([ELKIN]);
+    vi.mocked(fetchVehicleCategory).mockResolvedValue(category as never);
+    renderWithProviders(
+      <QueryClientProvider client={new QueryClient()}>
+        <OrderEditor customer={CUSTOMER} vehicle={MOTO} onSaved={vi.fn()} />
+      </QueryClientProvider>
+    );
+  };
+
+  it('shows the motorcycle’s category and offers the value of it (CA-04, CA-10)', async () => {
+    render('sbk');
+
+    expect(await screen.findByText('Categoría de la moto: SBK/SSP')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Añadir Lavado Pro Wash/ })).toHaveTextContent(
+      '$ 46.000'
+    );
+    await addService(/Añadir Lavado Pro Wash/);
+    expect(within(line('Lavado Pro Wash')).getByRole('textbox', { name: /Valor/ })).toHaveValue(
+      '46.000'
+    );
+  });
+
+  it('asks a motorcycle without category for it first, keeps it, then adds the line with its value (CA-06)', async () => {
+    vi.mocked(setVehicleCategory).mockResolvedValue({ ok: true });
+    render(null);
+
+    expect(await screen.findByText('Categoría de la moto: Sin categoría')).toBeInTheDocument();
+    await addService(/Añadir Lavado Pro Wash/);
+    const dialog = await screen.findByRole('dialog', { name: 'Categoría de la moto' });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Categoría/ }));
+    fireEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'Trail' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() =>
+      expect(setVehicleCategory).toHaveBeenCalledWith({ vehicle_id: MOTO.id, category: 'trail' })
+    );
+    expect(
+      await within(await screen.findByRole('group', { name: 'Lavado Pro Wash' })).findByRole(
+        'textbox',
+        {
+          name: /Valor/,
+        }
+      )
+    ).toHaveValue('48.000');
+  });
+
+  it('adds a service «a convenir» without value, and does not save it so (CA-13, RN-02)', async () => {
+    render('sbk');
+
+    expect(await screen.findByRole('button', { name: /Añadir PPF/ })).toHaveTextContent(
+      'A convenir'
+    );
+    await addService(/Añadir PPF/);
+    expect(within(line('PPF')).getByRole('textbox', { name: /Valor/ })).toHaveValue('');
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir orden' }));
+
+    expect(await within(line('PPF')).findByText(/valor/i)).toBeInTheDocument();
+    expect(saveWorkOrder).not.toHaveBeenCalled();
+  });
+
+  describe('from a reservation', () => {
+    const LUBE = service({
+      id: '30000000-0000-4000-8000-000000000012',
+      name: 'Paquete de lavado Premium',
+      price_motorcycle: null,
+      motorcycle_prices: { ...PRO_WASH.motorcycle_prices!, trail: 95000 },
+      price_car: null,
+    });
+
+    const renderFrom = (
+      reservation: {
+        service_ids: string[];
+        services: string[];
+        service_minutes: (number | null)[];
+      },
+      category: string | null
+    ) => {
+      vi.mocked(fetchActiveServices).mockResolvedValue([PRO_WASH, PPF, LUBE]);
+      vi.mocked(fetchActiveEmployees).mockResolvedValue([ELKIN]);
+      vi.mocked(fetchVehicleCategory).mockResolvedValue(category as never);
+      renderWithProviders(
+        <QueryClientProvider client={new QueryClient()}>
+          <OrderEditor
+            customer={CUSTOMER}
+            vehicle={MOTO}
+            reservation={{
+              id: '50000000-0000-4000-8000-000000000002',
+              slot_start: '2030-06-12T14:00:00Z',
+              ...reservation,
+            }}
+            onSaved={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+    };
+
+    it('brings a service «a convenir» with the time given in the reservation and no value (CA-15)', async () => {
+      renderFrom({ service_ids: [PPF.id], services: ['PPF'], service_minutes: [240] }, 'sbk');
+
+      const ppf = await screen.findByRole('group', { name: 'PPF' });
+      expect(within(ppf).getByRole('textbox', { name: /Valor/ })).toHaveValue('');
+      expect(within(ppf).getByRole('textbox', { name: /Tiempo/ })).toHaveValue('240');
+    });
+
+    it('asks once for the category of a motorcycle without one, and adds every service by category with its value (CA-06)', async () => {
+      vi.mocked(setVehicleCategory).mockResolvedValue({ ok: true });
+      renderFrom(
+        {
+          service_ids: [PRO_WASH.id, LUBE.id],
+          services: ['Lavado Pro Wash', 'Paquete de lavado Premium'],
+          service_minutes: [null, null],
+        },
+        null
+      );
+
+      const dialog = await screen.findByRole('dialog', { name: 'Categoría de la moto' });
+      fireEvent.click(within(dialog).getByRole('button', { name: /Categoría/ }));
+      fireEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'Trail' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+
+      const value = async (name: string) =>
+        within(await screen.findByRole('group', { name })).getByRole('textbox', { name: /Valor/ });
+      expect(await value('Lavado Pro Wash')).toHaveValue('48.000');
+      expect(await value('Paquete de lavado Premium')).toHaveValue('95.000');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
   });
 });

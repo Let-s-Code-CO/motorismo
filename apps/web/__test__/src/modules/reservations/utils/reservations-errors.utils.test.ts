@@ -28,6 +28,9 @@ describe('fromReservationError', () => {
     ['reservation_not_found', 'notFound'],
     ['reservation_service_inactive', 'serviceUnavailable'],
     ['reservation_service_unavailable', 'serviceUnavailable'],
+    // Spec 024, CA-14 / CA-16.
+    ['reservation_quoted_minutes_required', 'quotedMinutesRequired'],
+    ['reservation_service_quoted', 'serviceUnavailable'],
     ['reservation_not_pending', 'notPending'],
     ['reservation_no_show_too_early', 'noShowTooEarly'],
     ['reservation_tolerance_out_of_range', 'toleranceOutOfRange'],

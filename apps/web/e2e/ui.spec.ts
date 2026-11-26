@@ -136,7 +136,7 @@ test.describe('on a 360 px phone', () => {
     await expect(page).toHaveURL('/services');
     // Measured once the panel has closed: it is not part of the page.
     await expect(panel).toHaveCount(0);
-    await expect(page.getByRole('grid', { name: 'Servicios activos' })).toContainText(longName);
+    await expect(page.getByRole('region', { name: 'Servicios activos' })).toContainText(longName);
     // The steady state: the panel may still be animating out for a moment under load.
     await expect.poll(() => horizontalOverflow(page)).toBe(0);
     await adminClient().from('services').delete().eq('name', longName);
@@ -344,7 +344,7 @@ test.describe('on an iPhone (440 px, touch, iPhone browser)', () => {
         // Spec 021: the estimated time of the services ticked, with one not estimated named.
         await page.getByRole('radio', { name: /Suzuki/ }).check({ force: true });
         // With the keyboard: the install notice of this iPhone (spec 006) may lie over the list.
-        for (const name of ['Lavado detallado', 'Recubrimiento cerámico']) {
+        for (const name of ['Paquete de lavado Premium', 'Combo de lavado Supreme']) {
           await page.getByRole('checkbox', { name }).focus();
           await page.keyboard.press('Space');
         }

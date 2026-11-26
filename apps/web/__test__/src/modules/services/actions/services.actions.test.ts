@@ -95,6 +95,10 @@ describe('services.actions', () => {
       price_bicycle: null,
       // Spec 008, CA-26: no estimated time typed.
       estimated_minutes: null,
+      // Spec 024: no values by category, not «a convenir», no description.
+      motorcycle_prices: null,
+      on_quote: false,
+      description: null,
     });
     expect(revalidatePath).toHaveBeenCalledWith('/services');
   });
@@ -130,6 +134,9 @@ describe('services.actions', () => {
       price_car: null,
       price_bicycle: null,
       estimated_minutes: null,
+      motorcycle_prices: null,
+      on_quote: false,
+      description: null,
     });
     expect(eq).toHaveBeenCalledWith('id', ID);
   });

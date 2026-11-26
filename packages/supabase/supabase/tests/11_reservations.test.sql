@@ -207,7 +207,7 @@ select is_empty(
                           'reservation_services', 'reservation_summaries') $$,
   'anon has no access to the agenda');
 select function_privs_are('public', 'save_reservation',
-  array['uuid', 'uuid', 'timestamp with time zone', 'uuid[]', 'text', 'uuid'], 'anon', array[]::text[],
+  array['uuid', 'uuid', 'timestamp with time zone', 'uuid[]', 'text', 'uuid', 'jsonb'], 'anon', array[]::text[],
   'anon cannot book');
 
 -- The turn (RN-04): a reservation keeps its reserved time within the tolerance ---------------------

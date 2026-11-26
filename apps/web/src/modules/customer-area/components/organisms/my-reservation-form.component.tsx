@@ -18,9 +18,9 @@ import {
   Textarea,
 } from '@heroui/react';
 
+import BookingEstimate from '@web/modules/core/components/booking-estimate.component';
 import { notify } from '@web/modules/core/lib/toast.lib';
 import { saveMyReservation } from '@web/modules/customer-area/actions/customer-area.actions';
-import BookingEstimate from '@web/modules/customer-area/components/molecules/booking-estimate.component';
 import type {
   BookableDay,
   BookableService,

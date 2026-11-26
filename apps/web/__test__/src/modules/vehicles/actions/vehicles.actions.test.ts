@@ -78,6 +78,7 @@ describe('saveVehicle', () => {
       p_displacement_cc: 600,
       p_color: 'black',
       p_plate: 'UIH03D',
+      p_set_category: false,
     });
     expect(revalidatePath).toHaveBeenCalledWith(`/customers/${OTHER_CUSTOMER_ID}`);
   });
@@ -225,5 +226,32 @@ describe('retireVehicle', () => {
     fakeRetire({ error: { hint: 'vehicle_retired', message: 'retired' } });
 
     expect(await retireVehicle({ id: VEHICLE_ID })).toEqual({ ok: false, error: 'retired' });
+  });
+
+  describe('the category (spec 024)', () => {
+    it('lets staff write a motorcycle’s own category (CA-03)', async () => {
+      vi.mocked(getActiveStaff).mockResolvedValue(STAFF);
+      const { rpc } = fakeSession();
+
+      await saveVehicle(motorcycle({ motorcycle_category: 'trail', set_category: true }));
+
+      expect(rpc).toHaveBeenCalledWith(
+        'save_vehicle',
+        expect.objectContaining({ p_set_category: true, p_motorcycle_category: 'trail' })
+      );
+    });
+
+    it('never asks for a customer, whatever they send (CA-05)', async () => {
+      vi.mocked(getActiveStaff).mockResolvedValue(null);
+      vi.mocked(getActiveCustomer).mockResolvedValue(OWN);
+      const { rpc } = fakeSession();
+
+      await saveVehicle(motorcycle({ motorcycle_category: 'trail', set_category: true }));
+
+      expect(rpc).toHaveBeenCalledWith(
+        'save_vehicle',
+        expect.objectContaining({ p_set_category: false })
+      );
+    });
   });
 });

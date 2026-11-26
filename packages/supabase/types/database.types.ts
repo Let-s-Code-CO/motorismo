@@ -604,16 +604,19 @@ export type Database = {
       }
       reservation_services: {
         Row: {
+          estimated_minutes: number | null
           position: number
           reservation_id: string
           service_id: string
         }
         Insert: {
+          estimated_minutes?: number | null
           position: number
           reservation_id: string
           service_id: string
         }
         Update: {
+          estimated_minutes?: number | null
           position?: number
           reservation_id?: string
           service_id?: string
@@ -797,33 +800,42 @@ export type Database = {
       services: {
         Row: {
           created_at: string
+          description: string | null
           disabled_at: string | null
           estimated_minutes: number | null
           id: string
+          motorcycle_prices: Json | null
           name: string
           name_key: string
+          on_quote: boolean
           price_bicycle: number | null
           price_car: number | null
           price_motorcycle: number | null
         }
         Insert: {
           created_at?: string
+          description?: string | null
           disabled_at?: string | null
           estimated_minutes?: number | null
           id?: string
+          motorcycle_prices?: Json | null
           name: string
           name_key?: string
+          on_quote?: boolean
           price_bicycle?: number | null
           price_car?: number | null
           price_motorcycle?: number | null
         }
         Update: {
           created_at?: string
+          description?: string | null
           disabled_at?: string | null
           estimated_minutes?: number | null
           id?: string
+          motorcycle_prices?: Json | null
           name?: string
           name_key?: string
+          on_quote?: boolean
           price_bicycle?: number | null
           price_car?: number | null
           price_motorcycle?: number | null
@@ -964,6 +976,9 @@ export type Database = {
           brand_id: string
           created_at: string
           id: string
+          motorcycle_category:
+            | Database["public"]["Enums"]["motorcycle_category"]
+            | null
           name: string
           name_key: string
           reviewed: boolean
@@ -972,6 +987,9 @@ export type Database = {
           brand_id: string
           created_at?: string
           id?: string
+          motorcycle_category?:
+            | Database["public"]["Enums"]["motorcycle_category"]
+            | null
           name: string
           name_key?: string
           reviewed?: boolean
@@ -980,6 +998,9 @@ export type Database = {
           brand_id?: string
           created_at?: string
           id?: string
+          motorcycle_category?:
+            | Database["public"]["Enums"]["motorcycle_category"]
+            | null
           name?: string
           name_key?: string
           reviewed?: boolean
@@ -1003,6 +1024,9 @@ export type Database = {
           displacement_cc: number | null
           id: string
           line_id: string | null
+          motorcycle_category:
+            | Database["public"]["Enums"]["motorcycle_category"]
+            | null
           plate: string | null
           plate_city_code: string | null
           retired_at: string | null
@@ -1018,6 +1042,9 @@ export type Database = {
           displacement_cc?: number | null
           id?: string
           line_id?: string | null
+          motorcycle_category?:
+            | Database["public"]["Enums"]["motorcycle_category"]
+            | null
           plate?: string | null
           plate_city_code?: string | null
           retired_at?: string | null
@@ -1033,6 +1060,9 @@ export type Database = {
           displacement_cc?: number | null
           id?: string
           line_id?: string | null
+          motorcycle_category?:
+            | Database["public"]["Enums"]["motorcycle_category"]
+            | null
           plate?: string | null
           plate_city_code?: string | null
           retired_at?: string | null
@@ -1396,6 +1426,7 @@ export type Database = {
           customer_phone: string | null
           day: string | null
           effective_tolerance_minutes: number | null
+          estimated_minutes: number | null
           extended_minutes: number | null
           extensions: number | null
           grace_until: string | null
@@ -1410,11 +1441,13 @@ export type Database = {
           plate: string | null
           plate_city_name: string | null
           service_ids: string[] | null
+          service_minutes: number[] | null
           services: string[] | null
           slot_end: string | null
           slot_start: string | null
           status: Database["public"]["Enums"]["reservation_status"] | null
           tolerance_minutes: number | null
+          unestimated: string[] | null
           updated_at: string | null
           updated_by_customer: boolean | null
           updated_by_name: string | null
@@ -1815,6 +1848,7 @@ export type Database = {
           p_id?: string
           p_notes?: string
           p_service_ids?: string[]
+          p_service_minutes?: Json
           p_slot_start: string
           p_vehicle_id: string
         }
@@ -1827,8 +1861,10 @@ export type Database = {
           p_customer_id: string
           p_displacement_cc?: number
           p_line_name?: string
+          p_motorcycle_category?: Database["public"]["Enums"]["motorcycle_category"]
           p_plate?: string
           p_plate_city_code?: string
+          p_set_category?: boolean
           p_vehicle_class?: Database["public"]["Enums"]["vehicle_class"]
           p_vehicle_id?: string
           p_vehicle_type: Database["public"]["Enums"]["vehicle_type"]
@@ -1893,6 +1929,20 @@ export type Database = {
         Args: { p_id: string; p_minutes: number }
         Returns: undefined
       }
+      set_vehicle_category: {
+        Args: {
+          p_category: Database["public"]["Enums"]["motorcycle_category"]
+          p_vehicle_id: string
+        }
+        Returns: undefined
+      }
+      set_vehicle_line_category: {
+        Args: {
+          p_category: Database["public"]["Enums"]["motorcycle_category"]
+          p_line_id: string
+        }
+        Returns: undefined
+      }
       start_work_order: { Args: { p_id: string }; Returns: undefined }
       vehicle_catalog: {
         Args: { p_type: Database["public"]["Enums"]["vehicle_type"] }
@@ -1918,6 +1968,15 @@ export type Database = {
       data_request_kind: "inquiry" | "correction" | "erasure"
       data_request_status: "received" | "attended" | "rejected" | "withdrawn"
       document_type: "cc" | "ce" | "ppt" | "passport"
+      motorcycle_category:
+        | "street"
+        | "sbk"
+        | "scooter"
+        | "maxi_scooter"
+        | "trail"
+        | "maxi_trail"
+        | "cruiser"
+        | "maxi_cruiser"
       payment_method: "cash" | "transfer" | "card" | "other"
       reservation_status: "pending" | "attended" | "cancelled" | "no_show"
       user_role: "operator" | "admin"
@@ -2075,6 +2134,16 @@ export const Constants = {
       data_request_kind: ["inquiry", "correction", "erasure"],
       data_request_status: ["received", "attended", "rejected", "withdrawn"],
       document_type: ["cc", "ce", "ppt", "passport"],
+      motorcycle_category: [
+        "street",
+        "sbk",
+        "scooter",
+        "maxi_scooter",
+        "trail",
+        "maxi_trail",
+        "cruiser",
+        "maxi_cruiser",
+      ],
       payment_method: ["cash", "transfer", "card", "other"],
       reservation_status: ["pending", "attended", "cancelled", "no_show"],
       user_role: ["operator", "admin"],

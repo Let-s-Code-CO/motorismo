@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { MOTORCYCLE_CATEGORIES } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import {
   CATALOG_NAME_MAX,
   DEFAULT_VEHICLE_TYPE,
@@ -55,5 +56,7 @@ export const catalogLinesSchema = z.array(
     reviewed: z.boolean(),
     created_at: z.string(),
     vehicles: z.number(),
+    // Spec 024, CA-01: a motorcycle line's category; null when it has none yet.
+    category: z.enum(MOTORCYCLE_CATEGORIES).nullish(),
   })
 );

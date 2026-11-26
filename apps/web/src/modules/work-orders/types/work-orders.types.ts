@@ -1,5 +1,6 @@
 import type { Enums, Tables } from '@motorismo/supabase/types';
 
+import type { MotorcycleCategory } from '@web/modules/vehicles/constants/motorcycle-categories.constants';
 import type { VehicleType } from '@web/modules/vehicles/types/vehicles.types';
 import type { MatchedPlate } from '@web/modules/work-orders/utils/plate-search.utils';
 
@@ -19,14 +20,25 @@ export type PickerVehicle = {
   plate: string | null;
   brand_name: string;
   line_name: string | null;
+  /** A motorcycle's category, its own or its line's (spec 024, CA-04); null otherwise. */
+  category: MotorcycleCategory | null;
   openOrder: { id: string; number: number } | null;
 };
 
 /** An active service, with its reference price per vehicle type and its time (spec 007, 008). */
 export type ServiceOption = Pick<
   Tables<'services'>,
-  'id' | 'name' | 'price_motorcycle' | 'price_car' | 'price_bicycle' | 'estimated_minutes'
->;
+  | 'id'
+  | 'name'
+  | 'price_motorcycle'
+  | 'price_car'
+  | 'price_bicycle'
+  | 'estimated_minutes'
+  | 'on_quote'
+> & {
+  /** The motorcycle value per category (spec 024, CA-07), or null. */
+  motorcycle_prices: Record<MotorcycleCategory, number> | null;
+};
 
 /** An active employee. */
 export type EmployeeOption = Pick<Tables<'employees'>, 'id' | 'full_name'>;
