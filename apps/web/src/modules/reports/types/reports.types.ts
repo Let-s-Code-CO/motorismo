@@ -41,22 +41,43 @@ export type ReportFilters = {
 /** The period the report opens on: this month, from day 1 to today (CA-01). */
 export type ReportPeriod = Pick<ReportFilters, 'from' | 'to'>;
 
+/** How the base salary is computed (spec 020, RN-02): «Mes comercial» or «Días reales». */
+export type PayrollMethod = 'commercial' | 'actual';
+
 /**
- * The state of a month's payroll (spec 016), as `payroll_month` returns it: who closed or
- * regenerated it and when, and the total before, only once it is closed.
+ * The period of the payroll (spec 020, RF-01): a fortnight by its first day (the 1st or the 16th) or
+ * any two days, both included. Days are `YYYY-MM-DD`.
  */
-export type PayrollMonth = Omit<
+export type PayrollPeriod =
+  { kind: 'fortnight'; start: string } | { kind: 'range'; from: string; to: string };
+
+/**
+ * What the address asks for (CA-10, CA-13): a period and the method the admin chose, or null when
+ * they chose none («Mes comercial», or a closed fortnight's own method, CA-16).
+ */
+export type PayrollQuery = { period: PayrollPeriod; method: PayrollMethod | null };
+
+/** Provisional (a fortnight not closed), closed, or a query (a range, CA-08). */
+export type PayrollStatus = 'provisional' | 'closed' | 'query';
+
+/**
+ * The state of a period's payroll (spec 020), as `payroll_period` returns it: who closed or
+ * regenerated it and when, and the total before, only once it is closed; `method` is the one its
+ * figures were computed with (a closed fortnight's own, CA-16).
+ */
+export type PayrollState = Omit<
   WithNulls<
-    Functions['payroll_month']['Returns'][number],
+    Functions['payroll_period']['Returns'][number],
     'closed_at' | 'closed_by_name' | 'regenerated_at' | 'regenerated_by_name' | 'previous_total'
   >,
-  'status'
-> & { status: PayrollStatus };
+  'status' | 'kind' | 'method'
+> & { status: PayrollStatus; kind: PayrollPeriod['kind']; method: PayrollMethod };
 
-export type PayrollStatus = 'provisional' | 'closed';
-
-/** An employee of a month's payroll (CA-05). */
+/** An employee of a period's payroll (CA-01, CA-06). */
 export type PayrollLine = Functions['payroll_lines']['Returns'][number];
 
-/** A service an employee took part in, with its commission (CA-11). */
+/** A service an employee took part in, with its commission (CA-04). */
 export type PayrollItem = Functions['payroll_items']['Returns'][number];
+
+/** A piece of an employee's base salary: a fortnight, or part of one, of the period (CA-04, RN-02). */
+export type PayrollBasePart = Functions['payroll_base_parts']['Returns'][number];

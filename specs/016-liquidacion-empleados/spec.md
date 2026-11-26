@@ -55,6 +55,9 @@ liquidación lo sume.
 
 ### HU-02 (P1) — Ver la liquidación de un mes
 
+*Enmendada por la spec 020:* la liquidación se ve por quincena (la en curso por defecto) o por un rango
+de fechas, y el salario base se calcula por «Mes comercial» (por defecto) o «Días reales».
+
 Como administrador, quiero ver cuánto le corresponde a cada empleado en un mes, para pagarle sin
 hacer la cuenta a mano.
 
@@ -87,6 +90,9 @@ hacer la cuenta a mano.
 
 ### HU-03 (P1) — Cerrar y regenerar el mes
 
+*Enmendada por la spec 020:* se cierran y regeneran quincenas, no meses, con el método elegido; un
+rango no se cierra.
+
 Como administrador, quiero cerrar la liquidación del mes, para que quede como comprobante de lo que
 pagué aunque después cambie algo; y poder regenerarla si tuve que corregir algo.
 
@@ -108,6 +114,10 @@ pagué aunque después cambie algo; y poder regenerarla si tuve que corregir alg
   cambios después del cierre») para que el administrador decida si la regenera.
 
 ### HU-04 (P2) — Exportar a Excel
+
+*Enmendada por la spec 020 (CA-17):* el archivo lleva el periodo en el nombre
+(«liquidacion-2026-11-1a-quincena.xlsx», «liquidacion-2026-11-03-a-2026-11-20.xlsx») y, arriba del
+«Resumen», el periodo, su estado y el método.
 
 Como administrador, quiero llevarme la liquidación del mes a Excel, para pagar y archivar.
 
@@ -216,3 +226,4 @@ Ninguna.
 | 2026-11-23 | Tareas aprobadas: estado `lista`; empieza la implementación (`en-progreso`). |
 | 2026-11-23 | Implementada: estado `implementada`. `save_employee` recibe el salario base al final y opcional (nulo conserva el que había); la navegación del mes se apila en el teléfono. |
 | 2026-11-23 | Verificación: CA-01 dice «la lista de empleados» (no hay ficha propia, spec 007); pgTAP prueba también una orden anulada después del cierre (CA-17). Estado `verificada`. |
+| 2026-11-26 | Enmendada por la spec 020: liquidación por quincena o por rango, con el método del salario base a elegir; se cierran quincenas (HU-02 a HU-04). |

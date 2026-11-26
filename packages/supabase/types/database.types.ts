@@ -389,11 +389,13 @@ export type Database = {
           base_salary: number
           commission_pct: number
           commissions: number
+          divisor: number
           employee_id: string
           employee_name: string
           id: string
-          month_days: number
+          paid_days: number
           payroll_id: string
+          period_days: number
           total: number
         }
         Insert: {
@@ -402,11 +404,13 @@ export type Database = {
           base_salary: number
           commission_pct: number
           commissions: number
+          divisor: number
           employee_id: string
           employee_name: string
           id?: string
-          month_days: number
+          paid_days: number
           payroll_id: string
+          period_days: number
           total: number
         }
         Update: {
@@ -415,11 +419,13 @@ export type Database = {
           base_salary?: number
           commission_pct?: number
           commissions?: number
+          divisor?: number
           employee_id?: string
           employee_name?: string
           id?: string
-          month_days?: number
+          paid_days?: number
           payroll_id?: string
+          period_days?: number
           total?: number
         }
         Relationships: [
@@ -441,30 +447,36 @@ export type Database = {
       }
       payrolls: {
         Row: {
+          base_method: string
           closed_at: string
           closed_by: string
           id: string
-          month: string
+          period_end: string
+          period_start: string
           previous_total: number | null
           regenerated_at: string | null
           regenerated_by: string | null
           total: number
         }
         Insert: {
+          base_method: string
           closed_at: string
           closed_by: string
           id?: string
-          month: string
+          period_end: string
+          period_start: string
           previous_total?: number | null
           regenerated_at?: string | null
           regenerated_by?: string | null
           total?: number
         }
         Update: {
+          base_method?: string
           closed_at?: string
           closed_by?: string
           id?: string
-          month?: string
+          period_end?: string
+          period_start?: string
           previous_total?: number | null
           regenerated_at?: string | null
           regenerated_by?: string | null
@@ -1535,7 +1547,10 @@ export type Database = {
         Args: { p_id: string; p_reason?: string }
         Returns: undefined
       }
-      close_payroll: { Args: { p_month: string }; Returns: string }
+      close_payroll: {
+        Args: { p_method: string; p_start: string }
+        Returns: string
+      }
       close_work_order: {
         Args: { p_id: string; p_payments?: Json }
         Returns: undefined
@@ -1659,8 +1674,25 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      payroll_base_parts: {
+        Args: {
+          p_employee: string
+          p_from: string
+          p_method: string
+          p_to: string
+        }
+        Returns: {
+          active_days: number
+          amount: number
+          divisor: number
+          paid_days: number
+          part_days: number
+          part_from: string
+          part_to: string
+        }[]
+      }
       payroll_items: {
-        Args: { p_employee: string; p_month: string }
+        Args: { p_employee: string; p_from: string; p_to: string }
         Returns: {
           closed_at: string
           commission: number
@@ -1672,7 +1704,7 @@ export type Database = {
         }[]
       }
       payroll_lines: {
-        Args: { p_month: string }
+        Args: { p_from: string; p_method: string; p_to: string }
         Returns: {
           active_days: number
           base_pay: number
@@ -1681,18 +1713,19 @@ export type Database = {
           commissions: number
           employee_id: string
           employee_name: string
-          month_days: number
+          period_days: number
           total: number
         }[]
       }
-      payroll_month: {
-        Args: { p_month: string }
+      payroll_period: {
+        Args: { p_from: string; p_method: string; p_to: string }
         Returns: {
           can_close: boolean
           changed_since_close: boolean
           closed_at: string
           closed_by_name: string
-          month: string
+          kind: string
+          method: string
           previous_total: number
           regenerated_at: string
           regenerated_by_name: string
@@ -1700,7 +1733,10 @@ export type Database = {
           total: number
         }[]
       }
-      regenerate_payroll: { Args: { p_month: string }; Returns: string }
+      regenerate_payroll: {
+        Args: { p_method: string; p_start: string }
+        Returns: string
+      }
       register_customer: {
         Args: {
           p_brand_name?: string

@@ -533,7 +533,7 @@ test('the services report, filtered, with its list of employees open, has no ser
   expect(await audit(page)).toEqual([]);
 });
 
-test('the payroll of a month, an employee in detail and the dialog to close it have no serious accessibility issues (spec 016)', async ({
+test('the payroll of a fortnight with its period bar, a range, an employee in detail and the dialog to close it have no serious accessibility issues (spec 020; spec 016)', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -543,13 +543,20 @@ test('the payroll of a month, an employee in detail and the dialog to close it h
     .eq('full_name', 'Elkin Estrada')
     .single();
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+  const day = Number(today.slice(8));
   const [year, month] = today.split('-').map(Number) as [number, number];
-  const lastMonth = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
+  // The fortnight before this one, as the address writes it.
+  const previous =
+    day > 15
+      ? `${today.slice(0, 7)}-1`
+      : `${new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7)}-2`;
   await signIn(page, SEED.admin.email);
   await expect(page).toHaveURL('/');
 
-  await page.goto(`/reports/payroll?month=${lastMonth}`);
+  // A fortnight by «Días reales»: the dates, the method and the table.
+  await page.goto(`/reports/payroll?fortnight=${previous}&base=actual`);
   await expect(page.getByRole('table', { name: 'Liquidación por empleado' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Días reales/ })).toBeChecked();
   expect(await audit(page)).toEqual([]);
 
   // Closing or, if another test closed it, regenerating: the dialog asks first (then cancelled).
@@ -561,7 +568,12 @@ test('the payroll of a month, an employee in detail and the dialog to close it h
   expect(await audit(page)).toEqual([]);
   await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
 
-  await page.goto(`/reports/payroll/${elkin!.id}?month=${lastMonth}`);
+  // A range: «Consulta» and the way back (CA-08).
+  await page.goto(`/reports/payroll?from=${today.slice(0, 8)}01&to=${today}`);
+  await expect(page.getByText('Consulta')).toBeVisible();
+  expect(await audit(page)).toEqual([]);
+
+  await page.goto(`/reports/payroll/${elkin!.id}?fortnight=${previous}`);
   await expect(page.getByRole('heading', { name: 'Elkin Estrada', level: 1 })).toBeVisible();
   expect(await audit(page)).toEqual([]);
 });

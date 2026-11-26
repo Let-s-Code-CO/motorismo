@@ -1,9 +1,9 @@
 ---
 id: "020"
 titulo: "Liquidación quincenal y por rango de fechas"
-estado: aprobada
+estado: verificada
 creada: 2026-11-25
-actualizada: 2026-11-25
+actualizada: 2026-11-26
 ---
 
 # 020 — Liquidación quincenal y por rango de fechas
@@ -63,7 +63,9 @@ coinciden con una quincena.
 - **CA-07** — Dado un rango, entonces cuentan los servicios de las órdenes cerradas entre «Desde» y
   «Hasta», ambos incluidos, y el salario base es proporcional a los días activos del rango (RN-02).
 - **CA-08** — Dado un rango, entonces se ve como «Consulta»: no se puede cerrar (RN-04). Puede
-  volver a la quincena en curso con un clic.
+  volver a la quincena en curso con un clic. Un rango que coincide exactamente con una quincena (del 1
+  al 15, o del 16 al último día) es esa quincena: provisional o cerrada, y se cierra si terminó; si la
+  quincena aún no llega, es una «Consulta», como cualquier rango.
 - **CA-09** — Dado un rango con «Desde» después de «Hasta», o una fecha que no existe, cuando se
   abre, entonces se muestra la quincena en curso, como el reporte de servicios con sus filtros
   inválidos (spec 015).
@@ -102,7 +104,8 @@ por días reales, según lo que necesite al liquidar.
   recibe salario ÷ 30 por cada día activo, como mucho 15 días; por «Días reales», salario × días
   activos ÷ días del mes.
 - **CA-16** — Dada una quincena cerrada, entonces guarda con qué método se cerró y lo muestra;
-  regenerarla vuelve a calcular con el método que esté elegido al regenerar.
+  regenerarla vuelve a calcular con el método que esté elegido al regenerar. Al abrirla sin haber
+  elegido método, el elegido es el del cierre.
 
 ### HU-05 (P2) — Exportar a Excel
 
@@ -190,3 +193,6 @@ Ninguna.
 | 2026-11-25 | Creación, a pedido del usuario: liquidación quincenal por defecto y por rango de fechas. Decisión del usuario: solo se cierran quincenas; el rango es para consultar y exportar. Queda abierto cómo se calcula el salario base. |
 | 2026-11-25 | Decisión del usuario sobre RN-02: el administrador elige el método al liquidar, «Mes comercial» por defecto o «Días reales». Nuevos CA-13 a CA-16 (método); el Excel pasa a CA-17. Sin preguntas abiertas. |
 | 2026-11-25 | Aprobada por el usuario. |
+| 2026-11-26 | Plan aprobado, con dos precisiones del usuario: un rango igual a una quincena es esa quincena (CA-08), y una quincena cerrada abre con el método del cierre (CA-16). Estado `planificada`. |
+| 2026-11-26 | Implementada: estado `implementada`. |
+| 2026-11-26 | `/verificar`: CA-01 a CA-17, RF y RN ✅ tras una corrección: unas fechas que son exactamente una quincena futura son una «Consulta» (CA-08), como `?fortnight=` no abre una quincena por venir. Estado `verificada`. |
